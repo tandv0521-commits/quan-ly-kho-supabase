@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -321,6 +321,7 @@
         </div>
         <div class="flex items-center space-x-2">
           <button onclick="promptSupabaseConfig()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm" title="Cấu hình kết nối Supabase"><i class="bi bi-database-gear"></i><span>Kết nối Supabase</span></button>
+          <button onclick="promptSupabaseConfig()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm" title="Cau hinh Supabase"><i class="bi bi-database-gear"></i><span>Ket noi Supabase</span></button>
           <button onclick="printCurrentTabTable()" class="px-3 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
             <i class="bi bi-printer"></i>
             <span>In Bảng (Ctrl+P)</span>
@@ -1184,9 +1185,12 @@
 // CLIENT SUPABASE ENGINE (Chạy trực tiếp 100% trên GitHub Pages)
 // ============================================================================
 
+const DEFAULT_SUPABASE_URL = "https://oskigucnaevmbpyhhpcg.supabase.co";
+const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9za2lndWNuYWV2bWJweWhocGNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NjcwODYsImV4cCI6MjEwNTI0MzA4Nn0.gj_HVBqciTpla68IGzOBxjtK3-hqvcHxoP-Wn9cGVoY";
+
 const SupabaseConfig = {
-  getUrl: () => localStorage.getItem('SP_URL') || "https://oskigucnaevmbpyhhpcg.supabase.co",
-  getKey: () => localStorage.getItem('SP_KEY') || "",
+  getUrl: () => localStorage.getItem('SP_URL') || DEFAULT_SUPABASE_URL,
+  getKey: () => localStorage.getItem('SP_KEY') || DEFAULT_SUPABASE_KEY,
   setUrl: (u) => localStorage.setItem('SP_URL', (u || '').trim()),
   setKey: (k) => localStorage.setItem('SP_KEY', (k || '').trim())
 };
@@ -1209,11 +1213,8 @@ function promptSupabaseConfig(customMsg) {
           <input id="swal-sp-key" type="password" class="w-full border rounded px-3 py-2 text-xs font-mono" placeholder="Dán mã anon public key tại đây..." value="${curKey}" />
         </div>
         <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-[11px] leading-relaxed">
-          <b class="text-blue-950">💡 Cách lấy mã API Key từ Supabase:</b><br>
-          1. Đăng nhập <a href="https://supabase.com/dashboard" target="_blank" class="underline font-bold text-blue-800">supabase.com/dashboard</a> và chọn dự án kho.<br>
-          2. Vào mục <b>Project Settings (biểu tượng bánh răng ⚙️)</b> &gt; <b>API</b> (hoặc <b>Data API</b>).<br>
-          3. Tại phần <b>Project API keys</b>, bấm <b>Copy</b> dòng <b>anon public</b> và dán vào ô số 2 ở trên.<br>
-          <i>(Mã được lưu an toàn trong trình duyệt của bạn, không bao giờ bị lộ hay bị vô hiệu hóa trên GitHub).</i>
+          <b class="text-blue-950">💡 Lưu ý quan trọng:</b><br>
+          Mã Anon Public Key đã được cấu hình mặc định. Để tải được toàn bộ 1.454 sản phẩm, hãy đảm bảo bạn đã tắt RLS trong Supabase (SQL Editor: <code>ALTER TABLE products DISABLE ROW LEVEL SECURITY;</code>).
         </div>
       </div>
     `,
@@ -1294,7 +1295,7 @@ async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
 
   if (status >= 400) {
     if (status === 401 || status === 403) {
-      promptSupabaseConfig("Khóa API Supabase không chính xác hoặc đã bị vô hiệu hóa. Vui lòng cập nhật lại mã anon public key!");
+      promptSupabaseConfig("Khóa API Supabase không chính xác hoặc RLS đang chặn quyền. Vui lòng kiểm tra lại cấu hình Supabase!");
     }
     throw new Error(`Lỗi Supabase (${status}): ${resText}`);
   }
@@ -2650,16 +2651,6 @@ window.google.script = {
     }
   })
 };
-
-// Tự động kiểm tra cấu hình Supabase khi trang tải
-document.addEventListener('DOMContentLoaded', function() {
-  const curKey = SupabaseConfig.getKey();
-  if (!curKey) {
-    setTimeout(() => {
-      promptSupabaseConfig();
-    }, 600);
-  }
-});
 
     let inventoryMap = {};
     let inventoryList = [];
