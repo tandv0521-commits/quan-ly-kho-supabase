@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Quản Lý Kho Thông Minh - Supabase Cloud Engine</title>
+  <title>Hệ Thống Quản Lý Kho Doanh Nghiệp</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -246,7 +246,7 @@
             </div>
             <div class="sidebar-header-text overflow-hidden">
               <h1 class="font-black text-slate-900 text-xs tracking-wider uppercase leading-tight">QUẢN LÝ KHO</h1>
-              <p class="text-[11px] text-slate-400 font-medium truncate">Supabase Cloud Engine</p>
+              <p class="text-[11px] text-slate-400 font-medium truncate">Hệ Thống Đám Mây</p>
             </div>
           </div>
           <button onclick="toggleCollapseSidebar()" class="collapse-toggle-btn hidden md:flex p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="Thu gọn / Mở rộng">
@@ -510,7 +510,7 @@
                   </tr>
                 </thead>
                 <tbody id="inventory-tbody" class="divide-y divide-slate-100 bg-white">
-                  <tr><td colspan="9" class="text-center py-8 text-slate-400">Đang tải dữ liệu từ Supabase...</td></tr>
+                  <tr><td colspan="9" class="text-center py-8 text-slate-400">Đang tải dữ liệu từ máy chủ...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -897,7 +897,7 @@
                   <i class="bi bi-arrow-return-left text-purple-600"></i>
                   <span>DANH SÁCH PHIẾU HÀNG NHẬP TRẢ</span>
                 </h2>
-                <p class="text-[11px] text-slate-400 mt-0.5">Dữ liệu lưu trữ trên hệ thống Supabase</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Dữ liệu lưu trữ trên hệ thống máy chủ</p>
               </div>
               <div class="flex items-center space-x-2">
                 <button onclick="loadNhapTraVouchersList()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition flex items-center space-x-1">
@@ -946,7 +946,7 @@
                   <i class="bi bi-file-earmark-plus text-purple-600"></i>
                   <span id="nhaptra-form-title">LẬP PHIẾU HÀNG NHẬP TRẢ LẠI KHO</span>
                 </h2>
-                <p class="text-[11px] text-slate-500 mt-0.5">Số lượng trả sẽ tự động cộng hoàn lại vào tổng tồn trong Supabase.</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Số lượng trả sẽ tự động cộng hoàn lại vào tổng tồn trong hệ thống.</p>
               </div>
               <div class="flex items-center space-x-2">
                 <button onclick="closeCreateNhapTraForm()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
@@ -1168,7 +1168,7 @@
                   </tr>
                 </thead>
                 <tbody id="audit-tbody" class="divide-y divide-slate-100 bg-white">
-                  <tr><td colspan="11" class="text-center py-8 text-slate-400">Đang tải nhật ký từ Supabase...</td></tr>
+                  <tr><td colspan="11" class="text-center py-8 text-slate-400">Đang tải nhật ký từ máy chủ...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1292,7 +1292,7 @@
   <!-- ==================== BAT DAU PHAN SCRIPT ==================== -->
   <script>
 // ============================================================================
-// CLIENT SUPABASE ENGINE (Cháº¡y tá»± Ä‘á»™ng 100% trÃªn GitHub Pages - Tá»‘c Ä‘á»™ cao)
+// CLIENT SUPABASE ENGINE (Chạy tự động 100% trên GitHub Pages - Tốc độ cao)
 // ============================================================================
 
 const SUPABASE_URL = "https://oskigucnaevmbpyhhpcg.supabase.co";
@@ -1333,7 +1333,7 @@ async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
   const resText = await response.text();
 
   if (status >= 400) {
-    throw new Error(`Lá»—i Supabase (${status}): ${resText}`);
+    throw new Error(`Lỗi máy chủ (${status}): ${resText}`);
   }
 
   return resText ? JSON.parse(resText) : null;
@@ -1395,9 +1395,9 @@ async function callSupabase_(endpoint, method, payload, extraHeaders) {
 function cleanNoteContent_(val) {
   if (!val) return "";
   let s = String(val).trim();
-  s = s.replace(/import\s*tá»«\s*file\s*excel/gi, "");
+  s = s.replace(/import\s*từ\s*file\s*excel/gi, "");
   s = s.replace(/import\s*excel/gi, "");
-  s = s.replace(/\[\s*(ThÃ nh\s*pháº©m|Pháº¿\s*pháº©m|TP|PP)\s*\]/gi, "");
+  s = s.replace(/\[\s*(Thành\s*phẩm|Phế\s*phẩm|TP|PP)\s*\]/gi, "");
   s = s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
   s = s.replace(/\|\s*\|+/g, "|").trim();
   return s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
@@ -1418,14 +1418,14 @@ async function logVoucherHistorySupabase_(action, voucherNo, type, voucherDate, 
     (items || []).forEach((it, idx) => {
       const q = Number(it.quantity || it.qty) || 0;
       totalQty += q;
-      const ql = (it.quality === "PP") ? "Pháº¿ pháº©m" : "ThÃ nh pháº©m";
+      const ql = (it.quality === "PP") ? "Phế phẩm" : "Thành phẩm";
       if (idx < maxDetailItems) {
         itemsDetail.push(`${it.code} (${ql}: ${q} ${it.unit || ''})`);
       }
     });
 
     if ((items || []).length > maxDetailItems) {
-      itemsDetail.push(`...vÃ  cÃ²n ${(items || []).length - maxDetailItems} máº·t hÃ ng khÃ¡c`);
+      itemsDetail.push(`...và còn ${(items || []).length - maxDetailItems} mặt hàng khác`);
     }
 
     const payload = {
@@ -1441,7 +1441,7 @@ async function logVoucherHistorySupabase_(action, voucherNo, type, voucherDate, 
 
     await callSupabaseSingle_("voucher_audit_logs", "POST", payload);
   } catch (err) {
-    console.warn("Lá»—i logVoucherHistorySupabase_:", err);
+    console.warn("Lỗi logVoucherHistorySupabase_:", err);
   }
 }
 
@@ -1452,7 +1452,7 @@ const ClientBackend = {
       const cleanNo = String(voucherNo).trim().toUpperCase();
       return (await callSupabaseSingle_(`voucher_audit_logs?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=created_at.desc&select=*&limit=100`, "GET")) || [];
     } catch (err) {
-      throw new Error("Lá»—i Ä‘á»c lá»‹ch sá»­ phiáº¿u: " + err.message);
+      throw new Error("Lỗi đọc lịch sử phiếu: " + err.message);
     }
   },
 
@@ -1481,52 +1481,52 @@ const ClientBackend = {
       }
       return logs;
     } catch (err) {
-      throw new Error("Lá»—i táº£i nháº­t kÃ½: " + err.message);
+      throw new Error("Lỗi tải nhật ký: " + err.message);
     }
   },
 
   async deleteVoucherAuditLogById(id, password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
+        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
       }
       await callSupabaseSingle_(`voucher_audit_logs?id=eq.${id}`, "DELETE");
-      return { success: true, message: "ÄÃ£ xÃ³a báº£n ghi nháº­t kÃ½!" };
+      return { success: true, message: "Đã xóa bản ghi nhật ký!" };
     } catch (err) {
-      return { success: false, message: "Lá»—i xÃ³a nháº­t kÃ½: " + err.message };
+      return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
     }
   },
 
   async deleteVoucherAuditLogsBatch(ids, password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
+        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
       }
-      if (!ids || ids.length === 0) throw new Error("ChÆ°a chá»n báº£n ghi nÃ o.");
+      if (!ids || ids.length === 0) throw new Error("Chưa chọn bản ghi nào.");
       await callSupabaseSingle_(`voucher_audit_logs?id=in.(${ids.join(',')})`, "DELETE");
-      return { success: true, message: `ÄÃ£ xÃ³a ${ids.length} báº£n ghi nháº­t kÃ½!` };
+      return { success: true, message: `Đã xóa ${ids.length} bản ghi nhật ký!` };
     } catch (err) {
-      return { success: false, message: "Lá»—i xÃ³a nháº­t kÃ½: " + err.message };
+      return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
     }
   },
 
   async deleteVoucherAuditLogsByDate(fromDate, toDate, password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
+        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
       }
-      if (!fromDate && !toDate) throw new Error("Vui lÃ²ng chá»n khoáº£ng ngÃ y cáº§n xÃ³a.");
+      if (!fromDate && !toDate) throw new Error("Vui lòng chọn khoảng ngày cần xóa.");
       let query = `voucher_audit_logs?id=gt.0`;
       if (fromDate) query += `&created_at=gte.${fromDate}T00:00:00Z`;
       if (toDate) query += `&created_at=lte.${toDate}T23:59:59Z`;
       await callSupabaseSingle_(query, "DELETE");
-      return { success: true, message: "ÄÃ£ xÃ³a toÃ n bá»™ nháº­t kÃ½ trong khoáº£ng ngÃ y Ä‘Ã£ chá»n!" };
+      return { success: true, message: "Đã xóa toàn bộ nhật ký trong khoảng ngày đã chọn!" };
     } catch (err) {
-      return { success: false, message: "Lá»—i xÃ³a nháº­t kÃ½: " + err.message };
+      return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
     }
   },
 
-  // SINH Sá» PHIáº¾U Tá»° Äá»˜NG - SONG SONG Cá»°C NHANH
+  // SINH SỐ PHIẾU TỰ ĐỘNG - SONG SONG CỰC NHANH
   async getNextVoucherNo(type) {
     try {
       let prefix = "PN";
@@ -1570,7 +1570,7 @@ const ClientBackend = {
     }
   },
 
-  // Báº¢NG Tá»’N KHO - TRUY Váº¤N SONG SONG VÆ¯á»¢T GIá»šI Háº N 1.000 DÃ’NG SIÃŠU Tá»C
+  // BẢNG TỒN KHO - TRUY VẤN SONG SONG VƯỢT GIỚI HẠN 1.000 DÒNG SIÊU TỐC
   async getInventoryData(targetDateStr) {
     try {
       const todayStr = getTodayISO_();
@@ -1615,7 +1615,7 @@ const ClientBackend = {
         return list;
       }
 
-      // Tá»“n quÃ¡ khá»©
+      // Tồn quá khứ
       const baseEp = "products?select=code,name,unit,pack_qty,pack_unit&order=code.asc";
       const [b1, b2, txs] = await Promise.all([
         callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
@@ -1682,7 +1682,7 @@ const ClientBackend = {
       items.sort((a, b) => a.code.localeCompare(b.code));
       return items;
     } catch (err) {
-      throw new Error("Lá»—i Ä‘á»c tá»“n kho: " + err.message);
+      throw new Error("Lỗi đọc tồn kho: " + err.message);
     }
   },
 
@@ -1697,8 +1697,8 @@ const ClientBackend = {
       const stockPP = Number(payload.stockPP) || 0;
       const totalStock = stockTP + stockPP;
 
-      if (!code) throw new Error("MÃ£ sáº£n pháº©m khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
-      if (!name) throw new Error("TÃªn máº·t hÃ ng khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+      if (!code) throw new Error("Mã sản phẩm không được để trống.");
+      if (!name) throw new Error("Tên mặt hàng không được để trống.");
 
       const rowData = {
         code: code,
@@ -1724,31 +1724,31 @@ const ClientBackend = {
           initLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
             code: code, name: name, unit: unit, quantity: stockTP,
-            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
+            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
           });
           initNhapLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY",
             code: code, name: name, unit: unit, quantity: stockTP,
-            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
+            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
           });
         }
         if (stockPP > 0) {
           initLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
             code: code, name: name, unit: unit, quantity: stockPP,
-            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
+            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
           });
           initNhapLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY",
             code: code, name: name, unit: unit, quantity: stockPP,
-            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
+            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
           });
         }
         await callSupabaseBatchPost_("inventory_transactions", initLogs);
         try { await callSupabaseBatchPost_("phieu_nhap", initNhapLogs); } catch(e) {}
       }
 
-      return { success: true, message: `ÄÃ£ táº¡o thÃ nh cÃ´ng sáº£n pháº©m "${code} - ${name}"!` };
+      return { success: true, message: `Đã tạo thành công sản phẩm "${code} - ${name}"!` };
     } catch (err) {
       return { success: false, message: err.message };
     }
@@ -1757,7 +1757,7 @@ const ClientBackend = {
   async importProductsBatch(productsList) {
     try {
       if (!productsList || productsList.length === 0) {
-        throw new Error("Danh sÃ¡ch sáº£n pháº©m trá»‘ng.");
+        throw new Error("Danh sách sản phẩm trống.");
       }
 
       const todayISO = getTodayISO_();
@@ -1793,31 +1793,31 @@ const ClientBackend = {
             initLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
               code: code, name: name, unit: unit, quantity: stockTP,
-              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
+              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
             });
             initNhapLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY",
               code: code, name: name, unit: unit, quantity: stockTP,
-              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
+              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
             });
           }
           if (stockPP > 0) {
             initLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
               code: code, name: name, unit: unit, quantity: stockPP,
-              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
+              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
             });
             initNhapLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY",
               code: code, name: name, unit: unit, quantity: stockPP,
-              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
+              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
             });
           }
         }
       });
 
       if (batchProducts.length === 0) {
-        throw new Error("KhÃ´ng tÃ¬m tháº¥y dÃ²ng sáº£n pháº©m há»£p lá»‡.");
+        throw new Error("Không tìm thấy dòng sản phẩm hợp lệ.");
       }
 
       await callSupabaseBatchPost_("products?on_conflict=code", batchProducts, {
@@ -1832,7 +1832,7 @@ const ClientBackend = {
       return {
         success: true,
         count: batchProducts.length,
-        message: `ÄÃ£ náº¡p thÃ nh cÃ´ng ${batchProducts.length} sáº£n pháº©m vÃ o báº£ng tá»“n kho!`
+        message: `Đã nạp thành công ${batchProducts.length} sản phẩm vào bảng tồn kho!`
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -1842,7 +1842,7 @@ const ClientBackend = {
   async clearAllWarehouseData(password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
+        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
       }
 
       try { await callSupabaseSingle_("voucher_audit_logs?id=gt.0", "DELETE"); } catch(e) {}
@@ -1853,9 +1853,9 @@ const ClientBackend = {
       try { await callSupabaseSingle_("products?code=not.is.null", "DELETE"); } catch(e) {}
 
       localStorage.removeItem('CACHED_INVENTORY');
-      return { success: true, message: "ÄÃ£ xÃ³a sáº¡ch toÃ n bá»™ danh má»¥c vÃ  dá»¯ liá»‡u kho thÃ nh cÃ´ng!" };
+      return { success: true, message: "Đã xóa sạch toàn bộ danh mục và dữ liệu kho thành công!" };
     } catch (err) {
-      return { success: false, message: "Lá»—i xÃ³a dá»¯ liá»‡u: " + err.message };
+      return { success: false, message: "Lỗi xóa dữ liệu: " + err.message };
     }
   },
 
@@ -1865,11 +1865,11 @@ const ClientBackend = {
       const voucherNo = String(voucher.voucherNo || "").trim().toUpperCase();
       const items = voucher.items;
 
-      if (!voucherNo) throw new Error("Sá»‘ chá»©ng tá»« khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
-      if (!items || items.length === 0) throw new Error("Danh sÃ¡ch máº·t hÃ ng trong phiáº¿u Ä‘ang trá»‘ng.");
+      if (!voucherNo) throw new Error("Số chứng từ không được để trống.");
+      if (!items || items.length === 0) throw new Error("Danh sách mặt hàng trong phiếu đang trống.");
 
       if (!isUpdateMode && (await checkVoucherExists_(voucherNo))) {
-        throw new Error(`Sá»‘ chá»©ng tá»« "${voucherNo}" Ä‘Ã£ tá»“n táº¡i trong há»‡ thá»‘ng. Vui lÃ²ng kiá»ƒm tra hoáº·c Ä‘á»•i sá»‘ khÃ¡c!`);
+        throw new Error(`Số chứng từ "${voucherNo}" đã tồn tại trong hệ thống. Vui lòng kiểm tra hoặc đổi số khác!`);
       }
 
       let dedicatedTable = "phieu_nhap";
@@ -1903,10 +1903,10 @@ const ClientBackend = {
           if (isNhap) {
             const cleanNewCode = rawCode.toUpperCase();
             let cleanNewName = String(it.name || "").trim();
-            if (!cleanNewName || cleanNewName.includes("MÃ£ má»›i") || cleanNewName === "-") {
-              cleanNewName = `Sáº£n pháº©m ${cleanNewCode}`;
+            if (!cleanNewName || cleanNewName.includes("Mã mới") || cleanNewName === "-") {
+              cleanNewName = `Sản phẩm ${cleanNewCode}`;
             }
-            const cleanNewUnit = String(it.unit || "").trim() || "CÃ¡i";
+            const cleanNewUnit = String(it.unit || "").trim() || "Cái";
 
             p = {
               code: cleanNewCode,
@@ -1923,7 +1923,7 @@ const ClientBackend = {
               newProductsCreated.push(cleanNewCode);
             }
           } else {
-            throw new Error(`DÃ²ng ${idx + 1}: MÃ£ "${it.code}" khÃ´ng tá»“n táº¡i trong danh má»¥c tá»“n kho.`);
+            throw new Error(`Dòng ${idx + 1}: Mã "${it.code}" không tồn tại trong danh mục tồn kho.`);
           }
         }
 
@@ -1932,7 +1932,7 @@ const ClientBackend = {
         const masterUnit = p.unit;
 
         const qty = parseFloat(it.quantity);
-        if (isNaN(qty) || qty <= 0) throw new Error(`DÃ²ng ${idx + 1} (${masterCode}): Sá»‘ lÆ°á»£ng pháº£i lá»›n hÆ¡n 0.`);
+        if (isNaN(qty) || qty <= 0) throw new Error(`Dòng ${idx + 1} (${masterCode}): Số lượng phải lớn hơn 0.`);
 
         const isPP = (it.quality === "PP");
         let curTP = Number(p.stock_tp) || 0;
@@ -1962,7 +1962,7 @@ const ClientBackend = {
           total_stock: newStock
         };
 
-        const qualityDisplay = isPP ? "Pháº¿ pháº©m" : "ThÃ nh pháº©m";
+        const qualityDisplay = isPP ? "Phế phẩm" : "Thành phẩm";
         const cleanVNote = cleanNoteContent_(voucher.note || "");
         let cleanINote = cleanNoteContent_(it.note || "");
 
@@ -2041,20 +2041,20 @@ const ClientBackend = {
             "Prefer": "return=minimal"
           }, 250);
         } catch(e) {
-          console.warn("Lá»—i lÆ°u " + dedicatedTable + ":", e);
+          console.warn("Lỗi lưu " + dedicatedTable + ":", e);
         }
       }
 
       if (!isUpdateMode) {
-        await logVoucherHistorySupabase_("Táº O Má»šI", voucherNo, type, voucher.date, items, voucher.note);
+        await logVoucherHistorySupabase_("TẠO MỚI", voucherNo, type, voucher.date, items, voucher.note);
       }
 
-      let resMessage = `ÄÃ£ lÆ°u thÃ nh cÃ´ng chá»©ng tá»« ${voucherNo}!`;
+      let resMessage = `Đã lưu thành công chứng từ ${voucherNo}!`;
       if (newProductsCreated.length > 0) {
         if (newProductsCreated.length <= 8) {
-          resMessage = `ÄÃ£ lÆ°u phiáº¿u ${voucherNo}! Tá»± Ä‘á»™ng táº¡o ${newProductsCreated.length} mÃ£ má»›i: [${newProductsCreated.join(', ')}].`;
+          resMessage = `Đã lưu phiếu ${voucherNo}! Tự động tạo ${newProductsCreated.length} mã mới: [${newProductsCreated.join(', ')}].`;
         } else {
-          resMessage = `ÄÃ£ lÆ°u phiáº¿u ${voucherNo}! Tá»± Ä‘á»™ng táº¡o thÃ nh cÃ´ng ${newProductsCreated.length} mÃ£ má»›i vÃ o danh má»¥c tá»“n kho.`;
+          resMessage = `Đã lưu phiếu ${voucherNo}! Tự động tạo thành công ${newProductsCreated.length} mã mới vào danh mục tồn kho.`;
         }
       }
 
@@ -2074,20 +2074,20 @@ const ClientBackend = {
       const newVoucher = payload.newVoucher;
       const newVoucherNo = String(newVoucher.voucherNo || "").trim().toUpperCase();
 
-      if (!newVoucherNo) throw new Error("Sá»‘ chá»©ng tá»« má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+      if (!newVoucherNo) throw new Error("Số chứng từ mới không được để trống.");
 
       if (newVoucherNo !== oldVoucherNo && (await checkVoucherExists_(newVoucherNo))) {
-        return { success: false, message: `Sá»‘ chá»©ng tá»« má»›i "${newVoucherNo}" Ä‘Ã£ tá»“n táº¡i!` };
+        return { success: false, message: `Số chứng từ mới "${newVoucherNo}" đã tồn tại!` };
       }
 
       const delRes = await ClientBackend.deleteVoucherGeneral(oldVoucherNo, newVoucher.type, true);
       if (!delRes.success) {
-        return { success: false, message: "Lá»—i thu há»“i phiáº¿u cÅ©: " + delRes.message };
+        return { success: false, message: "Lỗi thu hồi phiếu cũ: " + delRes.message };
       }
 
       const saveRes = await ClientBackend.saveVoucher(newVoucher, true);
       if (saveRes.success) {
-        await logVoucherHistorySupabase_("CHá»ˆNH Sá»¬A", newVoucherNo, newVoucher.type, newVoucher.date, newVoucher.items, `Sá»­a tá»« phiáº¿u cÅ© ${oldVoucherNo} | ${newVoucher.note || ''}`);
+        await logVoucherHistorySupabase_("CHỈNH SỬA", newVoucherNo, newVoucher.type, newVoucher.date, newVoucher.items, `Sửa từ phiếu cũ ${oldVoucherNo} | ${newVoucher.note || ''}`);
       }
       return saveRes;
     } catch (err) {
@@ -2099,7 +2099,7 @@ const ClientBackend = {
     try {
       const cleanNo = String(voucherNo || "").trim().toUpperCase();
       const txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=id.asc&select=*`, "GET");
-      if (!txs || txs.length === 0) throw new Error(`KhÃ´ng tÃ¬m tháº¥y chá»©ng tá»« "${cleanNo}".`);
+      if (!txs || txs.length === 0) throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
 
       const first = txs[0];
       const cleanGeneralNote = cleanNoteContent_(first.note || "");
@@ -2150,9 +2150,9 @@ const ClientBackend = {
             let dedicatedTable = (type === "XUAT") ? "phieu_xuat" : ((type === "NHAPTRA") ? "hang_nhap_tra" : "phieu_nhap");
             await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
           } catch(e) {}
-          return { success: true, message: "KhÃ´ng cÃ³ giao dá»‹ch cÅ© cáº§n hoÃ n tÃ¡c." };
+          return { success: true, message: "Không có giao dịch cũ cần hoàn tác." };
         }
-        throw new Error(`KhÃ´ng tÃ¬m tháº¥y chá»©ng tá»« "${cleanNo}".`);
+        throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
       }
 
       let dedicatedTable = "phieu_nhap";
@@ -2213,10 +2213,10 @@ const ClientBackend = {
       try { await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE"); } catch(e) {}
 
       if (!isForUpdate) {
-        await logVoucherHistorySupabase_("XÃ“A PHIáº¾U", cleanNo, type, txs[0].voucher_date, txs, txs[0].note);
+        await logVoucherHistorySupabase_("XÓA PHIẾU", cleanNo, type, txs[0].voucher_date, txs, txs[0].note);
       }
 
-      return { success: true, message: `ÄÃ£ xÃ³a chá»©ng tá»« ${cleanNo} thÃ nh cÃ´ng!` };
+      return { success: true, message: `Đã xóa chứng từ ${cleanNo} thành công!` };
     } catch (err) {
       return { success: false, message: err.message };
     }
@@ -2230,7 +2230,7 @@ const ClientBackend = {
         callSupabaseSingle_(`inventory_transactions?code=ilike.${encodeURIComponent(cleanCode)}&select=id,voucher_date,voucher_no,type,quantity,quality,note&order=voucher_date.asc,id.asc&limit=500`, "GET")
       ]);
 
-      if (!pArr || pArr.length === 0) throw new Error(`KhÃ´ng tÃ¬m tháº¥y mÃ£ "${cleanCode}".`);
+      if (!pArr || pArr.length === 0) throw new Error(`Không tìm thấy mã "${cleanCode}".`);
 
       const txList = txs || [];
       txList.sort((a, b) => {
@@ -2310,7 +2310,7 @@ const ClientBackend = {
       const groupedList = Object.values(dailyMap).sort((a, b) => b.isoDate.localeCompare(a.isoDate));
       return { product, totalNhap, totalXuat, dayCount: groupedList.length, groupedList };
     } catch (err) {
-      throw new Error("Lá»—i tra cá»©u tháº» kho: " + err.message);
+      throw new Error("Lỗi tra cứu thẻ kho: " + err.message);
     }
   },
 
@@ -2414,7 +2414,7 @@ const ClientBackend = {
         recentDates: [targetDateStr]
       };
     } catch (err) {
-      throw new Error("Lá»—i tá»•ng há»£p ngÃ y: " + err.message);
+      throw new Error("Lỗi tổng hợp ngày: " + err.message);
     }
   },
 
@@ -2452,7 +2452,7 @@ const ClientBackend = {
       (txs || []).forEach(t => {
         const code = String(t.code || '').trim();
         const name = String(t.name || '').trim();
-        const voucherNo = String(t.voucher_no || 'CHÆ¯A_CÃ“_Sá»').trim();
+        const voucherNo = String(t.voucher_no || 'CHƯA_CÓ_SỐ').trim();
         const note = String(t.note || '').trim();
 
         if (keyword) {
@@ -2498,7 +2498,7 @@ const ClientBackend = {
         totalVouchers: Object.keys(voucherMap).length
       };
     } catch (err) {
-      throw new Error("Lá»—i táº£i bÃ¡o cÃ¡o: " + err.message);
+      throw new Error("Lỗi tải báo cáo: " + err.message);
     }
   },
 
@@ -2518,14 +2518,14 @@ const ClientBackend = {
       const newName = String(payload.newName || "").trim();
       const newUnit = String(payload.newUnit || "").trim() || "-";
 
-      if (!oldCode) throw new Error("MÃ£ sáº£n pháº©m cÅ© khÃ´ng há»£p lá»‡.");
-      if (!newCode) throw new Error("MÃ£ sáº£n pháº©m má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
-      if (!newName) throw new Error("TÃªn sáº£n pháº©m má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+      if (!oldCode) throw new Error("Mã sản phẩm cũ không hợp lệ.");
+      if (!newCode) throw new Error("Mã sản phẩm mới không được để trống.");
+      if (!newName) throw new Error("Tên sản phẩm mới không được để trống.");
 
       if (newCode !== oldCode) {
         const exist = await callSupabaseSingle_(`products?code=eq.${encodeURIComponent(newCode)}&select=code&limit=1`, "GET");
         if (exist && exist.length > 0) {
-          throw new Error(`MÃ£ sáº£n pháº©m "${newCode}" Ä‘Ã£ tá»“n táº¡i trÃªn há»‡ thá»‘ng! Vui lÃ²ng chá»n mÃ£ khÃ¡c.`);
+          throw new Error(`Mã sản phẩm "${newCode}" đã tồn tại trên hệ thống! Vui lòng chọn mã khác.`);
         }
       }
 
@@ -2545,20 +2545,20 @@ const ClientBackend = {
 
       try {
         await callSupabaseSingle_("voucher_audit_logs", "POST", {
-          action: "CHá»ˆNH Sá»¬A",
+          action: "CHỈNH SỬA",
           voucher_no: newCode,
           voucher_type: "DANHMUC",
           voucher_date: getTodayISO_(),
           total_qty: 0,
           item_count: 1,
-          items_detail: `Sá»­a SP: ${oldCode} âžœ ${newCode} (${newName}, ${newUnit})`,
-          note: `Cáº­p nháº­t danh má»¥c sáº£n pháº©m tá»« mÃ£ cÅ©: ${oldCode}`
+          items_detail: `Sửa SP: ${oldCode} ➜ ${newCode} (${newName}, ${newUnit})`,
+          note: `Cập nhật danh mục sản phẩm từ mã cũ: ${oldCode}`
         });
       } catch(e) {}
 
       return { 
         success: true, 
-        message: `ÄÃ£ cáº­p nháº­t thÃ nh cÃ´ng sáº£n pháº©m "${oldCode}" thÃ nh "${newCode} - ${newName}"!` 
+        message: `Đã cập nhật thành công sản phẩm "${oldCode}" thành "${newCode} - ${newName}"!` 
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -2571,7 +2571,7 @@ const ClientBackend = {
       const packQty = (payload.packQty && Number(payload.packQty) > 1) ? Number(payload.packQty) : null;
       const packUnit = packQty ? (payload.packUnit ? String(payload.packUnit).trim() : "Bao") : null;
 
-      if (!code) throw new Error("MÃ£ sáº£n pháº©m khÃ´ng há»£p lá»‡.");
+      if (!code) throw new Error("Mã sản phẩm không hợp lệ.");
 
       await callSupabaseSingle_(`products?code=eq.${encodeURIComponent(code)}`, "PATCH", {
         pack_qty: packQty,
@@ -2580,7 +2580,7 @@ const ClientBackend = {
 
       return { 
         success: true, 
-        message: packQty ? `ÄÃ£ cáº­p nháº­t quy cÃ¡ch cho "${code}": ${packQty} ${payload.unit || ''}/${packUnit}!` : `ÄÃ£ xÃ³a quy cÃ¡ch cá»§a mÃ£ "${code}" vá» chÆ°a cÃ i Ä‘áº·t!` 
+        message: packQty ? `Đã cập nhật quy cách cho "${code}": ${packQty} ${payload.unit || ''}/${packUnit}!` : `Đã xóa quy cách của mã "${code}" về chưa cài đặt!` 
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -2589,7 +2589,7 @@ const ClientBackend = {
 
   async updateProductPackagingBatch(list) {
     try {
-      if (!list || list.length === 0) throw new Error("Danh sÃ¡ch cáº­p nháº­t trá»‘ng.");
+      if (!list || list.length === 0) throw new Error("Danh sách cập nhật trống.");
       const batch = list.map(item => {
         const pQty = (item.packQty && Number(item.packQty) > 1) ? Number(item.packQty) : null;
         return {
@@ -2605,7 +2605,7 @@ const ClientBackend = {
 
       return { 
         success: true, 
-        message: `ÄÃ£ lÆ°u quy cÃ¡ch cho ${batch.length} sáº£n pháº©m thÃ nh cÃ´ng!` 
+        message: `Đã lưu quy cách cho ${batch.length} sản phẩm thành công!` 
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -2620,21 +2620,21 @@ const ClientBackend = {
       if (nhapTraNo) {
         const delRes = await ClientBackend.deleteVoucherGeneral(nhapTraNo, "NHAPTRA", true);
         if (!delRes.success) {
-          throw new Error("Lá»—i thu há»“i phiáº¿u nháº­p tráº£: " + delRes.message);
+          throw new Error("Lỗi thu hồi phiếu nhập trả: " + delRes.message);
         }
       }
 
       const saveRes = await ClientBackend.saveVoucher(newVoucher, false);
       if (saveRes.success && nhapTraNo) {
         await logVoucherHistorySupabase_(
-          "CHUYá»‚N Äá»”I", 
+          "CHUYỂN ĐỔI", 
           newVoucher.voucherNo, 
           "NHAP", 
           newVoucher.date, 
           newVoucher.items, 
-          `Chuyá»ƒn tá»« phiáº¿u nháº­p tráº£ ${nhapTraNo} sang phiáº¿u nháº­p kho | ${newVoucher.note || ''}`
+          `Chuyển từ phiếu nhập trả ${nhapTraNo} sang phiếu nhập kho | ${newVoucher.note || ''}`
         );
-        saveRes.message = `ÄÃ£ lÆ°u thÃ nh cÃ´ng phiáº¿u nháº­p ${newVoucher.voucherNo} vÃ  xÃ³a phiáº¿u nháº­p tráº£ ${nhapTraNo}!`;
+        saveRes.message = `Đã lưu thành công phiếu nhập ${newVoucher.voucherNo} và xóa phiếu nhập trả ${nhapTraNo}!`;
       }
       return saveRes;
     } catch (err) {
@@ -2644,7 +2644,7 @@ const ClientBackend = {
 };
 
 // ============================================================================
-// GOOGLE.SCRIPT.RUN EMULATOR (Äiá»u hÆ°á»›ng mÆ°á»£t mÃ  cho toÃ n bá»™ giao diá»‡n)
+// GOOGLE.SCRIPT.RUN EMULATOR (Điều hướng mượt mà cho toàn bộ giao diện)
 // ============================================================================
 
 function createGoogleScriptRunner(handlers = {}) {
@@ -2684,17 +2684,17 @@ function createGoogleScriptRunner(handlers = {}) {
                 state.successHandler(res, state.userObject);
               }
             } else {
-              console.warn(`HÃ m ${prop} chÆ°a Ä‘Æ°á»£c triá»ƒn khai trong ClientBackend.`);
+              console.warn(`Hàm ${prop} chưa được triển khai trong ClientBackend.`);
               if (typeof state.successHandler === 'function') {
                 state.successHandler(null, state.userObject);
               }
             }
           } catch (err) {
-            console.error(`Lá»—i thá»±c thi ${prop}:`, err);
+            console.error(`Lỗi thực thi ${prop}:`, err);
             if (typeof state.failureHandler === 'function') {
               state.failureHandler(err, state.userObject);
             } else {
-              Swal.fire('Lá»—i káº¿t ná»‘i', err.message, 'error');
+              Swal.fire('Lỗi kết nối', err.message, 'error');
             }
           }
         }, 10);
@@ -3439,7 +3439,7 @@ window.google.script = {
       }
 
       if (tbody && inventoryList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-blue-600 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang đọc dữ liệu Supabase...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-blue-600 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang đọc dữ liệu từ máy chủ...</td></tr>';
       }
 
       const asOfDate = document.getElementById('inventory-asof-date') ? document.getElementById('inventory-asof-date').value : '';
@@ -3929,7 +3929,7 @@ window.google.script = {
         if (res.isConfirmed) {
           Swal.fire({
             title: 'Đang cập nhật...',
-            html: `<div class="text-xs text-slate-600">Đang lưu thay đổi của <b>${res.value.oldCode}</b> lên Supabase...</div>`,
+            html: `<div class="text-xs text-slate-600">Đang lưu thay đổi của <b>${res.value.oldCode}</b> lên máy chủ...</div>`,
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
           });
@@ -4166,7 +4166,7 @@ window.google.script = {
 
       Swal.fire({
         title: `Lưu ${list.length} quy cách vừa sửa?`,
-        text: 'Hệ thống sẽ cập nhật thông tin này lên cơ sở dữ liệu Supabase.',
+        text: 'Hệ thống sẽ cập nhật thông tin này lên cơ sở dữ liệu máy chủ.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Đồng ý lưu',
@@ -4174,7 +4174,7 @@ window.google.script = {
         confirmButtonColor: '#d97706'
       }).then((choice) => {
         if (choice.isConfirmed) {
-          Swal.fire({ title: 'Đang cập nhật lên Supabase...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          Swal.fire({ title: 'Đang cập nhật lên máy chủ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
           google.script.run
             .withSuccessHandler(function(res) {
               if (res.success) {
@@ -4333,7 +4333,7 @@ window.google.script = {
       const totalCols = headers.length;
       const themeArgb = headerThemeColor || "FF1E40AF";
 
-      const r1 = ws.addRow(["HỆ THỐNG QUẢN LÝ KHO KINH DOANH - SUPABASE CLOUD ENGINE"]);
+      const r1 = ws.addRow(["HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP"]);
       ws.mergeCells(1, 1, 1, totalCols);
       r1.font = { name: "Times New Roman", size: 10, italic: true, color: { argb: "FF475569" } };
       r1.alignment = { vertical: "middle", horizontal: "left" };
@@ -5147,7 +5147,7 @@ window.google.script = {
             width: '950px',
             html: `
               <div class="text-left text-xs mb-2 text-slate-500">
-                Ghi nhận các mốc ngày giờ tạo mới, chỉnh sửa chi tiết và xóa phiếu trên Supabase.
+                Ghi nhận các mốc ngày giờ tạo mới, chỉnh sửa chi tiết và xóa phiếu trên hệ thống.
               </div>
               <div class="max-h-80 overflow-y-auto border border-slate-200 rounded-xl custom-scroll w-full">
                 <table class="min-w-full divide-y divide-slate-200 text-xs">
@@ -5224,7 +5224,7 @@ window.google.script = {
       const toDate = document.getElementById('report-to-date').value;
       const keyword = document.getElementById('report-keyword').value.trim();
       const tbodyList = document.getElementById('report-tbody-list');
-      tbodyList.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Đang tải phiếu từ Supabase...</td></tr>';
+      tbodyList.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400">Đang tải phiếu từ máy chủ...</td></tr>';
 
       google.script.run
         .withSuccessHandler(function(res) {
@@ -5994,7 +5994,7 @@ window.google.script = {
       const isConverting = !!convertingFromNhapTraNo;
 
       Swal.fire({
-        title: isEditing ? 'Đang cập nhật...' : (isConverting ? 'Đang lưu & xóa phiếu trả...' : 'Đang lưu vào Supabase...'),
+        title: isEditing ? 'Đang cập nhật...' : (isConverting ? 'Đang lưu & xóa phiếu trả...' : 'Đang lưu lên máy chủ...'),
         text: `Số phiếu: ${voucherNo}`,
         allowOutsideClick: false,
         didOpen: () => Swal.showLoading()
@@ -7044,7 +7044,7 @@ window.google.script = {
     function loadTabAuditLogs() {
       const tbody = document.getElementById('audit-tbody');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-indigo-600 font-semibold"><span class="inline-block animate-spin mr-2">⏳</span> Đang tải nhật ký từ Supabase...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-8 text-indigo-600 font-semibold"><span class="inline-block animate-spin mr-2">⏳</span> Đang tải nhật ký từ máy chủ...</td></tr>';
       }
 
       const params = {
@@ -7303,7 +7303,7 @@ window.google.script = {
             return;
           }
 
-          Swal.fire({ title: `Đang nạp ${productsList.length} sản phẩm lên Supabase...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          Swal.fire({ title: `Đang nạp ${productsList.length} sản phẩm lên máy chủ...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
           google.script.run
             .withSuccessHandler(function(res) {
@@ -7328,7 +7328,7 @@ window.google.script = {
 
     function confirmClearAllWarehouse() {
       askAdminPasswordAndExecute("XÓA TOÀN BỘ DỮ LIỆU KHO & DANH MỤC", (pwd) => {
-        Swal.fire({ title: 'Đang xóa sạch dữ liệu trên Supabase...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: 'Đang xóa sạch dữ liệu trên máy chủ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         google.script.run
           .withSuccessHandler(function(res) {
             if (res.success) {
