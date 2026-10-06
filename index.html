@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -320,8 +320,6 @@
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <button onclick="promptSupabaseConfig()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm" title="Cấu hình kết nối Supabase"><i class="bi bi-database-gear"></i><span>Kết nối Supabase</span></button>
-          
           <button onclick="printCurrentTabTable()" class="px-3 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
             <i class="bi bi-printer"></i>
             <span>In Bảng (Ctrl+P)</span>
@@ -1182,76 +1180,11 @@
   <!-- ==================== BAT DAU PHAN SCRIPT ==================== -->
   <script>
 // ============================================================================
-// CLIENT SUPABASE ENGINE (Chạy trực tiếp 100% trên GitHub Pages)
+// CLIENT SUPABASE ENGINE (Cháº¡y tá»± Ä‘á»™ng 100% trÃªn GitHub Pages - Tá»‘c Ä‘á»™ cao)
 // ============================================================================
 
-const DEFAULT_SUPABASE_URL = "https://oskigucnaevmbpyhhpcg.supabase.co";
-const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9za2lndWNuYWV2bWJweWhocGNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NjcwODYsImV4cCI6MjEwNTI0MzA4Nn0.gj_HVBqciTpla68IGzOBxjtK3-hqvcHxoP-Wn9cGVoY";
-
-const SupabaseConfig = {
-  getUrl: () => localStorage.getItem('SP_URL') || DEFAULT_SUPABASE_URL,
-  getKey: () => localStorage.getItem('SP_KEY') || DEFAULT_SUPABASE_KEY,
-  setUrl: (u) => localStorage.setItem('SP_URL', (u || '').trim()),
-  setKey: (k) => localStorage.setItem('SP_KEY', (k || '').trim())
-};
-
-function promptSupabaseConfig(customMsg) {
-  const curUrl = SupabaseConfig.getUrl();
-  const curKey = SupabaseConfig.getKey();
-  Swal.fire({
-    title: '⚙️ Cấu Hình Kết Nối Supabase',
-    html: `
-      <div class="text-left text-xs space-y-3 leading-relaxed text-slate-700">
-        ${customMsg ? `<div class="p-2.5 bg-rose-50 border border-rose-300 text-rose-700 rounded-lg font-semibold">${customMsg}</div>` : ''}
-        <p>Ứng dụng kho hoạt động trực tiếp 100% trên <b>GitHub Pages</b> kết nối với cơ sở dữ liệu Supabase của bạn.</p>
-        <div>
-          <label class="block font-bold mb-1 text-slate-800">1. Supabase Project URL:</label>
-          <input id="swal-sp-url" class="w-full border rounded px-3 py-2 text-xs font-mono bg-slate-50" value="${curUrl}" />
-        </div>
-        <div>
-          <label class="block font-bold mb-1 text-slate-800">2. Supabase Anon Public Key (Mã Khóa Kết Nối):</label>
-          <input id="swal-sp-key" type="password" class="w-full border rounded px-3 py-2 text-xs font-mono" placeholder="Dán mã anon public key tại đây..." value="${curKey}" />
-        </div>
-        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-[11px] leading-relaxed">
-          <b class="text-blue-950">💡 Lưu ý quan trọng:</b><br>
-          Mã Anon Public Key đã được cấu hình mặc định. Để tải được toàn bộ 1.454 sản phẩm, hãy đảm bảo bạn đã tắt RLS trong Supabase (SQL Editor: <code>ALTER TABLE products DISABLE ROW LEVEL SECURITY;</code>).
-        </div>
-      </div>
-    `,
-    showCancelButton: true,
-    confirmButtonText: '<i class="bi bi-check-circle mr-1"></i> Lưu & Kết Nối',
-    cancelButtonText: 'Đóng',
-    confirmButtonColor: '#2563eb',
-    didOpen: () => {
-      const keyInput = document.getElementById('swal-sp-key');
-      if (keyInput && !curKey) keyInput.focus();
-    },
-    preConfirm: () => {
-      const u = document.getElementById('swal-sp-url').value.trim();
-      const k = document.getElementById('swal-sp-key').value.trim();
-      if (!u || !k) {
-        Swal.showValidationMessage('Vui lòng nhập đầy đủ Supabase URL và API Key!');
-        return false;
-      }
-      return { url: u, key: k };
-    }
-  }).then((res) => {
-    if (res.isConfirmed && res.value) {
-      SupabaseConfig.setUrl(res.value.url);
-      SupabaseConfig.setKey(res.value.key);
-      Swal.fire({
-        icon: 'success',
-        title: 'Đã lưu cấu hình!',
-        text: 'Đang kết nối lại dữ liệu Supabase...',
-        timer: 1500,
-        showConfirmButton: false
-      });
-      loadInventory();
-      generateVoucherNo('NHAP');
-      generateNhapTraVoucherNo();
-    }
-  });
-}
+const SUPABASE_URL = "https://oskigucnaevmbpyhhpcg.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9za2lndWNuYWV2bWJweWhocGNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk2NjcwODYsImV4cCI6MjEwNTI0MzA4Nn0.gj_HVBqciTpla68IGzOBxjtK3-hqvcHxoP-Wn9cGVoY";
 
 function getTodayISO_() {
   const d = new Date();
@@ -1262,20 +1195,14 @@ function getTodayISO_() {
 }
 
 async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
-  const urlBase = SupabaseConfig.getUrl().replace(/\/+$/, '');
+  const urlBase = SUPABASE_URL.replace(/\/+$/, '');
   const cleanEp = endpoint.replace(/^\/+/, '');
   const rawUrl = `${urlBase}/rest/v1/${cleanEp}`;
   const url = encodeURI(rawUrl).replace(/"/g, '%22');
-  const key = SupabaseConfig.getKey();
-
-  if (!key) {
-    promptSupabaseConfig("Vui lòng nhập Supabase Anon API Key để kết nối dữ liệu!");
-    throw new Error("Chưa nhập Supabase API Key.");
-  }
 
   const headers = {
-    "apikey": key,
-    "Authorization": `Bearer ${key}`,
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`,
     "Content-Type": "application/json",
     ...(extraHeaders || {})
   };
@@ -1294,10 +1221,7 @@ async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
   const resText = await response.text();
 
   if (status >= 400) {
-    if (status === 401 || status === 403) {
-      promptSupabaseConfig("Khóa API Supabase không chính xác hoặc RLS đang chặn quyền. Vui lòng kiểm tra lại cấu hình Supabase!");
-    }
-    throw new Error(`Lỗi Supabase (${status}): ${resText}`);
+    throw new Error(`Lá»—i Supabase (${status}): ${resText}`);
   }
 
   return resText ? JSON.parse(resText) : null;
@@ -1359,9 +1283,9 @@ async function callSupabase_(endpoint, method, payload, extraHeaders) {
 function cleanNoteContent_(val) {
   if (!val) return "";
   let s = String(val).trim();
-  s = s.replace(/import\s*từ\s*file\s*excel/gi, "");
+  s = s.replace(/import\s*tá»«\s*file\s*excel/gi, "");
   s = s.replace(/import\s*excel/gi, "");
-  s = s.replace(/\[\s*(Thành\s*phẩm|Phế\s*phẩm|TP|PP)\s*\]/gi, "");
+  s = s.replace(/\[\s*(ThÃ nh\s*pháº©m|Pháº¿\s*pháº©m|TP|PP)\s*\]/gi, "");
   s = s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
   s = s.replace(/\|\s*\|+/g, "|").trim();
   return s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
@@ -1370,7 +1294,7 @@ function cleanNoteContent_(val) {
 async function checkVoucherExists_(voucherNo) {
   if (!voucherNo) return false;
   const cleanNo = String(voucherNo).trim();
-  const res = await callSupabase_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id&limit=1`, "GET");
+  const res = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id&limit=1`, "GET");
   return res && res.length > 0;
 }
 
@@ -1382,14 +1306,14 @@ async function logVoucherHistorySupabase_(action, voucherNo, type, voucherDate, 
     (items || []).forEach((it, idx) => {
       const q = Number(it.quantity || it.qty) || 0;
       totalQty += q;
-      const ql = (it.quality === "PP") ? "Phế phẩm" : "Thành phẩm";
+      const ql = (it.quality === "PP") ? "Pháº¿ pháº©m" : "ThÃ nh pháº©m";
       if (idx < maxDetailItems) {
         itemsDetail.push(`${it.code} (${ql}: ${q} ${it.unit || ''})`);
       }
     });
 
     if ((items || []).length > maxDetailItems) {
-      itemsDetail.push(`...và còn ${(items || []).length - maxDetailItems} mặt hàng khác`);
+      itemsDetail.push(`...vÃ  cÃ²n ${(items || []).length - maxDetailItems} máº·t hÃ ng khÃ¡c`);
     }
 
     const payload = {
@@ -1405,7 +1329,7 @@ async function logVoucherHistorySupabase_(action, voucherNo, type, voucherDate, 
 
     await callSupabaseSingle_("voucher_audit_logs", "POST", payload);
   } catch (err) {
-    console.warn("Lỗi logVoucherHistorySupabase_:", err);
+    console.warn("Lá»—i logVoucherHistorySupabase_:", err);
   }
 }
 
@@ -1414,9 +1338,9 @@ const ClientBackend = {
     try {
       if (!voucherNo) return [];
       const cleanNo = String(voucherNo).trim().toUpperCase();
-      return (await callSupabase_(`voucher_audit_logs?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=created_at.desc&select=*`, "GET")) || [];
+      return (await callSupabaseSingle_(`voucher_audit_logs?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=created_at.desc&select=*&limit=100`, "GET")) || [];
     } catch (err) {
-      throw new Error("Lỗi đọc lịch sử phiếu: " + err.message);
+      throw new Error("Lá»—i Ä‘á»c lá»‹ch sá»­ phiáº¿u: " + err.message);
     }
   },
 
@@ -1434,7 +1358,7 @@ const ClientBackend = {
       if (fromDate) query += `&created_at=gte.${fromDate}T00:00:00Z`;
       if (toDate) query += `&created_at=lte.${toDate}T23:59:59Z`;
 
-      const logs = (await callSupabase_(query, 'GET')) || [];
+      const logs = (await callSupabaseSingle_(query, 'GET')) || [];
       
       if (keyword) {
         return logs.filter(l => 
@@ -1445,51 +1369,52 @@ const ClientBackend = {
       }
       return logs;
     } catch (err) {
-      throw new Error("Lỗi tải nhật ký: " + err.message);
+      throw new Error("Lá»—i táº£i nháº­t kÃ½: " + err.message);
     }
   },
 
   async deleteVoucherAuditLogById(id, password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
       }
-      await callSupabase_(`voucher_audit_logs?id=eq.${id}`, "DELETE");
-      return { success: true, message: "Đã xóa bản ghi nhật ký!" };
+      await callSupabaseSingle_(`voucher_audit_logs?id=eq.${id}`, "DELETE");
+      return { success: true, message: "ÄÃ£ xÃ³a báº£n ghi nháº­t kÃ½!" };
     } catch (err) {
-      return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
+      return { success: false, message: "Lá»—i xÃ³a nháº­t kÃ½: " + err.message };
     }
   },
 
   async deleteVoucherAuditLogsBatch(ids, password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
       }
-      if (!ids || ids.length === 0) throw new Error("Chưa chọn bản ghi nào.");
-      await callSupabase_(`voucher_audit_logs?id=in.(${ids.join(',')})`, "DELETE");
-      return { success: true, message: `Đã xóa ${ids.length} bản ghi nhật ký!` };
+      if (!ids || ids.length === 0) throw new Error("ChÆ°a chá»n báº£n ghi nÃ o.");
+      await callSupabaseSingle_(`voucher_audit_logs?id=in.(${ids.join(',')})`, "DELETE");
+      return { success: true, message: `ÄÃ£ xÃ³a ${ids.length} báº£n ghi nháº­t kÃ½!` };
     } catch (err) {
-      return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
+      return { success: false, message: "Lá»—i xÃ³a nháº­t kÃ½: " + err.message };
     }
   },
 
   async deleteVoucherAuditLogsByDate(fromDate, toDate, password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
       }
-      if (!fromDate && !toDate) throw new Error("Vui lòng chọn khoảng ngày cần xóa.");
+      if (!fromDate && !toDate) throw new Error("Vui lÃ²ng chá»n khoáº£ng ngÃ y cáº§n xÃ³a.");
       let query = `voucher_audit_logs?id=gt.0`;
       if (fromDate) query += `&created_at=gte.${fromDate}T00:00:00Z`;
       if (toDate) query += `&created_at=lte.${toDate}T23:59:59Z`;
-      await callSupabase_(query, "DELETE");
-      return { success: true, message: "Đã xóa toàn bộ nhật ký trong khoảng ngày đã chọn!" };
+      await callSupabaseSingle_(query, "DELETE");
+      return { success: true, message: "ÄÃ£ xÃ³a toÃ n bá»™ nháº­t kÃ½ trong khoáº£ng ngÃ y Ä‘Ã£ chá»n!" };
     } catch (err) {
-      return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
+      return { success: false, message: "Lá»—i xÃ³a nháº­t kÃ½: " + err.message };
     }
   },
 
+  // SINH Sá» PHIáº¾U Tá»° Äá»˜NG - SONG SONG Cá»°C NHANH
   async getNextVoucherNo(type) {
     try {
       let prefix = "PN";
@@ -1505,35 +1430,22 @@ const ClientBackend = {
       let maxNum = 0;
       const regex = new RegExp(`^${prefix}-(\\d+)$`, 'i');
 
-      try {
-        const res = await callSupabase_(`inventory_transactions?type=eq.${type}&select=voucher_no&order=id.desc&limit=300`, "GET");
-        if (res && res.length > 0) {
-          res.forEach(r => {
-            const m = String(r.voucher_no || "").trim().match(regex);
-            if (m) {
-              const num = parseInt(m[1], 10);
-              if (!isNaN(num) && num > maxNum) maxNum = num;
-            }
-          });
-        }
-      } catch(e) {}
+      const [res1, res2] = await Promise.all([
+        callSupabaseSingle_(`inventory_transactions?type=eq.${type}&select=voucher_no&order=id.desc&limit=100`, "GET").catch(() => []),
+        callSupabaseSingle_(`${dedicatedTable}?select=voucher_no&order=id.desc&limit=100`, "GET").catch(() => [])
+      ]);
 
-      try {
-        const res2 = await callSupabase_(`${dedicatedTable}?select=voucher_no&order=id.desc&limit=300`, "GET");
-        if (res2 && res2.length > 0) {
-          res2.forEach(r => {
-            const m = String(r.voucher_no || "").trim().match(regex);
-            if (m) {
-              const num = parseInt(m[1], 10);
-              if (!isNaN(num) && num > maxNum) maxNum = num;
-            }
-          });
+      (res1 || []).concat(res2 || []).forEach(r => {
+        const m = String(r.voucher_no || "").trim().match(regex);
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
         }
-      } catch(e) {}
+      });
 
       let nextCandidate = `${prefix}-${String(maxNum + 1).padStart(3, '0')}`;
       let safetyCounter = 0;
-      while ((await checkVoucherExists_(nextCandidate)) && safetyCounter < 100) {
+      while ((await checkVoucherExists_(nextCandidate)) && safetyCounter < 10) {
         maxNum++;
         nextCandidate = `${prefix}-${String(maxNum + 1).padStart(3, '0')}`;
         safetyCounter++;
@@ -1546,18 +1458,22 @@ const ClientBackend = {
     }
   },
 
+  // Báº¢NG Tá»’N KHO - TRUY Váº¤N SONG SONG VÆ¯á»¢T GIá»šI Háº N 1.000 DÃ’NG SIÃŠU Tá»C
   async getInventoryData(targetDateStr) {
     try {
       const todayStr = getTodayISO_();
       const isHistorical = targetDateStr && targetDateStr < todayStr;
 
       if (!isHistorical) {
-        const products = (await callSupabase_(
-          "products?select=code,name,unit,pack_qty,pack_unit,stock_tp,stock_pp,total_stock&order=code.asc", 
-          "GET"
-        )) || [];
+        const baseEp = "products?select=code,name,unit,pack_qty,pack_unit,stock_tp,stock_pp,total_stock&order=code.asc";
+        const [batch1, batch2] = await Promise.all([
+          callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
+          callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => [])
+        ]);
 
-        return products.map(p => {
+        const products = (batch1 || []).concat(batch2 || []);
+
+        const list = products.map(p => {
           const c = String(p.code || "").trim();
           const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
             ? Number(p.pack_qty) 
@@ -1579,10 +1495,23 @@ const ClientBackend = {
             stock: total
           };
         });
+
+        try {
+          localStorage.setItem('CACHED_INVENTORY', JSON.stringify(list));
+        } catch(e) {}
+
+        return list;
       }
 
-      // Trường hợp tồn quá khứ
-      const products = (await callSupabase_("products?select=code,name,unit,pack_qty,pack_unit&order=code.asc", "GET")) || [];
+      // Tá»“n quÃ¡ khá»©
+      const baseEp = "products?select=code,name,unit,pack_qty,pack_unit&order=code.asc";
+      const [b1, b2, txs] = await Promise.all([
+        callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
+        callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => []),
+        callSupabase_(`inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality`, "GET").catch(() => [])
+      ]);
+
+      const products = (b1 || []).concat(b2 || []);
       const itemMap = {};
       const items = [];
 
@@ -1604,10 +1533,7 @@ const ClientBackend = {
         items.push(obj);
       });
 
-      const txQuery = `inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality`;
-      const txs = (await callSupabase_(txQuery, "GET")) || [];
-
-      txs.forEach(t => {
+      (txs || []).forEach(t => {
         const c = String(t.code || "").trim();
         if (!c) return;
         const key = c.toLowerCase();
@@ -1644,7 +1570,7 @@ const ClientBackend = {
       items.sort((a, b) => a.code.localeCompare(b.code));
       return items;
     } catch (err) {
-      throw new Error("Lỗi đọc tồn kho: " + err.message);
+      throw new Error("Lá»—i Ä‘á»c tá»“n kho: " + err.message);
     }
   },
 
@@ -1659,8 +1585,8 @@ const ClientBackend = {
       const stockPP = Number(payload.stockPP) || 0;
       const totalStock = stockTP + stockPP;
 
-      if (!code) throw new Error("Mã sản phẩm không được để trống.");
-      if (!name) throw new Error("Tên mặt hàng không được để trống.");
+      if (!code) throw new Error("MÃ£ sáº£n pháº©m khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+      if (!name) throw new Error("TÃªn máº·t hÃ ng khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
 
       const rowData = {
         code: code,
@@ -1686,31 +1612,31 @@ const ClientBackend = {
           initLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
             code: code, name: name, unit: unit, quantity: stockTP,
-            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
           });
           initNhapLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY",
             code: code, name: name, unit: unit, quantity: stockTP,
-            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
           });
         }
         if (stockPP > 0) {
           initLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
             code: code, name: name, unit: unit, quantity: stockPP,
-            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
           });
           initNhapLogs.push({
             voucher_date: todayISO, voucher_no: "DAUKY",
             code: code, name: name, unit: unit, quantity: stockPP,
-            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
           });
         }
         await callSupabaseBatchPost_("inventory_transactions", initLogs);
         try { await callSupabaseBatchPost_("phieu_nhap", initNhapLogs); } catch(e) {}
       }
 
-      return { success: true, message: `Đã tạo thành công sản phẩm "${code} - ${name}"!` };
+      return { success: true, message: `ÄÃ£ táº¡o thÃ nh cÃ´ng sáº£n pháº©m "${code} - ${name}"!` };
     } catch (err) {
       return { success: false, message: err.message };
     }
@@ -1719,7 +1645,7 @@ const ClientBackend = {
   async importProductsBatch(productsList) {
     try {
       if (!productsList || productsList.length === 0) {
-        throw new Error("Danh sách sản phẩm trống.");
+        throw new Error("Danh sÃ¡ch sáº£n pháº©m trá»‘ng.");
       }
 
       const todayISO = getTodayISO_();
@@ -1755,31 +1681,31 @@ const ClientBackend = {
             initLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
               code: code, name: name, unit: unit, quantity: stockTP,
-              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
             });
             initNhapLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY",
               code: code, name: name, unit: unit, quantity: stockTP,
-              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+              old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tá»“n Ä‘áº§u ká»³ [ThÃ nh pháº©m]"
             });
           }
           if (stockPP > 0) {
             initLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
               code: code, name: name, unit: unit, quantity: stockPP,
-              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
             });
             initNhapLogs.push({
               voucher_date: todayISO, voucher_no: "DAUKY",
               code: code, name: name, unit: unit, quantity: stockPP,
-              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+              old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tá»“n Ä‘áº§u ká»³ [Pháº¿ pháº©m]"
             });
           }
         }
       });
 
       if (batchProducts.length === 0) {
-        throw new Error("Không tìm thấy dòng sản phẩm hợp lệ.");
+        throw new Error("KhÃ´ng tÃ¬m tháº¥y dÃ²ng sáº£n pháº©m há»£p lá»‡.");
       }
 
       await callSupabaseBatchPost_("products?on_conflict=code", batchProducts, {
@@ -1794,7 +1720,7 @@ const ClientBackend = {
       return {
         success: true,
         count: batchProducts.length,
-        message: `Đã nạp thành công ${batchProducts.length} sản phẩm vào bảng tồn kho!`
+        message: `ÄÃ£ náº¡p thÃ nh cÃ´ng ${batchProducts.length} sáº£n pháº©m vÃ o báº£ng tá»“n kho!`
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -1804,19 +1730,20 @@ const ClientBackend = {
   async clearAllWarehouseData(password) {
     try {
       if (String(password).trim() !== "123123") {
-        return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+        return { success: false, message: "Máº­t kháº©u quáº£n trá»‹ khÃ´ng chÃ­nh xÃ¡c!" };
       }
 
-      try { await callSupabase_("voucher_audit_logs?id=gt.0", "DELETE"); } catch(e) {}
-      try { await callSupabase_("inventory_transactions?id=gt.0", "DELETE"); } catch(e) {}
-      try { await callSupabase_("phieu_nhap?id=gt.0", "DELETE"); } catch(e) {}
-      try { await callSupabase_("phieu_xuat?id=gt.0", "DELETE"); } catch(e) {}
-      try { await callSupabase_("hang_nhap_tra?id=gt.0", "DELETE"); } catch(e) {}
-      try { await callSupabase_("products?code=not.is.null", "DELETE"); } catch(e) {}
+      try { await callSupabaseSingle_("voucher_audit_logs?id=gt.0", "DELETE"); } catch(e) {}
+      try { await callSupabaseSingle_("inventory_transactions?id=gt.0", "DELETE"); } catch(e) {}
+      try { await callSupabaseSingle_("phieu_nhap?id=gt.0", "DELETE"); } catch(e) {}
+      try { await callSupabaseSingle_("phieu_xuat?id=gt.0", "DELETE"); } catch(e) {}
+      try { await callSupabaseSingle_("hang_nhap_tra?id=gt.0", "DELETE"); } catch(e) {}
+      try { await callSupabaseSingle_("products?code=not.is.null", "DELETE"); } catch(e) {}
 
-      return { success: true, message: "Đã xóa sạch toàn bộ danh mục và dữ liệu kho thành công!" };
+      localStorage.removeItem('CACHED_INVENTORY');
+      return { success: true, message: "ÄÃ£ xÃ³a sáº¡ch toÃ n bá»™ danh má»¥c vÃ  dá»¯ liá»‡u kho thÃ nh cÃ´ng!" };
     } catch (err) {
-      return { success: false, message: "Lỗi xóa dữ liệu: " + err.message };
+      return { success: false, message: "Lá»—i xÃ³a dá»¯ liá»‡u: " + err.message };
     }
   },
 
@@ -1826,18 +1753,23 @@ const ClientBackend = {
       const voucherNo = String(voucher.voucherNo || "").trim().toUpperCase();
       const items = voucher.items;
 
-      if (!voucherNo) throw new Error("Số chứng từ không được để trống.");
-      if (!items || items.length === 0) throw new Error("Danh sách mặt hàng trong phiếu đang trống.");
+      if (!voucherNo) throw new Error("Sá»‘ chá»©ng tá»« khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+      if (!items || items.length === 0) throw new Error("Danh sÃ¡ch máº·t hÃ ng trong phiáº¿u Ä‘ang trá»‘ng.");
 
       if (!isUpdateMode && (await checkVoucherExists_(voucherNo))) {
-        throw new Error(`Số chứng từ "${voucherNo}" đã tồn tại trong hệ thống. Vui lòng kiểm tra hoặc đổi số khác!`);
+        throw new Error(`Sá»‘ chá»©ng tá»« "${voucherNo}" Ä‘Ã£ tá»“n táº¡i trong há»‡ thá»‘ng. Vui lÃ²ng kiá»ƒm tra hoáº·c Ä‘á»•i sá»‘ khÃ¡c!`);
       }
 
       let dedicatedTable = "phieu_nhap";
       if (type === "XUAT") dedicatedTable = "phieu_xuat";
       else if (type === "NHAPTRA") dedicatedTable = "hang_nhap_tra";
 
-      const prods = (await callSupabase_("products?select=code,name,unit,stock_tp,stock_pp,total_stock,pack_qty,pack_unit&order=code.asc", "GET")) || [];
+      const baseEp = "products?select=code,name,unit,stock_tp,stock_pp,total_stock,pack_qty,pack_unit&order=code.asc";
+      const [b1, b2] = await Promise.all([
+        callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
+        callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => [])
+      ]);
+      const prods = (b1 || []).concat(b2 || []);
       const prodMap = {};
       prods.forEach(p => {
         prodMap[p.code.toLowerCase()] = p;
@@ -1859,10 +1791,10 @@ const ClientBackend = {
           if (isNhap) {
             const cleanNewCode = rawCode.toUpperCase();
             let cleanNewName = String(it.name || "").trim();
-            if (!cleanNewName || cleanNewName.includes("Mã mới") || cleanNewName === "-") {
-              cleanNewName = `Sản phẩm ${cleanNewCode}`;
+            if (!cleanNewName || cleanNewName.includes("MÃ£ má»›i") || cleanNewName === "-") {
+              cleanNewName = `Sáº£n pháº©m ${cleanNewCode}`;
             }
-            const cleanNewUnit = String(it.unit || "").trim() || "Cái";
+            const cleanNewUnit = String(it.unit || "").trim() || "CÃ¡i";
 
             p = {
               code: cleanNewCode,
@@ -1879,7 +1811,7 @@ const ClientBackend = {
               newProductsCreated.push(cleanNewCode);
             }
           } else {
-            throw new Error(`Dòng ${idx + 1}: Mã "${it.code}" không tồn tại trong danh mục tồn kho.`);
+            throw new Error(`DÃ²ng ${idx + 1}: MÃ£ "${it.code}" khÃ´ng tá»“n táº¡i trong danh má»¥c tá»“n kho.`);
           }
         }
 
@@ -1888,7 +1820,7 @@ const ClientBackend = {
         const masterUnit = p.unit;
 
         const qty = parseFloat(it.quantity);
-        if (isNaN(qty) || qty <= 0) throw new Error(`Dòng ${idx + 1} (${masterCode}): Số lượng phải lớn hơn 0.`);
+        if (isNaN(qty) || qty <= 0) throw new Error(`DÃ²ng ${idx + 1} (${masterCode}): Sá»‘ lÆ°á»£ng pháº£i lá»›n hÆ¡n 0.`);
 
         const isPP = (it.quality === "PP");
         let curTP = Number(p.stock_tp) || 0;
@@ -1918,7 +1850,7 @@ const ClientBackend = {
           total_stock: newStock
         };
 
-        const qualityDisplay = isPP ? "Phế phẩm" : "Thành phẩm";
+        const qualityDisplay = isPP ? "Pháº¿ pháº©m" : "ThÃ nh pháº©m";
         const cleanVNote = cleanNoteContent_(voucher.note || "");
         let cleanINote = cleanNoteContent_(it.note || "");
 
@@ -1997,20 +1929,20 @@ const ClientBackend = {
             "Prefer": "return=minimal"
           }, 250);
         } catch(e) {
-          console.warn("Lỗi lưu " + dedicatedTable + ":", e);
+          console.warn("Lá»—i lÆ°u " + dedicatedTable + ":", e);
         }
       }
 
       if (!isUpdateMode) {
-        await logVoucherHistorySupabase_("TẠO MỚI", voucherNo, type, voucher.date, items, voucher.note);
+        await logVoucherHistorySupabase_("Táº O Má»šI", voucherNo, type, voucher.date, items, voucher.note);
       }
 
-      let resMessage = `Đã lưu thành công chứng từ ${voucherNo}!`;
+      let resMessage = `ÄÃ£ lÆ°u thÃ nh cÃ´ng chá»©ng tá»« ${voucherNo}!`;
       if (newProductsCreated.length > 0) {
         if (newProductsCreated.length <= 8) {
-          resMessage = `Đã lưu phiếu ${voucherNo}! Tự động tạo ${newProductsCreated.length} mã mới: [${newProductsCreated.join(', ')}].`;
+          resMessage = `ÄÃ£ lÆ°u phiáº¿u ${voucherNo}! Tá»± Ä‘á»™ng táº¡o ${newProductsCreated.length} mÃ£ má»›i: [${newProductsCreated.join(', ')}].`;
         } else {
-          resMessage = `Đã lưu phiếu ${voucherNo}! Tự động tạo thành công ${newProductsCreated.length} mã mới vào danh mục tồn kho.`;
+          resMessage = `ÄÃ£ lÆ°u phiáº¿u ${voucherNo}! Tá»± Ä‘á»™ng táº¡o thÃ nh cÃ´ng ${newProductsCreated.length} mÃ£ má»›i vÃ o danh má»¥c tá»“n kho.`;
         }
       }
 
@@ -2030,20 +1962,20 @@ const ClientBackend = {
       const newVoucher = payload.newVoucher;
       const newVoucherNo = String(newVoucher.voucherNo || "").trim().toUpperCase();
 
-      if (!newVoucherNo) throw new Error("Số chứng từ mới không được để trống.");
+      if (!newVoucherNo) throw new Error("Sá»‘ chá»©ng tá»« má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
 
       if (newVoucherNo !== oldVoucherNo && (await checkVoucherExists_(newVoucherNo))) {
-        return { success: false, message: `Số chứng từ mới "${newVoucherNo}" đã tồn tại!` };
+        return { success: false, message: `Sá»‘ chá»©ng tá»« má»›i "${newVoucherNo}" Ä‘Ã£ tá»“n táº¡i!` };
       }
 
       const delRes = await ClientBackend.deleteVoucherGeneral(oldVoucherNo, newVoucher.type, true);
       if (!delRes.success) {
-        return { success: false, message: "Lỗi thu hồi phiếu cũ: " + delRes.message };
+        return { success: false, message: "Lá»—i thu há»“i phiáº¿u cÅ©: " + delRes.message };
       }
 
       const saveRes = await ClientBackend.saveVoucher(newVoucher, true);
       if (saveRes.success) {
-        await logVoucherHistorySupabase_("CHỈNH SỬA", newVoucherNo, newVoucher.type, newVoucher.date, newVoucher.items, `Sửa từ phiếu cũ ${oldVoucherNo} | ${newVoucher.note || ''}`);
+        await logVoucherHistorySupabase_("CHá»ˆNH Sá»¬A", newVoucherNo, newVoucher.type, newVoucher.date, newVoucher.items, `Sá»­a tá»« phiáº¿u cÅ© ${oldVoucherNo} | ${newVoucher.note || ''}`);
       }
       return saveRes;
     } catch (err) {
@@ -2054,8 +1986,8 @@ const ClientBackend = {
   async getVoucherByNo(voucherNo) {
     try {
       const cleanNo = String(voucherNo || "").trim().toUpperCase();
-      const txs = await callSupabase_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=id.asc&select=*`, "GET");
-      if (!txs || txs.length === 0) throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
+      const txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=id.asc&select=*`, "GET");
+      if (!txs || txs.length === 0) throw new Error(`KhÃ´ng tÃ¬m tháº¥y chá»©ng tá»« "${cleanNo}".`);
 
       const first = txs[0];
       const cleanGeneralNote = cleanNoteContent_(first.note || "");
@@ -2098,7 +2030,7 @@ const ClientBackend = {
   async deleteVoucherGeneral(voucherNo, type, isForUpdate) {
     try {
       const cleanNo = String(voucherNo || "").trim().toUpperCase();
-      const txs = await callSupabase_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=code,quantity,quality,voucher_date,note`, "GET");
+      const txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=code,quantity,quality,voucher_date,note`, "GET");
       
       if (!txs || txs.length === 0) {
         if (isForUpdate) {
@@ -2106,9 +2038,9 @@ const ClientBackend = {
             let dedicatedTable = (type === "XUAT") ? "phieu_xuat" : ((type === "NHAPTRA") ? "hang_nhap_tra" : "phieu_nhap");
             await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
           } catch(e) {}
-          return { success: true, message: "Không có giao dịch cũ cần hoàn tác." };
+          return { success: true, message: "KhÃ´ng cÃ³ giao dá»‹ch cÅ© cáº§n hoÃ n tÃ¡c." };
         }
-        throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
+        throw new Error(`KhÃ´ng tÃ¬m tháº¥y chá»©ng tá»« "${cleanNo}".`);
       }
 
       let dedicatedTable = "phieu_nhap";
@@ -2117,7 +2049,12 @@ const ClientBackend = {
 
       const isNhap = (type === "NHAP" || type === "NHAPTRA");
       
-      const prods = (await callSupabase_("products?select=code,stock_tp,stock_pp,total_stock,name,unit,pack_qty,pack_unit&order=code.asc", "GET")) || [];
+      const baseEp = "products?select=code,stock_tp,stock_pp,total_stock,name,unit,pack_qty,pack_unit&order=code.asc";
+      const [b1, b2] = await Promise.all([
+        callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
+        callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => [])
+      ]);
+      const prods = (b1 || []).concat(b2 || []);
       const prodMap = {};
       prods.forEach(p => { prodMap[p.code.toLowerCase()] = p; });
 
@@ -2164,10 +2101,10 @@ const ClientBackend = {
       try { await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE"); } catch(e) {}
 
       if (!isForUpdate) {
-        await logVoucherHistorySupabase_("XÓA PHIẾU", cleanNo, type, txs[0].voucher_date, txs, txs[0].note);
+        await logVoucherHistorySupabase_("XÃ“A PHIáº¾U", cleanNo, type, txs[0].voucher_date, txs, txs[0].note);
       }
 
-      return { success: true, message: `Đã xóa chứng từ ${cleanNo} thành công!` };
+      return { success: true, message: `ÄÃ£ xÃ³a chá»©ng tá»« ${cleanNo} thÃ nh cÃ´ng!` };
     } catch (err) {
       return { success: false, message: err.message };
     }
@@ -2176,12 +2113,15 @@ const ClientBackend = {
   async getProductDetail(code) {
     try {
       const cleanCode = String(code || "").trim();
-      const pArr = await callSupabase_(`products?code=ilike.${encodeURIComponent(cleanCode)}&select=code,name,unit,total_stock,pack_qty,pack_unit`, "GET");
-      if (!pArr || pArr.length === 0) throw new Error(`Không tìm thấy mã "${cleanCode}".`);
+      const [pArr, txs] = await Promise.all([
+        callSupabaseSingle_(`products?code=ilike.${encodeURIComponent(cleanCode)}&select=code,name,unit,total_stock,pack_qty,pack_unit`, "GET"),
+        callSupabaseSingle_(`inventory_transactions?code=ilike.${encodeURIComponent(cleanCode)}&select=id,voucher_date,voucher_no,type,quantity,quality,note&order=voucher_date.asc,id.asc&limit=500`, "GET")
+      ]);
 
-      const txs = (await callSupabase_(`inventory_transactions?code=ilike.${encodeURIComponent(cleanCode)}&select=id,voucher_date,voucher_no,type,quantity,quality,note&order=voucher_date.asc,id.asc`, "GET")) || [];
+      if (!pArr || pArr.length === 0) throw new Error(`KhÃ´ng tÃ¬m tháº¥y mÃ£ "${cleanCode}".`);
 
-      txs.sort((a, b) => {
+      const txList = txs || [];
+      txList.sort((a, b) => {
         if (a.voucher_date !== b.voucher_date) {
           return String(a.voucher_date).localeCompare(String(b.voucher_date));
         }
@@ -2193,7 +2133,7 @@ const ClientBackend = {
       let totalXuat = 0;
       const dailyMap = {};
 
-      txs.forEach(t => {
+      txList.forEach(t => {
         const q = Number(t.quantity) || 0;
         const isNhap = String(t.type || '').toUpperCase().includes("NHAP");
 
@@ -2258,22 +2198,26 @@ const ClientBackend = {
       const groupedList = Object.values(dailyMap).sort((a, b) => b.isoDate.localeCompare(a.isoDate));
       return { product, totalNhap, totalXuat, dayCount: groupedList.length, groupedList };
     } catch (err) {
-      throw new Error("Lỗi tra cứu thẻ kho: " + err.message);
+      throw new Error("Lá»—i tra cá»©u tháº» kho: " + err.message);
     }
   },
 
   async getDailyMovement(targetDateStr) {
     try {
-      const dayTxs = (await callSupabase_(`inventory_transactions?voucher_date=eq.${targetDateStr}&select=id,voucher_no,type,code,name,unit,quantity,quality,note&order=id.asc`, "GET")) || [];
-      dayTxs.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+      const baseProds = "products?select=code,name,unit,pack_qty,pack_unit&order=code.asc";
+      const [dayTxs, beforeTxs, b1, b2] = await Promise.all([
+        callSupabaseSingle_(`inventory_transactions?voucher_date=eq.${targetDateStr}&select=id,voucher_no,type,code,name,unit,quantity,quality,note&order=id.asc&limit=1000`, "GET").catch(() => []),
+        callSupabase_(`inventory_transactions?voucher_date=lt.${targetDateStr}&select=code,quantity,type`, "GET").catch(() => []),
+        callSupabaseSingle_(`${baseProds}&limit=1000&offset=0`, "GET").catch(() => []),
+        callSupabaseSingle_(`${baseProds}&limit=1000&offset=1000`, "GET").catch(() => [])
+      ]);
 
-      const beforeTxs = (await callSupabase_(`inventory_transactions?voucher_date=lt.${targetDateStr}&select=code,quantity,type`, "GET")) || [];
-      const prods = (await callSupabase_("products?select=code,name,unit,pack_qty,pack_unit", "GET")) || [];
+      const prods = (b1 || []).concat(b2 || []);
       const prodMap = {};
       prods.forEach(p => { prodMap[p.code.toLowerCase()] = p; });
 
       const beforeStockMap = {};
-      beforeTxs.forEach(t => {
+      (beforeTxs || []).forEach(t => {
         const cKey = String(t.code || '').toLowerCase();
         const q = Number(t.quantity) || 0;
         const isNhap = String(t.type || '').toUpperCase().includes("NHAP");
@@ -2285,7 +2229,7 @@ const ClientBackend = {
       let totalNhap = 0;
       let totalXuat = 0;
 
-      dayTxs.forEach(t => {
+      (dayTxs || []).forEach(t => {
         const cKey = String(t.code || '').toLowerCase();
         if (!itemTxsMap[cKey]) itemTxsMap[cKey] = [];
         itemTxsMap[cKey].push(t);
@@ -2358,7 +2302,7 @@ const ClientBackend = {
         recentDates: [targetDateStr]
       };
     } catch (err) {
-      throw new Error("Lỗi tổng hợp ngày: " + err.message);
+      throw new Error("Lá»—i tá»•ng há»£p ngÃ y: " + err.message);
     }
   },
 
@@ -2373,45 +2317,30 @@ const ClientBackend = {
       if (type === "XUAT") dedicatedTable = "phieu_xuat";
       else if (type === "NHAPTRA") dedicatedTable = "hang_nhap_tra";
 
-      let txs = [];
+      let invQuery = `inventory_transactions?order=voucher_date.desc,id.desc&select=*`;
+      if (type === 'NHAP') invQuery += `&type=eq.NHAP`;
+      else if (type === 'XUAT') invQuery += `&type=eq.XUAT`;
+      else if (type === 'NHAPTRA') invQuery += `&type=ilike.*NHAPTRA*`;
 
-      try {
-        let invQuery = `inventory_transactions?order=voucher_date.desc,id.desc&select=*`;
-        if (type === 'NHAP') invQuery += `&type=eq.NHAP`;
-        else if (type === 'XUAT') invQuery += `&type=eq.XUAT`;
-        else if (type === 'NHAPTRA') invQuery += `&type=ilike.*NHAPTRA*`;
+      if (fromDate) invQuery += `&voucher_date=gte.${fromDate}`;
+      if (toDate) invQuery += `&voucher_date=lte.${toDate}`;
 
-        if (fromDate) invQuery += `&voucher_date=gte.${fromDate}`;
-        if (toDate) invQuery += `&voucher_date=lte.${toDate}`;
-
-        txs = (await callSupabase_(invQuery, "GET")) || [];
-      } catch(e1) {
-        console.warn("Lỗi đọc inventory_transactions:", e1);
-        txs = [];
-      }
+      let txs = (await callSupabase_(invQuery, "GET").catch(() => [])) || [];
 
       if (!txs || txs.length === 0) {
-        try {
-          let dedQuery = `${dedicatedTable}?order=voucher_date.desc,id.desc&select=*`;
-          if (fromDate) dedQuery += `&voucher_date=gte.${fromDate}`;
-          if (toDate) dedQuery += `&voucher_date=lte.${toDate}`;
-
-          const dedTxs = await callSupabase_(dedQuery, "GET");
-          if (dedTxs && dedTxs.length > 0) {
-            txs = dedTxs;
-          }
-        } catch(e2) {
-          console.warn("Lỗi đọc " + dedicatedTable + ":", e2);
-        }
+        let dedQuery = `${dedicatedTable}?order=voucher_date.desc,id.desc&select=*`;
+        if (fromDate) dedQuery += `&voucher_date=gte.${fromDate}`;
+        if (toDate) dedQuery += `&voucher_date=lte.${toDate}`;
+        txs = (await callSupabase_(dedQuery, "GET").catch(() => [])) || [];
       }
 
       const voucherMap = {};
       let grandTotalQty = 0;
 
-      txs.forEach(t => {
+      (txs || []).forEach(t => {
         const code = String(t.code || '').trim();
         const name = String(t.name || '').trim();
-        const voucherNo = String(t.voucher_no || 'CHƯA_CÓ_SỐ').trim();
+        const voucherNo = String(t.voucher_no || 'CHÆ¯A_CÃ“_Sá»').trim();
         const note = String(t.note || '').trim();
 
         if (keyword) {
@@ -2457,7 +2386,7 @@ const ClientBackend = {
         totalVouchers: Object.keys(voucherMap).length
       };
     } catch (err) {
-      throw new Error("Lỗi tải báo cáo: " + err.message);
+      throw new Error("Lá»—i táº£i bÃ¡o cÃ¡o: " + err.message);
     }
   },
 
@@ -2477,14 +2406,14 @@ const ClientBackend = {
       const newName = String(payload.newName || "").trim();
       const newUnit = String(payload.newUnit || "").trim() || "-";
 
-      if (!oldCode) throw new Error("Mã sản phẩm cũ không hợp lệ.");
-      if (!newCode) throw new Error("Mã sản phẩm mới không được để trống.");
-      if (!newName) throw new Error("Tên sản phẩm mới không được để trống.");
+      if (!oldCode) throw new Error("MÃ£ sáº£n pháº©m cÅ© khÃ´ng há»£p lá»‡.");
+      if (!newCode) throw new Error("MÃ£ sáº£n pháº©m má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+      if (!newName) throw new Error("TÃªn sáº£n pháº©m má»›i khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
 
       if (newCode !== oldCode) {
-        const exist = await callSupabase_(`products?code=eq.${encodeURIComponent(newCode)}&select=code&limit=1`, "GET");
+        const exist = await callSupabaseSingle_(`products?code=eq.${encodeURIComponent(newCode)}&select=code&limit=1`, "GET");
         if (exist && exist.length > 0) {
-          throw new Error(`Mã sản phẩm "${newCode}" đã tồn tại trên hệ thống! Vui lòng chọn mã khác.`);
+          throw new Error(`MÃ£ sáº£n pháº©m "${newCode}" Ä‘Ã£ tá»“n táº¡i trÃªn há»‡ thá»‘ng! Vui lÃ²ng chá»n mÃ£ khÃ¡c.`);
         }
       }
 
@@ -2504,20 +2433,20 @@ const ClientBackend = {
 
       try {
         await callSupabaseSingle_("voucher_audit_logs", "POST", {
-          action: "CHỈNH SỬA",
+          action: "CHá»ˆNH Sá»¬A",
           voucher_no: newCode,
           voucher_type: "DANHMUC",
           voucher_date: getTodayISO_(),
           total_qty: 0,
           item_count: 1,
-          items_detail: `Sửa SP: ${oldCode} ➜ ${newCode} (${newName}, ${newUnit})`,
-          note: `Cập nhật danh mục sản phẩm từ mã cũ: ${oldCode}`
+          items_detail: `Sá»­a SP: ${oldCode} âžœ ${newCode} (${newName}, ${newUnit})`,
+          note: `Cáº­p nháº­t danh má»¥c sáº£n pháº©m tá»« mÃ£ cÅ©: ${oldCode}`
         });
       } catch(e) {}
 
       return { 
         success: true, 
-        message: `Đã cập nhật thành công sản phẩm "${oldCode}" thành "${newCode} - ${newName}"!` 
+        message: `ÄÃ£ cáº­p nháº­t thÃ nh cÃ´ng sáº£n pháº©m "${oldCode}" thÃ nh "${newCode} - ${newName}"!` 
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -2530,7 +2459,7 @@ const ClientBackend = {
       const packQty = (payload.packQty && Number(payload.packQty) > 1) ? Number(payload.packQty) : null;
       const packUnit = packQty ? (payload.packUnit ? String(payload.packUnit).trim() : "Bao") : null;
 
-      if (!code) throw new Error("Mã sản phẩm không hợp lệ.");
+      if (!code) throw new Error("MÃ£ sáº£n pháº©m khÃ´ng há»£p lá»‡.");
 
       await callSupabaseSingle_(`products?code=eq.${encodeURIComponent(code)}`, "PATCH", {
         pack_qty: packQty,
@@ -2539,7 +2468,7 @@ const ClientBackend = {
 
       return { 
         success: true, 
-        message: packQty ? `Đã cập nhật quy cách cho "${code}": ${packQty} ${payload.unit || ''}/${packUnit}!` : `Đã xóa quy cách của mã "${code}" về chưa cài đặt!` 
+        message: packQty ? `ÄÃ£ cáº­p nháº­t quy cÃ¡ch cho "${code}": ${packQty} ${payload.unit || ''}/${packUnit}!` : `ÄÃ£ xÃ³a quy cÃ¡ch cá»§a mÃ£ "${code}" vá» chÆ°a cÃ i Ä‘áº·t!` 
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -2548,7 +2477,7 @@ const ClientBackend = {
 
   async updateProductPackagingBatch(list) {
     try {
-      if (!list || list.length === 0) throw new Error("Danh sách cập nhật trống.");
+      if (!list || list.length === 0) throw new Error("Danh sÃ¡ch cáº­p nháº­t trá»‘ng.");
       const batch = list.map(item => {
         const pQty = (item.packQty && Number(item.packQty) > 1) ? Number(item.packQty) : null;
         return {
@@ -2564,7 +2493,7 @@ const ClientBackend = {
 
       return { 
         success: true, 
-        message: `Đã lưu quy cách cho ${batch.length} sản phẩm thành công!` 
+        message: `ÄÃ£ lÆ°u quy cÃ¡ch cho ${batch.length} sáº£n pháº©m thÃ nh cÃ´ng!` 
       };
     } catch (err) {
       return { success: false, message: err.message };
@@ -2579,21 +2508,21 @@ const ClientBackend = {
       if (nhapTraNo) {
         const delRes = await ClientBackend.deleteVoucherGeneral(nhapTraNo, "NHAPTRA", true);
         if (!delRes.success) {
-          throw new Error("Lỗi thu hồi phiếu nhập trả: " + delRes.message);
+          throw new Error("Lá»—i thu há»“i phiáº¿u nháº­p tráº£: " + delRes.message);
         }
       }
 
       const saveRes = await ClientBackend.saveVoucher(newVoucher, false);
       if (saveRes.success && nhapTraNo) {
         await logVoucherHistorySupabase_(
-          "CHUYỂN ĐỔI", 
+          "CHUYá»‚N Äá»”I", 
           newVoucher.voucherNo, 
           "NHAP", 
           newVoucher.date, 
           newVoucher.items, 
-          `Chuyển từ phiếu nhập trả ${nhapTraNo} sang phiếu nhập kho | ${newVoucher.note || ''}`
+          `Chuyá»ƒn tá»« phiáº¿u nháº­p tráº£ ${nhapTraNo} sang phiáº¿u nháº­p kho | ${newVoucher.note || ''}`
         );
-        saveRes.message = `Đã lưu thành công phiếu nhập ${newVoucher.voucherNo} và xóa phiếu nhập trả ${nhapTraNo}!`;
+        saveRes.message = `ÄÃ£ lÆ°u thÃ nh cÃ´ng phiáº¿u nháº­p ${newVoucher.voucherNo} vÃ  xÃ³a phiáº¿u nháº­p tráº£ ${nhapTraNo}!`;
       }
       return saveRes;
     } catch (err) {
@@ -2603,7 +2532,7 @@ const ClientBackend = {
 };
 
 // ============================================================================
-// GOOGLE.SCRIPT.RUN EMULATOR (Điều hướng mượt mà cho toàn bộ giao diện)
+// GOOGLE.SCRIPT.RUN EMULATOR (Äiá»u hÆ°á»›ng mÆ°á»£t mÃ  cho toÃ n bá»™ giao diá»‡n)
 // ============================================================================
 
 function createGoogleScriptRunner(handlers = {}) {
@@ -2634,7 +2563,6 @@ function createGoogleScriptRunner(handlers = {}) {
         };
       }
 
-      // Bất kỳ hàm backend nào (getInventoryData, saveVoucher, generateVoucherNo, ...)
       return function(...args) {
         setTimeout(async () => {
           try {
@@ -2644,17 +2572,17 @@ function createGoogleScriptRunner(handlers = {}) {
                 state.successHandler(res, state.userObject);
               }
             } else {
-              console.warn(`Hàm ${prop} chưa được triển khai trong ClientBackend.`);
+              console.warn(`HÃ m ${prop} chÆ°a Ä‘Æ°á»£c triá»ƒn khai trong ClientBackend.`);
               if (typeof state.successHandler === 'function') {
                 state.successHandler(null, state.userObject);
               }
             }
           } catch (err) {
-            console.error(`Lỗi thực thi ${prop}:`, err);
+            console.error(`Lá»—i thá»±c thi ${prop}:`, err);
             if (typeof state.failureHandler === 'function') {
               state.failureHandler(err, state.userObject);
             } else {
-              Swal.fire('Lỗi kết nối', err.message, 'error');
+              Swal.fire('Lá»—i káº¿t ná»‘i', err.message, 'error');
             }
           }
         }, 10);
@@ -3356,20 +3284,26 @@ window.google.script = {
     function loadInventory(callback) {
       const tbody = document.getElementById('inventory-tbody');
 
-      if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-amber-700 font-semibold">
-            <i class="bi bi-info-circle text-2xl text-amber-600 block mb-2"></i>
-            <b>Chế độ xem trước trên máy tính (Local Preview)</b><br>
-            <span class="text-xs text-slate-500 font-normal">Ứng dụng kết nối bảo mật với Supabase thông qua máy chủ <b>Google Apps Script</b>.<br>
-            Vui lòng mở bằng đường link Web App chính thức sau khi Triển khai trên Google Trang tính để tải dữ liệu.</span>
-          </td></tr>`;
-        }
-        return;
+      // 1. Cache-first: Hien thi tuc thi tu bo nho dem LocalStorage
+      if (inventoryList.length === 0) {
+        try {
+          const cachedStr = localStorage.getItem('CACHED_INVENTORY');
+          if (cachedStr) {
+            const cachedData = JSON.parse(cachedStr);
+            if (Array.isArray(cachedData) && cachedData.length > 0) {
+              inventoryList = cachedData;
+              inventoryMap = {};
+              inventoryList.forEach(item => {
+                if (item && item.code) inventoryMap[item.code.toLowerCase()] = item;
+              });
+              renderInventoryTable(inventoryList);
+            }
+          }
+        } catch (e) {}
       }
 
-      if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-blue-600 font-semibold"><span class="inline-block animate-spin mr-2">⏳</span> Đang đọc dữ liệu Supabase...</td></tr>';
+      if (tbody && inventoryList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-blue-600 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang đọc dữ liệu Supabase...</td></tr>';
       }
 
       const asOfDate = document.getElementById('inventory-asof-date') ? document.getElementById('inventory-asof-date').value : '';
@@ -3386,7 +3320,7 @@ window.google.script = {
           if (typeof callback === 'function') callback();
         })
         .withFailureHandler(function(err) {
-          if (tbody) {
+          if (tbody && inventoryList.length === 0) {
             tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-rose-600 font-bold">
               <i class="bi bi-exclamation-triangle mr-1"></i> Lỗi tải dữ liệu: ${err.message}<br>
               <button onclick="loadInventory()" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-xs font-semibold">Thử lại</button>
@@ -6824,7 +6758,7 @@ window.google.script = {
         .withFailureHandler(function(err) {
           if (tbody) {
             tbody.innerHTML = `<tr><td colspan="11" class="text-center py-8 text-rose-600 font-bold">
-              <i class="bi bi-exclamation-triangle mr-1"></i> Lỗi tải nhật ký: ${err.message}<br>
+              <i class="bi bi-exclamation-triangle mr-1"></i> Lỗi tải dữ liệu: ${err.message}<br>
               <button onclick="loadTabAuditLogs()" class="mt-2 px-3 py-1 bg-indigo-600 text-white rounded text-xs font-semibold">Thử lại</button>
             </td></tr>`;
           }
