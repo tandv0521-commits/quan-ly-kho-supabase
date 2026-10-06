@@ -6,7 +6,7 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <style>
-    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; letter-spacing: -0.011em; }
+    body { font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif; letter-spacing: -0.012em; }
     .font-mono, .col-num, [inputmode="decimal"], .stat-num {
       font-family: 'JetBrains Mono', monospace !important;
       font-variant-numeric: tabular-nums !important;
@@ -320,6 +320,12 @@
           </div>
         </div>
         <div class="flex items-center space-x-2">
+          <button onclick="openQuickSearchModal()" class="flex items-center space-x-2 px-3 py-1.5 text-xs text-slate-600 bg-slate-100/90 hover:bg-slate-200 hover:text-slate-900 rounded-xl transition border border-slate-200/80 shadow-2xs group" title="TÃ¬m kiáº¿m nhanh sáº£n pháº©m (Ctrl + K)">
+            <i class="bi bi-search text-slate-400 group-hover:text-blue-600 transition"></i>
+            <span class="hidden sm:inline font-semibold">TÃ¬m nhanh...</span>
+            <kbd class="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-bold font-mono bg-white text-slate-500 rounded border border-slate-300 shadow-2xs">Ctrl K</kbd>
+          </button>
+          
           <button onclick="printCurrentTabTable()" class="px-3 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
             <i class="bi bi-printer"></i>
             <span>In Bảng (Ctrl+P)</span>
@@ -335,6 +341,76 @@
 
         <!-- 1. BẢNG TỒN KHO (TỐI ƯU CHIỀU NGANG VỪA MÀN HÌNH) -->
         <section id="tab-inventory" class="space-y-3.5">
+
+                        <!-- DASHBOARD KPI CARDS (THỐNG KÊ KHO THỜI GIAN THỰC) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 no-print">
+          <!-- CARD 1: TỔNG SKU -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex items-center justify-between group">
+            <div class="space-y-1">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Tổng Danh Mục</span>
+              <div class="flex items-baseline space-x-1.5">
+                <span id="kpi-total-skus" class="text-xl sm:text-2xl font-black text-slate-900 font-mono">0</span>
+                <span class="text-xs font-semibold text-slate-400">mã SP</span>
+              </div>
+              <span class="text-[11px] text-slate-500 font-medium block">Danh mục đang quản lý</span>
+            </div>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-2xs">
+              <i class="bi bi-box-seam"></i>
+            </div>
+          </div>
+
+          <!-- CARD 2: TỔNG TỒN KHO -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex items-center justify-between group">
+            <div class="space-y-1">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Tổng Tồn Toàn Kho</span>
+              <div class="flex items-baseline space-x-1.5">
+                <span id="kpi-total-stock" class="text-xl sm:text-2xl font-black text-emerald-600 font-mono">0</span>
+                <span class="text-xs font-semibold text-emerald-500">đơn vị</span>
+              </div>
+              <span id="kpi-sub-stock" class="text-[11px] text-slate-500 font-medium block truncate max-w-[140px] sm:max-w-none">TP: 0 | PP: 0</span>
+            </div>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-2xs">
+              <i class="bi bi-boxes"></i>
+            </div>
+          </div>
+
+          <!-- CARD 3: SẮP HẾT HÀNG (CLICK ĐỂ LỌC) -->
+          <div onclick="setStockFilter('LOW_STOCK')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex items-center justify-between group cursor-pointer" title="Bấm để lọc các mã sắp hết (≤ 50)">
+            <div class="space-y-1">
+              <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider block flex items-center space-x-1">
+                <span>Sắp Hết Hàng</span>
+                <i class="bi bi-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition"></i>
+              </span>
+              <div class="flex items-baseline space-x-1.5">
+                <span id="kpi-low-stock" class="text-xl sm:text-2xl font-black text-amber-600 font-mono">0</span>
+                <span class="text-xs font-semibold text-amber-500">mã SP</span>
+              </div>
+              <span class="text-[11px] text-amber-700/80 font-medium block">Số lượng tồn ≤ 50</span>
+            </div>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-2xs">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+          </div>
+
+          <!-- CARD 4: TỒN ÂM (CLICK ĐỂ LỌC) -->
+          <div onclick="setStockFilter('NEGATIVE_STOCK')" class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-rose-300 transition-all duration-200 flex items-center justify-between group cursor-pointer" title="Bấm để lọc các mã tồn âm (< 0)">
+            <div class="space-y-1">
+              <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider block flex items-center space-x-1">
+                <span>Cảnh Báo Tồn Âm</span>
+                <i class="bi bi-arrow-right text-[10px] opacity-0 group-hover:opacity-100 transition"></i>
+              </span>
+              <div class="flex items-baseline space-x-1.5">
+                <span id="kpi-negative-stock" class="text-xl sm:text-2xl font-black text-rose-600 font-mono">0</span>
+                <span class="text-xs font-semibold text-rose-500">mã SP</span>
+              </div>
+              <span id="kpi-badge-neg" class="text-[11px] font-bold text-rose-600">Bấm để kiểm tra</span>
+            </div>
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg sm:text-xl group-hover:scale-110 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-2xs">
+              <i class="bi bi-exclamation-octagon"></i>
+            </div>
+          </div>
+        </div>
+
           <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-200/80 space-y-3 no-print">
             
             <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
@@ -1173,6 +1249,41 @@
   </div>
 
   <!-- DROPDOWN GỢI Ý MÃ TOÀN CỤC -->
+  <!-- MODAL TÌM KIẾM NHANH (COMMAND PALETTE - CTRL + K) -->
+  <div id="quick-search-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4" onclick="if(event.target === this) closeQuickSearchModal();">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- HEADER SEARCH INPUT -->
+      <div class="p-3.5 sm:p-4 border-b border-slate-100 flex items-center space-x-3 bg-slate-50/50">
+        <i class="bi bi-search text-lg text-blue-600"></i>
+        <input type="text" id="quick-search-input" oninput="handleQuickSearchInput(this.value)" placeholder="Tìm nhanh theo mã hàng, tên sản phẩm... (Ctrl + K)" 
+               class="flex-1 bg-transparent text-sm sm:text-base font-semibold text-slate-800 placeholder-slate-400 focus:outline-none">
+        <kbd class="hidden sm:inline-block px-2 py-0.5 text-xs font-semibold font-mono bg-white text-slate-500 rounded-lg border border-slate-200 shadow-2xs">ESC</kbd>
+        <button onclick="closeQuickSearchModal()" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg"><i class="bi bi-x-lg text-sm"></i></button>
+      </div>
+
+      <!-- SEARCH RESULTS LIST -->
+      <div id="quick-search-results" class="max-h-96 overflow-y-auto custom-scroll p-2 divide-y divide-slate-50">
+        <div class="py-8 text-center text-xs text-slate-400">
+          <i class="bi bi-search text-2xl block mb-2 opacity-50"></i>
+          Gõ mã sản phẩm hoặc tên hàng để tra cứu tức thì...
+        </div>
+      </div>
+
+      <!-- FOOTER SHORTCUTS -->
+      <div class="p-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium px-4">
+        <div class="flex items-center space-x-3">
+          <span><kbd class="px-1 py-0.5 bg-white border rounded text-[10px] font-mono">↑↓</kbd> Di chuyển</span>
+          <span><kbd class="px-1 py-0.5 bg-white border rounded text-[10px] font-mono">↵ Enter</kbd> Chọn</span>
+          <span><kbd class="px-1 py-0.5 bg-white border rounded text-[10px] font-mono">ESC</kbd> Đóng</span>
+        </div>
+        <span id="quick-search-count" class="font-mono font-bold text-blue-600"></span>
+      </div>
+
+    </div>
+  </div>
+
+
   <div id="global-autocomplete-dropdown" 
        class="hidden fixed bg-white border-2 rounded-xl shadow-2xl z-[9999] max-h-64 overflow-y-auto custom-scroll divide-y divide-slate-100"
        style="display: none;"></div>
@@ -3015,6 +3126,30 @@ window.google.script = {
 
       window.addEventListener('resize', closeAllDropdowns);
 
+      const qsInputEl = document.getElementById('quick-search-input');
+      if (qsInputEl) {
+        qsInputEl.addEventListener('keydown', function(e) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (quickSearchResults.length > 0) {
+              quickSearchHighlightedIndex = (quickSearchHighlightedIndex + 1) % quickSearchResults.length;
+              highlightQuickSearchItem(quickSearchHighlightedIndex);
+            }
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (quickSearchResults.length > 0) {
+              quickSearchHighlightedIndex = (quickSearchHighlightedIndex - 1 + quickSearchResults.length) % quickSearchResults.length;
+              highlightQuickSearchItem(quickSearchHighlightedIndex);
+            }
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (quickSearchResults[quickSearchHighlightedIndex]) {
+              selectQuickSearchItem(quickSearchResults[quickSearchHighlightedIndex].code);
+            }
+          }
+        });
+      }
+
       document.addEventListener('click', function(e) {
         if (!e.target.closest('#global-autocomplete-dropdown') && 
             !e.target.closest('[id^="input_code_"]') && 
@@ -3359,6 +3494,172 @@ window.google.script = {
     }
 
     // BẢNG TỒN KHO: HIỂN THỊ QUY CÁCH BAO/CÂY & LẺ NGAY CẠNH SỐ TỒN
+    // ============================================================================
+    // DASHBOARD KPI CARDS & QUICK SEARCH (CTRL + K)
+    // ============================================================================
+
+    function updateDashboardCards() {
+      if (!Array.isArray(inventoryList)) return;
+      
+      const totalSkus = inventoryList.length;
+      let totalStock = 0;
+      let totalTP = 0;
+      let totalPP = 0;
+      let lowStockCount = 0;
+      let negativeStockCount = 0;
+      
+      inventoryList.forEach(item => {
+        const s = Number(item.stock) || 0;
+        const tp = Number(item.stockTP) || 0;
+        const pp = Number(item.stockPP) || 0;
+        
+        totalStock += s;
+        totalTP += tp;
+        totalPP += pp;
+        
+        if (s > 0 && s <= 50) lowStockCount++;
+        if (s < 0) negativeStockCount++;
+      });
+      
+      const elSkus = document.getElementById('kpi-total-skus');
+      if (elSkus) elSkus.textContent = totalSkus.toLocaleString('vi-VN');
+      
+      const elStock = document.getElementById('kpi-total-stock');
+      if (elStock) elStock.textContent = totalStock.toLocaleString('vi-VN');
+      
+      const elSubStock = document.getElementById('kpi-sub-stock');
+      if (elSubStock) elSubStock.textContent = `TP: ${totalTP.toLocaleString('vi-VN')} | PP: ${totalPP.toLocaleString('vi-VN')}`;
+      
+      const elLow = document.getElementById('kpi-low-stock');
+      if (elLow) elLow.textContent = lowStockCount.toLocaleString('vi-VN');
+      
+      const elNeg = document.getElementById('kpi-negative-stock');
+      if (elNeg) {
+        elNeg.textContent = negativeStockCount.toLocaleString('vi-VN');
+        const badgeNeg = document.getElementById('kpi-badge-neg');
+        if (badgeNeg) {
+          if (negativeStockCount > 0) {
+            badgeNeg.className = "text-[11px] font-bold text-rose-600";
+            badgeNeg.textContent = "Bấm để kiểm tra (" + negativeStockCount + " SP)";
+          } else {
+            badgeNeg.className = "text-[11px] font-bold text-emerald-600";
+            badgeNeg.textContent = "Kho an toàn (0 SP)";
+          }
+        }
+      }
+    }
+
+    let quickSearchResults = [];
+    let quickSearchHighlightedIndex = 0;
+
+    function openQuickSearchModal() {
+      const modal = document.getElementById('quick-search-modal');
+      const input = document.getElementById('quick-search-input');
+      if (!modal || !input) return;
+      modal.classList.remove('hidden');
+      input.value = '';
+      input.focus();
+      handleQuickSearchInput('');
+    }
+
+    function closeQuickSearchModal() {
+      const modal = document.getElementById('quick-search-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleQuickSearchInput(query) {
+      const q = (query || '').trim().toLowerCase();
+      const container = document.getElementById('quick-search-results');
+      const countEl = document.getElementById('quick-search-count');
+      if (!container) return;
+
+      if (!q) {
+        quickSearchResults = (inventoryList || []).slice(0, 10);
+      } else {
+        quickSearchResults = (inventoryList || []).filter(item => {
+          const c = (item.code || '').toLowerCase();
+          const n = (item.name || '').toLowerCase();
+          return c.includes(q) || n.includes(q);
+        }).slice(0, 25);
+      }
+
+      quickSearchHighlightedIndex = 0;
+      if (countEl) countEl.textContent = `${quickSearchResults.length} mặt hàng`;
+
+      if (quickSearchResults.length === 0) {
+        container.innerHTML = `
+          <div class="py-10 text-center text-xs text-slate-400">
+            <i class="bi bi-inbox text-3xl block mb-2 text-slate-300"></i>
+            Không tìm thấy mặt hàng nào phù hợp với từ khóa "${query}"
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = quickSearchResults.map((item, idx) => {
+        let stockBadge = '';
+        if (item.stock < 0) {
+          stockBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">Tồn âm</span>';
+        } else if (item.stock === 0) {
+          stockBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">Hết hàng</span>';
+        } else if (item.stock <= 50) {
+          stockBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Sắp hết</span>';
+        } else {
+          stockBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Còn hàng</span>';
+        }
+
+        const isHighlighted = (idx === 0) ? 'bg-blue-50/70 border border-blue-200/80' : 'border border-transparent';
+
+        return `
+          <div id="qs-item-${idx}" onclick="selectQuickSearchItem('${item.code}')" 
+               class="p-2.5 rounded-xl flex items-center justify-between hover:bg-blue-50/80 cursor-pointer transition ${isHighlighted} group">
+            <div class="flex items-center space-x-3 overflow-hidden">
+              <div class="px-2.5 py-1 rounded-lg bg-slate-100 group-hover:bg-blue-600 group-hover:text-white text-blue-700 font-mono font-bold text-xs shrink-0 transition">
+                ${item.code}
+              </div>
+              <div class="overflow-hidden">
+                <div class="text-xs font-bold text-slate-800 truncate">${item.name}</div>
+                <div class="text-[11px] text-slate-400 font-medium flex items-center space-x-2">
+                  <span>ĐVT: <b class="text-slate-600">${item.unit || '-'}</b></span>
+                  <span>•</span>
+                  <span>TP: <b class="text-emerald-700">${formatNumber(item.stockTP)}</b></span>
+                  <span>•</span>
+                  <span>PP: <b class="text-amber-700">${formatNumber(item.stockPP)}</b></span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2.5 shrink-0 ml-2">
+              <div class="text-right">
+                <div class="text-xs font-mono font-black text-slate-900">${formatNumber(item.stock)}</div>
+                ${stockBadge}
+              </div>
+              <i class="bi bi-chevron-right text-xs text-slate-300 group-hover:text-blue-600 transition"></i>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function highlightQuickSearchItem(index) {
+      quickSearchResults.forEach((_, idx) => {
+        const el = document.getElementById(`qs-item-${idx}`);
+        if (el) {
+          if (idx === index) {
+            el.className = "p-2.5 rounded-xl flex items-center justify-between bg-blue-50/80 border border-blue-200/80 cursor-pointer transition group";
+            el.scrollIntoView({ block: 'nearest' });
+          } else {
+            el.className = "p-2.5 rounded-xl flex items-center justify-between border border-transparent hover:bg-blue-50/80 cursor-pointer transition group";
+          }
+        }
+      });
+    }
+
+    function selectQuickSearchItem(code) {
+      closeQuickSearchModal();
+      openProductDetailTab(code);
+    }
+
+
     function renderInventoryTable(items) {
       const tbody = document.getElementById('inventory-tbody');
       if (!tbody) return;
