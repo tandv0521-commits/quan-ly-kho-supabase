@@ -1,0 +1,1480 @@
+/**
+ * HỆ THỐNG QUẢN LÝ KHO - BACKEND SUPABASE ENGINE SIÊU TỐC & AUDIT LOGS
+ * Tối ưu hóa truy vấn một chiều, triệt tiêu độ trễ đồng bộ ngược khi xem tồn kho
+ * Tích hợp Auto-Pagination vượt giới hạn 1.000 dòng của Supabase PostgREST
+ * Xử lý Batching/Chunking siêu tốc khi cập nhật số lượng lớn mã mới
+ * Đồng bộ trường Quy cách bao gói (pack_qty > 1) sang Bảng tồn kho, Biến động ngày và Thẻ kho
+ */
+
+const SUPABASE_URL = "https://oskigucnaevmbpyhhpcg.supabase.co";
+const SUPABASE_KEY = "sb_secret_ja41pM5w7RPHpBTKdJs8-w_qdm6EHEl";
+
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Quản Lý Kho Hàng - Supabase Engine')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+// ---------------------- HÀM KẾT NỐI API AN TOÀN & BATCHING ----------------------
+
+function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
+  const cleanBase = SUPABASE_URL.replace(/\/+$/, '');
+  const cleanEp = endpoint.replace(/^\/+/, '');
+  const rawUrl = `${cleanBase}/rest/v1/${cleanEp}`;
+  const url = encodeURI(rawUrl).replace(/"/g, '%22');
+
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+    ...extraHeaders
+  };
+
+  const options = {
+    method: method || "GET",
+    headers: headers,
+    muteHttpExceptions: true
+  };
+
+  if (payload && (method === "POST" || method === "PATCH" || method === "PUT")) {
+    options.payload = JSON.stringify(payload);
+  }
+
+  const response = UrlFetchApp.fetch(url, options);
+  const status = response.getResponseCode();
+  const resText = response.getContentText();
+
+  if (status >= 400) {
+    throw new Error(`Lỗi Supabase (${status}): ${resText}`);
+  }
+
+  return resText ? JSON.parse(resText) : null;
+}
+
+// Hàm chia mẻ dữ liệu POST theo từng batch (250 dòng) để vượt giới hạn Payload & Timeout của Supabase
+function callSupabaseBatchPost_(endpoint, arrayPayload, extraHeaders, batchSize) {
+  if (!arrayPayload || !Array.isArray(arrayPayload) || arrayPayload.length === 0) return [];
+  const size = batchSize || 250;
+  for (let i = 0; i < arrayPayload.length; i += size) {
+    const chunk = arrayPayload.slice(i, i + size);
+    callSupabaseSingle_(endpoint, "POST", chunk, {
+      "Prefer": "return=minimal",
+      ...extraHeaders
+    });
+  }
+}
+
+function callSupabase_(endpoint, method, payload, extraHeaders) {
+  const reqMethod = (method || "GET").toUpperCase();
+
+  if (reqMethod !== "GET") {
+    return callSupabaseSingle_(endpoint, reqMethod, payload, extraHeaders);
+  }
+
+  const limitMatch = endpoint.match(/[?&]limit=(\d+)/i);
+  if (limitMatch && parseInt(limitMatch[1], 10) < 1000) {
+    return callSupabaseSingle_(endpoint, "GET", null, extraHeaders);
+  }
+
+  let baseEp = endpoint.replace(/([?&])limit=\d+/gi, '$1').replace(/([?&])offset=\d+/gi, '$1');
+  baseEp = baseEp.replace(/\?&/, '?').replace(/&&/, '&').replace(/[?&]+$/, '');
+
+  let allResults = [];
+  let offset = 0;
+  const pageSize = 1000;
+  const maxLimit = (limitMatch && parseInt(limitMatch[1], 10) >= 1000) ? parseInt(limitMatch[1], 10) : 100000;
+
+  while (offset < maxLimit) {
+    const sep = baseEp.includes('?') ? '&' : '?';
+    const pageEp = `${baseEp}${sep}limit=${pageSize}&offset=${offset}`;
+    const res = callSupabaseSingle_(pageEp, "GET", null, extraHeaders);
+
+    if (!res || !Array.isArray(res) || res.length === 0) {
+      break;
+    }
+
+    allResults = allResults.concat(res);
+
+    if (res.length < pageSize) {
+      break;
+    }
+
+    offset += pageSize;
+  }
+
+  return allResults;
+}
+
+function cleanNoteContent_(val) {
+  if (!val) return "";
+  let s = String(val).trim();
+  s = s.replace(/import\s*từ\s*file\s*excel/gi, "");
+  s = s.replace(/import\s*excel/gi, "");
+  s = s.replace(/\[\s*(Thành\s*phẩm|Phế\s*phẩm|TP|PP)\s*\]/gi, "");
+  s = s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
+  s = s.replace(/\|\s*\|+/g, "|").trim();
+  return s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
+}
+
+function checkVoucherExists_(voucherNo) {
+  if (!voucherNo) return false;
+  const cleanNo = String(voucherNo).trim();
+  const res = callSupabase_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id&limit=1`, "GET");
+  return res && res.length > 0;
+}
+
+// ---------------------- 1. NHẬT KÝ THAO TÁC (AUDIT LOGS) ----------------------
+
+function logVoucherHistorySupabase_(action, voucherNo, type, voucherDate, items, note) {
+  try {
+    let totalQty = 0;
+    const itemsDetail = [];
+    const maxDetailItems = 30;
+    (items || []).forEach((it, idx) => {
+      const q = Number(it.quantity || it.qty) || 0;
+      totalQty += q;
+      const ql = (it.quality === "PP") ? "Phế phẩm" : "Thành phẩm";
+      if (idx < maxDetailItems) {
+        itemsDetail.push(`${it.code} (${ql}: ${q} ${it.unit || ''})`);
+      }
+    });
+
+    if ((items || []).length > maxDetailItems) {
+      itemsDetail.push(`...và còn ${(items || []).length - maxDetailItems} mặt hàng khác`);
+    }
+
+    const payload = {
+      action: action,
+      voucher_no: String(voucherNo || '').trim().toUpperCase(),
+      voucher_type: type,
+      voucher_date: voucherDate || null,
+      total_qty: totalQty,
+      item_count: (items || []).length,
+      items_detail: itemsDetail.join("; "),
+      note: cleanNoteContent_(note || "")
+    };
+
+    callSupabaseSingle_("voucher_audit_logs", "POST", payload);
+  } catch (err) {
+    Logger.log("Lỗi logVoucherHistorySupabase_: " + err.message);
+  }
+}
+
+function getVoucherAuditLogs(voucherNo) {
+  try {
+    if (!voucherNo) return [];
+    const cleanNo = String(voucherNo).trim().toUpperCase();
+    return callSupabase_(`voucher_audit_logs?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=created_at.desc&select=*`, "GET") || [];
+  } catch (err) {
+    throw new Error("Lỗi đọc lịch sử phiếu: " + err.message);
+  }
+}
+
+function getAllVoucherAuditLogs(params) {
+  try {
+    const fromDate = params ? params.fromDate : '';
+    const toDate = params ? params.toDate : '';
+    const action = params ? params.action : '';
+    const type = params ? params.type : '';
+    const keyword = params ? (params.keyword || '').trim().toLowerCase() : '';
+
+    let query = 'voucher_audit_logs?order=created_at.desc&limit=500&select=id,action,voucher_no,voucher_type,voucher_date,total_qty,items_detail,note,created_at';
+    if (action && action !== 'ALL') query += `&action=eq.${encodeURIComponent(action)}`;
+    if (type && type !== 'ALL') query += `&voucher_type=eq.${encodeURIComponent(type)}`;
+    if (fromDate) query += `&created_at=gte.${fromDate}T00:00:00Z`;
+    if (toDate) query += `&created_at=lte.${toDate}T23:59:59Z`;
+
+    const logs = callSupabase_(query, 'GET') || [];
+    
+    if (keyword) {
+      return logs.filter(l => 
+        (l.voucher_no && l.voucher_no.toLowerCase().includes(keyword)) ||
+        (l.items_detail && l.items_detail.toLowerCase().includes(keyword)) ||
+        (l.note && l.note.toLowerCase().includes(keyword))
+      );
+    }
+    return logs;
+  } catch (err) {
+    throw new Error("Lỗi tải nhật ký: " + err.message);
+  }
+}
+
+function deleteVoucherAuditLogById(id, password) {
+  try {
+    if (String(password).trim() !== "123123") {
+      return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+    }
+    callSupabase_(`voucher_audit_logs?id=eq.${id}`, "DELETE");
+    return { success: true, message: "Đã xóa bản ghi nhật ký!" };
+  } catch (err) {
+    return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
+  }
+}
+
+function deleteVoucherAuditLogsBatch(ids, password) {
+  try {
+    if (String(password).trim() !== "123123") {
+      return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+    }
+    if (!ids || ids.length === 0) throw new Error("Chưa chọn bản ghi nào.");
+    callSupabase_(`voucher_audit_logs?id=in.(${ids.join(',')})`, "DELETE");
+    return { success: true, message: `Đã xóa ${ids.length} bản ghi nhật ký!` };
+  } catch (err) {
+    return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
+  }
+}
+
+function deleteVoucherAuditLogsByDate(fromDate, toDate, password) {
+  try {
+    if (String(password).trim() !== "123123") {
+      return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+    }
+    if (!fromDate && !toDate) throw new Error("Vui lòng chọn khoảng ngày cần xóa.");
+    let query = `voucher_audit_logs?id=gt.0`;
+    if (fromDate) query += `&created_at=gte.${fromDate}T00:00:00Z`;
+    if (toDate) query += `&created_at=lte.${toDate}T23:59:59Z`;
+    callSupabase_(query, "DELETE");
+    return { success: true, message: "Đã xóa toàn bộ nhật ký trong khoảng ngày đã chọn!" };
+  } catch (err) {
+    return { success: false, message: "Lỗi xóa nhật ký: " + err.message };
+  }
+}
+
+// ---------------------- 2. SINH SỐ PHIẾU TỰ ĐỘNG ----------------------
+
+function getNextVoucherNo(type) {
+  try {
+    let prefix = "PN";
+    let dedicatedTable = "phieu_nhap";
+    if (type === "XUAT") {
+      prefix = "PX";
+      dedicatedTable = "phieu_xuat";
+    } else if (type === "NHAPTRA") {
+      prefix = "NT";
+      dedicatedTable = "hang_nhap_tra";
+    }
+
+    let maxNum = 0;
+    const regex = new RegExp(`^${prefix}-(\\d+)$`, 'i');
+
+    try {
+      const res = callSupabase_(`inventory_transactions?type=eq.${type}&select=voucher_no&order=id.desc&limit=300`, "GET");
+      if (res && res.length > 0) {
+        res.forEach(r => {
+          const m = String(r.voucher_no || "").trim().match(regex);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxNum) maxNum = num;
+          }
+        });
+      }
+    } catch(e) {}
+
+    try {
+      const res2 = callSupabase_(`${dedicatedTable}?select=voucher_no&order=id.desc&limit=300`, "GET");
+      if (res2 && res2.length > 0) {
+        res2.forEach(r => {
+          const m = String(r.voucher_no || "").trim().match(regex);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (!isNaN(num) && num > maxNum) maxNum = num;
+          }
+        });
+      }
+    } catch(e) {}
+
+    let nextCandidate = `${prefix}-${String(maxNum + 1).padStart(3, '0')}`;
+    let safetyCounter = 0;
+    while (checkVoucherExists_(nextCandidate) && safetyCounter < 100) {
+      maxNum++;
+      nextCandidate = `${prefix}-${String(maxNum + 1).padStart(3, '0')}`;
+      safetyCounter++;
+    }
+
+    return nextCandidate;
+  } catch (e) {
+    const prefix = type === "XUAT" ? "PX" : (type === "NHAPTRA" ? "NT" : "PN");
+    return `${prefix}-001`;
+  }
+}
+
+// ---------------------- 3. BẢNG TỒN KHO & QUY CÁCH (PHIÊN BẢN SIÊU TỐC) ----------------------
+
+function getInventoryData(targetDateStr) {
+  try {
+    const todayStr = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "yyyy-MM-dd");
+    const isHistorical = targetDateStr && targetDateStr < todayStr;
+
+    // TRƯỜNG HỢP 1: TỒN HIỆN TẠI -> ĐỌC TRỰC TIẾP TỪ BẢNG PRODUCTS (Cực nhanh, 1 query duy nhất)
+    if (!isHistorical) {
+      const products = callSupabase_(
+        "products?select=code,name,unit,pack_qty,pack_unit,stock_tp,stock_pp,total_stock&order=code.asc", 
+        "GET"
+      ) || [];
+
+      return products.map(p => {
+        const c = String(p.code || "").trim();
+        const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
+          ? Number(p.pack_qty) 
+          : null;
+        const tp = Number(p.stock_tp) || 0;
+        const pp = Number(p.stock_pp) || 0;
+        const total = (p.total_stock !== null && p.total_stock !== undefined && p.total_stock !== "") 
+          ? Number(p.total_stock) 
+          : (tp + pp);
+
+        return {
+          code: c,
+          name: p.name || c,
+          unit: p.unit || "-",
+          pack_qty: parsedPackQty,
+          pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
+          stockTP: tp,
+          stockPP: pp,
+          stock: total
+        };
+      });
+    }
+
+    // TRƯỜNG HỢP 2: TỒN QUÁ KHỨ -> TÍNH TOÁN THEO SỔ CÁI ĐẾN NGÀY ĐÓ
+    const products = callSupabase_("products?select=code,name,unit,pack_qty,pack_unit&order=code.asc", "GET") || [];
+    const itemMap = {};
+    const items = [];
+
+    products.forEach(p => {
+      const c = String(p.code || "").trim();
+      if (!c) return;
+      const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) ? Number(p.pack_qty) : null;
+      const obj = {
+        code: c,
+        name: p.name || c,
+        unit: p.unit || "-",
+        pack_qty: parsedPackQty,
+        pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
+        stockTP: 0,
+        stockPP: 0,
+        stock: 0
+      };
+      itemMap[c.toLowerCase()] = obj;
+      items.push(obj);
+    });
+
+    const txQuery = `inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality`;
+    const txs = callSupabase_(txQuery, "GET") || [];
+
+    txs.forEach(t => {
+      const c = String(t.code || "").trim();
+      if (!c) return;
+      const key = c.toLowerCase();
+      let item = itemMap[key];
+
+      if (!item) {
+        item = {
+          code: c,
+          name: t.name || c,
+          unit: t.unit || "-",
+          pack_qty: null,
+          pack_unit: "",
+          stockTP: 0,
+          stockPP: 0,
+          stock: 0
+        };
+        itemMap[key] = item;
+        items.push(item);
+      }
+
+      const q = Number(t.quantity) || 0;
+      const isNhap = String(t.type || "").toUpperCase().includes("NHAP");
+      const isPP = String(t.quality || "").toUpperCase() === "PP";
+      const delta = isNhap ? q : -q;
+
+      if (isPP) {
+        item.stockPP += delta;
+      } else {
+        item.stockTP += delta;
+      }
+      item.stock = item.stockTP + item.stockPP;
+    });
+
+    items.sort((a, b) => a.code.localeCompare(b.code));
+    return items;
+  } catch (err) {
+    throw new Error("Lỗi đọc tồn kho: " + err.message);
+  }
+}
+
+function createProduct(payload) {
+  try {
+    const code = String(payload.code || "").trim().toUpperCase();
+    const name = String(payload.name || "").trim();
+    const unit = String(payload.unit || "").trim();
+    const packQty = (payload.packQty && Number(payload.packQty) > 1) ? Number(payload.packQty) : null;
+    const packUnit = packQty ? (payload.packUnit ? String(payload.packUnit).trim() : "Bao") : null;
+    const stockTP = Number(payload.stockTP) || 0;
+    const stockPP = Number(payload.stockPP) || 0;
+    const totalStock = stockTP + stockPP;
+
+    if (!code) throw new Error("Mã sản phẩm không được để trống.");
+    if (!name) throw new Error("Tên mặt hàng không được để trống.");
+
+    const rowData = {
+      code: code,
+      name: name,
+      unit: unit,
+      pack_qty: packQty,
+      pack_unit: packUnit,
+      stock_tp: stockTP,
+      stock_pp: stockPP,
+      total_stock: totalStock
+    };
+
+    callSupabaseSingle_("products?on_conflict=code", "POST", rowData, {
+      "Prefer": "resolution=merge-duplicates,return=minimal"
+    });
+
+    if (stockTP > 0 || stockPP > 0) {
+      const todayISO = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "yyyy-MM-dd");
+      const initLogs = [];
+      const initNhapLogs = [];
+
+      if (stockTP > 0) {
+        initLogs.push({
+          voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
+          code: code, name: name, unit: unit, quantity: stockTP,
+          old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+        });
+        initNhapLogs.push({
+          voucher_date: todayISO, voucher_no: "DAUKY",
+          code: code, name: name, unit: unit, quantity: stockTP,
+          old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+        });
+      }
+      if (stockPP > 0) {
+        initLogs.push({
+          voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
+          code: code, name: name, unit: unit, quantity: stockPP,
+          old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+        });
+        initNhapLogs.push({
+          voucher_date: todayISO, voucher_no: "DAUKY",
+          code: code, name: name, unit: unit, quantity: stockPP,
+          old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+        });
+      }
+      callSupabaseBatchPost_("inventory_transactions", initLogs);
+      try { callSupabaseBatchPost_("phieu_nhap", initNhapLogs); } catch(e) {}
+    }
+
+    return { success: true, message: `Đã tạo thành công sản phẩm "${code} - ${name}"!` };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+function importProductsBatch(productsList) {
+  try {
+    if (!productsList || productsList.length === 0) {
+      throw new Error("Danh sách sản phẩm trống.");
+    }
+
+    const todayISO = Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "yyyy-MM-dd");
+    const batchProducts = [];
+    const initLogs = [];
+    const initNhapLogs = [];
+
+    productsList.forEach(p => {
+      const code = String(p.code || "").trim().toUpperCase();
+      const name = String(p.name || "").trim();
+      const unit = String(p.unit || "").trim() || "-";
+      const rawQty = (p.packQty !== undefined && p.packQty !== null && p.packQty !== "") ? p.packQty : p.pack_qty;
+      const packQty = (rawQty && Number(rawQty) > 1) ? Number(rawQty) : null;
+      const rawUnit = p.packUnit ? p.packUnit : p.pack_unit;
+      const packUnit = packQty ? (rawUnit ? String(rawUnit).trim() : "Bao") : null;
+      const stockTP = Number(p.stockTP) || 0;
+      const stockPP = Number(p.stockPP) || 0;
+      const totalStock = stockTP + stockPP;
+
+      if (code && name) {
+        batchProducts.push({
+          code: code,
+          name: name,
+          unit: unit,
+          pack_qty: packQty,
+          pack_unit: packUnit,
+          stock_tp: stockTP,
+          stock_pp: stockPP,
+          total_stock: totalStock
+        });
+
+        if (stockTP > 0) {
+          initLogs.push({
+            voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
+            code: code, name: name, unit: unit, quantity: stockTP,
+            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+          });
+          initNhapLogs.push({
+            voucher_date: todayISO, voucher_no: "DAUKY",
+            code: code, name: name, unit: unit, quantity: stockTP,
+            old_stock: 0, new_stock: stockTP, quality: "TP", note: "Tồn đầu kỳ [Thành phẩm]"
+          });
+        }
+        if (stockPP > 0) {
+          initLogs.push({
+            voucher_date: todayISO, voucher_no: "DAUKY", type: "NHAP",
+            code: code, name: name, unit: unit, quantity: stockPP,
+            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+          });
+          initNhapLogs.push({
+            voucher_date: todayISO, voucher_no: "DAUKY",
+            code: code, name: name, unit: unit, quantity: stockPP,
+            old_stock: 0, new_stock: stockPP, quality: "PP", note: "Tồn đầu kỳ [Phế phẩm]"
+          });
+        }
+      }
+    });
+
+    if (batchProducts.length === 0) {
+      throw new Error("Không tìm thấy dòng sản phẩm hợp lệ.");
+    }
+
+    callSupabaseBatchPost_("products?on_conflict=code", batchProducts, {
+      "Prefer": "resolution=merge-duplicates,return=minimal"
+    }, 250);
+
+    if (initLogs.length > 0) {
+      callSupabaseBatchPost_("inventory_transactions", initLogs);
+      try { callSupabaseBatchPost_("phieu_nhap", initNhapLogs); } catch(e) {}
+    }
+
+    return {
+      success: true,
+      count: batchProducts.length,
+      message: `Đã nạp thành công ${batchProducts.length} sản phẩm vào bảng tồn kho!`
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+function clearAllWarehouseData(password) {
+  try {
+    if (String(password).trim() !== "123123") {
+      return { success: false, message: "Mật khẩu quản trị không chính xác!" };
+    }
+
+    try { callSupabase_("voucher_audit_logs?id=gt.0", "DELETE"); } catch(e) {}
+    try { callSupabase_("inventory_transactions?id=gt.0", "DELETE"); } catch(e) {}
+    try { callSupabase_("phieu_nhap?id=gt.0", "DELETE"); } catch(e) {}
+    try { callSupabase_("phieu_xuat?id=gt.0", "DELETE"); } catch(e) {}
+    try { callSupabase_("hang_nhap_tra?id=gt.0", "DELETE"); } catch(e) {}
+    try { callSupabase_("products?code=not.is.null", "DELETE"); } catch(e) {}
+
+    return { success: true, message: "Đã xóa sạch toàn bộ danh mục và dữ liệu kho thành công!" };
+  } catch (err) {
+    return { success: false, message: "Lỗi xóa dữ liệu: " + err.message };
+  }
+}
+
+// ---------------------- 4. LƯU & SỬA PHIẾU (XỬ LÝ MÃ MỚI SIÊU TỐC) ----------------------
+
+function saveVoucher(voucher, isUpdateMode) {
+  try {
+    const type = voucher.type;
+    const voucherNo = String(voucher.voucherNo || "").trim().toUpperCase();
+    const items = voucher.items;
+
+    if (!voucherNo) throw new Error("Số chứng từ không được để trống.");
+    if (!items || items.length === 0) throw new Error("Danh sách mặt hàng trong phiếu đang trống.");
+
+    if (!isUpdateMode && checkVoucherExists_(voucherNo)) {
+      throw new Error(`Số chứng từ "${voucherNo}" đã tồn tại trong hệ thống. Vui lòng kiểm tra hoặc đổi số khác!`);
+    }
+
+    let dedicatedTable = "phieu_nhap";
+    if (type === "XUAT") dedicatedTable = "phieu_xuat";
+    else if (type === "NHAPTRA") dedicatedTable = "hang_nhap_tra";
+
+    const prods = callSupabase_("products?select=code,name,unit,stock_tp,stock_pp,total_stock,pack_qty,pack_unit&order=code.asc", "GET");
+    const prodMap = {};
+    (prods || []).forEach(p => {
+      prodMap[p.code.toLowerCase()] = p;
+    });
+
+    const isNhap = (type === "NHAP");
+    const isAdd = (type === "NHAP" || type === "NHAPTRA");
+    const ledgerLogs = [];
+    const dedicatedLogs = [];
+    const updatedProductsMap = {};
+    const newProductsCreated = [];
+
+    items.forEach((it, idx) => {
+      const rawCode = String(it.code || "").trim();
+      const searchKey = rawCode.toLowerCase();
+      let p = prodMap[searchKey];
+
+      if (!p) {
+        if (isNhap) {
+          const cleanNewCode = rawCode.toUpperCase();
+          let cleanNewName = String(it.name || "").trim();
+          if (!cleanNewName || cleanNewName.includes("Mã mới") || cleanNewName === "-") {
+            cleanNewName = `Sản phẩm ${cleanNewCode}`;
+          }
+          const cleanNewUnit = String(it.unit || "").trim() || "Cái";
+
+          p = {
+            code: cleanNewCode,
+            name: cleanNewName,
+            unit: cleanNewUnit,
+            pack_qty: null,
+            pack_unit: null,
+            stock_tp: 0,
+            stock_pp: 0,
+            total_stock: 0
+          };
+          prodMap[searchKey] = p;
+          if (!newProductsCreated.includes(cleanNewCode)) {
+            newProductsCreated.push(cleanNewCode);
+          }
+        } else {
+          throw new Error(`Dòng ${idx + 1}: Mã "${it.code}" không tồn tại trong danh mục tồn kho.`);
+        }
+      }
+
+      const masterCode = p.code;
+      const masterName = p.name;
+      const masterUnit = p.unit;
+
+      const qty = parseFloat(it.quantity);
+      if (isNaN(qty) || qty <= 0) throw new Error(`Dòng ${idx + 1} (${masterCode}): Số lượng phải lớn hơn 0.`);
+
+      const isPP = (it.quality === "PP");
+      let curTP = Number(p.stock_tp) || 0;
+      let curPP = Number(p.stock_pp) || 0;
+      const oldStock = Number(p.total_stock) || 0;
+
+      if (isPP) {
+        curPP = isAdd ? (curPP + qty) : (curPP - qty);
+      } else {
+        curTP = isAdd ? (curTP + qty) : (curTP - qty);
+      }
+      const newStock = curTP + curPP;
+
+      p.stock_tp = curTP;
+      p.stock_pp = curPP;
+      p.total_stock = newStock;
+
+      const packQtyValid = (p.pack_qty && Number(p.pack_qty) > 1) ? Number(p.pack_qty) : null;
+      updatedProductsMap[masterCode] = {
+        code: masterCode,
+        name: masterName,
+        unit: masterUnit,
+        pack_qty: packQtyValid,
+        pack_unit: packQtyValid ? (p.pack_unit ? String(p.pack_unit).trim() : null) : null,
+        stock_tp: curTP,
+        stock_pp: curPP,
+        total_stock: newStock
+      };
+
+      const qualityDisplay = isPP ? "Phế phẩm" : "Thành phẩm";
+      const cleanVNote = cleanNoteContent_(voucher.note || "");
+      let cleanINote = cleanNoteContent_(it.note || "");
+
+      if (cleanVNote && cleanINote) {
+        if (cleanINote.toLowerCase() === cleanVNote.toLowerCase() || cleanVNote.toLowerCase().includes(cleanINote.toLowerCase())) {
+          cleanINote = "";
+        } else if (cleanINote.toLowerCase().startsWith(cleanVNote.toLowerCase())) {
+          cleanINote = cleanINote.substring(cleanVNote.length).replace(/^[\s\|\,\-]+/, '').trim();
+        }
+      }
+
+      let combinedNote = "";
+      if (cleanVNote && cleanINote) {
+        combinedNote = `${cleanVNote} | ${cleanINote}`;
+      } else {
+        combinedNote = cleanVNote || cleanINote || "";
+      }
+
+      if (combinedNote.includes('|')) {
+        const parts = combinedNote.split('|').map(p => cleanNoteContent_(p)).filter(Boolean);
+        const unique = [];
+        parts.forEach(p => {
+          if (!unique.some(u => u.toLowerCase() === p.toLowerCase())) {
+            unique.push(p);
+          }
+        });
+        combinedNote = unique.join(' | ');
+      }
+
+      const fullNote = combinedNote ? `${combinedNote} [${qualityDisplay}]` : `[${qualityDisplay}]`;
+
+      ledgerLogs.push({
+        voucher_date: voucher.date,
+        voucher_no: voucherNo,
+        type: type,
+        code: masterCode,
+        name: masterName,
+        unit: masterUnit,
+        quantity: qty,
+        old_stock: oldStock,
+        new_stock: newStock,
+        quality: it.quality || "TP",
+        note: fullNote
+      });
+
+      dedicatedLogs.push({
+        voucher_date: voucher.date,
+        voucher_no: voucherNo,
+        code: masterCode,
+        name: masterName,
+        unit: masterUnit,
+        quantity: qty,
+        old_stock: oldStock,
+        new_stock: newStock,
+        quality: it.quality || "TP",
+        note: fullNote
+      });
+    });
+
+    const productList = Object.values(updatedProductsMap);
+    if (productList.length > 0) {
+      callSupabaseBatchPost_("products?on_conflict=code", productList, {
+        "Prefer": "resolution=merge-duplicates,return=minimal"
+      }, 250);
+    }
+
+    if (ledgerLogs.length > 0) {
+      callSupabaseBatchPost_("inventory_transactions", ledgerLogs, {
+        "Prefer": "return=minimal"
+      }, 250);
+    }
+
+    if (dedicatedLogs.length > 0) {
+      try {
+        callSupabaseBatchPost_(dedicatedTable, dedicatedLogs, {
+          "Prefer": "return=minimal"
+        }, 250);
+      } catch(e) {
+        Logger.log("Lỗi lưu " + dedicatedTable + ": " + e.message);
+      }
+    }
+
+    if (!isUpdateMode) {
+      logVoucherHistorySupabase_("TẠO MỚI", voucherNo, type, voucher.date, items, voucher.note);
+    }
+
+    let resMessage = `Đã lưu thành công chứng từ ${voucherNo}!`;
+    if (newProductsCreated.length > 0) {
+      if (newProductsCreated.length <= 8) {
+        resMessage = `Đã lưu phiếu ${voucherNo}! Tự động tạo ${newProductsCreated.length} mã mới: [${newProductsCreated.join(', ')}].`;
+      } else {
+        resMessage = `Đã lưu phiếu ${voucherNo}! Tự động tạo thành công ${newProductsCreated.length} mã mới vào danh mục tồn kho.`;
+      }
+    }
+
+    return { 
+      success: true, 
+      message: resMessage,
+      newProductsCreated: newProductsCreated
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+function updateEntireVoucher(payload) {
+  try {
+    const oldVoucherNo = String(payload.oldVoucherNo || "").trim().toUpperCase();
+    const newVoucher = payload.newVoucher;
+    const newVoucherNo = String(newVoucher.voucherNo || "").trim().toUpperCase();
+
+    if (!newVoucherNo) throw new Error("Số chứng từ mới không được để trống.");
+
+    if (newVoucherNo !== oldVoucherNo && checkVoucherExists_(newVoucherNo)) {
+      return { success: false, message: `Số chứng từ mới "${newVoucherNo}" đã tồn tại!` };
+    }
+
+    const delRes = deleteVoucherGeneral(oldVoucherNo, newVoucher.type, true);
+    if (!delRes.success) {
+      return { success: false, message: "Lỗi thu hồi phiếu cũ: " + delRes.message };
+    }
+
+    const saveRes = saveVoucher(newVoucher, true);
+    if (saveRes.success) {
+      logVoucherHistorySupabase_("CHỈNH SỬA", newVoucherNo, newVoucher.type, newVoucher.date, newVoucher.items, `Sửa từ phiếu cũ ${oldVoucherNo} | ${newVoucher.note || ''}`);
+    }
+    return saveRes;
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// ---------------------- 5. TRA CỨU & XÓA PHIẾU ----------------------
+
+function getVoucherByNo(voucherNo) {
+  try {
+    const cleanNo = String(voucherNo || "").trim().toUpperCase();
+    const txs = callSupabase_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=id.asc&select=*`, "GET");
+    if (!txs || txs.length === 0) throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
+
+    const first = txs[0];
+    const cleanGeneralNote = cleanNoteContent_(first.note || "");
+
+    const items = txs.map(t => {
+      let rowNote = cleanNoteContent_(t.note || "");
+      if (cleanGeneralNote && rowNote.toLowerCase().startsWith(cleanGeneralNote.toLowerCase())) {
+        rowNote = rowNote.substring(cleanGeneralNote.length).replace(/^[\s\|\,\-]+/, '').trim();
+      }
+      return {
+        code: t.code,
+        name: t.name,
+        unit: t.unit,
+        qty: Number(t.quantity),
+        oldStock: Number(t.old_stock),
+        newStock: Number(t.new_stock),
+        quality: t.quality,
+        note: rowNote
+      };
+    });
+
+    return {
+      success: true,
+      voucher: {
+        voucherNo: first.voucher_no,
+        type: first.type,
+        date: first.voucher_date,
+        isoDate: first.voucher_date,
+        note: cleanGeneralNote,
+        items: items,
+        totalQty: items.reduce((s, it) => s + it.qty, 0),
+        itemCount: items.length
+      }
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+function deleteVoucherGeneral(voucherNo, type, isForUpdate) {
+  try {
+    const cleanNo = String(voucherNo || "").trim().toUpperCase();
+    const txs = callSupabase_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=code,quantity,quality,voucher_date,note`, "GET");
+    
+    if (!txs || txs.length === 0) {
+      if (isForUpdate) {
+        try {
+          let dedicatedTable = (type === "XUAT") ? "phieu_xuat" : ((type === "NHAPTRA") ? "hang_nhap_tra" : "phieu_nhap");
+          callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
+        } catch(e) {}
+        return { success: true, message: "Không có giao dịch cũ cần hoàn tác." };
+      }
+      throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
+    }
+
+    let dedicatedTable = "phieu_nhap";
+    if (type === "XUAT") dedicatedTable = "phieu_xuat";
+    else if (type === "NHAPTRA") dedicatedTable = "hang_nhap_tra";
+
+    const isNhap = (type === "NHAP" || type === "NHAPTRA");
+    
+    const prods = callSupabase_("products?select=code,stock_tp,stock_pp,total_stock,name,unit,pack_qty,pack_unit&order=code.asc", "GET");
+    const prodMap = {};
+    (prods || []).forEach(p => { prodMap[p.code.toLowerCase()] = p; });
+
+    const revertMap = {};
+
+    txs.forEach(t => {
+      const p = prodMap[t.code.toLowerCase()];
+      if (p) {
+        let curTP = Number(p.stock_tp) || 0;
+        let curPP = Number(p.stock_pp) || 0;
+        const q = Number(t.quantity) || 0;
+
+        if (t.quality === "PP") {
+          curPP = isNhap ? (curPP - q) : (curPP + q);
+        } else {
+          curTP = isNhap ? (curTP - q) : (curTP + q);
+        }
+
+        p.stock_tp = curTP;
+        p.stock_pp = curPP;
+        p.total_stock = curTP + curPP;
+
+        const packQtyValid = (p.pack_qty && Number(p.pack_qty) > 1) ? Number(p.pack_qty) : null;
+        revertMap[p.code] = {
+          code: p.code,
+          name: p.name,
+          unit: p.unit,
+          pack_qty: packQtyValid,
+          pack_unit: packQtyValid ? (p.pack_unit ? String(p.pack_unit).trim() : null) : null,
+          stock_tp: curTP,
+          stock_pp: curPP,
+          total_stock: curTP + curPP
+        };
+      }
+    });
+
+    if (Object.keys(revertMap).length > 0) {
+      callSupabaseBatchPost_("products?on_conflict=code", Object.values(revertMap), {
+        "Prefer": "resolution=merge-duplicates,return=minimal"
+      }, 250);
+    }
+
+    callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
+    try { callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE"); } catch(e) {}
+
+    if (!isForUpdate) {
+      logVoucherHistorySupabase_("XÓA PHIẾU", cleanNo, type, txs[0].voucher_date, txs, txs[0].note);
+    }
+
+    return { success: true, message: `Đã xóa chứng từ ${cleanNo} thành công!` };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// ---------------------- 6. THẺ KHO CHI TIẾT (KÈM QUY CÁCH BAO GÓI) ----------------------
+
+function getProductDetail(code) {
+  try {
+    const cleanCode = String(code || "").trim();
+    const pArr = callSupabase_(`products?code=ilike.${encodeURIComponent(cleanCode)}&select=code,name,unit,total_stock,pack_qty,pack_unit`, "GET");
+    if (!pArr || pArr.length === 0) throw new Error(`Không tìm thấy mã "${cleanCode}".`);
+
+    const txs = callSupabase_(`inventory_transactions?code=ilike.${encodeURIComponent(cleanCode)}&select=id,voucher_date,voucher_no,type,quantity,quality,note&order=voucher_date.asc,id.asc`, "GET") || [];
+
+    txs.sort((a, b) => {
+      if (a.voucher_date !== b.voucher_date) {
+        return String(a.voucher_date).localeCompare(String(b.voucher_date));
+      }
+      return (Number(a.id) || 0) - (Number(b.id) || 0);
+    });
+
+    let runningStock = 0;
+    let totalNhap = 0;
+    let totalXuat = 0;
+    const dailyMap = {};
+
+    txs.forEach(t => {
+      const q = Number(t.quantity) || 0;
+      const isNhap = String(t.type || '').toUpperCase().includes("NHAP");
+
+      if (isNhap) totalNhap += q;
+      else totalXuat += q;
+
+      const txOldStock = runningStock;
+      if (isNhap) {
+        runningStock += q;
+      } else {
+        runningStock -= q;
+      }
+      const txNewStock = runningStock;
+
+      const dKey = t.voucher_date;
+      if (!dailyMap[dKey]) {
+        dailyMap[dKey] = {
+          isoDate: dKey,
+          voucherDate: dKey,
+          oldStock: txOldStock,
+          nhapQty: 0,
+          xuatQty: 0,
+          newStock: txNewStock,
+          voucherNos: [],
+          notes: [],
+          transactions: []
+        };
+      }
+
+      if (isNhap) dailyMap[dKey].nhapQty += q;
+      else dailyMap[dKey].xuatQty += q;
+      dailyMap[dKey].newStock = txNewStock;
+
+      if (t.voucher_no && !dailyMap[dKey].voucherNos.includes(t.voucher_no)) {
+        dailyMap[dKey].voucherNos.push(t.voucher_no);
+      }
+      if (t.note && !dailyMap[dKey].notes.includes(t.note)) {
+        dailyMap[dKey].notes.push(t.note);
+      }
+
+      dailyMap[dKey].transactions.push({
+        voucherNo: t.voucher_no,
+        type: t.type,
+        qty: q,
+        oldStock: txOldStock,
+        newStock: txNewStock,
+        quality: t.quality,
+        note: t.note
+      });
+    });
+
+    const parsedPackQty = (pArr[0].pack_qty !== null && pArr[0].pack_qty !== undefined && pArr[0].pack_qty !== "" && Number(pArr[0].pack_qty) > 1) ? Number(pArr[0].pack_qty) : null;
+    const product = {
+      code: pArr[0].code,
+      name: pArr[0].name,
+      unit: pArr[0].unit || "-",
+      pack_qty: parsedPackQty,
+      pack_unit: parsedPackQty ? (pArr[0].pack_unit ? String(pArr[0].pack_unit).trim() : "Bao") : "",
+      stock: runningStock
+    };
+
+    const groupedList = Object.values(dailyMap).sort((a, b) => b.isoDate.localeCompare(a.isoDate));
+    return { product, totalNhap, totalXuat, dayCount: groupedList.length, groupedList };
+  } catch (err) {
+    throw new Error("Lỗi tra cứu thẻ kho: " + err.message);
+  }
+}
+
+// ---------------------- 7. BIẾN ĐỘNG TRONG NGÀY (KÈM QUY CÁCH BAO GÓI) ----------------------
+
+function getDailyMovement(targetDateStr) {
+  try {
+    const dayTxs = callSupabase_(`inventory_transactions?voucher_date=eq.${targetDateStr}&select=id,voucher_no,type,code,name,unit,quantity,quality,note&order=id.asc`, "GET") || [];
+    dayTxs.sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+
+    const beforeTxs = callSupabase_(`inventory_transactions?voucher_date=lt.${targetDateStr}&select=code,quantity,type`, "GET") || [];
+    const prods = callSupabase_("products?select=code,name,unit,pack_qty,pack_unit", "GET") || [];
+    const prodMap = {};
+    prods.forEach(p => { prodMap[p.code.toLowerCase()] = p; });
+
+    const beforeStockMap = {};
+    beforeTxs.forEach(t => {
+      const cKey = String(t.code || '').toLowerCase();
+      const q = Number(t.quantity) || 0;
+      const isNhap = String(t.type || '').toUpperCase().includes("NHAP");
+      if (!beforeStockMap[cKey]) beforeStockMap[cKey] = 0;
+      beforeStockMap[cKey] += isNhap ? q : -q;
+    });
+
+    const itemTxsMap = {};
+    let totalNhap = 0;
+    let totalXuat = 0;
+
+    dayTxs.forEach(t => {
+      const cKey = String(t.code || '').toLowerCase();
+      if (!itemTxsMap[cKey]) itemTxsMap[cKey] = [];
+      itemTxsMap[cKey].push(t);
+    });
+
+    const resultItems = [];
+
+    Object.keys(itemTxsMap).forEach(cKey => {
+      const txList = itemTxsMap[cKey];
+      const p = prodMap[cKey] || { code: txList[0].code, name: txList[0].name, unit: txList[0].unit, pack_qty: null, pack_unit: null };
+
+      const S_begin = beforeStockMap[cKey] || 0;
+      let N_day = 0;
+      let X_day = 0;
+
+      txList.forEach(t => {
+        const q = Number(t.quantity) || 0;
+        if (String(t.type || '').toUpperCase().includes("NHAP")) N_day += q;
+        else X_day += q;
+      });
+
+      const S_end = S_begin + N_day - X_day;
+
+      totalNhap += N_day;
+      totalXuat += X_day;
+
+      let running = S_begin;
+      const details = [];
+
+      txList.forEach(t => {
+        const q = Number(t.quantity) || 0;
+        const isNhap = String(t.type || '').toUpperCase().includes("NHAP");
+        const tOld = running;
+        if (isNhap) running += q;
+        else running -= q;
+        const tNew = running;
+
+        details.push({
+          voucherNo: t.voucher_no,
+          type: t.type,
+          qty: q,
+          oldStock: tOld,
+          newStock: tNew,
+          quality: t.quality,
+          note: t.note
+        });
+      });
+
+      const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) ? Number(p.pack_qty) : null;
+      resultItems.push({
+        code: p.code,
+        name: p.name,
+        unit: p.unit || "-",
+        pack_qty: parsedPackQty,
+        pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
+        nhap: N_day,
+        xuat: X_day,
+        tonDau: S_begin,
+        tonCuoi: S_end,
+        txCount: txList.length,
+        details: details
+      });
+    });
+
+    return {
+      date: targetDateStr,
+      items: resultItems,
+      totalNhap: totalNhap,
+      totalXuat: totalXuat,
+      recentDates: [targetDateStr]
+    };
+  } catch (err) {
+    throw new Error("Lỗi tổng hợp ngày: " + err.message);
+  }
+}
+
+// ---------------------- 8. BÁO CÁO CHỨNG TỪ ----------------------
+
+function getSummaryReport(params) {
+  try {
+    const type = (params && params.type ? params.type : 'NHAP').toUpperCase();
+    const fromDate = params ? params.fromDate : '';
+    const toDate = params ? params.toDate : '';
+    const keyword = params ? (params.keyword || '').trim().toLowerCase() : '';
+
+    let dedicatedTable = "phieu_nhap";
+    if (type === "XUAT") dedicatedTable = "phieu_xuat";
+    else if (type === "NHAPTRA") dedicatedTable = "hang_nhap_tra";
+
+    let txs = [];
+
+    try {
+      let invQuery = `inventory_transactions?order=voucher_date.desc,id.desc&select=*`;
+      if (type === 'NHAP') invQuery += `&type=eq.NHAP`;
+      else if (type === 'XUAT') invQuery += `&type=eq.XUAT`;
+      else if (type === 'NHAPTRA') invQuery += `&type=ilike.*NHAPTRA*`;
+
+      if (fromDate) invQuery += `&voucher_date=gte.${fromDate}`;
+      if (toDate) invQuery += `&voucher_date=lte.${toDate}`;
+
+      txs = callSupabase_(invQuery, "GET") || [];
+    } catch(e1) {
+      Logger.log("Lỗi đọc inventory_transactions: " + e1.message);
+      txs = [];
+    }
+
+    if (!txs || txs.length === 0) {
+      try {
+        let dedQuery = `${dedicatedTable}?order=voucher_date.desc,id.desc&select=*`;
+        if (fromDate) dedQuery += `&voucher_date=gte.${fromDate}`;
+        if (toDate) dedQuery += `&voucher_date=lte.${toDate}`;
+
+        const dedTxs = callSupabase_(dedQuery, "GET");
+        if (dedTxs && dedTxs.length > 0) {
+          txs = dedTxs;
+        }
+      } catch(e2) {
+        Logger.log("Lỗi đọc " + dedicatedTable + ": " + e2.message);
+      }
+    }
+
+    const voucherMap = {};
+    let grandTotalQty = 0;
+
+    txs.forEach(t => {
+      const code = String(t.code || '').trim();
+      const name = String(t.name || '').trim();
+      const voucherNo = String(t.voucher_no || 'CHƯA_CÓ_SỐ').trim();
+      const note = String(t.note || '').trim();
+
+      if (keyword) {
+        const match = code.toLowerCase().includes(keyword) || 
+                      name.toLowerCase().includes(keyword) || 
+                      voucherNo.toLowerCase().includes(keyword) || 
+                      note.toLowerCase().includes(keyword);
+        if (!match) return;
+      }
+
+      const q = Number(t.quantity) || 0;
+      grandTotalQty += q;
+
+      if (!voucherMap[voucherNo]) {
+        voucherMap[voucherNo] = {
+          voucherNo: voucherNo,
+          date: t.voucher_date || '',
+          isoDate: t.voucher_date || '',
+          note: cleanNoteContent_(note),
+          totalQty: 0,
+          itemCount: 0,
+          items: []
+        };
+      }
+      voucherMap[voucherNo].totalQty += q;
+      voucherMap[voucherNo].itemCount++;
+      voucherMap[voucherNo].items.push({
+        code: code,
+        name: name,
+        unit: t.unit || '-',
+        qty: q,
+        quality: t.quality || 'TP',
+        oldStock: Number(t.old_stock) || 0,
+        newStock: Number(t.new_stock) || 0,
+        note: cleanNoteContent_(t.note || '')
+      });
+    });
+
+    return {
+      type: type,
+      voucherList: Object.values(voucherMap),
+      totalQty: grandTotalQty,
+      totalVouchers: Object.keys(voucherMap).length
+    };
+  } catch (err) {
+    throw new Error("Lỗi tải báo cáo: " + err.message);
+  }
+}
+
+function getNhapTraVouchersList() {
+  const res = getSummaryReport({ type: 'NHAPTRA', fromDate: '', toDate: '', keyword: '' });
+  return (res && res.voucherList) ? res.voucherList : [];
+}
+
+function deleteNhapTraVoucher(voucherNo) {
+  return deleteVoucherGeneral(voucherNo, "NHAPTRA", false);
+}
+
+// ---------------------- 9. CẬP NHẬT MÃ, TÊN & QUY CÁCH BAO GÓI ----------------------
+
+function updateProductInfo(payload) {
+  try {
+    const oldCode = String(payload.oldCode || "").trim().toUpperCase();
+    const newCode = String(payload.newCode || "").trim().toUpperCase();
+    const newName = String(payload.newName || "").trim();
+    const newUnit = String(payload.newUnit || "").trim() || "-";
+
+    if (!oldCode) throw new Error("Mã sản phẩm cũ không hợp lệ.");
+    if (!newCode) throw new Error("Mã sản phẩm mới không được để trống.");
+    if (!newName) throw new Error("Tên sản phẩm mới không được để trống.");
+
+    if (newCode !== oldCode) {
+      const exist = callSupabase_(`products?code=eq.${encodeURIComponent(newCode)}&select=code&limit=1`, "GET");
+      if (exist && exist.length > 0) {
+        throw new Error(`Mã sản phẩm "${newCode}" đã tồn tại trên hệ thống! Vui lòng chọn mã khác.`);
+      }
+    }
+
+    callSupabaseSingle_(`products?code=eq.${encodeURIComponent(oldCode)}`, "PATCH", {
+      code: newCode,
+      name: newName,
+      unit: newUnit
+    });
+
+    if (newCode !== oldCode) {
+      const syncPayload = { code: newCode, name: newName, unit: newUnit };
+      try { callSupabaseSingle_(`inventory_transactions?code=eq.${encodeURIComponent(oldCode)}`, "PATCH", syncPayload); } catch(e) {}
+      try { callSupabaseSingle_(`phieu_nhap?code=eq.${encodeURIComponent(oldCode)}`, "PATCH", syncPayload); } catch(e) {}
+      try { callSupabaseSingle_(`phieu_xuat?code=eq.${encodeURIComponent(oldCode)}`, "PATCH", syncPayload); } catch(e) {}
+      try { callSupabaseSingle_(`hang_nhap_tra?code=eq.${encodeURIComponent(oldCode)}`, "PATCH", syncPayload); } catch(e) {}
+    }
+
+    try {
+      callSupabaseSingle_("voucher_audit_logs", "POST", {
+        action: "CHỈNH SỬA",
+        voucher_no: newCode,
+        voucher_type: "DANHMUC",
+        voucher_date: Utilities.formatDate(new Date(), "Asia/Ho_Chi_Minh", "yyyy-MM-dd"),
+        total_qty: 0,
+        item_count: 1,
+        items_detail: `Sửa SP: ${oldCode} ➜ ${newCode} (${newName}, ${newUnit})`,
+        note: `Cập nhật danh mục sản phẩm từ mã cũ: ${oldCode}`
+      });
+    } catch(e) {}
+
+    return { 
+      success: true, 
+      message: `Đã cập nhật thành công sản phẩm "${oldCode}" thành "${newCode} - ${newName}"!` 
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// Cập nhật quy cách bao gói (chỉ nhận pack_qty > 1, nếu <= 1 xóa về NULL)
+function updateProductPackaging(payload) {
+  try {
+    const code = String(payload.code || "").trim().toUpperCase();
+    const packQty = (payload.packQty && Number(payload.packQty) > 1) ? Number(payload.packQty) : null;
+    const packUnit = packQty ? (payload.packUnit ? String(payload.packUnit).trim() : "Bao") : null;
+
+    if (!code) throw new Error("Mã sản phẩm không hợp lệ.");
+
+    callSupabaseSingle_(`products?code=eq.${encodeURIComponent(code)}`, "PATCH", {
+      pack_qty: packQty,
+      pack_unit: packUnit
+    });
+
+    return { 
+      success: true, 
+      message: packQty ? `Đã cập nhật quy cách cho "${code}": ${packQty} ${payload.unit || ''}/${packUnit}!` : `Đã xóa quy cách của mã "${code}" về chưa cài đặt!` 
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// Lưu hàng loạt quy cách bao gói (chỉ nhận pack_qty > 1)
+function updateProductPackagingBatch(list) {
+  try {
+    if (!list || list.length === 0) throw new Error("Danh sách cập nhật trống.");
+    const batch = list.map(item => {
+      const pQty = (item.packQty && Number(item.packQty) > 1) ? Number(item.packQty) : null;
+      return {
+        code: String(item.code || "").trim().toUpperCase(),
+        pack_qty: pQty,
+        pack_unit: pQty ? (item.packUnit ? String(item.packUnit).trim() : "Bao") : null
+      };
+    });
+
+    callSupabaseBatchPost_("products?on_conflict=code", batch, {
+      "Prefer": "resolution=merge-duplicates,return=minimal"
+    }, 250);
+
+    return { 
+      success: true, 
+      message: `Đã lưu quy cách cho ${batch.length} sản phẩm thành công!` 
+    };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// ---------------------- 10. CHUYỂN ĐỔI PHIẾU NHẬP TRẢ THÀNH PHIẾU NHẬP ----------------------
+
+function saveConvertedNhapTraVoucher(payload) {
+  try {
+    const nhapTraNo = String(payload.deleteNhapTraNo || "").trim().toUpperCase();
+    const newVoucher = payload.newVoucher;
+
+    if (nhapTraNo) {
+      const delRes = deleteVoucherGeneral(nhapTraNo, "NHAPTRA", true);
+      if (!delRes.success) {
+        throw new Error("Lỗi thu hồi phiếu nhập trả: " + delRes.message);
+      }
+    }
+
+    const saveRes = saveVoucher(newVoucher, false);
+    if (saveRes.success && nhapTraNo) {
+      logVoucherHistorySupabase_(
+        "CHUYỂN ĐỔI", 
+        newVoucher.voucherNo, 
+        "NHAP", 
+        newVoucher.date, 
+        newVoucher.items, 
+        `Chuyển từ phiếu nhập trả ${nhapTraNo} sang phiếu nhập kho | ${newVoucher.note || ''}`
+      );
+      saveRes.message = `Đã lưu thành công phiếu nhập ${newVoucher.voucherNo} và xóa phiếu nhập trả ${nhapTraNo}!`;
+    }
+    return saveRes;
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// ---------------------- 11. TÍCH HỢP MENU TRÊN GOOGLE TRANG TÍNH ----------------------
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("⚡ Quản Lý Kho")
+    .addItem("📤 Đẩy danh mục từ Sheet lên Supabase", "syncCurrentSheetToSupabase")
+    .addItem("📥 Đồng bộ tồn kho từ Supabase về Sheet", "syncSupabaseToCurrentSheet")
+    .addSeparator()
+    .addItem("🔗 Mở Web App Quản Lý Kho", "openWebAppUrlPrompt")
+    .addToUi();
+}
+
+function syncCurrentSheetToSupabase() {
+  const ui = SpreadsheetApp.getUi();
+  const res = ui.alert("Xác nhận đồng bộ", "Đẩy toàn bộ danh mục từ Sheet lên Supabase?", ui.ButtonSet.YES_NO);
+  if (res !== ui.Button.YES) return;
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getActiveSheet();
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) { ui.alert("Bảng tính trống!"); return; }
+
+    const headers = data[0].map(h => String(h || "").trim().toLowerCase());
+    const colCode = headers.indexOf("code") !== -1 ? headers.indexOf("code") : headers.indexOf("mã số");
+    const colName = headers.indexOf("name") !== -1 ? headers.indexOf("name") : headers.indexOf("mặt hàng");
+    const colUnit = headers.indexOf("unit") !== -1 ? headers.indexOf("unit") : headers.indexOf("đvt");
+    const colTp = headers.indexOf("stock_tp") !== -1 ? headers.indexOf("stock_tp") : headers.indexOf("tồn thành phẩm");
+    const colPp = headers.indexOf("stock_pp") !== -1 ? headers.indexOf("stock_pp") : headers.indexOf("tồn phế phẩm");
+    const colPackQty = headers.indexOf("pack_qty") !== -1 ? headers.indexOf("pack_qty") : headers.indexOf("quy cách");
+    const colPackUnit = headers.indexOf("pack_unit") !== -1 ? headers.indexOf("pack_unit") : headers.indexOf("đơn vị bao gói");
+
+    const productsList = [];
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const code = String(row[colCode] || "").trim().toUpperCase();
+      const name = String(row[colName] || "").trim();
+      const unit = colUnit !== -1 ? String(row[colUnit] || "").trim() : "-";
+      const stockTP = colTp !== -1 ? (Number(row[colTp]) || 0) : 0;
+      const stockPP = colPp !== -1 ? (Number(row[colPp]) || 0) : 0;
+      const packQty = colPackQty !== -1 && row[colPackQty] && Number(row[colPackQty]) > 1 ? Number(row[colPackQty]) : null;
+      const packUnit = packQty ? (colPackUnit !== -1 && row[colPackUnit] ? String(row[colPackUnit]).trim() : "Bao") : null;
+      if (code && name) productsList.push({ code, name, unit, packQty, packUnit, stockTP, stockPP });
+    }
+
+    const importRes = importProductsBatch(productsList);
+    ui.alert(importRes.success ? "Thành công" : "Lỗi", importRes.message, ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert("Lỗi: " + err.message);
+  }
+}
+
+function syncSupabaseToCurrentSheet() {
+  const ui = SpreadsheetApp.getUi();
+  const res = ui.alert("Xác nhận sao lưu", "Tải dữ liệu tồn kho từ Supabase về tab 'Supabase_Backup'?", ui.ButtonSet.YES_NO);
+  if (res !== ui.Button.YES) return;
+
+  try {
+    const products = getInventoryData(); 
+    if (!products || products.length === 0) { ui.alert("Không có dữ liệu tồn kho!"); return; }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName("Supabase_Backup") || ss.insertSheet("Supabase_Backup");
+    sheet.clearContents();
+
+    const rows = [["code", "name", "unit", "pack_qty", "pack_unit", "stock_tp", "stock_pp", "total_stock"]];
+    products.forEach(p => {
+      rows.push([
+        p.code, 
+        p.name, 
+        p.unit || "-", 
+        (p.pack_qty && Number(p.pack_qty) > 1) ? Number(p.pack_qty) : "", 
+        (p.pack_qty && Number(p.pack_qty) > 1) ? (p.pack_unit || "") : "", 
+        Number(p.stockTP) || 0, 
+        Number(p.stockPP) || 0, 
+        Number(p.stock) || 0
+      ]);
+    });
+
+    sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+    sheet.getRange(1, 1, 1, rows[0].length).setFontWeight("bold");
+    ui.alert("Thành công", `Đã sao lưu ${products.length} sản phẩm với số tồn chuẩn vào tab 'Supabase_Backup'!`, ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert("Lỗi: " + err.message);
+  }
+}
+
+function openWebAppUrlPrompt() {
+  const url = ScriptApp.getService().getUrl();
+  const ui = SpreadsheetApp.getUi();
+  if (!url) { ui.alert("Vui lòng triển khai Web App trước!"); return; }
+  const html = HtmlService.createHtmlOutput(
+    `<div style="font-family:sans-serif; padding:10px;">
+      <p style="font-size:13px; color:#334155; margin-bottom:8px;">Đường dẫn Web App của bạn:</p>
+      <input type="text" value="${url}" style="width:100%; padding:8px; font-size:12px; border:1px solid #cbd5e1; border-radius:6px;" readonly onclick="this.select();">
+      <br><br>
+      <a href="${url}" target="_blank" style="display:inline-block; padding:8px 16px; background:#2563eb; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; font-size:13px;">Mở Web App ngay</a>
+    </div>`
+  ).setWidth(450).setHeight(160);
+  ui.showModalDialog(html, "Link Web App Quản Lý Kho");
+}
+
+function triggerAuthorization() {
+  SpreadsheetApp.getActiveSpreadsheet();
+}
