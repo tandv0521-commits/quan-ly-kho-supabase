@@ -321,7 +321,7 @@
         </div>
         <div class="flex items-center space-x-2">
           <button onclick="promptSupabaseConfig()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm" title="Cấu hình kết nối Supabase"><i class="bi bi-database-gear"></i><span>Kết nối Supabase</span></button>
-          <button onclick="promptSupabaseConfig()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm" title="Cau hinh Supabase"><i class="bi bi-database-gear"></i><span>Ket noi Supabase</span></button>
+          
           <button onclick="printCurrentTabTable()" class="px-3 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-sm">
             <i class="bi bi-printer"></i>
             <span>In Bảng (Ctrl+P)</span>
@@ -2606,50 +2606,72 @@ const ClientBackend = {
 // GOOGLE.SCRIPT.RUN EMULATOR (Điều hướng mượt mà cho toàn bộ giao diện)
 // ============================================================================
 
-window.google = window.google || {};
-window.google.script = {
-  run: new Proxy({}, {
-    get: function(target, prop) {
-      let successCb = null;
-      let failureCb = null;
+function createGoogleScriptRunner(handlers = {}) {
+  const state = {
+    successHandler: handlers.successHandler || null,
+    failureHandler: handlers.failureHandler || null,
+    userObject: handlers.userObject || null
+  };
 
-      const runner = {
-        withSuccessHandler: function(cb) {
-          successCb = cb;
-          return runner;
-        },
-        withFailureHandler: function(cb) {
-          failureCb = cb;
-          return runner;
-        },
-        withUserObject: function() {
-          return runner;
-        }
-      };
+  const runnerHandler = {
+    get(target, prop) {
+      if (prop === 'withSuccessHandler') {
+        return function(cb) {
+          state.successHandler = cb;
+          return new Proxy(state, runnerHandler);
+        };
+      }
+      if (prop === 'withFailureHandler') {
+        return function(cb) {
+          state.failureHandler = cb;
+          return new Proxy(state, runnerHandler);
+        };
+      }
+      if (prop === 'withUserObject') {
+        return function(obj) {
+          state.userObject = obj;
+          return new Proxy(state, runnerHandler);
+        };
+      }
 
+      // Bất kỳ hàm backend nào (getInventoryData, saveVoucher, generateVoucherNo, ...)
       return function(...args) {
         setTimeout(async () => {
           try {
             if (typeof ClientBackend[prop] === 'function') {
               const res = await ClientBackend[prop](...args);
-              if (typeof successCb === 'function') successCb(res);
+              if (typeof state.successHandler === 'function') {
+                state.successHandler(res, state.userObject);
+              }
             } else {
-              console.warn(`Hàm ${prop} chưa được triển khai.`);
-              if (typeof successCb === 'function') successCb(null);
+              console.warn(`Hàm ${prop} chưa được triển khai trong ClientBackend.`);
+              if (typeof state.successHandler === 'function') {
+                state.successHandler(null, state.userObject);
+              }
             }
           } catch (err) {
             console.error(`Lỗi thực thi ${prop}:`, err);
-            if (typeof failureCb === 'function') {
-              failureCb(err);
+            if (typeof state.failureHandler === 'function') {
+              state.failureHandler(err, state.userObject);
             } else {
               Swal.fire('Lỗi kết nối', err.message, 'error');
             }
           }
-        }, 0);
-        return runner;
+        }, 10);
+
+        return new Proxy(state, runnerHandler);
       };
     }
-  })
+  };
+
+  return new Proxy(state, runnerHandler);
+}
+
+window.google = window.google || {};
+window.google.script = {
+  get run() {
+    return createGoogleScriptRunner();
+  }
 };
 
     let inventoryMap = {};
