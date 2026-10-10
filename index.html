@@ -1321,7 +1321,7 @@
   <!-- ========================================== -->
   <!-- MODAL TUY CHINH BANG BIEU & COT HIEN THI -->
   <!-- ========================================== -->
-  <div id="column-customizer-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="if(event.target === this) closeColumnCustomizerModal();">
+  <div id="column-customizer-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" style="display: none;" onclick="if(event.target === this) closeColumnCustomizerModal();">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
       
       <!-- Header -->
@@ -1335,7 +1335,7 @@
             <p class="text-[11px] text-slate-400">&#7848;n/hi&#7878;n c&#7897;t v&#224; ghim c&#7889; &#273;&#7883;nh theo nhu c&#7847;u s&#7917; d&#7909;ng</p>
           </div>
         </div>
-        <button onclick="closeColumnCustomizerModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"><i class="bi bi-x-lg text-sm"></i></button>
+        <button type="button" onclick="closeColumnCustomizerModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"><i class="bi bi-x-lg text-sm"></i></button>
       </div>
 
       <!-- Body -->
@@ -1360,9 +1360,9 @@
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-bold text-slate-700 uppercase tracking-wider text-[11px]">Danh S&#225;ch C&#7897;t Hi&#7875;n Th&#7883;</span>
             <div class="space-x-1.5 text-[11px]">
-              <button onclick="setAllColumnsVisibility(true)" class="text-blue-600 font-bold hover:underline">Hi&#7878;n t&#7845;t c&#7843;</button>
+              <button type="button" onclick="setAllColumnsVisibility(true)" class="text-blue-600 font-bold hover:underline">Hi&#7878;n t&#7845;t c&#7843;</button>
               <span class="text-slate-300">|</span>
-              <button onclick="resetDefaultColumnsVisibility()" class="text-slate-500 font-medium hover:underline">M&#7863;c &#273;&#7883;nh</button>
+              <button type="button" onclick="resetDefaultColumnsVisibility()" class="text-slate-500 font-medium hover:underline">M&#7863;c &#273;&#7883;nh</button>
             </div>
           </div>
 
@@ -1375,103 +1375,13 @@
       <!-- Footer -->
       <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
         <span class="text-[11px] text-slate-400 font-medium">T&#7921; &#273;&#7897;ng ghi nh&#7899; tr&#234;n tr&#236;nh duy&#7878;t n&#224;y</span>
-        <button onclick="closeColumnCustomizerModal()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs">
+        <button type="button" onclick="closeColumnCustomizerModal()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs">
           Ho&#224;n t&#7845;t
         </button>
       </div>
 
     </div>
   </div>
-        <div class="flex items-center space-x-2.5">
-          <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold shadow-2xs">
-            <i class="bi bi-layout-three-columns"></i>
-          </div>
-          <div>
-            <h3 class="font-extrabold text-sm text-slate-800">TÃ¹y Chá»‰nh Cá»™t Báº£ng Tá»“n Kho</h3>
-            <p class="text-[11px] text-slate-400">áº¨n/hiá»‡n cá»™t vÃ  ghim cá»‘ Ä‘á»‹nh theo nhu cáº§u sá»­ dá»¥ng</p>
-          </div>
-        </div>
-        <button onclick="closeColumnCustomizerModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"><i class="bi bi-x-lg text-sm"></i></button>
-      </div>
-
-      <!-- Body -->
-      <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto custom-scroll">
-        <!-- Section 1: Ghim cá»‘ Ä‘á»‹nh cá»™t -->
-        <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex items-center justify-between">
-          <div class="flex items-center space-x-2.5">
-            <i class="bi bi-pin-angle-fill text-blue-600 text-base"></i>
-            <div>
-              <div class="text-xs font-bold text-slate-800">Ghim cá»‘ Ä‘á»‹nh cá»™t MÃ£ sá»‘</div>
-              <div class="text-[11px] text-slate-500">Giá»¯ cá»™t MÃ£ sá»‘ vÃ  STT Ä‘á»©ng yÃªn khi cuá»™n ngang báº£ng</div>
-            </div>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="modal-freeze-toggle" onchange="toggleFreezeCodeColumn(this.checked)" class="sr-only peer">
-            <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <!-- Section 2: Danh sÃ¡ch cá»™t -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider text-[11px]">Danh SÃ¡ch Cá»™t Hiá»ƒn Thá»‹</span>
-            <div class="space-x-1.5 text-[11px]">
-              <button onclick="setAllColumnsVisibility(true)" class="text-blue-600 font-bold hover:underline">Hiá»‡n táº¥t cáº£</button>
-              <span class="text-slate-300">|</span>
-              <button onclick="resetDefaultColumnsVisibility()" class="text-slate-500 font-medium hover:underline">Máº·c Ä‘á»‹nh</button>
-            </div>
-          </div>
-
-          <div class="space-y-1.5" id="column-checkboxes-list">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-        <span class="text-[11px] text-slate-400 font-medium">Tá»± Ä‘á»™ng ghi nhá»› trÃªn trÃ¬nh duyá»‡t nÃ y</span>
-        <button onclick="closeColumnCustomizerModal()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs">
-          HoÃ n táº¥t
-        </button>
-      </div>
-
-    </div>
-  </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="modal-freeze-toggle" onchange="toggleFreezeCodeColumn(this.checked)" class="sr-only peer">
-            <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          </label>
-        </div>
-
-        <!-- Section 2: Danh sÃ¡ch cá»™t -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider text-[11px]">Danh SÃ¡ch Cá»™t Hiá»ƒn Thá»‹</span>
-            <div class="space-x-1.5 text-[11px]">
-              <button onclick="setAllColumnsVisibility(true)" class="text-blue-600 font-bold hover:underline">Hiá»‡n táº¥t cáº£</button>
-              <span class="text-slate-300">|</span>
-              <button onclick="resetDefaultColumnsVisibility()" class="text-slate-500 font-medium hover:underline">Máº·c Ä‘á»‹nh</button>
-            </div>
-          </div>
-
-          <div class="space-y-1.5" id="column-checkboxes-list">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-        <span class="text-[11px] text-slate-400 font-medium">Tá»± Ä‘á»™ng ghi nhá»› trÃªn trÃ¬nh duyá»‡t nÃ y</span>
-        <button onclick="closeColumnCustomizerModal()" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs">
-          HoÃ n táº¥t
-        </button>
-      </div>
-
-    </div>
-  </div>
-
   <div id="quick-search-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start justify-center pt-12 sm:pt-20 px-3 sm:px-4" onclick="if(event.target === this) closeQuickSearchModal();">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
       
@@ -1686,12 +1596,18 @@ function openColumnCustomizerModal() {
   const modalToggle = document.getElementById('modal-freeze-toggle');
   if (modalToggle) modalToggle.checked = isFreezeCodeActive;
   const modal = document.getElementById('column-customizer-modal');
-  if (modal) modal.classList.remove('hidden');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
 }
 
 function closeColumnCustomizerModal() {
   const modal = document.getElementById('column-customizer-modal');
-  if (modal) modal.classList.add('hidden');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
 }
 
 // ============================================================================
