@@ -63,6 +63,9 @@
   
   <style>
     /* CHUẨN GIAO DIỆN PHẦN MỀM MÁY TÍNH (DESKTOP SOFTWARE UI) */
+    :root, html, body, input, select, textarea {
+      color-scheme: light !important;
+    }
     html, body {
       font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
       letter-spacing: normal;
@@ -72,9 +75,24 @@
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }
-    input, textarea, [contenteditable="true"], table tbody td, .selectable-text {
-      user-select: text !important;
-      -webkit-user-select: text !important;
+    input, textarea, [contenteditable="true"], table tbody td:not(.select-none):not([ondblclick]), .selectable-text {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    [ondblclick], [ondblclick] *, .select-none, .select-none * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+    /* VÔ HIỆU HÓA GỢI Ý ĐEN 'SAVED INFO' CỦA EDGE / CHROMIUM TRÊN CÁC Ô NHẬP LIỆU */
+    input::-webkit-contacts-auto-fill-button,
+    input::-webkit-credentials-auto-fill-button {
+      visibility: hidden !important;
+      display: none !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      width: 0 !important;
+      margin: 0 !important;
+      opacity: 0 !important;
     }
     img, svg, i, button, a {
       -webkit-user-drag: none;
@@ -1466,9 +1484,9 @@
                 </button>
                 <input type="file" id="dispatch-reconcile-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleDispatchReconciliationFile(event)">
 
-                <button type="button" onclick="openCreateDispatchForm()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-sm cursor-pointer" title="Bấm để ghi nhận phiếu phát hàng mới cho xe (F2)">
+                <button type="button" onclick="openCreateDispatchForm()" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Bấm để ghi nhận phiếu phát hàng mới cho xe (F2)">
                   <i class="bi bi-plus-circle-fill text-teal-100 text-sm"></i>
-                  <span>+ GHI PHÁT HÀNG</span>
+                  <span>Ghi Phát Hàng</span>
                 </button>
               </div>
             </div>
@@ -1539,29 +1557,25 @@
             </div>
 
             <!-- THANH CHUYỂN ĐỔI CHẾ ĐỘ XEM: BẢNG TỔNG HỢP SẢN PHẨM vs CHI TIẾT TỪNG PHIẾU vs THỐNG KÊ THEO NHÂN VIÊN -->
-            <div class="px-4 py-2.5 border-b border-slate-200/80 bg-slate-50/80 flex flex-wrap items-center justify-between gap-3 text-xs no-print">
-              <div class="inline-flex p-1.5 bg-slate-200/90 border border-slate-300 rounded-2xl gap-2 font-bold text-xs shadow-inner" role="tablist">
+            <div class="px-4 py-2 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between gap-3 text-xs no-print">
+              <div class="inline-flex p-1 bg-slate-200/70 rounded-xl border border-slate-300/70 gap-1 font-sans text-xs" role="tablist">
                 <button type="button" id="dispatch-view-tab-summary" onclick="switchDispatchViewMode('summary')" 
-                        class="px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-teal-600 text-white shadow-md shadow-teal-600/30 font-black cursor-pointer ring-2 ring-teal-400/30">
-                  <i class="bi bi-collection-fill text-sm"></i>
+                        class="px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs bg-teal-700 text-white font-bold shadow-xs cursor-pointer">
+                  <i class="bi bi-collection-fill text-xs"></i>
                   <span>Bảng tổng hợp sản phẩm</span>
-                  <span id="dispatch-summary-badge" class="ml-1 px-2 py-0.5 bg-teal-800 text-teal-100 text-[10.5px] rounded-full font-mono font-bold">0 SKU</span>
+                  <span id="dispatch-summary-badge" class="ml-1.5 px-1.5 py-0.5 bg-teal-900/60 text-teal-100 text-[10px] rounded-full font-mono font-bold">0 SKU</span>
                 </button>
                 <button type="button" id="dispatch-view-tab-detail" onclick="switchDispatchViewMode('detail')" 
-                        class="px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 shadow-2xs font-bold cursor-pointer">
-                  <i class="bi bi-list-ul text-teal-600 text-sm"></i>
+                        class="px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium cursor-pointer">
+                  <i class="bi bi-list-ul text-slate-500 text-xs"></i>
                   <span>Chi tiết từng phiếu</span>
                 </button>
                 <button type="button" id="dispatch-view-tab-staff" onclick="switchDispatchViewMode('staff')" 
-                        class="px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 shadow-2xs font-bold cursor-pointer">
-                  <i class="bi bi-person-badge-fill text-blue-600 text-sm"></i>
+                        class="px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-white/60 font-medium cursor-pointer">
+                  <i class="bi bi-person-badge text-slate-500 text-xs"></i>
                   <span>Thống kê theo nhân viên</span>
-                  <span id="dispatch-staff-badge" class="ml-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10.5px] rounded-full font-mono font-bold">0 NV</span>
+                  <span id="dispatch-staff-badge" class="ml-1.5 px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[10px] rounded-full font-mono font-bold">0 NV</span>
                 </button>
-              </div>
-              <div class="text-[11.5px] text-teal-800 font-semibold italic flex items-center space-x-1.5 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200/80 shadow-2xs" id="dispatch-view-hint">
-                <i class="bi bi-info-circle-fill text-teal-600 text-sm"></i>
-                <span id="dispatch-view-hint-text">Nhấp đúp chuột (2 lần) vào dòng sản phẩm để xem chi tiết các xe</span>
               </div>
             </div>
 
@@ -1709,13 +1723,28 @@
                     <span>Danh mục xe</span>
                   </button>
                 </div>
-                <div class="flex gap-1.5">
-                  <input type="text" id="dispatch-input-vehicle" list="dispatch-vehicle-suggestions" 
-                         oninput="onDispatchVehicleInput(this.value)"
-                         onchange="onDispatchVehicleChange(this.value)"
-                         placeholder="Nhập biển số hoặc mã xe..." 
-                         class="w-full px-2.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-bold uppercase focus:ring-2 focus:ring-teal-600 bg-white text-teal-950 text-xs shadow-2xs">
-                  <datalist id="dispatch-vehicle-suggestions"></datalist>
+                <div class="flex gap-1.5 relative">
+                  <div class="relative flex-1">
+                    <input type="text" id="dispatch-input-vehicle"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-form-type="other"
+                           oninput="handleDispatchVehicleAutocomplete(this.value)"
+                           onfocus="handleDispatchVehicleAutocomplete(this.value)"
+                           onblur="onDispatchVehicleBlur(this.value)"
+                           onkeydown="handleDispatchVehicleKeydown(event)"
+                           onchange="onDispatchVehicleChange(this.value)"
+                           placeholder="Nhập biển số hoặc mã xe..." 
+                           class="w-full px-2.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-bold uppercase focus:ring-2 focus:ring-teal-600 bg-white text-teal-950 text-xs shadow-2xs">
+                    <datalist id="dispatch-vehicle-suggestions"></datalist>
+                    <!-- DROPDOWN GỢI Ý MÃ XE & SỐ XE TƯƠI SÁNG, HIỆN ĐẠI -->
+                    <div id="dispatch-vehicle-dropdown" 
+                         class="hidden absolute left-0 top-full mt-1.5 w-full min-w-[340px] max-w-lg bg-white border-2 border-teal-500 rounded-xl shadow-2xl z-[9999] max-h-72 overflow-y-auto custom-scroll divide-y divide-slate-100" 
+                         style="display: none;"></div>
+                  </div>
                   <button type="button" onclick="quickAddVehiclePrompt()" class="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer" title="Tạo mã xe mới">
                     <i class="bi bi-plus-lg"></i>
                   </button>
@@ -1730,7 +1759,16 @@
                 <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1">Lái xe / Người vận chuyển:</label>
                 <div class="relative flex items-center">
                   <i class="bi bi-person absolute left-2.5 text-slate-400 text-xs"></i>
-                  <input type="text" id="dispatch-input-driver" placeholder="VD: Bác Hùng, Xe bưu chính..." class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500">
+                  <input type="text" id="dispatch-input-driver" 
+                         name="wh_driver_noname"
+                         autocomplete="off"
+                         autocorrect="off"
+                         autocapitalize="off"
+                         spellcheck="false"
+                         data-lpignore="true"
+                         data-form-type="other"
+                         placeholder="VD: Bác Hùng, Xe bưu chính..." 
+                         class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500">
                 </div>
               </div>
 
@@ -1739,7 +1777,16 @@
                 <label class="block font-bold text-teal-800 uppercase text-[11px] mb-1">SĐT lái xe (tự động hiện):</label>
                 <div class="relative flex items-center">
                   <i class="bi bi-telephone-fill absolute left-2.5 text-teal-600 text-xs"></i>
-                  <input type="text" id="dispatch-input-driver-phone" placeholder="VD: 0912.345.678" class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
+                  <input type="text" id="dispatch-input-driver-phone" 
+                         name="wh_phone_notel"
+                         autocomplete="off"
+                         autocorrect="off"
+                         autocapitalize="off"
+                         spellcheck="false"
+                         data-lpignore="true"
+                         data-form-type="other"
+                         placeholder="VD: 0912.345.678" 
+                         class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
                 </div>
               </div>
             </div>
@@ -1771,9 +1818,9 @@
                     <button type="button" onclick="resetFastItemsQuantities()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 transition cursor-pointer" title="Đặt lại toàn bộ số lượng phát về trống">
                       <i class="bi bi-arrow-counterclockwise"></i> Xóa trắng SL
                     </button>
-                    <button type="button" onclick="openFastItemsCustomizerModal('groups')" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-2xs cursor-pointer" title="Tạo thêm nhóm mới hoặc gán lại nhóm cho từng sản phẩm">
+                    <button type="button" onclick="openFastItemsCustomizerModal()" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-2xs cursor-pointer" title="Cài đặt nhóm sản phẩm, xem danh sách nhóm và thêm SP vào nhóm">
                       <i class="bi bi-tags-fill"></i>
-                      <span>Tạo & Gán nhóm</span>
+                      <span>Quản lý nhóm SP</span>
                     </button>
                   </div>
                 </div>
@@ -1826,7 +1873,7 @@
                   </button>
                   <button type="button" onclick="addDispatchFormRow(null, true)" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-sm cursor-pointer" title="Thêm dòng mặt hàng mới (Phím tắt: F2)">
                     <i class="bi bi-plus-circle-fill text-teal-100 text-sm"></i>
-                    <span>+ Thêm mặt hàng ngoài bảng (F2)</span>
+                    <span>Thêm mặt hàng ngoài bảng (F2)</span>
                   </button>
                 </div>
               </div>
@@ -1851,7 +1898,7 @@
               <div class="pt-1">
                 <button type="button" onclick="addDispatchFormRow(null, true)" class="w-full py-2 px-3 border border-dashed border-slate-300 hover:border-teal-500 rounded-xl bg-slate-50 hover:bg-teal-50/50 text-slate-700 hover:text-teal-900 font-bold text-xs transition flex items-center justify-center space-x-2 cursor-pointer shadow-2xs">
                   <i class="bi bi-plus-circle-fill text-teal-600 text-sm"></i>
-                  <span>+ Thêm dòng mặt hàng bổ sung ngoài bảng (F2)</span>
+                  <span>Thêm dòng mặt hàng bổ sung ngoài bảng (F2)</span>
                 </button>
               </div>
             </div>
@@ -2322,21 +2369,21 @@
   <!-- ======================================================== -->
   <!-- MODAL ĐỐI CHIẾU DANH SÁCH PHÁT HÀNG VỚI BẢNG TỔNG HỢP XUẤT -->
   <!-- ======================================================== -->
-  <div id="dispatch-reconciliation-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4" style="display: none;" onclick="if(event.target === this) closeDispatchReconciliationModal();">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+  <div id="dispatch-reconciliation-modal" class="hidden fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-1.5 sm:p-3" style="display: none;" onclick="if(event.target === this) closeDispatchReconciliationModal();">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-[98vw] max-w-[1620px] h-[95vh] max-h-[96vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
       
       <!-- HEADER (Tone màu dịu nhẹ, thanh lịch dễ nhìn) -->
-      <div class="px-5 py-3.5 bg-gradient-to-r from-slate-100 via-indigo-50/70 to-slate-100 text-slate-800 flex items-center justify-between border-b border-slate-200 shrink-0">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-2xs shrink-0">
+      <div class="px-4 sm:px-5 py-2.5 bg-gradient-to-r from-slate-100 via-indigo-50/70 to-slate-100 text-slate-800 flex items-center justify-between border-b border-slate-200 shrink-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-base shadow-2xs shrink-0">
             <i class="bi bi-file-earmark-diff-fill"></i>
           </div>
           <div>
             <div class="flex items-center space-x-2 flex-wrap">
-              <h3 class="font-extrabold text-sm text-slate-800 uppercase tracking-wide">ĐỐI CHIẾU PHÁT HÀNG VỚI BẢNG TỔNG HỢP XUẤT</h3>
+              <h3 class="font-extrabold text-xs sm:text-sm text-slate-800 uppercase tracking-wide">ĐỐI CHIẾU PHÁT HÀNG VỚI BẢNG TỔNG HỢP XUẤT</h3>
               <span id="reconcile-file-name-badge" class="px-2 py-0.5 rounded-full text-[10.5px] font-mono bg-white text-indigo-700 border border-indigo-200 font-bold truncate max-w-[240px] shadow-2xs"></span>
             </div>
-            <p class="text-[11px] text-slate-500 mt-0.5" id="reconcile-subtitle-info">So sánh số lượng và mã sản phẩm trong danh sách ghi phát hàng với file Excel xuất kho</p>
+            <p class="text-[10.5px] sm:text-[11px] text-slate-500 mt-0.5" id="reconcile-subtitle-info">So sánh số lượng và mã sản phẩm trong danh sách ghi phát hàng với file Excel xuất kho</p>
           </div>
         </div>
         <div class="flex items-center space-x-2">
@@ -2350,157 +2397,148 @@
         </div>
       </div>
 
-      <!-- BODY CONTENT -->
-      <div class="p-4 sm:p-5 overflow-y-auto custom-scroll flex-1 space-y-4 text-xs bg-slate-50/40">
+      <!-- BODY CONTENT (BẢNG TỰ ĐỘNG CHIẾM TOÀN BỘ PHẦN CÒN LẠI CỦA MÀN HÌNH) -->
+      <div class="p-2.5 sm:p-3.5 flex-1 min-h-0 flex flex-col gap-2 overflow-hidden text-xs bg-slate-50/40">
         
-        <!-- BỘ CHỌN THỜI GIAN PHÁT HÀNG ĐỂ ĐỐI CHIẾU (ƯU TIÊN HÔM QUA & THEO FILE) -->
-        <div class="bg-white p-3.5 rounded-2xl border-2 border-indigo-200/90 shadow-2xs space-y-2.5">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            
-            <!-- Phần chọn ngày và nút chọn nhanh -->
-            <div class="flex items-center flex-wrap gap-2">
-              <span class="font-extrabold text-indigo-950 uppercase text-[11px] flex items-center shrink-0">
-                <i class="bi bi-calendar-check-fill text-indigo-600 mr-1.5 text-sm"></i>
-                Ngày phát hàng cần đối chiếu:
-              </span>
+        <!-- BỘ CHỌN THỜI GIAN & THÔNG TIN FILE GỌN GÀNG -->
+        <div class="bg-white px-3 py-1.5 rounded-xl border border-indigo-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div class="flex items-center flex-wrap gap-2">
+            <span class="font-bold text-indigo-950 uppercase text-[11px] flex items-center shrink-0">
+              <i class="bi bi-calendar-check-fill text-indigo-600 mr-1.5 text-xs"></i>
+              Ngày đối chiếu:
+            </span>
 
-              <div class="flex items-center space-x-1.5 bg-slate-50 px-2.5 py-1 rounded-xl border border-indigo-200">
-                <label class="text-[11px] font-bold text-slate-500">Từ:</label>
-                <input type="date" id="reconcile-date-from" onchange="handleReconcileDateInputChange()" class="px-1.5 py-0.5 text-xs font-semibold font-mono border-0 focus:outline-none text-indigo-950 bg-white rounded border border-slate-200 shadow-2xs">
-                <span class="text-slate-300 font-bold">-</span>
-                <label class="text-[11px] font-bold text-slate-500">Đến:</label>
-                <input type="date" id="reconcile-date-to" onchange="handleReconcileDateInputChange()" class="px-1.5 py-0.5 text-xs font-semibold font-mono border-0 focus:outline-none text-indigo-950 bg-white rounded border border-slate-200 shadow-2xs">
-              </div>
-
-              <!-- Nút chọn nhanh: Hôm qua (mặc định), Hôm nay, Theo file Excel, 7 ngày, Tất cả -->
-              <div class="flex items-center flex-wrap gap-1">
-                <button type="button" id="reconcile-quick-btn-yesterday" onclick="setReconcileQuickDate('yesterday')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition border border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 cursor-pointer shadow-2xs" title="Thường ngày hôm sau mới đối chiếu phát hàng ngày hôm trước">
-                  <i class="bi bi-arrow-left-circle mr-1 text-indigo-600"></i>Hôm qua
-                </button>
-                <button type="button" id="reconcile-quick-btn-today" onclick="setReconcileQuickDate('today')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
-                  Hôm nay
-                </button>
-                <button type="button" id="reconcile-quick-btn-file_date" onclick="setReconcileQuickDate('file_date')" class="hidden px-2.5 py-1 rounded-lg text-xs font-bold transition border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 cursor-pointer shadow-2xs">
-                  <i class="bi bi-file-earmark-check mr-1 text-emerald-600"></i><span id="reconcile-quick-btn-file-date-label">Theo ngày file</span>
-                </button>
-                <button type="button" id="reconcile-quick-btn-7days" onclick="setReconcileQuickDate('7days')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
-                  7 ngày gần nhất
-                </button>
-                <button type="button" id="reconcile-quick-btn-all" onclick="setReconcileQuickDate('all')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
-                  Tất cả lịch sử
-                </button>
-              </div>
+            <div class="flex items-center space-x-1.5 bg-slate-50 px-2 py-0.5 rounded-lg border border-indigo-200">
+              <label class="text-[10.5px] font-bold text-slate-500">Từ:</label>
+              <input type="date" id="reconcile-date-from" onchange="handleReconcileDateInputChange()" class="px-1.5 py-0.5 text-xs font-semibold font-mono border-0 focus:outline-none text-indigo-950 bg-white rounded border border-slate-200 shadow-2xs">
+              <span class="text-slate-300 font-bold">-</span>
+              <label class="text-[10.5px] font-bold text-slate-500">Đến:</label>
+              <input type="date" id="reconcile-date-to" onchange="handleReconcileDateInputChange()" class="px-1.5 py-0.5 text-xs font-semibold font-mono border-0 focus:outline-none text-indigo-950 bg-white rounded border border-slate-200 shadow-2xs">
             </div>
 
-            <!-- Badge hiển thị số lượng phiếu phát hàng trong khoảng ngày này -->
-            <div class="flex items-center space-x-2 shrink-0">
-              <div class="px-3 py-1 bg-indigo-50/70 rounded-xl border border-indigo-200 text-indigo-900 font-bold text-xs flex items-center space-x-1.5 shadow-2xs">
-                <i class="bi bi-truck text-indigo-600"></i>
-                <span>Có <b class="font-mono text-indigo-950 text-sm" id="reconcile-matched-vouchers-count">0</b> phiếu phát</span>
-              </div>
-              <button type="button" onclick="syncReconcileDateToMainDispatch()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl border border-slate-300 text-[11px] font-semibold transition cursor-pointer" title="Áp dụng ngày này ra bộ lọc màn hình phát hàng bên ngoài">
-                <i class="bi bi-arrow-repeat mr-1 text-slate-500"></i>Đồng bộ ra ngoài
+            <!-- Nút chọn nhanh: Hôm qua, Hôm nay, Theo file, 7 ngày, Tất cả -->
+            <div class="flex items-center flex-wrap gap-1">
+              <button type="button" id="reconcile-quick-btn-yesterday" onclick="setReconcileQuickDate('yesterday')" class="px-2.5 py-0.5 rounded-md text-xs font-bold transition border border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100 cursor-pointer shadow-2xs" title="Thường ngày hôm sau mới đối chiếu phát hàng ngày hôm trước">
+                Hôm qua
+              </button>
+              <button type="button" id="reconcile-quick-btn-today" onclick="setReconcileQuickDate('today')" class="px-2.5 py-0.5 rounded-md text-xs font-semibold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                Hôm nay
+              </button>
+              <button type="button" id="reconcile-quick-btn-file_date" onclick="setReconcileQuickDate('file_date')" class="hidden px-2.5 py-0.5 rounded-md text-xs font-bold transition border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 cursor-pointer shadow-2xs">
+                <i class="bi bi-file-earmark-check mr-1 text-emerald-600"></i><span id="reconcile-quick-btn-file-date-label">Theo file</span>
+              </button>
+              <button type="button" id="reconcile-quick-btn-7days" onclick="setReconcileQuickDate('7days')" class="px-2.5 py-0.5 rounded-md text-xs font-semibold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                7 ngày
+              </button>
+              <button type="button" id="reconcile-quick-btn-all" onclick="setReconcileQuickDate('all')" class="px-2.5 py-0.5 rounded-md text-xs font-semibold transition border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                Tất cả
               </button>
             </div>
-
           </div>
 
-          <!-- Thông tin trích xuất từ file Excel (Ngày, Mã vật tư, Tiêu đề) -->
-          <div class="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
-            <div id="reconcile-excel-meta-box" class="text-slate-600 font-mono flex items-center space-x-2 truncate"></div>
-            <div id="reconcile-date-detected-alert" class="hidden text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 font-medium">
+          <!-- Thông tin file và số phiếu bên phải -->
+          <div class="flex items-center flex-wrap gap-2 text-[11px] shrink-0">
+            <div id="reconcile-excel-meta-box" class="text-slate-500 font-mono text-[10.5px] truncate max-w-xs md:max-w-md"></div>
+            <div id="reconcile-date-detected-alert" class="hidden text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-medium text-[10.5px]">
               <i class="bi bi-magic text-emerald-600 mr-1"></i>
-              <span id="reconcile-date-detected-text">Tự động nhận diện ngày từ tiêu đề file Excel...</span>
+              <span id="reconcile-date-detected-text"></span>
             </div>
+            <div class="px-2.5 py-0.5 bg-indigo-50/80 rounded-lg border border-indigo-200 text-indigo-900 font-bold text-xs flex items-center space-x-1 shadow-2xs">
+              <i class="bi bi-truck text-indigo-600"></i>
+              <span>Có <b class="font-mono text-indigo-950 text-sm" id="reconcile-matched-vouchers-count">0</b> phiếu phát</span>
+            </div>
+            <button type="button" onclick="syncReconcileDateToMainDispatch()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 text-[11px] font-semibold transition cursor-pointer" title="Áp dụng ngày này ra bộ lọc màn hình phát hàng bên ngoài">
+              <i class="bi bi-arrow-repeat mr-1 text-slate-500"></i>Đồng bộ
+            </button>
           </div>
         </div>
 
-        <!-- 5 THẺ THỐNG KÊ KPI TỔNG QUAN (BẤM VÀO TỪNG THẺ ĐỂ LỌC BẢNG BÊN DƯỚI) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          <!-- Card 1: Tổng mặt hàng đã phát -->
+        <!-- 5 THẺ THỐNG KÊ KPI KIÊM BỘ LỌC TỔNG QUAN -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 shrink-0">
+          <!-- Card 1: Hàng đã ghi phát -->
           <div id="reconcile-card-dispatched" onclick="setReconciliationFilter('dispatched')" 
-               class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] select-none group" 
-               title="Bấm để hiển thị toàn bộ hàng đã ghi nhận phát">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-slate-500 uppercase group-hover:text-indigo-600 transition">Hàng đã ghi phát</span>
-              <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition flex items-center justify-center text-xs"><i class="bi bi-box-seam"></i></span>
+               class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group" 
+               title="Bấm để lọc toàn bộ hàng đã ghi nhận phát">
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0"><i class="bi bi-box-seam"></i></span>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold text-slate-500 uppercase truncate group-hover:text-indigo-600 transition">Đã ghi phát</div>
+                <div class="text-[9.5px] text-slate-400 font-mono truncate" id="reconcile-kpi-dispatched-qty">0</div>
+              </div>
             </div>
-            <div class="mt-2 flex items-baseline justify-between">
-              <div class="font-mono font-black text-xl text-slate-800" id="reconcile-kpi-dispatched-skus">0</div>
-              <div class="text-[10.5px] text-slate-400 font-mono font-medium" id="reconcile-kpi-dispatched-qty">0</div>
-            </div>
+            <div class="font-mono font-black text-base lg:text-lg text-slate-800 shrink-0 ml-1.5" id="reconcile-kpi-dispatched-skus">0</div>
           </div>
 
           <!-- Card 2: Khớp chuẩn 100% -->
           <div id="reconcile-card-matched" onclick="setReconciliationFilter('matched')" 
-               class="bg-emerald-50/60 p-3 rounded-xl border border-emerald-200 shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] select-none group" 
+               class="px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50/50 shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group" 
                title="Bấm để lọc các mặt hàng khớp đúng 100% cả mã và số lượng">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-emerald-800 uppercase">Khớp chuẩn 100%</span>
-              <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs"><i class="bi bi-check2-circle"></i></span>
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs shrink-0"><i class="bi bi-check2-circle"></i></span>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold text-emerald-800 uppercase truncate">Khớp chuẩn</div>
+                <div class="text-[9.5px] text-emerald-600 truncate font-semibold">Đúng mã & SL</div>
+              </div>
             </div>
-            <div class="mt-2 flex items-baseline justify-between">
-              <div class="font-mono font-black text-xl text-emerald-700" id="reconcile-kpi-matched">0</div>
-              <div class="text-[10.5px] text-emerald-600 font-semibold">Đúng mã & số lượng</div>
-            </div>
+            <div class="font-mono font-black text-base lg:text-lg text-emerald-700 shrink-0 ml-1.5" id="reconcile-kpi-matched">0</div>
           </div>
 
           <!-- Card 3: Lệch số lượng -->
           <div id="reconcile-card-discrepancy" onclick="setReconciliationFilter('discrepancy')" 
-               class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] select-none group" 
+               class="px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50/50 shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group" 
                title="Bấm để lọc các mặt hàng có chênh lệch số lượng (thiếu hoặc vượt)">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-amber-800 uppercase">Lệch số lượng</span>
-              <span class="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs"><i class="bi bi-exclamation-triangle"></i></span>
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs shrink-0"><i class="bi bi-exclamation-triangle"></i></span>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold text-amber-800 uppercase truncate">Lệch số lượng</div>
+                <div class="text-[9.5px] text-amber-600 truncate font-semibold">Thiếu / Vượt</div>
+              </div>
             </div>
-            <div class="mt-2 flex items-baseline justify-between">
-              <div class="font-mono font-black text-xl text-amber-700" id="reconcile-kpi-mismatch-qty">0</div>
-              <div class="text-[10.5px] text-amber-600 font-semibold">Thiếu hoặc vượt</div>
-            </div>
+            <div class="font-mono font-black text-base lg:text-lg text-amber-700 shrink-0 ml-1.5" id="reconcile-kpi-mismatch-qty">0</div>
           </div>
 
           <!-- Card 4: Không có trong file xuất -->
           <div id="reconcile-card-not_in_excel" onclick="setReconciliationFilter('not_in_excel')" 
-               class="bg-rose-50/80 p-3 rounded-xl border-2 border-rose-300 shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] select-none group" 
+               class="px-3 py-1.5 rounded-xl border border-rose-300 bg-rose-50/70 shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group" 
                title="Bấm để lọc các mặt hàng đã phát nhưng không có trong bảng tổng hợp xuất">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-rose-800 uppercase">Không có trong file</span>
-              <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center text-xs"><i class="bi bi-exclamation-octagon-fill"></i></span>
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center text-xs shrink-0"><i class="bi bi-exclamation-octagon-fill"></i></span>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold text-rose-800 uppercase truncate">Ngoài file</div>
+                <div class="text-[9.5px] text-rose-600 truncate font-bold">Cần kiểm tra!</div>
+              </div>
             </div>
-            <div class="mt-2 flex items-baseline justify-between">
-              <div class="font-mono font-black text-xl text-rose-700" id="reconcile-kpi-not-in-excel">0</div>
-              <div class="text-[10.5px] text-rose-600 font-bold">Cần kiểm tra ngay!</div>
-            </div>
+            <div class="font-mono font-black text-base lg:text-lg text-rose-700 shrink-0 ml-1.5" id="reconcile-kpi-not-in-excel">0</div>
           </div>
 
           <!-- Card 5: File xuất chưa phát -->
           <div id="reconcile-card-not_dispatched" onclick="setReconciliationFilter('not_dispatched')" 
-               class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between col-span-2 sm:col-span-1 cursor-pointer transition-all duration-150 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] select-none group" 
+               class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1 cursor-pointer transition-all duration-150 select-none group" 
                title="Bấm để lọc các mặt hàng có trong bảng tổng hợp xuất nhưng chưa ghi phát">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] font-bold text-slate-600 uppercase group-hover:text-slate-900 transition">Trong file chưa phát</span>
-              <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 group-hover:bg-slate-200 transition flex items-center justify-center text-xs"><i class="bi bi-hourglass-split"></i></span>
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-xs shrink-0"><i class="bi bi-hourglass-split"></i></span>
+              <div class="min-w-0">
+                <div class="text-[10px] font-bold text-slate-600 uppercase truncate group-hover:text-slate-900 transition">Chưa phát</div>
+                <div class="text-[9.5px] text-slate-400 truncate font-semibold">Tồn file xuất</div>
+              </div>
             </div>
-            <div class="mt-2 flex items-baseline justify-between">
-              <div class="font-mono font-black text-xl text-slate-600" id="reconcile-kpi-not-dispatched">0</div>
-              <div class="text-[10.5px] text-slate-400 font-semibold">Còn tồn file xuất</div>
-            </div>
+            <div class="font-mono font-black text-base lg:text-lg text-slate-600 shrink-0 ml-1.5" id="reconcile-kpi-not-dispatched">0</div>
           </div>
         </div>
 
-        <!-- THANH CÔNG CỤ TRẠNG THÁI LỌC & Ô TÌM KIẾM NHANH -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+        <!-- THANH CÔNG CỤ TRẠNG THÁI LỌC & Ô TÌM KIẾM NHANH (GỌN GÀNG) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <div class="flex items-center flex-wrap gap-2">
             <span class="text-xs font-semibold text-slate-500 flex items-center space-x-1">
               <i class="bi bi-funnel-fill text-indigo-600"></i>
               <span>Đang xem:</span>
             </span>
-            <span id="reconcile-current-filter-badge" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+            <span id="reconcile-current-filter-badge" class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
               <i class="bi bi-box-seam" id="reconcile-current-filter-icon"></i>
               <span id="reconcile-current-filter-text">Hàng đã ghi phát</span>
             </span>
             <button type="button" onclick="setReconciliationFilter('all')" id="reconcile-btn-show-all" 
-                    class="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition cursor-pointer flex items-center space-x-1 shadow-2xs" 
+                    class="text-xs font-semibold px-2.5 py-0.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition cursor-pointer flex items-center space-x-1 shadow-2xs" 
                     title="Bấm để xem danh sách toàn bộ mặt hàng không lọc">
               <i class="bi bi-collection text-slate-500"></i>
               <span>Xem tất cả (<span id="reconcile-all-skus-count">0</span>)</span>
@@ -2509,39 +2547,39 @@
           </div>
 
           <!-- Ô tìm kiếm trong modal đối chiếu -->
-          <div class="relative w-full sm:w-72">
+          <div class="relative w-full sm:w-72 md:w-80">
             <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" id="reconcile-search-input" oninput="handleReconciliationSearch(this.value)" placeholder="Tìm nhanh mã hoặc tên sản phẩm..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs">
+            <input type="text" id="reconcile-search-input" oninput="handleReconciliationSearch(this.value)" placeholder="Tìm nhanh mã hoặc tên sản phẩm..." class="w-full pl-8 pr-3 py-1 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-2xs">
           </div>
         </div>
 
-        <!-- BẢNG KẾT QUẢ ĐỐI CHIẾU -->
-        <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-          <div class="max-h-[460px] overflow-y-auto custom-scroll">
+        <!-- BẢNG KẾT QUẢ ĐỐI CHIẾU (TỰ ĐỘNG CHIẾM TOÀN BỘ PHẦN CÒN LẠI CỦA MÀN HÌNH) -->
+        <div class="flex-1 min-h-0 border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs flex flex-col">
+          <div class="flex-1 overflow-y-auto custom-scroll relative">
             <table class="min-w-full divide-y divide-slate-200 text-xs">
-              <thead class="bg-indigo-50/70 text-indigo-950 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider">
+              <thead class="bg-indigo-50/90 text-indigo-950 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider shadow-2xs backdrop-blur-xs">
                 <tr>
-                  <th class="px-3 py-2.5 text-center w-12 col-center">STT</th>
-                  <th class="px-3 py-2.5 text-center w-32 col-center font-mono">MÃ SẢN PHẨM</th>
-                  <th class="px-3 py-2.5 text-left col-item-name">TÊN MẶT HÀNG</th>
-                  <th class="px-3 py-2.5 text-center w-16 col-center">ĐVT</th>
-                  <th class="px-3 py-2.5 text-right w-28 col-num font-mono bg-indigo-100/60 border-l border-indigo-200 text-indigo-950">SL ĐÃ PHÁT</th>
-                  <th class="px-3 py-2.5 text-right w-28 col-num font-mono bg-slate-100/70 border-l border-slate-200 text-slate-900">SL TỔNG HỢP XUẤT</th>
-                  <th class="px-3 py-2.5 text-right w-32 col-num font-mono border-l border-slate-200">CHÊNH LỆCH</th>
-                  <th class="px-3 py-2.5 text-center w-48 col-center">KẾT QUẢ ĐỐI CHIẾU</th>
-                  <th class="px-3 py-2.5 text-center w-36 col-center whitespace-nowrap">THAO TÁC</th>
+                  <th class="px-3 py-2 text-center w-12 col-center">STT</th>
+                  <th class="px-3 py-2 text-center w-32 col-center font-mono">MÃ SẢN PHẨM</th>
+                  <th class="px-3 py-2 text-left col-item-name">TÊN MẶT HÀNG</th>
+                  <th class="px-3 py-2 text-center w-16 col-center">ĐVT</th>
+                  <th class="px-3 py-2 text-right w-28 col-num font-mono bg-indigo-100/60 border-l border-indigo-200 text-indigo-950">SL ĐÃ PHÁT</th>
+                  <th class="px-3 py-2 text-right w-28 col-num font-mono bg-slate-100/70 border-l border-slate-200 text-slate-900">SL TỔNG HỢP XUẤT</th>
+                  <th class="px-3 py-2 text-right w-32 col-num font-mono border-l border-slate-200">CHÊNH LỆCH</th>
+                  <th class="px-3 py-2 text-center w-48 col-center">KẾT QUẢ ĐỐI CHIẾU</th>
+                  <th class="px-3 py-2 text-center w-36 col-center whitespace-nowrap">THAO TÁC</th>
                 </tr>
               </thead>
               <tbody id="reconcile-table-tbody" class="divide-y divide-slate-100 bg-white">
                 <tr><td colspan="9" class="text-center py-8 text-slate-400">Đang nạp kết quả đối chiếu...</td></tr>
               </tbody>
-              <tfoot class="bg-slate-50 font-bold text-slate-900 text-xs border-t-2 border-slate-300">
+              <tfoot class="sticky bottom-0 z-10 bg-slate-50 font-bold text-slate-900 text-xs border-t-2 border-slate-300 shadow-2xs">
                 <tr>
-                  <td colspan="4" class="px-4 py-2.5 text-right uppercase text-slate-600">Tổng cộng hiển thị:</td>
-                  <td id="reconcile-foot-dispatched-qty" class="px-3 py-2.5 text-right font-black font-mono text-indigo-900 bg-indigo-50 border-l border-indigo-200">0</td>
-                  <td id="reconcile-foot-excel-qty" class="px-3 py-2.5 text-right font-black font-mono text-slate-900 bg-slate-100 border-l border-slate-200">0</td>
-                  <td id="reconcile-foot-diff-qty" class="px-3 py-2.5 text-right font-black font-mono border-l border-slate-200">0</td>
-                  <td colspan="2" id="reconcile-foot-summary-note" class="px-3 py-2.5 text-slate-500 font-medium">0 mặt hàng</td>
+                  <td colspan="4" class="px-4 py-2 text-right uppercase text-slate-600">Tổng cộng hiển thị:</td>
+                  <td id="reconcile-foot-dispatched-qty" class="px-3 py-2 text-right font-black font-mono text-indigo-900 bg-indigo-50 border-l border-indigo-200">0</td>
+                  <td id="reconcile-foot-excel-qty" class="px-3 py-2 text-right font-black font-mono text-slate-900 bg-slate-100 border-l border-slate-200">0</td>
+                  <td id="reconcile-foot-diff-qty" class="px-3 py-2 text-right font-black font-mono border-l border-slate-200">0</td>
+                  <td colspan="2" id="reconcile-foot-summary-note" class="px-3 py-2 text-slate-500 font-medium">0 mặt hàng</td>
                 </tr>
               </tfoot>
             </table>
@@ -2601,23 +2639,21 @@
         </button>
       </div>
 
-      <!-- NAV TABS -->
-      <div class="px-5 pt-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
-        <div class="flex items-center space-x-1 sm:space-x-2">
-          <button type="button" id="cust-modal-tab-groups-btn" onclick="switchCustModalTab('groups')" 
-                  class="px-4 py-2 text-xs font-black rounded-t-xl transition flex items-center space-x-1.5 border-t-2 border-x border-teal-600 bg-white text-teal-900 shadow-2xs">
-            <i class="bi bi-tags-fill text-teal-600"></i>
-            <span>1. Tạo & Phân nhóm sản phẩm</span>
-          </button>
-          <button type="button" id="cust-modal-tab-items-btn" onclick="switchCustModalTab('items')" 
-                  class="px-4 py-2 text-xs font-bold rounded-t-xl transition flex items-center space-x-1.5 border-t-2 border-x border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100">
-            <i class="bi bi-plus-circle-fill"></i>
-            <span>2. Thêm SP từ kho & Đổi tên rút gọn</span>
-          </button>
+      <!-- THANH ĐIỀU HƯỚNG / TIÊU ĐỀ: TẠO & QUẢN LÝ NHÓM SẢN PHẨM (TRÌNH BÀY LẠI HÀI HÒA, THỐNG NHẤT, BỎ DẠNG TAB ĐƠN) -->
+      <div class="px-5 py-2.5 bg-gradient-to-r from-teal-50/80 via-slate-50 to-teal-50/50 border-b border-teal-200/80 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center space-x-2.5 text-teal-950">
+          <span class="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">
+            <i class="bi bi-tags-fill"></i>
+          </span>
+          <span class="text-xs sm:text-[13px] font-black uppercase tracking-wide">
+            Tạo & Quản lý nhóm sản phẩm
+          </span>
         </div>
 
-        <div class="text-[11px] text-slate-500 font-medium pb-2 hidden sm:block">
-          <span id="cust-modal-summary-badge" class="font-mono font-bold text-teal-800 bg-teal-100/80 px-2 py-0.5 rounded-full">0 SP • 0 Nhóm</span>
+        <div>
+          <span id="cust-modal-summary-badge" class="font-mono font-bold text-teal-900 bg-white border border-teal-300 px-3 py-1 rounded-full text-xs shadow-2xs inline-flex items-center gap-1.5">
+            0 SP • 0 Nhóm
+          </span>
         </div>
       </div>
 
@@ -2625,46 +2661,35 @@
       <div class="p-4 sm:p-5 overflow-y-auto custom-scroll flex-1 text-xs bg-slate-50/40">
         
         <!-- ============================================== -->
-        <!-- TAB 1: TẠO & PHÂN NHÓM SẢN PHẨM -->
+        <!-- DANH MỤC NHÓM SẢN PHẨM -->
         <!-- ============================================== -->
         <div id="cust-modal-tab-groups" class="space-y-4">
-          <!-- KHỐI 1: TẠO NHÓM MỚI -->
-          <div class="bg-white p-3.5 rounded-xl border border-teal-200 shadow-2xs space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
-              <div>
+          <!-- KHỐI 1: TẠO NHÓM MỚI (TRÌNH BÀY GỌN GÀNG, BỎ PHẦN XEM NHANH CHIPS THEO YÊU CẦU) -->
+          <div class="bg-white p-3.5 rounded-xl border border-teal-200 shadow-2xs">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="flex-1">
                 <h4 class="font-bold text-teal-950 text-xs flex items-center gap-1.5">
                   <i class="bi bi-folder-plus text-teal-600 text-sm"></i>
                   <span>Tạo nhóm sản phẩm mới (Tùy ý bạn đặt tên)</span>
                 </h4>
                 <p class="text-[11px] text-slate-500 mt-0.5">
-                  Tạo các nhóm theo quy ước của bạn (VD: <b class="text-teal-900">Chếch, Bịt xả, Tê đều, Ba chạc 45°, Bạc, Nối thẳng, Bích, TCB, Bịt, Thông sàn, Góc...</b>)
+                  Quy ước gợi ý: <b class="text-teal-900 font-semibold">Chếch, Bịt xả, Tê đều, Ba chạc 45°, Bạc, Nối thẳng, Bích, TCB, Bịt, Thông sàn, Góc...</b>
                 </p>
               </div>
-            </div>
 
-            <!-- Form thêm nhóm -->
-            <div class="flex items-center gap-2 max-w-xl">
-              <div class="relative flex-1">
-                <i class="bi bi-tag absolute left-2.5 top-2.5 text-teal-600 text-xs"></i>
-                <input type="text" id="cust-new-group-name" 
-                       placeholder="Nhập tên nhóm mới (VD: Van / Khóa, Khớp nối, Ống D90...)" 
-                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addNewCustomGroupFromModal(); }"
-                       class="w-full pl-8 pr-3 py-1.5 border-2 border-teal-400 rounded-lg font-bold text-xs bg-teal-50/30 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-500">
-              </div>
-              <button type="button" onclick="addNewCustomGroupFromModal()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer shrink-0">
-                <i class="bi bi-plus-lg font-black"></i>
-                <span>+ Thêm nhóm</span>
-              </button>
-            </div>
-
-            <!-- Xem nhanh dạng thẻ chip -->
-            <div>
-              <div class="text-[11px] font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Xem nhanh các nhóm hiện có:</span>
-                <span class="text-slate-400 font-normal italic lowercase">(Bấm biểu tượng x để xóa nhóm)</span>
-              </div>
-              <div id="cust-modal-group-chips" class="flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-slate-50 rounded-xl border border-slate-200">
-                <!-- Render dynamic qua renderCustModalGroupChips() -->
+              <!-- Form thêm nhóm -->
+              <div class="flex items-center gap-2 w-full md:w-auto md:min-w-[420px]">
+                <div class="relative flex-1">
+                  <i class="bi bi-tag absolute left-2.5 top-2.5 text-teal-600 text-xs"></i>
+                  <input type="text" id="cust-new-group-name" 
+                         placeholder="Nhập tên nhóm mới (VD: Van / Khóa, Khớp nối, Ống D90...)" 
+                         onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addNewCustomGroupFromModal(); }"
+                         class="w-full pl-8 pr-3 py-1.5 border-2 border-teal-400 rounded-lg font-bold text-xs bg-teal-50/30 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-500 shadow-2xs">
+                </div>
+                <button type="button" onclick="addNewCustomGroupFromModal()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer shrink-0">
+                  <i class="bi bi-plus-lg font-black"></i>
+                  <span>+ Thêm nhóm</span>
+                </button>
               </div>
             </div>
           </div>
@@ -2679,10 +2704,10 @@
                 </span>
                 <span id="cust-modal-groups-table-badge" class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 font-mono font-bold text-[10.5px]">0 nhóm</span>
               </div>
-              <span class="text-[11px] text-slate-500 italic">Bấm "Sửa tên" để đổi tên nhóm (tự động cập nhật các SP thuộc nhóm) hoặc bấm "Xóa"</span>
+              <span class="text-[11px] text-slate-500 italic">Bấm "Xem thông tin" để xem & thêm SP vào nhóm, bấm "Sửa tên" hoặc "Xóa"</span>
             </div>
 
-            <div class="overflow-x-auto max-h-[220px] custom-scroll">
+            <div class="overflow-x-auto max-h-[60vh] min-h-[340px] custom-scroll">
               <table class="w-full min-w-[640px] divide-y divide-slate-200 text-xs">
                 <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200">
                   <tr>
@@ -2698,164 +2723,15 @@
               </table>
             </div>
           </div>
-
-          <!-- KHỐI 3: BẢNG GÁN SẢN PHẨM VÀO NHÓM -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div class="flex items-center space-x-2">
-                <span class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                  <i class="bi bi-link-45deg text-teal-600 text-base"></i>
-                  <span>Gán từng sản phẩm vào nhóm tương ứng</span>
-                </span>
-                <span id="cust-modal-group-items-badge" class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 font-mono font-bold text-[10.5px]">0 mặt hàng</span>
-              </div>
-
-              <!-- Thanh tìm kiếm nhanh sản phẩm trong bảng phân nhóm -->
-              <div class="relative w-full sm:w-64">
-                <i class="bi bi-search absolute left-2.5 top-1.5 text-slate-400 text-xs"></i>
-                <input type="text" id="cust-modal-group-filter-inp" oninput="renderCustModalGroupsTab()" 
-                       placeholder="Lọc nhanh sản phẩm để gán nhóm..." 
-                       class="w-full pl-7 pr-6 py-1 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-teal-500">
-                <button type="button" onclick="document.getElementById('cust-modal-group-filter-inp').value=''; renderCustModalGroupsTab();" class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 cursor-pointer">
-                  <i class="bi bi-x text-xs"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto max-h-[400px] custom-scroll">
-              <table class="min-w-full divide-y divide-slate-200 text-xs">
-                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200">
-                  <tr>
-                    <th class="px-2.5 py-2 text-center w-10">STT</th>
-                    <th class="px-3 py-2 text-left w-52 text-teal-900">Tên rút gọn của bạn</th>
-                    <th class="px-3 py-2 text-left w-64 text-teal-900">Chọn nhóm cho sản phẩm này</th>
-                    <th class="px-3 py-2 text-left col-item-name">Sản phẩm trong kho (Mã & Tên chuẩn)</th>
-                    <th class="px-2.5 py-2 text-center w-16">ĐVT</th>
-                  </tr>
-                </thead>
-                <tbody id="cust-modal-group-items-tbody" class="divide-y divide-slate-100 bg-white">
-                  <!-- Render dynamic qua renderCustModalGroupsTab() -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============================================== -->
-        <!-- TAB 2: THÊM & QUẢN LÝ SẢN PHẨM TRONG KHO -->
-        <!-- ============================================== -->
-        <div id="cust-modal-tab-items" class="hidden space-y-3.5">
-          <!-- FORM THÊM SẢN PHẨM MỚI VÀO DANH MỤC NHANH -->
-          <div class="bg-white p-3.5 rounded-xl border border-teal-200 shadow-2xs space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-teal-950 uppercase text-[11px] flex items-center gap-1.5">
-                <i class="bi bi-plus-circle-fill text-teal-600"></i>
-                <span>Thêm mặt hàng mới vào Bảng Nhập Nhanh:</span>
-              </span>
-              <span class="text-[11px] text-slate-500 italic">Chọn sản phẩm từ kho, đặt tên gọi rút gọn và chọn nhóm sản phẩm</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
-              <!-- Cột 1: Chọn sản phẩm kho -->
-              <div class="sm:col-span-5 relative">
-                <label class="block font-bold text-slate-700 text-[11px] mb-1">
-                  Sản phẩm trong kho <span class="text-rose-500">*</span>:
-                </label>
-                <input type="text" id="cust-fast-item-search" 
-                       placeholder="Gõ mã hoặc tên SP trong kho..." 
-                       autocomplete="off"
-                       oninput="handleCustFastItemSearchInput(this.value)"
-                       onkeydown="handleCustFastItemSearchKeydown(event)"
-                       class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
-                <input type="hidden" id="cust-fast-item-selected-code" value="">
-                <div id="cust-fast-item-search-dropdown" class="hidden absolute left-0 top-full mt-1 w-full sm:w-96 bg-white border border-teal-500 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto custom-scroll divide-y divide-slate-100"></div>
-              </div>
-
-              <!-- Cột 2: Tên gọi tùy biến theo bạn -->
-              <div class="sm:col-span-4">
-                <label class="block font-bold text-teal-900 text-[11px] mb-1">
-                  Tên gọi theo ý bạn (Rút gọn) <span class="text-rose-500">*</span>:
-                </label>
-                <input type="text" id="cust-fast-item-custom-name" 
-                       placeholder="VD: CHẾCH 75/6, BỊT XẢ 75..." 
-                       onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addFastItemToCustomizerList(); }"
-                       class="w-full px-2.5 py-1.5 border-2 border-teal-400 rounded-lg font-bold text-xs bg-teal-50/40 text-teal-950 focus:ring-2 focus:ring-teal-500">
-              </div>
-
-              <!-- Cột 3: Chọn nhóm sản phẩm -->
-              <div class="sm:col-span-2">
-                <label class="block font-bold text-teal-900 text-[11px] mb-1">
-                  Nhóm sản phẩm:
-                </label>
-                <select id="cust-fast-item-target-group" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-slate-800 font-bold focus:ring-2 focus:ring-teal-500">
-                  <!-- Dynamic options from groups -->
-                </select>
-              </div>
-
-              <!-- Cột 4: Nút thêm -->
-              <div class="sm:col-span-1">
-                <button type="button" onclick="addFastItemToCustomizerList()" class="w-full py-1.5 px-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center justify-center space-x-1 shadow-2xs cursor-pointer" title="Thêm vào danh mục nhanh">
-                  <i class="bi bi-plus-lg font-black"></i>
-                  <span>Thêm</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- BẢNG DANH SÁCH MẶT HÀNG NHẬP NHANH HIỆN TẠI -->
-          <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <div class="flex items-center space-x-2">
-                <span class="font-extrabold text-slate-800 uppercase tracking-wide">
-                  Danh sách toàn bộ mặt hàng trong bảng nhanh
-                </span>
-                <span id="cust-fast-items-count-badge" class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 font-mono font-bold text-[10.5px]">0 mặt hàng</span>
-              </div>
-
-              <div class="flex items-center space-x-2">
-                <button type="button" onclick="clearAllCustomFastItems()" class="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-lg font-semibold text-xs transition flex items-center space-x-1 cursor-pointer" title="Xóa toàn bộ để cấu hình lại từ đầu">
-                  <i class="bi bi-trash3"></i>
-                  <span>Xóa hết</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="overflow-x-auto max-h-[380px] custom-scroll">
-              <table class="min-w-full divide-y divide-slate-200 text-xs">
-                <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200">
-                  <tr>
-                    <th class="px-2.5 py-2 text-center w-10">STT</th>
-                    <th class="px-3 py-2 text-left w-48 text-teal-900">Nhóm sản phẩm</th>
-                    <th class="px-3 py-2 text-left w-52 text-teal-900">Tên gọi của bạn (Bấm để sửa)</th>
-                    <th class="px-3 py-2 text-left col-item-name">Sản phẩm trong kho (Mã & Tên chuẩn)</th>
-                    <th class="px-2.5 py-2 text-center w-16">ĐVT</th>
-                    <th class="px-2.5 py-2 text-center w-14">Xóa</th>
-                  </tr>
-                </thead>
-                <tbody id="cust-fast-items-tbody" class="divide-y divide-slate-100 bg-white">
-                  <!-- Dynamically generated rows -->
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
 
       </div>
 
-      <!-- FOOTER -->
-      <div class="px-5 py-3 bg-white border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+      <!-- FOOTER THÔNG BÁO TỰ ĐỘNG LƯU (ĐÃ LOẠI BỎ 2 NÚT ĐÓNG DƯ THỪA) -->
+      <div class="px-5 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
         <div class="text-[11px] text-teal-800 italic flex items-center gap-1.5 font-medium">
           <i class="bi bi-shield-check text-teal-600 text-sm"></i>
-          <span>Hệ thống tự động lưu tức thì mỗi khi bấm Thêm hoặc sửa. Tích chọn nhóm ở Bảng Phát Nhanh để sản phẩm hiện lên.</span>
-        </div>
-        <div class="flex items-center space-x-2 justify-end">
-          <button type="button" onclick="closeFastItemsCustomizerModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">
-            Đóng
-          </button>
-          <button type="button" onclick="saveAndApplyFastItemsCustomizer()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer" title="Dữ liệu đã được tự động lưu. Bấm để đóng bảng cài đặt">
-            <i class="bi bi-check2-circle text-base"></i>
-            <span>Đã Tự Động Lưu (Đóng)</span>
-          </button>
+          <span>Hệ thống tự động lưu tức thì mỗi khi bấm Thêm hoặc sửa. Bấm biểu tượng <b>✕</b> ở góc trên hoặc nhấn phím <b>Esc</b> để đóng.</span>
         </div>
       </div>
 
@@ -6021,6 +5897,9 @@ window.google.script = {
       }
 
       document.addEventListener('click', function(e) {
+        if (!e.target.closest('#dispatch-vehicle-dropdown') && !e.target.closest('#dispatch-input-vehicle')) {
+          if (typeof closeDispatchVehicleDropdown === 'function') closeDispatchVehicleDropdown();
+        }
         if (!e.target.closest('#global-autocomplete-dropdown') && 
             !e.target.closest('[id^="input_code_"]') && 
             !e.target.closest('[id^="input_nt_code_"]') && 
@@ -6029,6 +5908,12 @@ window.google.script = {
             !e.target.closest('#dispatch-filter-product-container-detail') &&
             !e.target.closest('#dispatch-export-menu-container')) {
           closeAllDropdowns();
+        }
+      });
+
+      document.addEventListener('focusin', function(e) {
+        if (!e.target.closest('#dispatch-vehicle-dropdown') && !e.target.closest('#dispatch-input-vehicle')) {
+          if (typeof closeDispatchVehicleDropdown === 'function') closeDispatchVehicleDropdown();
         }
       });
     }
@@ -8278,6 +8163,9 @@ window.google.script = {
     }
 
     function closeAllDropdowns() {
+      if (typeof closeDispatchVehicleDropdown === 'function') {
+        closeDispatchVehicleDropdown();
+      }
       const gDropdown = document.getElementById('global-autocomplete-dropdown');
       if (gDropdown) {
         gDropdown.style.display = 'none';
@@ -11478,6 +11366,274 @@ window.google.script = {
       }
     }
 
+    let activeVehicleSuggestions = [];
+    let highlightedVehicleIndex = -1;
+
+    function getCombinedVehiclesList() {
+      const list = [];
+      const seenPlates = new Set();
+
+      // 1. Xe từ danh mục
+      if (Array.isArray(vehiclesListCached)) {
+        vehiclesListCached.forEach(v => {
+          const p = (v.plate || '').trim().toUpperCase();
+          if (p) seenPlates.add(p);
+          list.push({
+            code: v.code || '',
+            plate: v.plate || '',
+            driver: v.driver || '',
+            phone: v.phone || '',
+            note: v.note || '',
+            source: 'catalog'
+          });
+        });
+      }
+
+      // 2. Xe đã từng phát hàng trước đây (nếu chưa có trong danh mục)
+      if (Array.isArray(dispatchListCached)) {
+        dispatchListCached.forEach(it => {
+          const p = (it.license_plate || '').trim().toUpperCase();
+          if (p && !seenPlates.has(p)) {
+            seenPlates.add(p);
+            list.push({
+              code: '',
+              plate: it.license_plate || '',
+              driver: it.driver_name || '',
+              phone: it.driver_phone || '',
+              note: 'Đã từng phát hàng trước đây',
+              source: 'history'
+            });
+          }
+        });
+      }
+
+      return list;
+    }
+
+    function highlightVehicleText(text) {
+      if (!text) return '';
+      return escapeHtml(text);
+    }
+
+    function handleDispatchVehicleAutocomplete(val) {
+      const dropdown = document.getElementById('dispatch-vehicle-dropdown');
+      const inputEl = document.getElementById('dispatch-input-vehicle');
+      if (!dropdown || !inputEl) return;
+
+      const q = (val || '').trim().toUpperCase();
+      const allVehicles = getCombinedVehiclesList();
+
+      if (!q) {
+        activeVehicleSuggestions = allVehicles.slice(0, 25);
+      } else {
+        activeVehicleSuggestions = allVehicles.filter(v => {
+          const matchPlate = v.plate && v.plate.toUpperCase().includes(q);
+          const matchCode = v.code && v.code.toUpperCase().includes(q);
+          const matchDriver = v.driver && v.driver.toUpperCase().includes(q);
+          const matchPhone = v.phone && v.phone.includes(q);
+          return matchPlate || matchCode || matchDriver || matchPhone;
+        }).sort((a, b) => {
+          const aExact = (a.plate && a.plate.toUpperCase() === q) || (a.code && a.code.toUpperCase() === q);
+          const bExact = (b.plate && b.plate.toUpperCase() === q) || (b.code && b.code.toUpperCase() === q);
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          const aStarts = (a.plate && a.plate.toUpperCase().startsWith(q)) || (a.code && a.code.toUpperCase().startsWith(q));
+          const bStarts = (b.plate && b.plate.toUpperCase().startsWith(q)) || (b.code && b.code.toUpperCase().startsWith(q));
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
+          return 0;
+        }).slice(0, 30);
+      }
+
+      highlightedVehicleIndex = activeVehicleSuggestions.length > 0 ? 0 : -1;
+      renderDispatchVehicleDropdown(q);
+      onDispatchVehicleInput(val);
+    }
+
+    function renderDispatchVehicleDropdown(query) {
+      const dropdown = document.getElementById('dispatch-vehicle-dropdown');
+      if (!dropdown) return;
+
+      if (activeVehicleSuggestions.length === 0) {
+        if (!query) {
+          dropdown.style.display = 'none';
+          dropdown.classList.add('hidden');
+          return;
+        }
+        dropdown.innerHTML = `
+          <div class="p-3 text-center bg-teal-50/40 text-xs text-slate-600">
+            <i class="bi bi-truck text-teal-600 text-base mb-1 block"></i>
+            <div class="font-bold text-teal-950">Xe mới: <span class="font-mono text-teal-700 font-black">${escapeHtml(query)}</span></div>
+            <div class="text-[11px] text-slate-500 mt-0.5">Hệ thống sẽ tự động lưu xe vào danh mục khi lưu phiếu</div>
+          </div>
+        `;
+        dropdown.style.display = 'block';
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      let html = `
+        <div class="px-3.5 py-2 bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 border-b border-teal-200/90 flex items-center justify-between text-xs font-black text-teal-950">
+          <div class="flex items-center gap-1.5">
+            <i class="bi bi-truck text-teal-600 text-sm"></i>
+            <span>GỢI Ý XE LẤY HÀNG (${activeVehicleSuggestions.length})</span>
+          </div>
+          <span class="text-[10px] text-teal-700 font-bold bg-white px-2 py-0.5 rounded-full border border-teal-200 shadow-2xs">Bấm hoặc Enter</span>
+        </div>
+        <div class="divide-y divide-slate-100">
+      `;
+
+      activeVehicleSuggestions.forEach((v, idx) => {
+        const isSelected = (idx === highlightedVehicleIndex);
+        const itemClass = isSelected 
+          ? 'bg-teal-100/70 ring-1 ring-inset ring-teal-400' 
+          : 'hover:bg-teal-50/60 bg-white';
+        
+        const plateBadgeClass = isSelected
+          ? 'bg-teal-700 text-white border-teal-700'
+          : 'bg-teal-50 text-teal-900 border-teal-300';
+
+        const codeBadgeClass = isSelected
+          ? 'bg-blue-700 text-white border-blue-700'
+          : 'bg-blue-50 text-blue-800 border-blue-200';
+
+        html += `
+          <div class="p-2.5 ${itemClass} cursor-pointer transition-colors group select-none"
+               id="veh-suggest-item-${idx}"
+               onmousedown="selectDispatchVehicle('${escapeHtml(v.plate)}', '${escapeHtml(v.driver || '')}', '${escapeHtml(v.phone || '')}', '${escapeHtml(v.note || '')}')">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-mono font-black ${plateBadgeClass} border shadow-2xs">
+                  <i class="bi bi-truck mr-1 text-xs ${isSelected ? 'text-teal-200' : 'text-teal-600'}"></i>${highlightVehicleText(v.plate || 'CHƯA RÕ BIỂN SỐ', query)}
+                </span>
+                ${v.code ? `
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${codeBadgeClass} border shadow-2xs">
+                    <i class="bi bi-tag-fill mr-1 text-[9px] ${isSelected ? 'text-blue-200' : 'text-blue-500'}"></i>${highlightVehicleText(v.code, query)}
+                  </span>
+                ` : ''}
+              </div>
+
+              ${v.driver ? `
+                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 shrink-0">
+                  <i class="bi bi-person-fill text-slate-400 text-xs"></i>
+                  <span>${highlightVehicleText(v.driver, query)}</span>
+                  ${v.phone ? `
+                    <span class="font-mono text-[11px] text-emerald-800 font-bold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                      <i class="bi bi-telephone-fill mr-0.5 text-emerald-600 text-[10px]"></i>${highlightVehicleText(v.phone, query)}
+                    </span>
+                  ` : ''}
+                </div>
+              ` : ''}
+            </div>
+
+            ${v.note ? `
+              <div class="text-[10.5px] text-slate-500 truncate mt-1 pl-0.5 flex items-center gap-1">
+                <i class="bi bi-info-circle text-slate-400 text-[10px]"></i>
+                <span>${escapeHtml(v.note)}</span>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+      dropdown.classList.remove('hidden');
+
+      scrollHighlightedVehicleIntoView();
+    }
+
+    function scrollHighlightedVehicleIntoView() {
+      if (highlightedVehicleIndex < 0) return;
+      const el = document.getElementById(`veh-suggest-item-${highlightedVehicleIndex}`);
+      if (el) {
+        el.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function selectDispatchVehicle(plate, driver, phone, note) {
+      const vehInp = document.getElementById('dispatch-input-vehicle');
+      if (vehInp) {
+        vehInp.value = plate || '';
+      }
+      if (driver) {
+        const driverInp = document.getElementById('dispatch-input-driver');
+        if (driverInp) driverInp.value = driver;
+      }
+      if (phone) {
+        const phoneInp = document.getElementById('dispatch-input-driver-phone');
+        if (phoneInp) phoneInp.value = phone;
+      }
+      if (note) {
+        const noteInp = document.getElementById('dispatch-input-general-note');
+        if (noteInp && !noteInp.value) noteInp.value = note;
+      }
+
+      closeDispatchVehicleDropdown();
+
+      const driverInp = document.getElementById('dispatch-input-driver');
+      if (driverInp && !driverInp.value) {
+        driverInp.focus();
+      }
+    }
+
+    function handleDispatchVehicleKeydown(e) {
+      const dropdown = document.getElementById('dispatch-vehicle-dropdown');
+      const isOpen = dropdown && dropdown.style.display !== 'none' && !dropdown.classList.contains('hidden');
+
+      if (e.key === 'ArrowDown') {
+        if (!isOpen) {
+          handleDispatchVehicleAutocomplete(e.target.value);
+          return;
+        }
+        e.preventDefault();
+        if (activeVehicleSuggestions.length > 0) {
+          highlightedVehicleIndex = (highlightedVehicleIndex + 1) % activeVehicleSuggestions.length;
+          renderDispatchVehicleDropdown(e.target.value.trim().toUpperCase());
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (!isOpen) return;
+        e.preventDefault();
+        if (activeVehicleSuggestions.length > 0) {
+          highlightedVehicleIndex = (highlightedVehicleIndex - 1 + activeVehicleSuggestions.length) % activeVehicleSuggestions.length;
+          renderDispatchVehicleDropdown(e.target.value.trim().toUpperCase());
+        }
+      } else if (e.key === 'Enter') {
+        if (isOpen && highlightedVehicleIndex >= 0 && activeVehicleSuggestions[highlightedVehicleIndex]) {
+          e.preventDefault();
+          const v = activeVehicleSuggestions[highlightedVehicleIndex];
+          selectDispatchVehicle(v.plate, v.driver, v.phone, v.note);
+        } else {
+          onDispatchVehicleChange(e.target.value);
+          closeDispatchVehicleDropdown();
+        }
+      } else if (e.key === 'Tab') {
+        closeDispatchVehicleDropdown();
+        onDispatchVehicleChange(e.target.value);
+      } else if (e.key === 'Escape') {
+        closeDispatchVehicleDropdown();
+      }
+    }
+
+    function onDispatchVehicleBlur(val) {
+      setTimeout(() => {
+        closeDispatchVehicleDropdown();
+        onDispatchVehicleChange(val);
+      }, 150);
+    }
+
+    function closeDispatchVehicleDropdown() {
+      const dropdown = document.getElementById('dispatch-vehicle-dropdown');
+      if (dropdown) {
+        dropdown.style.display = 'none';
+        dropdown.classList.add('hidden');
+      }
+      highlightedVehicleIndex = -1;
+    }
+
     function onDispatchVehicleInput(val) {
       if (!val) return;
       const clean = val.trim().toUpperCase();
@@ -11628,23 +11784,24 @@ window.google.script = {
       const containerStaff = document.getElementById('dispatch-staff-container');
       const hintText = document.getElementById('dispatch-view-hint-text');
 
-      const inactiveBase = "px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200/90 shadow-2xs font-bold cursor-pointer";
+      const activeBase = "px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs font-bold cursor-pointer shadow-xs";
+      const inactiveBase = "px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 cursor-pointer";
 
       // Tab 1: Tổng hợp sản phẩm
       if (tabSummary) {
         if (mode === 'summary') {
-          tabSummary.className = "px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-teal-600 text-white shadow-md shadow-teal-600/30 font-black cursor-pointer ring-2 ring-teal-400/30";
-          if (badgeSummary) badgeSummary.className = "ml-1 px-2 py-0.5 bg-teal-800 text-teal-100 text-[10.5px] rounded-full font-mono font-bold";
+          tabSummary.className = `${activeBase} bg-teal-700 text-white`;
+          if (badgeSummary) badgeSummary.className = "ml-1.5 px-1.5 py-0.5 bg-teal-900/60 text-teal-100 text-[10px] rounded-full font-mono font-bold";
         } else {
           tabSummary.className = inactiveBase;
-          if (badgeSummary) badgeSummary.className = "ml-1 px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-200 text-[10.5px] rounded-full font-mono font-bold";
+          if (badgeSummary) badgeSummary.className = "ml-1.5 px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[10px] rounded-full font-mono font-bold";
         }
       }
 
       // Tab 2: Chi tiết từng phiếu
       if (tabDetail) {
         if (mode === 'detail') {
-          tabDetail.className = "px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-teal-600 text-white shadow-md shadow-teal-600/30 font-black cursor-pointer ring-2 ring-teal-400/30";
+          tabDetail.className = `${activeBase} bg-teal-700 text-white`;
         } else {
           tabDetail.className = inactiveBase;
         }
@@ -11653,11 +11810,11 @@ window.google.script = {
       // Tab 3: Thống kê theo nhân viên
       if (tabStaff) {
         if (mode === 'staff') {
-          tabStaff.className = "px-4 py-2 rounded-xl transition-all duration-150 flex items-center space-x-2 bg-blue-600 text-white shadow-md shadow-blue-600/30 font-black cursor-pointer ring-2 ring-blue-400/30";
-          if (badgeStaff) badgeStaff.className = "ml-1 px-2 py-0.5 bg-blue-800 text-blue-100 text-[10.5px] rounded-full font-mono font-bold";
+          tabStaff.className = `${activeBase} bg-teal-700 text-white`;
+          if (badgeStaff) badgeStaff.className = "ml-1.5 px-1.5 py-0.5 bg-teal-900/60 text-teal-100 text-[10px] rounded-full font-mono font-bold";
         } else {
           tabStaff.className = inactiveBase;
-          if (badgeStaff) badgeStaff.className = "ml-1 px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10.5px] rounded-full font-mono font-bold";
+          if (badgeStaff) badgeStaff.className = "ml-1.5 px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[10px] rounded-full font-mono font-bold";
         }
       }
 
@@ -11672,12 +11829,6 @@ window.google.script = {
       if (containerStaff) {
         if (mode === 'staff') containerStaff.classList.remove('hidden');
         else containerStaff.classList.add('hidden');
-      }
-
-      if (hintText) {
-        if (mode === 'summary') hintText.textContent = "Nhấp đúp chuột (2 lần) vào dòng sản phẩm để xem chi tiết các xe";
-        else if (mode === 'detail') hintText.textContent = "Hiển thị chi tiết từng lần phát hàng của các xe theo ngày";
-        else if (mode === 'staff') hintText.textContent = "Bấm 'Chi tiết xe' để xem danh sách các xe nhân viên đã phát";
       }
     }
 
@@ -11724,7 +11875,8 @@ window.google.script = {
             dispatch_time: it.dispatch_time || '',
             note: it.note || '',
             items: [],
-            totalQty: 0
+            totalQty: 0,
+            firstRecordId: it.id || 0
           });
           if (plate && plate !== 'CHƯA RÕ BIỂN SỐ') {
             sData.plateTripsMap.set(plate, (sData.plateTripsMap.get(plate) || 0) + 1);
@@ -11734,6 +11886,7 @@ window.google.script = {
         const trip = sData.tripsMap.get(tripKey);
         trip.totalQty += qty;
         trip.items.push({
+          id: it.id,
           product_code: it.product_code || '-',
           product_name: it.product_name || '-',
           unit: it.unit || '-',
@@ -11867,8 +12020,11 @@ window.google.script = {
           const multiBadge = tripCount > 1 
             ? `<span class="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-teal-100 text-teal-800 border border-teal-200 shrink-0" title="Phát ${tripCount} lượt">${tripCount} lượt</span>` 
             : '';
+          const matchingTrip = s.trips.find(t => (t.license_plate || '').toUpperCase() === p.toUpperCase());
+          const targetRecId = matchingTrip ? (matchingTrip.firstRecordId || matchingTrip.items?.[0]?.id || 0) : 0;
+          const dblClickAttr = targetRecId ? `ondblclick="event.stopPropagation(); openEditDispatchVoucher(${targetRecId})"` : '';
           return `
-            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white text-slate-800 border border-slate-300 hover:border-teal-500 hover:bg-teal-50/50 hover:text-teal-950 shadow-2xs transition-all tracking-wide select-all" title="Biển số: ${escapeHtml(p)}${tripCount > 1 ? ` (${tripCount} lượt)` : ''}">
+            <span ${dblClickAttr} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white text-slate-800 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs transition-all tracking-wide select-none cursor-pointer" title="Biển số: ${escapeHtml(p)}${tripCount > 1 ? ` (${tripCount} lượt)` : ''} - Nhấp đúp chuột để sửa phiếu">
               <i class="bi bi-truck text-teal-600 mr-1.5 text-xs shrink-0"></i>
               <span>${escapeHtml(p)}</span>
               ${multiBadge}
@@ -11952,8 +12108,12 @@ window.google.script = {
 
       let tripsHtml = '';
       s.trips.forEach((trip, idx) => {
+        const tripTargetId = trip.firstRecordId || trip.items?.[0]?.id || 0;
         const rowsHtml = trip.items.map((it, i) => `
-          <tr class="hover:bg-slate-50/80 transition border-b border-slate-100 last:border-b-0">
+          <tr ondblclick="Swal.close(); openEditDispatchVoucher(${it.id || tripTargetId})" 
+              onmousedown="event.detail > 1 && event.preventDefault()"
+              class="hover:bg-amber-50/50 cursor-pointer transition border-b border-slate-100 last:border-b-0 select-none"
+              title="Nhấp đúp chuột để sửa dòng phiếu này">
             <td class="px-3 py-2 text-center text-slate-400 font-mono text-[11px] col-center font-bold">${i + 1}</td>
             <td class="px-3 py-2 text-center font-mono font-bold text-teal-800 text-xs col-center bg-slate-50/40">${escapeHtml(it.product_code)}</td>
             <td class="px-3 py-2 text-slate-900 font-medium text-xs">${escapeHtml(it.product_name)}</td>
@@ -11969,11 +12129,14 @@ window.google.script = {
           : '';
 
         tripsHtml += `
-          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs text-left">
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs text-left select-none">
             <div class="bg-gradient-to-r from-teal-50/90 to-slate-50 px-3.5 py-2.5 border-b border-teal-100 flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center space-x-2">
                 <span class="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center font-mono font-black text-xs shrink-0">${idx + 1}</span>
-                <span class="px-2.5 py-1 rounded-lg font-mono font-black text-xs bg-white text-teal-950 border border-teal-300 shadow-2xs">
+                <span ondblclick="Swal.close(); openEditDispatchVoucher(${tripTargetId})"
+                      onmousedown="event.detail > 1 && event.preventDefault()"
+                      class="px-2.5 py-1 rounded-lg font-mono font-black text-xs bg-white text-teal-950 border border-teal-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs cursor-pointer transition select-none"
+                      title="Nhấp đúp chuột để sửa phiếu xe này">
                   <i class="bi bi-truck mr-1 text-teal-600"></i>${escapeHtml(trip.license_plate)}
                 </span>
                 ${driverInfo}
@@ -12386,6 +12549,21 @@ window.google.script = {
         });
       });
 
+      prodMap.forEach(pData => {
+        pData.records.sort((a, b) => {
+          const staffA = (a.staff || '').trim();
+          const staffB = (b.staff || '').trim();
+          const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+          if (staffCmp !== 0) return staffCmp;
+
+          const timeA = `${a.date || ''} ${a.time || ''}`;
+          const timeB = `${b.date || ''} ${b.time || ''}`;
+          if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+          return (a.id || 0) - (b.id || 0);
+        });
+      });
+
       return Array.from(prodMap.values()).sort((a, b) => b.totalQty - a.totalQty);
     }
 
@@ -12461,15 +12639,20 @@ window.google.script = {
         if (r.driver) driverParts.push(r.driver);
         if (r.phone) driverParts.push(`(${r.phone})`);
         const driverDisplay = driverParts.join(' ') || '-';
+        const isGroupStart = idx > 0 && (r.staff || '').trim() !== (pData.records[idx - 1].staff || '').trim();
+        const groupBorderClass = isGroupStart ? 'border-t-2 border-slate-300' : 'border-b border-slate-100';
 
         return `
-          <tr class="hover:bg-teal-50/30 transition-colors border-b border-slate-100 text-xs">
+          <tr ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})" onmousedown="event.detail > 1 && event.preventDefault()" class="hover:bg-amber-50/50 cursor-pointer transition-colors ${groupBorderClass} text-xs select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2.5 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
             <td class="px-3 py-2.5 text-slate-800 whitespace-nowrap font-medium">
               ${escapeHtml(driverDisplay)}
             </td>
             <td class="px-3 py-2.5 text-center font-mono col-center whitespace-nowrap">
-              <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200/80 font-bold text-xs shadow-2xs">
+              <span ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"
+                    onmousedown="event.detail > 1 && event.preventDefault()"
+                    class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-950 text-slate-800 border border-slate-200/80 font-bold text-xs shadow-2xs cursor-pointer transition select-none"
+                    title="Nhấp đúp chuột để sửa phiếu xe này">
                 <i class="bi bi-truck mr-1.5 text-teal-600"></i> ${escapeHtml(r.plate || '-')}
               </span>
             </td>
@@ -12602,9 +12785,6 @@ window.google.script = {
                 <h3 class="text-xs sm:text-sm font-black text-teal-950 uppercase tracking-wide">
                   BẢNG TỔNG HỢP SẢN PHẨM PHÁT HÀNG THEO XE
                 </h3>
-                <span class="hidden md:inline-flex items-center text-[11px] text-teal-800 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-200/80 font-medium">
-                  <i class="bi bi-mouse mr-1 text-teal-600"></i>Click 2 lần vào dòng SP để xem chi tiết
-                </span>
               </div>
               <p class="text-[11px] text-slate-500 mt-0.5">
                 Tổng hợp tất cả sản phẩm thành viên kho phát • Sản phẩm trùng nhau tự động cộng dồn lại
@@ -12612,14 +12792,14 @@ window.google.script = {
             </div>
           </div>
 
-          <div class="flex items-center space-x-2.5 shrink-0 self-end sm:self-auto">
-            <div class="bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200 text-right">
-              <div class="text-[10px] uppercase font-bold text-teal-700">Tổng mặt hàng</div>
-              <div class="text-xs font-black font-mono text-teal-950">${productsAggregated.length} SKU</div>
+          <div class="flex items-center flex-wrap gap-2 shrink-0 self-end sm:self-auto">
+            <div class="inline-flex items-center space-x-1.5 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200 text-xs shadow-2xs">
+              <span class="text-[11px] uppercase font-bold text-teal-700">Tổng mặt hàng:</span>
+              <span class="text-sm font-black font-mono text-teal-950">${productsAggregated.length}</span>
             </div>
-            <div class="bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 text-right">
-              <div class="text-[10px] uppercase font-bold text-emerald-700">Tổng SL phát (Cộng dồn)</div>
-              <div class="text-sm font-black font-mono text-emerald-900">${formatNumber(totalOverallQty)}</div>
+            <div class="inline-flex items-center space-x-1.5 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 text-xs shadow-2xs">
+              <span class="text-[11px] uppercase font-bold text-emerald-700">Tổng SL phát (Cộng dồn):</span>
+              <span class="text-sm font-black font-mono text-emerald-900">${formatNumber(totalOverallQty)}</span>
             </div>
           </div>
         </div>
@@ -12744,11 +12924,14 @@ window.google.script = {
         const fullNote = noteParts.join(' | ') || '-';
 
         return `
-          <tr class="hover:bg-teal-50/40 transition border-b border-slate-100">
+          <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
             <td class="px-3 py-2 text-center font-mono text-slate-600 col-center whitespace-nowrap text-[11px]">${dateTimeFull}</td>
             <td class="px-3 py-2 text-center col-center whitespace-nowrap">
-              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-mono font-black bg-teal-50 text-teal-800 border border-teal-200">
+              <span ondblclick="event.stopPropagation(); openEditDispatchVoucher(${it.id})"
+                    onmousedown="event.detail > 1 && event.preventDefault()"
+                    class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-mono font-black bg-teal-50 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-950 text-teal-800 border border-teal-200 cursor-pointer shadow-2xs transition select-none"
+                    title="Nhấp đúp chuột để sửa phiếu phát cho xe này">
                 <i class="bi bi-truck mr-1 text-teal-600"></i> ${it.license_plate || '-'}
               </span>
             </td>
@@ -12779,7 +12962,17 @@ window.google.script = {
     let editingDispatchContext = null;
 
     function openEditDispatchVoucher(targetId) {
-      const targetItem = dispatchListCached.find(x => x.id === targetId);
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+      }
+      if (typeof Swal !== 'undefined' && Swal.isVisible()) {
+        Swal.close();
+      }
+      if (typeof switchTab === 'function') {
+        switchTab('dispatch');
+      }
+
+      const targetItem = dispatchListCached.find(x => x.id === targetId || String(x.id) === String(targetId));
       if (!targetItem) {
         Swal.fire('Lỗi', 'Không tìm thấy dữ liệu dòng phát hàng!', 'error');
         return;
@@ -12813,7 +13006,11 @@ window.google.script = {
       };
 
       document.getElementById('dispatch-list-view').classList.add('hidden');
-      document.getElementById('dispatch-create-view').classList.remove('hidden');
+      const createView = document.getElementById('dispatch-create-view');
+      if (createView) {
+        createView.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
 
       const stickyDispatchBar = document.getElementById('sticky-dispatch-bar');
       if (stickyDispatchBar) {
@@ -12873,51 +13070,36 @@ window.google.script = {
       const tbody = document.getElementById('dispatch-form-tbody');
       if (tbody) tbody.innerHTML = '';
 
+      // BẢNG NHẬP NHANH THÌ ĐỂ TRỐNG HOÀN TOÀN
       resetFastItemsQuantities();
-      const fastItems = getCustomFastItems();
+      checkedFastGroupsList = [];
 
+      // TOÀN BỘ DANH SÁCH MẶT HÀNG CỦA PHIẾU ĐƯỢC HIỂN THỊ Ở BẢNG "MẶT HÀNG BỔ SUNG KHÁC NGOÀI BẢNG NHẬP NHANH"
       let targetRowId = null;
-      const editActiveGroups = new Set();
       relatedRecords.forEach(rec => {
-        const pCode = (rec.product_code || '').trim().toUpperCase();
-        const foundFastItem = fastItems.find(fi => (fi.code || '').trim().toUpperCase() === pCode);
-        if (foundFastItem) {
-          fastDispatchItemsState[foundFastItem.id] = {
-            tallyExpr: rec.quantity ? String(rec.quantity) : '',
-            calculatedQty: parseSmartNumber(rec.quantity)
-          };
-          if (foundFastItem.group) {
-            editActiveGroups.add(foundFastItem.group);
-          } else {
-            editActiveGroups.add('__UNGROUPED__');
-          }
-        } else {
-          const rowId = addDispatchFormRow({
-            code: rec.product_code || '',
-            name: rec.product_name || '',
-            unit: rec.unit || '',
-            quantity: rec.quantity || 0,
-            note: rec.note || ''
-          }, false);
+        const rowId = addDispatchFormRow({
+          code: rec.product_code || '',
+          name: rec.product_name || '',
+          unit: rec.unit || '',
+          quantity: rec.quantity || 0,
+          note: rec.note || ''
+        }, false);
 
-          if (rec.id === targetId) {
-            targetRowId = rowId;
-          }
+        if (Number(rec.id) === Number(targetId)) {
+          targetRowId = rowId;
         }
       });
 
-      // Mở sẵn các nhóm có sản phẩm phát của phiếu này để người dùng kiểm tra ngay
-      checkedFastGroupsList = Array.from(editActiveGroups);
-
-      if (dispatchFormRows.length === 0) {
-        addDispatchFormRow(null, false);
+      // Nếu không tìm thấy khớp ID thì mặc định chọn dòng đầu tiên
+      if (!targetRowId && dispatchFormRows.length > 0) {
+        targetRowId = dispatchFormRows[0].id;
       }
 
       renderFastGroupCheckboxes();
       renderFastItemsTable();
       calculateDispatchFormSummary();
 
-      // Tự động cuộn đến đúng dòng sản phẩm đấy trong phiếu và nhấp nháy highlight
+      // NHẢY ĐÚNG ĐẾN DÒNG SỬA: CUỘN MƯỢT, HIGHLIGHT NỔI BẬT VÀ TỰ ĐỘNG FOCUS Ô SỐ LƯỢNG
       if (targetRowId) {
         setTimeout(() => {
           const rowTr = document.getElementById(`tr_${targetRowId}`);
@@ -12938,7 +13120,7 @@ window.google.script = {
             qtyInp.focus();
             qtyInp.select();
           }
-        }, 250);
+        }, 200);
       }
     }
 
@@ -13292,31 +13474,19 @@ window.google.script = {
       const totalQty = allValidItems.reduce((sum, r) => sum + parseSmartNumber(r.quantity), 0);
       const isEditing = !!(editingDispatchContext && editingDispatchContext.isEdit);
 
-      const confirmResult = await Swal.fire({
-        title: isEditing ? `Cập nhật phiếu phát hàng cho xe ${vehicle}?` : `Lưu phát hàng cho xe ${vehicle}?`,
-        html: `
-          <div class="text-left text-xs space-y-2 p-2 bg-teal-50 border border-teal-200 rounded-xl">
-            <div>Số phiếu: <b class="text-teal-900 font-mono text-xs">${escapeHtml(voucherNo)}</b></div>
-            <div>Số xe: <b class="text-teal-900 font-mono text-sm">${escapeHtml(vehicle)}</b></div>
-            <div>Lái xe: <b class="text-slate-800">${escapeHtml(driver || '-')}${driverPhone ? ' (' + escapeHtml(driverPhone) + ')' : ''}</b></div>
-            <div>Thành viên phát: <b class="text-slate-800">${escapeHtml(staff)}</b></div>
-            <div>Thời gian: <b>${time} • ${formatDateVN(date)}</b></div>
-            <div>Số mặt hàng: <b>${allValidItems.length} mã</b> (${validFastList.length} nhanh + ${validManualRows.length} bổ sung) • Tổng SL: <b class="text-teal-700 font-mono">${formatNumber(totalQty)}</b></div>
-            <div class="text-[11px] text-teal-800 italic pt-1 border-t border-teal-200">
-              <i class="bi bi-info-circle"></i> Bản ghi được lưu để đối chiếu kiểm tra, <b>không trừ số tồn kho</b>.
-            </div>
-          </div>
-        `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: isEditing ? 'Xác nhận cập nhật' : (andAddNew ? 'Đồng ý & Thêm mới' : 'Đồng ý lưu'),
-        cancelButtonText: 'Kiểm tra lại',
-        confirmButtonColor: '#0d9488'
+      const btnSave = document.getElementById('btn-submit-dispatch');
+      const btnNew = document.getElementById('btn-submit-dispatch-new');
+      if (btnSave) { btnSave.disabled = true; btnSave.classList.add('opacity-70', 'pointer-events-none'); }
+      if (btnNew) { btnNew.disabled = true; btnNew.classList.add('opacity-70', 'pointer-events-none'); }
+
+      // Hiển thị thông báo trạng thái nhẹ dạng toast ở góc trên để không làm gián đoạn người dùng
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        title: isEditing ? 'Đang cập nhật phiếu...' : 'Đang lưu phiếu phát hàng...',
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading()
       });
-
-      if (!confirmResult.isConfirmed) return;
-
-      Swal.fire({ title: isEditing ? 'Đang cập nhật phiếu phát hàng...' : 'Đang lưu phiếu phát hàng...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       const payload = allValidItems.map(r => {
         const itemNoteParts = [];
@@ -13387,20 +13557,26 @@ window.google.script = {
 
         if (andAddNew) {
           Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'success',
-            title: isEditing ? 'Đã cập nhật phiếu phát hàng!' : 'Đã lưu phiếu phát hàng!',
-            text: `Ghi nhận thành công xe ${vehicle}. Tiếp tục nhập phiếu tiếp theo...`,
-            timer: 1500,
+            title: isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu phiếu xe ${vehicle}!`,
+            html: `<div class="text-xs text-slate-600 font-normal mt-0.5">${allValidItems.length} mã hàng • Tổng SL: <b class="text-teal-700">${formatNumber(totalQty)}</b></div>`,
+            timer: 1800,
+            timerProgressBar: true,
             showConfirmButton: false
           });
           resetCreateDispatchFormKeepScreen();
           loadDailyDispatchTab();
         } else {
           Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'success',
-            title: isEditing ? 'Đã cập nhật phiếu phát hàng!' : 'Đã lưu phiếu phát hàng!',
-            text: `Ghi nhận thành công ${allValidItems.length} mặt hàng cho xe ${vehicle}.`,
-            timer: 1500,
+            title: isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu phiếu xe ${vehicle}!`,
+            html: `<div class="text-xs text-slate-600 font-normal mt-0.5">${allValidItems.length} mã hàng • Tổng SL: <b class="text-teal-700">${formatNumber(totalQty)}</b></div>`,
+            timer: 1800,
+            timerProgressBar: true,
             showConfirmButton: false
           });
           closeCreateDispatchForm();
@@ -13408,6 +13584,9 @@ window.google.script = {
         }
       } catch (err) {
         Swal.fire('Lỗi lưu dữ liệu', err.message, 'error');
+      } finally {
+        if (btnSave) { btnSave.disabled = false; btnSave.classList.remove('opacity-70', 'pointer-events-none'); }
+        if (btnNew) { btnNew.disabled = false; btnNew.classList.remove('opacity-70', 'pointer-events-none'); }
       }
     }
 
@@ -14664,36 +14843,36 @@ window.google.script = {
           {
             id: 'reconcile-card-dispatched',
             filter: 'dispatched',
-            baseClass: 'p-3 rounded-xl border shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 select-none group',
-            activeClass: 'ring-2 ring-indigo-600 border-indigo-500 shadow-md bg-indigo-50/70 scale-[1.02]',
+            baseClass: 'px-3 py-1.5 rounded-xl border shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group',
+            activeClass: 'ring-2 ring-indigo-600 border-indigo-500 shadow-sm bg-indigo-50 text-indigo-950 font-bold',
             inactiveClass: 'bg-white border-slate-200 hover:border-indigo-300 hover:shadow-xs'
           },
           {
             id: 'reconcile-card-matched',
             filter: 'matched',
-            baseClass: 'p-3 rounded-xl border shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 select-none group',
-            activeClass: 'ring-2 ring-emerald-600 border-emerald-500 shadow-md bg-emerald-100/90 scale-[1.02]',
-            inactiveClass: 'bg-emerald-50/60 border-emerald-200 hover:border-emerald-400 hover:shadow-xs'
+            baseClass: 'px-3 py-1.5 rounded-xl border shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group',
+            activeClass: 'ring-2 ring-emerald-600 border-emerald-500 shadow-sm bg-emerald-100/90 text-emerald-950 font-bold',
+            inactiveClass: 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400 hover:shadow-xs'
           },
           {
             id: 'reconcile-card-discrepancy',
             filter: 'discrepancy',
-            baseClass: 'p-3 rounded-xl border shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 select-none group',
-            activeClass: 'ring-2 ring-amber-600 border-amber-500 shadow-md bg-amber-100/90 scale-[1.02]',
-            inactiveClass: 'bg-amber-50/60 border-amber-200 hover:border-amber-400 hover:shadow-xs'
+            baseClass: 'px-3 py-1.5 rounded-xl border shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group',
+            activeClass: 'ring-2 ring-amber-600 border-amber-500 shadow-sm bg-amber-100/90 text-amber-950 font-bold',
+            inactiveClass: 'bg-amber-50/50 border-amber-200 hover:border-amber-400 hover:shadow-xs'
           },
           {
             id: 'reconcile-card-not_in_excel',
             filter: 'not_in_excel',
-            baseClass: 'p-3 rounded-xl border-2 shadow-2xs flex flex-col justify-between cursor-pointer transition-all duration-150 select-none group',
-            activeClass: 'ring-2 ring-rose-600 border-rose-500 shadow-md bg-rose-100 scale-[1.02]',
-            inactiveClass: 'bg-rose-50/80 border-rose-300 hover:border-rose-500 hover:shadow-xs'
+            baseClass: 'px-3 py-1.5 rounded-xl border-2 shadow-2xs flex items-center justify-between cursor-pointer transition-all duration-150 select-none group',
+            activeClass: 'ring-2 ring-rose-600 border-rose-500 shadow-sm bg-rose-100 text-rose-950 font-bold',
+            inactiveClass: 'bg-rose-50/70 border-rose-300 hover:border-rose-500 hover:shadow-xs'
           },
           {
             id: 'reconcile-card-not_dispatched',
             filter: 'not_dispatched',
-            baseClass: 'p-3 rounded-xl border shadow-2xs flex flex-col justify-between col-span-2 sm:col-span-1 cursor-pointer transition-all duration-150 select-none group',
-            activeClass: 'ring-2 ring-slate-600 border-slate-500 shadow-md bg-slate-100 scale-[1.02]',
+            baseClass: 'px-3 py-1.5 rounded-xl border shadow-2xs flex items-center justify-between col-span-2 sm:col-span-1 cursor-pointer transition-all duration-150 select-none group',
+            activeClass: 'ring-2 ring-slate-600 border-slate-500 shadow-sm bg-slate-100 text-slate-950 font-bold',
             inactiveClass: 'bg-white border-slate-200 hover:border-slate-400 hover:shadow-xs'
           }
         ];
@@ -14914,6 +15093,18 @@ window.google.script = {
           "GHI CHÚ"
         ];
 
+        // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho)
+        records.sort((a, b) => {
+          const staffA = (a.staff || '').trim();
+          const staffB = (b.staff || '').trim();
+          const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+          if (staffCmp !== 0) return staffCmp;
+          const timeA = `${a.date || ''} ${a.time || ''}`;
+          const timeB = `${b.date || ''} ${b.time || ''}`;
+          if (timeA !== timeB) return timeA.localeCompare(timeB);
+          return (a.id || 0) - (b.id || 0);
+        });
+
         let totalQty = 0;
         const rows = records.map((r, idx) => {
           const q = parseSmartNumber(r.qty || 0);
@@ -14980,6 +15171,18 @@ window.google.script = {
         Swal.fire('Thông báo', 'Không có dữ liệu phát hàng thực tế để in!', 'info');
         return;
       }
+
+      // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho)
+      records.sort((a, b) => {
+        const staffA = (a.staff || '').trim();
+        const staffB = (b.staff || '').trim();
+        const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+        if (staffCmp !== 0) return staffCmp;
+        const timeA = `${a.date || ''} ${a.time || ''}`;
+        const timeB = `${b.date || ''} ${b.time || ''}`;
+        if (timeA !== timeB) return timeA.localeCompare(timeB);
+        return (a.id || 0) - (b.id || 0);
+      });
 
       const timeSubtitle = getReconciliationDateDisplay_();
       const nowStr = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -15193,15 +15396,34 @@ window.google.script = {
         statusBadgeHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-800 text-[11px] font-bold border border-rose-200 shadow-2xs"><i class="bi bi-x-octagon-fill mr-1.5 text-rose-600"></i>Không có trong file xuất</span>`;
       }
 
+      // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho) để các dòng cùng người đứng cạnh nhau
+      records.sort((a, b) => {
+        const staffA = (a.staff || '').trim();
+        const staffB = (b.staff || '').trim();
+        const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+        if (staffCmp !== 0) return staffCmp;
+
+        const timeA = `${a.date || ''} ${a.time || ''}`;
+        const timeB = `${b.date || ''} ${b.time || ''}`;
+        if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+        return (a.id || 0) - (b.id || 0);
+      });
+
       // Danh sách các hàng chi tiết trong bảng (kèm data-search và data-qty để lọc tức thì khi có nhiều số liệu)
       const rowsHtml = records.map((r, idx) => {
         const q = parseSmartNumber(r.qty || 0);
         const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''}`.toLowerCase();
+        const dblClickAction = r.id ? `ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
+        const badgeDblClick = r.id ? `ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
+        const isGroupStart = idx > 0 && (r.staff || '').trim() !== (records[idx - 1].staff || '').trim();
+        const groupBorderClass = isGroupStart ? 'border-t-2 border-slate-300' : 'border-b border-slate-100';
+
         return `
-          <tr class="product-detail-row hover:bg-indigo-50/50 even:bg-slate-50/40 transition-colors text-xs border-b border-slate-100" data-search="${escapeHtml(searchStr)}" data-qty="${q}">
+          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
             <td class="px-3 py-2 text-center whitespace-nowrap">
-              <span class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 text-xs">
+              <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Nhấp đúp chuột để sửa phiếu xe này">
                 <i class="bi bi-truck mr-1 text-indigo-500"></i>${escapeHtml(r.plate || '-')}
               </span>
             </td>
@@ -16477,90 +16699,90 @@ window.google.script = {
     const DN_PASTEL_THEMES = [
       {
         name: 'sky', // Xanh lam da trời dịu sáng
-        cardBg: 'bg-sky-50/70',
-        cardBorder: 'border-sky-200',
-        cardHover: 'hover:border-sky-400 hover:bg-sky-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-sky-300',
+        cardHover: 'hover:border-sky-500 hover:shadow-xs',
         barBg: 'bg-sky-400',
         dnBadge: 'bg-sky-100 text-sky-800 border-sky-300',
-        titleColor: 'text-sky-950',
-        inputBorder: 'border-sky-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-sky-200',
         inputBg: 'bg-white'
       },
       {
         name: 'amber', // Cam hổ phách / mật ong tươi sáng
-        cardBg: 'bg-amber-50/70',
-        cardBorder: 'border-amber-200',
-        cardHover: 'hover:border-amber-400 hover:bg-amber-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-amber-300',
+        cardHover: 'hover:border-amber-500 hover:shadow-xs',
         barBg: 'bg-amber-400',
         dnBadge: 'bg-amber-100 text-amber-800 border-amber-300',
-        titleColor: 'text-amber-950',
-        inputBorder: 'border-amber-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-amber-200',
         inputBg: 'bg-white'
       },
       {
         name: 'emerald', // Xanh ngọc / bạc hà tươi mát
-        cardBg: 'bg-emerald-50/70',
-        cardBorder: 'border-emerald-200',
-        cardHover: 'hover:border-emerald-400 hover:bg-emerald-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-emerald-300',
+        cardHover: 'hover:border-emerald-500 hover:shadow-xs',
         barBg: 'bg-emerald-400',
         dnBadge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-        titleColor: 'text-emerald-950',
-        inputBorder: 'border-emerald-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-emerald-200',
         inputBg: 'bg-white'
       },
       {
         name: 'purple', // Tím hoa cà dịu nhẹ
-        cardBg: 'bg-purple-50/70',
-        cardBorder: 'border-purple-200',
-        cardHover: 'hover:border-purple-400 hover:bg-purple-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-purple-300',
+        cardHover: 'hover:border-purple-500 hover:shadow-xs',
         barBg: 'bg-purple-400',
         dnBadge: 'bg-purple-100 text-purple-800 border-purple-300',
-        titleColor: 'text-purple-950',
-        inputBorder: 'border-purple-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-purple-200',
         inputBg: 'bg-white'
       },
       {
         name: 'rose', // Hồng phấn / san hô dịu sáng
-        cardBg: 'bg-rose-50/70',
-        cardBorder: 'border-rose-200',
-        cardHover: 'hover:border-rose-400 hover:bg-rose-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-rose-300',
+        cardHover: 'hover:border-rose-500 hover:shadow-xs',
         barBg: 'bg-rose-400',
         dnBadge: 'bg-rose-100 text-rose-800 border-rose-300',
-        titleColor: 'text-rose-950',
-        inputBorder: 'border-rose-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-rose-200',
         inputBg: 'bg-white'
       },
       {
         name: 'cyan', // Xanh lam ngọc tươi sáng
-        cardBg: 'bg-cyan-50/70',
-        cardBorder: 'border-cyan-200',
-        cardHover: 'hover:border-cyan-400 hover:bg-cyan-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-cyan-300',
+        cardHover: 'hover:border-cyan-500 hover:shadow-xs',
         barBg: 'bg-cyan-400',
         dnBadge: 'bg-cyan-100 text-cyan-800 border-cyan-300',
-        titleColor: 'text-cyan-950',
-        inputBorder: 'border-cyan-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-cyan-200',
         inputBg: 'bg-white'
       },
       {
         name: 'indigo', // Xanh chàm dịu nhẹ
-        cardBg: 'bg-indigo-50/70',
-        cardBorder: 'border-indigo-200',
-        cardHover: 'hover:border-indigo-400 hover:bg-indigo-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-indigo-300',
+        cardHover: 'hover:border-indigo-500 hover:shadow-xs',
         barBg: 'bg-indigo-400',
         dnBadge: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-        titleColor: 'text-indigo-950',
-        inputBorder: 'border-indigo-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-indigo-200',
         inputBg: 'bg-white'
       },
       {
         name: 'orange', // Cam sữa pastel dịu nhẹ
-        cardBg: 'bg-orange-50/70',
-        cardBorder: 'border-orange-200',
-        cardHover: 'hover:border-orange-400 hover:bg-orange-100/60',
+        cardBg: 'bg-white',
+        cardBorder: 'border-orange-300',
+        cardHover: 'hover:border-orange-500 hover:shadow-xs',
         barBg: 'bg-orange-400',
         dnBadge: 'bg-orange-100 text-orange-800 border-orange-300',
-        titleColor: 'text-orange-950',
-        inputBorder: 'border-orange-300',
+        titleColor: 'text-slate-800',
+        inputBorder: 'border-orange-200',
         inputBg: 'bg-white'
       }
     ];
@@ -16667,22 +16889,18 @@ window.google.script = {
             const invName = inv && inv.name ? inv.name : (item.name || '');
             const tooltipDesc = (item.code ? item.code : '') + (invName && invName.toUpperCase() !== displayName.toUpperCase() ? (item.code ? ' • ' : '') + invName : '');
 
-            // THẺ SẢN PHẨM THU HẸP: min-w-[135px] sm:min-w-[150px] để hiển thị được nhiều loại cùng nhóm trên 1 dòng
+            // THẺ SẢN PHẨM: min-w-[135px] sm:min-w-[150px] để hiển thị được nhiều loại cùng nhóm trên 1 dòng (đã bỏ vạch dọc trước tên để không bị rối mắt)
             const cardClasses = hasQty 
-              ? 'fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border-2 border-emerald-600 bg-emerald-50/90 shadow-sm ring-1 ring-emerald-400/40 transition select-none'
-              : `fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border ${theme.cardBorder} ${theme.cardBg} ${theme.cardHover} shadow-2xs transition select-none`;
-
-            const barClasses = hasQty
-              ? 'fast-card-bar w-1.5 h-6.5 rounded-full bg-emerald-600'
-              : `fast-card-bar w-1 h-6 rounded-full ${theme.barBg}`;
+              ? 'fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2.5 py-1.5 rounded-lg border-2 border-emerald-600 bg-emerald-50/90 shadow-sm ring-1 ring-emerald-400/40 transition select-none'
+              : `fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2.5 py-1.5 rounded-lg border ${theme.cardBorder} bg-white ${theme.cardHover} shadow-2xs transition select-none`;
 
             const titleColorClass = hasQty
               ? 'text-emerald-950 font-black'
-              : `${theme.titleColor} font-black`;
+              : 'text-slate-800 font-bold';
 
             const inputClasses = hasQty
               ? 'fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-black text-xs sm:text-[13px] rounded border-2 border-emerald-600 bg-white text-emerald-950 ring-1 ring-emerald-300 shadow-2xs focus:ring-2 focus:ring-emerald-500 transition'
-              : `fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-bold text-xs sm:text-[13px] rounded border ${theme.inputBorder} ${theme.inputBg} text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
+              : `fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-bold text-xs sm:text-[13px] rounded border ${theme.inputBorder} bg-white text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
 
             html += `
               <div class="${cardClasses}"
@@ -16691,9 +16909,8 @@ window.google.script = {
                    data-theme-idx="${themeIdx}"
                    data-dn-val="${bucket.dn < 9999 ? bucket.dn : ''}">
                 
-                <!-- Trái: Vạch màu + Tên sản phẩm quy tắc rút gọn (thu hẹp, rõ ràng) -->
+                <!-- Trái: Tên sản phẩm quy tắc rút gọn (rõ ràng, vừa mắt, không bị rối) -->
                 <div class="flex items-center space-x-1.5 min-w-0 pr-1 flex-1">
-                  <span class="${barClasses} shrink-0 transition"></span>
                   <span class="text-[11px] sm:text-xs ${titleColorClass} leading-tight truncate cursor-default" 
                         title="${escapeHtml(tooltipDesc || displayName)}">
                     ${escapeHtml(displayName)}
@@ -16760,15 +16977,11 @@ window.google.script = {
       if (card) {
         const themeIdx = parseInt(card.dataset.themeIdx || '0', 10);
         const theme = DN_PASTEL_THEMES[themeIdx % DN_PASTEL_THEMES.length] || DN_PASTEL_THEMES[0];
-        const leftBar = card.querySelector('.fast-card-bar');
         const badgeContainer = card.querySelector('.fast-card-badge-container');
 
         if (sum > 0) {
-          // Trạng thái: ĐÃ NHẬP SỐ LƯỢNG (Giữ đúng độ rộng thu hẹp)
-          card.className = 'fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border-2 border-emerald-600 bg-emerald-50/90 shadow-sm ring-1 ring-emerald-400/40 transition select-none';
-          if (leftBar) {
-            leftBar.className = 'fast-card-bar w-1.5 h-6.5 rounded-full bg-emerald-600 shrink-0 transition';
-          }
+          // Trạng thái: ĐÃ NHẬP SỐ LƯỢNG
+          card.className = 'fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2.5 py-1.5 rounded-lg border-2 border-emerald-600 bg-emerald-50/90 shadow-sm ring-1 ring-emerald-400/40 transition select-none';
           inputEl.className = 'fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-black text-xs sm:text-[13px] rounded border-2 border-emerald-600 bg-white text-emerald-950 ring-1 ring-emerald-300 shadow-2xs focus:ring-2 focus:ring-emerald-500 transition';
 
           if (badgeContainer) {
@@ -16779,12 +16992,9 @@ window.google.script = {
             `;
           }
         } else {
-          // Trạng thái: CHƯA NHẬP (Phân nhóm theo màu DN dịu nhẹ tươi sáng, thu hẹp gọn gàng)
-          card.className = `fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border ${theme.cardBorder} ${theme.cardBg} ${theme.cardHover} shadow-2xs transition select-none`;
-          if (leftBar) {
-            leftBar.className = `fast-card-bar w-1 h-6 rounded-full ${theme.barBg} shrink-0 transition`;
-          }
-          inputEl.className = `fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-bold text-xs sm:text-[13px] rounded border ${theme.inputBorder} ${theme.inputBg} text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
+          // Trạng thái: CHƯA NHẬP (Chỉ kẻ khung theo màu DN để phân biệt, không nền, không vạch dọc rối mắt)
+          card.className = `fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2.5 py-1.5 rounded-lg border ${theme.cardBorder} bg-white ${theme.cardHover} shadow-2xs transition select-none`;
+          inputEl.className = `fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-bold text-xs sm:text-[13px] rounded border ${theme.inputBorder} bg-white text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
 
           if (badgeContainer) {
             badgeContainer.innerHTML = '';
@@ -16883,28 +17093,18 @@ window.google.script = {
     let tempCustomizerGroups = [];
     let activeCustModalTab = 'groups';
 
-    function openFastItemsCustomizerModal(defaultTab = 'groups') {
+    function openFastItemsCustomizerModal() {
       const currentItems = getCustomFastItems();
       tempCustomizerItems = JSON.parse(JSON.stringify(currentItems));
 
       const currentGroups = getCustomFastGroups();
       tempCustomizerGroups = JSON.parse(JSON.stringify(currentGroups));
 
-      // Reset form thêm mới ở tab 2
-      const sInp = document.getElementById('cust-fast-item-search');
-      if (sInp) sInp.value = '';
-      const cCodeInp = document.getElementById('cust-fast-item-selected-code');
-      if (cCodeInp) cCodeInp.value = '';
-      const cNameInp = document.getElementById('cust-fast-item-custom-name');
-      if (cNameInp) cNameInp.value = '';
-      const dropdown = document.getElementById('cust-fast-item-search-dropdown');
-      if (dropdown) dropdown.classList.add('hidden');
-
-      // Reset ô thêm nhóm mới ở tab 1
+      // Reset ô thêm nhóm mới
       const newGrpInp = document.getElementById('cust-new-group-name');
       if (newGrpInp) newGrpInp.value = '';
 
-      switchCustModalTab(defaultTab || 'groups');
+      switchCustModalTab('groups');
 
       const modal = document.getElementById('fast-dispatch-customizer-modal');
       if (modal) {
@@ -16914,6 +17114,7 @@ window.google.script = {
     }
 
     function closeFastItemsCustomizerModal() {
+      autoSaveFastCustomizer(false);
       const modal = document.getElementById('fast-dispatch-customizer-modal');
       if (modal) {
         modal.classList.add('hidden');
@@ -16921,35 +17122,12 @@ window.google.script = {
       }
     }
 
-    function switchCustModalTab(tab) {
-      activeCustModalTab = tab;
+    function switchCustModalTab(tab = 'groups') {
+      activeCustModalTab = 'groups';
       const groupsTab = document.getElementById('cust-modal-tab-groups');
-      const itemsTab = document.getElementById('cust-modal-tab-items');
+      if (groupsTab) groupsTab.classList.remove('hidden');
 
-      const groupsBtn = document.getElementById('cust-modal-tab-groups-btn');
-      const itemsBtn = document.getElementById('cust-modal-tab-items-btn');
-
-      if (groupsTab) groupsTab.classList.add('hidden');
-      if (itemsTab) itemsTab.classList.add('hidden');
-
-      const activeBtnClass = 'px-4 py-2 text-xs font-black rounded-t-xl transition flex items-center space-x-1.5 border-t-2 border-x border-teal-600 bg-white text-teal-900 shadow-2xs';
-      const inactiveBtnClass = 'px-4 py-2 text-xs font-bold rounded-t-xl transition flex items-center space-x-1.5 border-t-2 border-x border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100';
-
-      if (groupsBtn) groupsBtn.className = inactiveBtnClass;
-      if (itemsBtn) itemsBtn.className = inactiveBtnClass;
-
-      if (tab === 'groups') {
-        if (groupsTab) groupsTab.classList.remove('hidden');
-        if (groupsBtn) groupsBtn.className = activeBtnClass;
-        renderCustModalGroupChips();
-        renderCustModalGroupsTable();
-        renderCustModalGroupsTab();
-      } else {
-        if (itemsTab) itemsTab.classList.remove('hidden');
-        if (itemsBtn) itemsBtn.className = activeBtnClass;
-        renderCustModalItemsTable();
-      }
-
+      renderCustModalGroupsTable();
       updateModalSummaryBadge();
     }
 
