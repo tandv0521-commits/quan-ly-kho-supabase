@@ -11,17 +11,36 @@
   <link rel="apple-touch-icon" href="favicon.svg">
   <meta name="theme-color" content="#2563eb">
   
+  <!-- TỐI ƯU OFFLINE 100%: DÙNG FONT NATIVE HỆ THỐNG WINDOWS (SEGOE UI / CASCADIA CODE) SIÊU MƯỢT, 0MS NETWORK -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="sortable.min.js"></script>
-  <script>if (typeof Sortable === 'undefined') { document.write('<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"><\/script>'); }</script>
+  <!-- THƯ VIỆN CỤC BỘ OFFLINE 100% (KHÔNG CẦN INTERNET, KHÔNG BỊ TREO GIẬT LAG KHI MỞ) -->
+  <link rel="stylesheet" href="libs/bootstrap-icons.min.css">
+  <script src="libs/tailwind.min.js"></script>
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/exceljs.min.js"></script>
+  <script src="libs/sweetalert2.all.min.js"></script>
+  <script src="libs/sortable.min.js"></script>
+  <!-- DỰ PHÒNG TỰ ĐỘNG KHI CHẠY TRÊN MÔI TRƯỜNG WEB KHÔNG CÓ LIBS -->
+  <script>
+    if (typeof tailwind === 'undefined') {
+      document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+    }
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+    }
+    if (typeof ExcelJS === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"><\/script>');
+    }
+    if (typeof Swal === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"><\/script>');
+    }
+    if (typeof Sortable === 'undefined') {
+      document.write('<script src="sortable.min.js"><\/script>');
+    }
+  </script>
   <script>
     // TỰ ĐỘNG MỞ RỘNG TOÀN MÀN HÌNH KHI KHỞI ĐỘNG PHẦN MỀM
     (function autoMaximizeWindow() {
@@ -45,12 +64,13 @@
   <style>
     /* CHUẨN GIAO DIỆN PHẦN MỀM MÁY TÍNH (DESKTOP SOFTWARE UI) */
     html, body {
-      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
       letter-spacing: normal;
       user-select: none;
       -webkit-user-select: none;
       overscroll-behavior: none;
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
     input, textarea, [contenteditable="true"], table tbody td, .selectable-text {
       user-select: text !important;
@@ -61,9 +81,19 @@
       user-drag: none;
     }
     .font-mono, .col-num, [inputmode="decimal"], .stat-num {
-      font-family: 'JetBrains Mono', monospace !important;
+      font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
       font-variant-numeric: tabular-nums !important;
       letter-spacing: -0.025em !important;
+    }
+    /* TỐI ƯU HIỆU NĂNG PHẦN CỨNG (GPU ACCELERATION) - LOẠI BỎ GIẬT LAG KHI CUỘN VÀ HIỂN THỊ BẢNG */
+    #inventory-table-container, #packaging-table-container, .custom-scroll {
+      -webkit-overflow-scrolling: touch;
+      will-change: scroll-position;
+      contain: layout paint;
+    }
+    .table-freeze-code thead th, .table-freeze-code .col-stt, .table-freeze-code .col-code {
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
     /* Thanh cuộn chuẩn phần mềm máy tính hiện đại */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -811,6 +841,21 @@
                 </tbody>
               </table>
             </div>
+            <!-- THANH ĐIỀU HƯỚNG PHÂN TRANG BẢNG TỒN KHO (TỐI ƯU SIÊU MƯỢT, 0MS TRỄ) -->
+            <div id="inventory-pagination-bar" class="px-3.5 py-2.5 bg-slate-50/90 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 no-print">
+              <div class="flex items-center space-x-2">
+                <span class="font-medium text-slate-500">Hiển thị:</span>
+                <select id="inventory-page-size" onchange="changeInventoryPageSize(this.value)" class="px-2.5 py-1 text-xs border border-slate-300 rounded-lg bg-white font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer">
+                  <option value="50">50 dòng / trang</option>
+                  <option value="100" selected>100 dòng / trang</option>
+                  <option value="200">200 dòng / trang</option>
+                  <option value="all">Tất cả sản phẩm</option>
+                </select>
+                <span id="inventory-page-info" class="font-medium text-slate-600 ml-2">Đang tải...</span>
+              </div>
+              <div class="flex items-center space-x-1" id="inventory-pagination-btns">
+              </div>
+            </div>
           </div>
         </section>
 
@@ -884,6 +929,21 @@
                   <tr><td colspan="6" class="text-center py-8 text-slate-400">Đang nạp danh mục quy cách...</td></tr>
                 </tbody>
               </table>
+            </div>
+            <!-- THANH ĐIỀU HƯỚNG PHÂN TRANG BẢNG QUY CÁCH (TỐI ƯU SIÊU MƯỢT, 0MS TRỄ) -->
+            <div id="packaging-pagination-bar" class="px-3.5 py-2.5 bg-amber-50/50 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 no-print">
+              <div class="flex items-center space-x-2">
+                <span class="font-medium text-slate-500">Hiển thị:</span>
+                <select id="packaging-page-size" onchange="changePackagingPageSize(this.value)" class="px-2.5 py-1 text-xs border border-slate-300 rounded-lg bg-white font-bold text-slate-700 focus:ring-2 focus:ring-amber-500 outline-none cursor-pointer">
+                  <option value="50">50 dòng / trang</option>
+                  <option value="100" selected>100 dòng / trang</option>
+                  <option value="200">200 dòng / trang</option>
+                  <option value="all">Tất cả sản phẩm</option>
+                </select>
+                <span id="packaging-page-info" class="font-medium text-slate-600 ml-2">Đang tải...</span>
+              </div>
+              <div class="flex items-center space-x-1" id="packaging-pagination-btns">
+              </div>
             </div>
           </div>
         </section>
@@ -2439,19 +2499,13 @@
               <i class="bi bi-box-seam" id="reconcile-current-filter-icon"></i>
               <span id="reconcile-current-filter-text">Hàng đã ghi phát</span>
             </span>
-            <button type="button" onclick="setReconciliationFilter('need_check')" id="reconcile-btn-need-check" 
-                    class="text-xs font-semibold px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition cursor-pointer flex items-center space-x-1 shadow-2xs" 
-                    title="Bấm để xem tất cả mặt hàng cần kiểm tra (gồm Lệch số lượng + Không có trong file xuất)">
-              <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
-              <span>Cần kiểm tra (<span id="reconcile-need-check-count">0</span>)</span>
-            </button>
             <button type="button" onclick="setReconciliationFilter('all')" id="reconcile-btn-show-all" 
                     class="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition cursor-pointer flex items-center space-x-1 shadow-2xs" 
                     title="Bấm để xem danh sách toàn bộ mặt hàng không lọc">
               <i class="bi bi-collection text-slate-500"></i>
               <span>Xem tất cả (<span id="reconcile-all-skus-count">0</span>)</span>
             </button>
-            <span class="text-[11px] text-slate-400 italic hidden md:inline">• Bấm vào các thẻ phía trên để lọc chính xác từng nhóm</span>
+            <span class="text-[11px] text-slate-400 italic hidden md:inline">• Bấm vào 5 ô thẻ phía trên để chuyển nhanh chế độ xem</span>
           </div>
 
           <!-- Ô tìm kiếm trong modal đối chiếu -->
@@ -2586,12 +2640,6 @@
                   Tạo các nhóm theo quy ước của bạn (VD: <b class="text-teal-900">Chếch, Bịt xả, Tê đều, Ba chạc 45°, Bạc, Nối thẳng, Bích, TCB, Bịt, Thông sàn, Góc...</b>)
                 </p>
               </div>
-              <div class="flex items-center space-x-2">
-                <button type="button" onclick="autoCategorizeItemsByKeywords()" class="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg font-bold text-xs transition flex items-center space-x-1.5 cursor-pointer shadow-2xs" title="Tự động nhận diện và gán nhóm theo tên viết tắt của sản phẩm">
-                  <i class="bi bi-magic text-teal-600"></i>
-                  <span>Tự động phân nhóm thông minh</span>
-                </button>
-              </div>
             </div>
 
             <!-- Form thêm nhóm -->
@@ -2635,13 +2683,13 @@
             </div>
 
             <div class="overflow-x-auto max-h-[220px] custom-scroll">
-              <table class="min-w-full divide-y divide-slate-200 text-xs">
+              <table class="w-full min-w-[640px] divide-y divide-slate-200 text-xs">
                 <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200">
                   <tr>
                     <th class="px-3 py-2 text-center w-12">STT</th>
-                    <th class="px-3 py-2 text-left font-bold text-teal-900">Tên nhóm sản phẩm</th>
-                    <th class="px-3 py-2 text-center w-36 font-bold text-teal-900">Số lượng SP đã gán</th>
-                    <th class="px-3 py-2 text-center w-32">Thao tác</th>
+                    <th class="px-3 py-2 text-left font-bold text-teal-900 min-w-[160px]">Tên nhóm sản phẩm</th>
+                    <th class="px-3 py-2 text-center w-36 font-bold text-teal-900 whitespace-nowrap">Số lượng SP đã gán</th>
+                    <th class="px-3 py-2 text-center w-64 min-w-[270px] whitespace-nowrap">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="cust-modal-groups-table-tbody" class="divide-y divide-slate-100 bg-white">
@@ -2796,20 +2844,159 @@
 
       <!-- FOOTER -->
       <div class="px-5 py-3 bg-white border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
-        <div class="text-[11px] text-slate-500 italic flex items-center gap-1.5">
-          <i class="bi bi-info-circle text-teal-600"></i>
-          <span>Tích chọn nhóm bất kỳ ở Bảng Phát Nhanh để sản phẩm hiện lên và tự động xếp cạnh nhau theo kích thước DN và PN.</span>
+        <div class="text-[11px] text-teal-800 italic flex items-center gap-1.5 font-medium">
+          <i class="bi bi-shield-check text-teal-600 text-sm"></i>
+          <span>Hệ thống tự động lưu tức thì mỗi khi bấm Thêm hoặc sửa. Tích chọn nhóm ở Bảng Phát Nhanh để sản phẩm hiện lên.</span>
         </div>
-        <div class="flex items-center space-x-2.5 justify-end">
-          <div class="flex items-center space-x-1.5 text-[11.5px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl shadow-2xs">
-            <i class="bi bi-check2-all text-sm text-emerald-600"></i>
-            <span>Tự động lưu trực tiếp</span>
-          </div>
-          <button type="button" onclick="closeFastItemsCustomizerModal()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer" title="Đóng bảng cài đặt">
+        <div class="flex items-center space-x-2 justify-end">
+          <button type="button" onclick="closeFastItemsCustomizerModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer">
+            Đóng
+          </button>
+          <button type="button" onclick="saveAndApplyFastItemsCustomizer()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer" title="Dữ liệu đã được tự động lưu. Bấm để đóng bảng cài đặt">
             <i class="bi bi-check2-circle text-base"></i>
-            <span>Đóng (Đã lưu xong)</span>
+            <span>Đã Tự Động Lưu (Đóng)</span>
           </button>
         </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL XEM CHI TIẾT NHÓM SẢN PHẨM & THÊM HÀNG VÀO NHÓM -->
+  <!-- ======================================================== -->
+  <div id="group-detail-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4" style="display: none;" onclick="if(event.target === this) closeGroupDetailModal();">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- HEADER -->
+      <div class="px-4 sm:px-6 py-3.5 bg-gradient-to-r from-teal-950 via-slate-900 to-teal-900 text-white flex items-center justify-between border-b border-teal-800/80 shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-600 text-white flex items-center justify-center text-lg font-bold shadow-md shrink-0">
+            <i class="bi bi-collection-fill"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide flex items-center gap-2 flex-wrap">
+              <span>Chi tiết nhóm: <b id="group-detail-title-name" class="text-teal-300 font-black">...</b></span>
+              <span id="group-detail-count-badge" class="text-[10.5px] px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-black font-mono shadow-2xs">0 sản phẩm</span>
+            </h3>
+            <p class="text-[11px] text-teal-200/80 mt-0.5">Danh sách sản phẩm được tự động sắp xếp theo đường kính DN và áp suất PN từ nhỏ đến lớn.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeGroupDetailModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition cursor-pointer" title="Đóng (Esc)">
+          <i class="bi bi-x-lg text-sm"></i>
+        </button>
+      </div>
+
+      <!-- BODY -->
+      <div class="p-3 sm:p-5 overflow-y-auto custom-scroll flex-1 text-xs bg-slate-50/50 space-y-3.5">
+        
+        <!-- KHỐI THÊM SẢN PHẨM MỚI VÀO NHÓM NÀY -->
+        <div class="bg-gradient-to-br from-teal-50/60 via-white to-slate-50/70 p-3 sm:p-4 rounded-xl border border-teal-200/90 shadow-2xs space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1 border-b border-teal-100/70">
+            <span class="font-extrabold text-teal-950 uppercase text-[11px] sm:text-xs flex items-center gap-1.5 tracking-wide">
+              <i class="bi bi-plus-circle-fill text-teal-600 text-sm"></i>
+              <span>Thêm mặt hàng mới vào nhóm này:</span>
+            </span>
+            <span class="text-[11px] text-slate-500 italic">Chọn sản phẩm kho, tự động nhận diện tên quy ước hoặc tự điền</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
+            <!-- Cột 1: Chọn sản phẩm kho -->
+            <div class="md:col-span-6 relative">
+              <label class="block font-bold text-slate-700 text-[11px] mb-1 flex items-center justify-between">
+                <span>Sản phẩm trong kho <span class="text-rose-500">*</span>:</span>
+                <span class="text-[10.5px] text-slate-400 font-normal">Gõ mã hoặc tên</span>
+              </label>
+              <div class="relative">
+                <i class="bi bi-search absolute left-3 top-2 text-slate-400 text-xs pointer-events-none"></i>
+                <input type="text" id="group-detail-add-search" 
+                       placeholder="Gõ mã hoặc tên SP trong kho..." 
+                       autocomplete="off"
+                       oninput="handleGroupDetailSearchInput(this.value)"
+                       onkeydown="handleGroupDetailSearchKeydown(event)"
+                       class="w-full pl-8 pr-7 py-1.5 border border-slate-300 rounded-lg text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition shadow-2xs">
+                <button type="button" onclick="clearGroupDetailAddSearch()" class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5">
+                  <i class="bi bi-x-circle-fill text-xs"></i>
+                </button>
+              </div>
+              <input type="hidden" id="group-detail-add-selected-code" value="">
+              <div id="group-detail-add-dropdown" class="hidden absolute left-0 top-full mt-1 w-full bg-white border border-teal-400 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto custom-scroll divide-y divide-slate-100"></div>
+            </div>
+
+            <!-- Cột 2: Tên rút gọn -->
+            <div class="md:col-span-4">
+              <label class="block font-bold text-teal-950 text-[11px] mb-1 flex items-center justify-between">
+                <span>Tên viết tắt quy ước <span class="text-rose-500">*</span>:</span>
+                <span id="group-detail-auto-detect-tag" class="hidden text-[10.5px] text-emerald-700 font-bold">✓ Tự nhận diện</span>
+              </label>
+              <input type="text" id="group-detail-add-custom-name" 
+                     placeholder="VD: CHẾCH 75/6, BỊT XẢ 75..." 
+                     onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addGroupDetailItemDirectly(); }"
+                     class="w-full px-3 py-1.5 border-2 border-teal-400/80 rounded-lg font-bold text-xs bg-white text-teal-950 focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition shadow-2xs">
+            </div>
+
+            <!-- Cột 3: Nút thêm -->
+            <div class="md:col-span-2">
+              <button type="button" onclick="addGroupDetailItemDirectly()" class="w-full py-1.5 px-3 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold rounded-lg text-xs transition flex items-center justify-center space-x-1.5 shadow-sm hover:shadow cursor-pointer active:scale-95">
+                <i class="bi bi-plus-lg font-black text-sm"></i>
+                <span class="whitespace-nowrap">Thêm vào nhóm</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- DÒNG THÔNG BÁO GỢI Ý KHI PHÁT HIỆN SẢN PHẨM TRÙNG TÊN / QUY ƯỚC -->
+          <div id="group-detail-match-hint" class="hidden"></div>
+        </div>
+
+        <!-- BẢNG DANH SÁCH MẶT HÀNG TRONG NHÓM -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div class="p-3 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+              <span class="font-extrabold text-slate-800 uppercase tracking-wide">
+                Các sản phẩm thuộc nhóm này
+              </span>
+              <span class="text-slate-500 italic text-[11px]">(Tự động xếp theo DN trước và PN từ nhỏ đến lớn)</span>
+            </div>
+
+            <!-- Tìm kiếm nhanh trong nhóm -->
+            <div class="relative w-full sm:w-64">
+              <i class="bi bi-search absolute left-2.5 top-1.5 text-slate-400 text-xs pointer-events-none"></i>
+              <input type="text" id="group-detail-table-filter" oninput="renderGroupDetailItemsTable()" 
+                     placeholder="Lọc nhanh trong nhóm..." 
+                     class="w-full pl-7 pr-6 py-1 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-teal-500 transition shadow-2xs">
+              <button type="button" onclick="document.getElementById('group-detail-table-filter').value=''; renderGroupDetailItemsTable();" class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <i class="bi bi-x text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[380px] custom-scroll">
+            <table class="w-full min-w-[700px] divide-y divide-slate-200 text-xs">
+              <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 border-b border-slate-200">
+                <tr>
+                  <th class="px-2.5 py-2 text-center w-12 text-slate-500">STT</th>
+                  <th class="px-3 py-2 text-left w-48 text-teal-900">Tên rút gọn (Bấm để sửa)</th>
+                  <th class="px-3 py-2 text-left min-w-[240px]">Sản phẩm trong kho (Mã & Tên chuẩn)</th>
+                  <th class="px-2.5 py-2 text-center w-32 text-teal-900">Kích thước (DN / PN)</th>
+                  <th class="px-2 py-2 text-center w-16 text-slate-600">ĐVT</th>
+                  <th class="px-2.5 py-2 text-center w-14">Xóa</th>
+                </tr>
+              </thead>
+              <tbody id="group-detail-items-tbody" class="divide-y divide-slate-100 bg-white">
+                <!-- Render dynamic qua renderGroupDetailItemsTable() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- FOOTER -->
+      <div class="px-4 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
+        <span class="text-[11px] text-slate-500 italic">Mọi thay đổi thêm/xóa/sửa trong nhóm này được tự động lưu ngay lập tức.</span>
+        <button type="button" onclick="closeGroupDetailModal()" class="px-5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold rounded-xl text-xs transition cursor-pointer shadow-2xs hover:shadow active:scale-95">
+          Đóng
+        </button>
       </div>
 
     </div>
@@ -3229,49 +3416,65 @@ const LocalDB = {
   ],
   cache: {},
   initialized: false,
+  _db: null,
+  _dbPromise: null,
+  _persistTimers: {},
+
+  async getDb() {
+    if (this._db) return this._db;
+    if (this._dbPromise) return this._dbPromise;
+    if (!window.indexedDB) return null;
+
+    this._dbPromise = new Promise((resolve) => {
+      const req = indexedDB.open(this.dbName, this.version);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        this.tables.forEach(t => {
+          if (!db.objectStoreNames.contains(t)) {
+            db.createObjectStore(t, { keyPath: 'id', autoIncrement: true });
+          }
+        });
+      };
+      req.onsuccess = (e) => {
+        this._db = e.target.result;
+        this._db.onversionchange = () => { try { this._db.close(); this._db = null; this._dbPromise = null; } catch(err){} };
+        resolve(this._db);
+      };
+      req.onerror = () => {
+        this._dbPromise = null;
+        resolve(null);
+      };
+    });
+    return this._dbPromise;
+  },
 
   async init() {
     if (this.initialized) return;
     this.tables.forEach(t => { this.cache[t] = []; });
 
-    // 1. Nạp từ IndexedDB nếu trình duyệt hỗ trợ
+    // 1. Nạp từ IndexedDB dùng kết nối duy nhất, siêu tốc
     try {
-      if (window.indexedDB) {
-        await new Promise((resolve) => {
-          const req = indexedDB.open(this.dbName, this.version);
-          req.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            this.tables.forEach(t => {
-              if (!db.objectStoreNames.contains(t)) {
-                db.createObjectStore(t, { keyPath: 'id', autoIncrement: true });
-              }
-            });
-          };
-          req.onsuccess = async (e) => {
-            const db = e.target.result;
-            const promises = this.tables.map(t => new Promise(res => {
-              try {
-                const tx = db.transaction(t, 'readonly');
-                const store = tx.objectStore(t);
-                const getReq = store.getAll();
-                getReq.onsuccess = () => res({ table: t, data: getReq.result || [] });
-                getReq.onerror = () => res({ table: t, data: [] });
-              } catch (err) {
-                res({ table: t, data: [] });
-              }
-            }));
-            const results = await Promise.all(promises);
-            results.forEach(r => { this.cache[r.table] = r.data; });
-            resolve();
-          };
-          req.onerror = () => resolve();
-        });
+      const db = await this.getDb();
+      if (db) {
+        const promises = this.tables.map(t => new Promise(res => {
+          try {
+            const tx = db.transaction(t, 'readonly');
+            const store = tx.objectStore(t);
+            const getReq = store.getAll();
+            getReq.onsuccess = () => res({ table: t, data: getReq.result || [] });
+            getReq.onerror = () => res({ table: t, data: [] });
+          } catch (err) {
+            res({ table: t, data: [] });
+          }
+        }));
+        const results = await Promise.all(promises);
+        results.forEach(r => { this.cache[r.table] = r.data || []; });
       }
     } catch (e) {
       console.warn("IndexedDB init:", e);
     }
 
-    // 2. Dự phòng: nạp từ localStorage nếu IndexedDB rỗng
+    // 2. Dự phòng: nạp từ localStorage nếu IndexedDB rỗng (chỉ bảng cấu hình nhỏ)
     this.tables.forEach(t => {
       if (!this.cache[t] || this.cache[t].length === 0) {
         try {
@@ -3287,24 +3490,33 @@ const LocalDB = {
   },
 
   async persist(tableName) {
-    const data = this.cache[tableName] || [];
-    try {
-      if (window.indexedDB) {
-        const req = indexedDB.open(this.dbName, this.version);
-        req.onsuccess = (e) => {
-          const db = e.target.result;
+    if (this._persistTimers[tableName]) {
+      clearTimeout(this._persistTimers[tableName]);
+    }
+    // Debounce 50ms: Gom các thao tác ghi liên tiếp thành 1 lần ghi vào đĩa, không bao giờ gây đơ hay giật lag giao diện
+    this._persistTimers[tableName] = setTimeout(async () => {
+      delete this._persistTimers[tableName];
+      const data = this.cache[tableName] || [];
+      try {
+        const db = await this.getDb();
+        if (db) {
           const tx = db.transaction(tableName, 'readwrite');
           const store = tx.objectStore(tableName);
           store.clear().onsuccess = () => {
-            data.forEach(item => store.put(item));
+            for (let i = 0; i < data.length; i++) {
+              store.put(data[i]);
+            }
           };
-        };
-      }
-    } catch (e) {}
+        }
+      } catch (e) {}
 
-    try {
-      localStorage.setItem(`wh_offline_${tableName}`, JSON.stringify(data));
-    } catch (e) {}
+      // Chỉ lưu bảng nhỏ (< 150 dòng) vào localStorage để tránh lỗi giới hạn 5MB và tránh nghẽn luồng UI
+      if (data.length <= 150) {
+        try {
+          localStorage.setItem(`wh_offline_${tableName}`, JSON.stringify(data));
+        } catch (e) {}
+      }
+    }, 50);
   },
 
   async query(endpoint, method, payload) {
@@ -5204,7 +5416,8 @@ window.google.script = {
     let activeDetailQuery = '';
 
     // ============================================================================
-    // THUẬT TOÁN TÌM KIẾM MÃ TỪ TRÁI SANG PHẢI (ƯU TIÊN KHỚP NHẤT HIỂN THỊ ĐẦU TIÊN)
+    // THUẬT TOÁN TÌM KIẾM MÃ TỪ TRÁI SANG PHẢI (CHỈ GỢI Ý MÃ TỪ TRÁI SANG PHẢI,
+    // KHÔNG HIỂN THỊ THÊM CÁC MÃ CHỨA KÝ TỰ Ở GIỮA HOẶC TRONG TÊN CÓ CHỨA KÝ TỰ)
     // ============================================================================
     function rankProductMatches(list, rawQuery, maxResults = 30) {
       if (!list || !Array.isArray(list)) return [];
@@ -5214,79 +5427,104 @@ window.google.script = {
       const q = rawQ.toLowerCase();
       const qNorm = q.replace(/[\s\-_.\/]/g, '');
 
-      const scored = [];
+      // BƯỚC 1: TÌM CÁC MÃ KHỚP TỪ TRÁI SANG PHẢI (PREFIX MATCH)
+      const codeMatches = [];
       for (let i = 0; i < list.length; i++) {
         const item = list[i];
         if (!item) continue;
         const rawCode = String(item.code || '').trim();
-        const rawName = String(item.name || '').trim();
         const c = rawCode.toLowerCase();
-        const n = rawName.toLowerCase();
         const cNorm = c.replace(/[\s\-_.\/]/g, '');
 
         let tier = 999;
-        let matchIndex = 999;
-
         // 1. Mã khớp chính xác 100%
         if (c === q) {
           tier = 0;
-          matchIndex = 0;
         }
-        // 2. Mã BẮT ĐẦU bằng từ khóa (tìm kiếm mã từ trái sang phải khớp nhất)
+        // 2. Mã BẮT ĐẦU bằng từ khóa (từ trái sang phải chuẩn)
         else if (c.startsWith(q)) {
           tier = 1;
-          matchIndex = 0;
         }
         // 3. Mã bắt đầu bằng từ khóa khi bỏ qua ký tự đặc biệt (- _ . / khoảng trắng)
         else if (qNorm && cNorm.startsWith(qNorm)) {
           tier = 2;
-          matchIndex = 0;
-        }
-        // 4. Phân đoạn trong mã (sau dấu -, _, /, khoảng trắng, .) bắt đầu bằng từ khóa
-        else if (c.includes('-' + q) || c.includes('_' + q) || c.includes('/' + q) || c.includes('.' + q) || c.includes(' ' + q)) {
-          tier = 3;
-          matchIndex = c.indexOf(q);
-        }
-        // 5. Mã chứa từ khóa ở vị trí bất kỳ (vị trí càng gần bên trái matchIndex càng nhỏ -> xếp trên)
-        else if (c.includes(q)) {
-          tier = 4;
-          matchIndex = c.indexOf(q);
-        }
-        // 6. Tên sản phẩm BẮT ĐẦU bằng từ khóa (từ trái sang phải)
-        else if (n.startsWith(q)) {
-          tier = 5;
-          matchIndex = 0;
-        }
-        // 7. Từ trong tên bắt đầu bằng từ khóa
-        else if (n.includes(' ' + q) || n.includes('-' + q) || n.includes('/' + q)) {
-          tier = 6;
-          matchIndex = n.indexOf(q);
-        }
-        // 8. Tên sản phẩm chứa từ khóa
-        else if (n.includes(q)) {
-          tier = 7;
-          matchIndex = n.indexOf(q);
         }
 
         if (tier < 999) {
-          scored.push({
+          codeMatches.push({
             item,
             tier,
-            matchIndex,
             codeLen: rawCode.length
           });
         }
       }
 
-      // Sắp xếp: Ưu tiên bậc khớp (tier) -> Vị trí xuất hiện từ trái sang phải (matchIndex) -> Độ dài mã ngắn hơn -> Thứ tự A-Z
-      scored.sort((a, b) => {
+      // NẾU CÓ MÃ KHỚP TỪ TRÁI SANG PHẢI:
+      // CHỈ TRẢ VỀ CÁC MÃ NÀY, TUYỆT ĐỐI KHÔNG HIỂN THỊ THÊM MÃ CÓ KÝ TỰ Ở GIỮA HOẶC TRONG TÊN CÓ CHỨA KÝ TỰ (CHO NGẮN GỌN & CHUẨN XÁC)
+      if (codeMatches.length > 0) {
+        codeMatches.sort((a, b) => {
+          if (a.tier !== b.tier) return a.tier - b.tier;
+          if (a.codeLen !== b.codeLen) return a.codeLen - b.codeLen;
+          const cA = a.item.code || '';
+          const cB = b.item.code || '';
+          return cA < cB ? -1 : (cA > cB ? 1 : 0);
+        });
+        return codeMatches.slice(0, maxResults).map(s => s.item);
+      }
+
+      // BƯỚC 2: NẾU HOÀN TOÀN KHÔNG CÓ MÃ NÀO KHỚP TỪ TRÁI SANG PHẢI
+      // (Người dùng đang tìm kiếm bằng TÊN sản phẩm, ví dụ: "Ba chạc", "Ống nhựa", "Cút 90"...)
+      const nameMatches = [];
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        if (!item) continue;
+        const rawName = String(item.name || '').trim();
+        const n = rawName.toLowerCase();
+        const nNorm = n.replace(/[\s\-_.\/]/g, '');
+
+        let tier = 999;
+        let matchIndex = 999;
+
+        // Tên bắt đầu bằng từ khóa từ trái sang phải
+        if (n.startsWith(q)) {
+          tier = 0;
+          matchIndex = 0;
+        }
+        else if (qNorm && nNorm.startsWith(qNorm)) {
+          tier = 1;
+          matchIndex = 0;
+        }
+        // Từ trong tên bắt đầu bằng từ khóa
+        else if (n.includes(' ' + q) || n.includes('-' + q) || n.includes('/' + q)) {
+          tier = 2;
+          matchIndex = n.indexOf(q);
+        }
+        // Tên sản phẩm chứa từ khóa
+        else if (n.includes(q)) {
+          tier = 3;
+          matchIndex = n.indexOf(q);
+        }
+
+        if (tier < 999) {
+          nameMatches.push({
+            item,
+            tier,
+            matchIndex,
+            nameLen: rawName.length
+          });
+        }
+      }
+
+      nameMatches.sort((a, b) => {
         if (a.tier !== b.tier) return a.tier - b.tier;
         if (a.matchIndex !== b.matchIndex) return a.matchIndex - b.matchIndex;
-        if (a.codeLen !== b.codeLen) return a.codeLen - b.codeLen;
-        return a.item.code.localeCompare(b.item.code);
+        if (a.nameLen !== b.nameLen) return a.nameLen - b.nameLen;
+        const nA = a.item.name || '';
+        const nB = b.item.name || '';
+        return nA < nB ? -1 : (nA > nB ? 1 : 0);
       });
 
-      return scored.slice(0, maxResults).map(s => s.item);
+      return nameMatches.slice(0, maxResults).map(s => s.item);
     }
 
     function escapeHtml(str) {
@@ -5742,23 +5980,21 @@ window.google.script = {
 
       window.addEventListener('scroll', function(e) {
         if (typeof isProgrammaticScroll !== 'undefined' && isProgrammaticScroll) return;
+        // Bỏ qua nếu không có bất kỳ dropdown nào đang mở (tối ưu 60fps khi cuộn chuột, loại bỏ giật lag)
+        if (!activeDropdownRowId) {
+          const g = document.getElementById('global-autocomplete-dropdown');
+          if (!g || g.style.display === 'none' || g.classList.contains('hidden')) {
+            const d = document.getElementById('detail-search-dropdown');
+            if (!d || d.classList.contains('hidden')) return;
+          }
+        }
         if (e.target && (e.target.id === 'global-autocomplete-dropdown' || (e.target.closest && e.target.closest('#global-autocomplete-dropdown')))) {
           return;
         }
-        const gDropdown = document.getElementById('global-autocomplete-dropdown');
-        const dSearch = document.getElementById('detail-search-dropdown');
-        const hasOpen = (gDropdown && gDropdown.style.display !== 'none' && !gDropdown.classList.contains('hidden')) ||
-                        (dSearch && !dSearch.classList.contains('hidden'));
-        if (hasOpen) {
-          closeAllDropdowns();
-        }
+        closeAllDropdowns();
       }, { passive: true, capture: true });
 
-      let resizeDebounceTimer = null;
-      window.addEventListener('resize', function() {
-        if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
-        resizeDebounceTimer = setTimeout(closeAllDropdowns, 100);
-      }, { passive: true });
+      window.addEventListener('resize', closeAllDropdowns);
 
       const qsInputEl = document.getElementById('quick-search-input');
       if (qsInputEl) {
@@ -5804,8 +6040,9 @@ window.google.script = {
     }
 
     function initAutoRefresh() {
-      // Đặt chu kỳ làm mới định kỳ 15 phút để bảo đảm tải nhanh và không gây nghẽn kết nối
+      // Đặt chu kỳ làm mới định kỳ 15 phút (chỉ chạy khi dùng Cloud, trong chế độ Offline độc lập không tự làm mới để giữ giao diện tĩnh mượt mà)
       setInterval(() => {
+        if (STORAGE_MODE !== 'CLOUD') return;
         if (Swal.isVisible() || editingVoucherNo || editingNhapTraNo) return;
         if (voucherRows.some(r => r.code || r.quantity)) return;
 
@@ -6070,10 +6307,12 @@ window.google.script = {
         if (sbStatus && sbStatus.dataset.refreshing) return;
 
         if (STORAGE_MODE !== 'CLOUD') {
-          if (sbStatus && !sbStatus.dataset.refreshing) {
-            sbStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse mr-1.5"></span><b class="text-slate-800">Sẵn sàng (Độc lập)</b>';
+          if (sbStatus && !sbStatus.dataset.refreshing && sbStatus.dataset.mode !== 'STANDALONE') {
+            sbStatus.dataset.mode = 'STANDALONE';
+            sbStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5"></span><b class="text-slate-800">Sẵn sàng (Độc lập)</b>';
           }
-          if (sbDb) {
+          if (sbDb && sbDb.dataset.mode !== 'STANDALONE') {
+            sbDb.dataset.mode = 'STANDALONE';
             sbDb.innerHTML = '<i class="bi bi-hdd-fill text-emerald-600 mr-1"></i><span>Lưu trữ: <b class="text-emerald-700">Độc lập (Máy tính)</b></span>';
           }
           return;
@@ -6494,24 +6733,62 @@ window.google.script = {
     }
 
 
+    let inventoryCurrentPage = 1;
+    let inventoryPageSize = 100;
+    let currentFilteredInventory = [];
+
+    function changeInventoryPageSize(newVal) {
+      inventoryPageSize = (newVal === 'all') ? 'all' : parseInt(newVal, 10);
+      inventoryCurrentPage = 1;
+      renderInventoryCurrentPage();
+    }
+
+    function goToInventoryPage(page) {
+      inventoryCurrentPage = page;
+      renderInventoryCurrentPage();
+      const cont = document.getElementById('inventory-table-container');
+      if (cont) cont.scrollTop = 0;
+    }
+
     function renderInventoryTable(items) {
+      currentFilteredInventory = items || [];
+      inventoryCurrentPage = 1;
+      updateDashboardCards();
+      renderInventoryCurrentPage();
+    }
+
+    function renderInventoryCurrentPage() {
       const tbody = document.getElementById('inventory-tbody');
       if (!tbody) return;
 
-      updateDashboardCards();
-
-      const totalItems = items ? items.length : 0;
+      const totalItems = currentFilteredInventory.length;
       const countEl = document.getElementById('inventory-item-count');
-      if (countEl) countEl.innerText = `Tổng: ${totalItems} SP`;
+      if (countEl) countEl.innerText = `Tổng: ${totalItems.toLocaleString('vi-VN')} SP`;
       const countTopEl = document.getElementById('inventory-item-count-top');
-      if (countTopEl) countTopEl.innerText = `Số lượng: ${totalItems} SP`;
+      if (countTopEl) countTopEl.innerText = `Số lượng: ${totalItems.toLocaleString('vi-VN')} SP`;
 
-      if (!items || items.length === 0) {
+      if (totalItems === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400">Không tìm thấy mặt hàng phù hợp</td></tr>';
+        renderInventoryPaginationUI(0, 0, 0, 1);
         return;
       }
 
-      tbody.innerHTML = items.map((item, index) => {
+      let itemsToRender = currentFilteredInventory;
+      let startIndex = 0;
+      let totalPages = 1;
+
+      if (inventoryPageSize !== 'all') {
+        const size = Number(inventoryPageSize);
+        totalPages = Math.ceil(totalItems / size) || 1;
+        if (inventoryCurrentPage > totalPages) inventoryCurrentPage = totalPages;
+        if (inventoryCurrentPage < 1) inventoryCurrentPage = 1;
+        startIndex = (inventoryCurrentPage - 1) * size;
+        itemsToRender = currentFilteredInventory.slice(startIndex, startIndex + size);
+      }
+
+      renderInventoryPaginationUI(totalItems, startIndex, itemsToRender.length, totalPages);
+
+      tbody.innerHTML = itemsToRender.map((item, index) => {
         let badgeHtml = '';
         let stockColor = 'text-slate-900';
 
@@ -6530,10 +6807,11 @@ window.google.script = {
 
         const tpPackDisplay = formatPackagingStock(item.stockTP, item.pack_qty, item.pack_unit, item.unit);
         const totalPackDisplay = formatPackagingStock(item.stock, item.pack_qty, item.pack_unit, item.unit);
+        const stt = startIndex + index + 1;
 
         return `
           <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
-            <td class="px-2 py-2 text-center font-mono text-slate-400 font-semibold col-center col-stt">${index + 1}</td>
+            <td class="px-2 py-2 text-center font-mono text-slate-400 font-semibold col-center col-stt">${stt}</td>
             <td class="px-2.5 py-2 font-mono font-bold text-blue-700 col-center col-code">${item.code}</td>
             <td class="px-2.5 py-2 text-slate-900 font-medium col-item-name col-name" title="${item.name}">${item.name}</td>
             <td class="px-2.5 py-2 text-center text-slate-500 font-semibold col-center col-unit">${item.unit || '-'}</td>
@@ -6560,6 +6838,47 @@ window.google.script = {
           </tr>
         `;
       }).join('');
+    }
+
+    function renderInventoryPaginationUI(total, start, count, totalPages) {
+      const infoEl = document.getElementById('inventory-page-info');
+      const btnsEl = document.getElementById('inventory-pagination-btns');
+      if (!infoEl || !btnsEl) return;
+
+      if (total === 0) {
+        infoEl.innerText = '0 sản phẩm';
+        btnsEl.innerHTML = '';
+        return;
+      }
+
+      if (inventoryPageSize === 'all') {
+        infoEl.innerHTML = `Hiển thị toàn bộ <b class="text-blue-700 font-mono">${total.toLocaleString('vi-VN')}</b> SP`;
+        btnsEl.innerHTML = '';
+        return;
+      }
+
+      const fromNum = start + 1;
+      const toNum = start + count;
+      infoEl.innerHTML = `Hiển thị <b class="font-mono text-slate-800">${fromNum}</b> - <b class="font-mono text-slate-800">${toNum}</b> / <b class="font-mono text-blue-700">${total.toLocaleString('vi-VN')}</b> SP (Trang <b class="text-blue-700 font-mono">${inventoryCurrentPage}</b>/${totalPages})`;
+
+      let html = '';
+      const isFirst = inventoryCurrentPage <= 1;
+      const isLast = inventoryCurrentPage >= totalPages;
+
+      html += `<button onclick="goToInventoryPage(1)" ${isFirst ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang đầu">« Đầu</button>`;
+      html += `<button onclick="goToInventoryPage(${inventoryCurrentPage - 1})" ${isFirst ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang trước">‹ Trước</button>`;
+
+      const pStart = Math.max(1, inventoryCurrentPage - 2);
+      const pEnd = Math.min(totalPages, inventoryCurrentPage + 2);
+      for (let p = pStart; p <= pEnd; p++) {
+        const isCurrent = p === inventoryCurrentPage;
+        html += `<button onclick="goToInventoryPage(${p})" class="px-2.5 py-1 rounded font-mono font-bold text-xs transition shadow-2xs ${isCurrent ? 'bg-blue-600 text-white' : 'bg-white hover:bg-blue-50 text-slate-700 border border-slate-200'}">${p}</button>`;
+      }
+
+      html += `<button onclick="goToInventoryPage(${inventoryCurrentPage + 1})" ${isLast ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang sau">Sau ›</button>`;
+      html += `<button onclick="goToInventoryPage(${totalPages})" ${isLast ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-blue-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang cuối">Cuối »</button>`;
+
+      btnsEl.innerHTML = html;
     }
 
     let isAdvancedInventoryUnlocked = false;
@@ -6927,32 +7246,79 @@ window.google.script = {
       renderPackagingTable(filtered);
     }
 
-    // BẢNG QUY CÁCH: CHỈ HIỂN THỊ ĐÚNG STT - MÃ SỐ - MẶT HÀNG - ĐVT LẺ - QUY CÁCH BAO GÓI
+    // BẢNG QUY CÁCH: CHỈ HIỂN THỊ ĐÚNG STT - MÃ SỐ - MẶT HÀNG - ĐVT LẺ - QUY CÁCH BAO GÓI (PHÂN TRANG TỐI ƯU 0MS TRỄ)
+    let packagingCurrentPage = 1;
+    let packagingPageSize = 100;
+    let currentFilteredPackaging = [];
+
+    function changePackagingPageSize(newVal) {
+      packagingPageSize = (newVal === 'all') ? 'all' : parseInt(newVal, 10);
+      packagingCurrentPage = 1;
+      renderPackagingCurrentPage();
+    }
+
+    function goToPackagingPage(page) {
+      packagingCurrentPage = page;
+      renderPackagingCurrentPage();
+      const cont = document.querySelector('#tab-packaging .overflow-x-auto');
+      if (cont) cont.scrollTop = 0;
+    }
+
     function renderPackagingTable(items) {
+      currentFilteredPackaging = items || [];
+      packagingCurrentPage = 1;
+      renderPackagingCurrentPage();
+    }
+
+    function renderPackagingCurrentPage() {
       const tbody = document.getElementById('packaging-tbody');
       if (!tbody) return;
 
-      if (!items || items.length === 0) {
+      const totalItems = currentFilteredPackaging.length;
+      if (totalItems === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">Không tìm thấy mặt hàng phù hợp</td></tr>';
         const summaryBadge = document.getElementById('pack-summary-badge');
         if (summaryBadge) summaryBadge.innerText = 'Tổng: 0 SP';
+        renderPackagingPaginationUI(0, 0, 0, 1);
         return;
       }
 
       let configuredCount = 0;
+      for (let i = 0; i < totalItems; i++) {
+        const q = currentFilteredPackaging[i].pack_qty;
+        if (q && Number(q) > 1) configuredCount++;
+      }
 
-      tbody.innerHTML = items.map((item, idx) => {
+      const summaryBadge = document.getElementById('pack-summary-badge');
+      if (summaryBadge) {
+        summaryBadge.innerText = `Tổng: ${totalItems.toLocaleString('vi-VN')} SP | Đã cài quy cách: ${configuredCount.toLocaleString('vi-VN')} SP`;
+      }
+
+      let itemsToRender = currentFilteredPackaging;
+      let startIndex = 0;
+      let totalPages = 1;
+
+      if (packagingPageSize !== 'all') {
+        const size = Number(packagingPageSize);
+        totalPages = Math.ceil(totalItems / size) || 1;
+        if (packagingCurrentPage > totalPages) packagingCurrentPage = totalPages;
+        if (packagingCurrentPage < 1) packagingCurrentPage = 1;
+        startIndex = (packagingCurrentPage - 1) * size;
+        itemsToRender = currentFilteredPackaging.slice(startIndex, startIndex + size);
+      }
+
+      renderPackagingPaginationUI(totalItems, startIndex, itemsToRender.length, totalPages);
+
+      tbody.innerHTML = itemsToRender.map((item, idx) => {
         const rawPackQty = item.pack_qty;
-        // Nếu giá trị <= 1 thì coi là rỗng để hiển thị placeholder
         const packQty = (rawPackQty !== null && rawPackQty !== undefined && rawPackQty !== "" && Number(rawPackQty) > 1) ? Number(rawPackQty) : '';
         const packUnit = item.pack_unit ? String(item.pack_unit).trim() : '';
         const baseUnit = item.unit || 'cái';
-
-        if (packQty && Number(packQty) > 1) configuredCount++;
+        const stt = startIndex + idx + 1;
 
         return `
           <tr class="border-b border-slate-100 hover:bg-amber-50/30 transition">
-            <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
+            <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${stt}</td>
             <td class="px-3 py-2 font-mono font-bold text-blue-700 col-center">${item.code}</td>
             <td class="px-3.5 py-2 text-slate-900 font-medium col-item-name" title="${item.name}">${item.name}</td>
             <td class="px-3 py-2 text-center text-slate-500 font-semibold col-center">${baseUnit}</td>
@@ -6984,11 +7350,47 @@ window.google.script = {
           </tr>
         `;
       }).join('');
+    }
 
-      const summaryBadge = document.getElementById('pack-summary-badge');
-      if (summaryBadge) {
-        summaryBadge.innerText = `Tổng: ${items.length} SP | Đã cài quy cách: ${configuredCount} SP`;
+    function renderPackagingPaginationUI(total, start, count, totalPages) {
+      const infoEl = document.getElementById('packaging-page-info');
+      const btnsEl = document.getElementById('packaging-pagination-btns');
+      if (!infoEl || !btnsEl) return;
+
+      if (total === 0) {
+        infoEl.innerText = '0 sản phẩm';
+        btnsEl.innerHTML = '';
+        return;
       }
+
+      if (packagingPageSize === 'all') {
+        infoEl.innerHTML = `Hiển thị toàn bộ <b class="text-amber-700 font-mono">${total.toLocaleString('vi-VN')}</b> SP`;
+        btnsEl.innerHTML = '';
+        return;
+      }
+
+      const fromNum = start + 1;
+      const toNum = start + count;
+      infoEl.innerHTML = `Hiển thị <b class="font-mono text-slate-800">${fromNum}</b> - <b class="font-mono text-slate-800">${toNum}</b> / <b class="font-mono text-amber-700">${total.toLocaleString('vi-VN')}</b> SP (Trang <b class="text-amber-700 font-mono">${packagingCurrentPage}</b>/${totalPages})`;
+
+      let html = '';
+      const isFirst = packagingCurrentPage <= 1;
+      const isLast = packagingCurrentPage >= totalPages;
+
+      html += `<button onclick="goToPackagingPage(1)" ${isFirst ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-amber-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang đầu">« Đầu</button>`;
+      html += `<button onclick="goToPackagingPage(${packagingCurrentPage - 1})" ${isFirst ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-amber-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang trước">‹ Trước</button>`;
+
+      const pStart = Math.max(1, packagingCurrentPage - 2);
+      const pEnd = Math.min(totalPages, packagingCurrentPage + 2);
+      for (let p = pStart; p <= pEnd; p++) {
+        const isCurrent = p === packagingCurrentPage;
+        html += `<button onclick="goToPackagingPage(${p})" class="px-2.5 py-1 rounded font-mono font-bold text-xs transition shadow-2xs ${isCurrent ? 'bg-amber-600 text-white' : 'bg-white hover:bg-amber-50 text-slate-700 border border-slate-200'}">${p}</button>`;
+      }
+
+      html += `<button onclick="goToPackagingPage(${packagingCurrentPage + 1})" ${isLast ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-amber-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang sau">Sau ›</button>`;
+      html += `<button onclick="goToPackagingPage(${totalPages})" ${isLast ? 'disabled class="px-2 py-1 rounded bg-slate-100 text-slate-300 text-xs font-bold cursor-not-allowed"' : 'class="px-2 py-1 rounded bg-white hover:bg-amber-50 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"'} title="Trang cuối">Cuối »</button>`;
+
+      btnsEl.innerHTML = html;
     }
 
     function onPackQtyInput(code, val) {
@@ -12505,7 +12907,7 @@ window.google.script = {
       });
 
       // Mở sẵn các nhóm có sản phẩm phát của phiếu này để người dùng kiểm tra ngay
-      checkedFastGroupsSet = editActiveGroups;
+      checkedFastGroupsList = Array.from(editActiveGroups);
 
       if (dispatchFormRows.length === 0) {
         addDispatchFormRow(null, false);
@@ -12591,7 +12993,7 @@ window.google.script = {
       }
 
       resetFastItemsQuantities();
-      checkedFastGroupsSet = new Set();
+      checkedFastGroupsList = [];
       saveCheckedFastGroups();
       renderFastGroupCheckboxes();
       renderFastItemsTable('');
@@ -12768,7 +13170,7 @@ window.google.script = {
     function onDispatchQtyInput(rowId, inputEl) {
       const r = dispatchFormRows.find(x => x.id === rowId);
       if (r) r.quantity = parseSmartNumber(inputEl.value);
-      scheduleDispatchFormSummary();
+      calculateDispatchFormSummary();
     }
 
     function onDispatchQtyFocus(rowId, inputEl) {
@@ -12779,7 +13181,7 @@ window.google.script = {
       const val = parseSmartNumber(inputEl.value);
       if (val > 0) inputEl.value = formatNumber(val);
       else inputEl.value = '';
-      scheduleDispatchFormSummary();
+      calculateDispatchFormSummary();
     }
 
     function onDispatchNoteChange(rowId, val) {
@@ -12787,21 +13189,12 @@ window.google.script = {
       if (r) r.note = cleanNoteContent(val);
     }
 
-    let dispatchSummaryRafId = null;
-    function scheduleDispatchFormSummary() {
-      if (dispatchSummaryRafId) cancelAnimationFrame(dispatchSummaryRafId);
-      dispatchSummaryRafId = requestAnimationFrame(() => {
-        dispatchSummaryRafId = null;
-        calculateDispatchFormSummary();
-      });
-    }
-
     function calculateDispatchFormSummary() {
       let count = 0;
       let total = 0;
 
       // 1. Mặt hàng phát từ Bảng nhanh
-      const fastItems = (customFastItemsList && customFastItemsList.length > 0) ? customFastItemsList : getCustomFastItems();
+      const fastItems = getCustomFastItems();
       fastItems.forEach(fi => {
         const state = fastDispatchItemsState[fi.id];
         const q = state ? (state.calculatedQty || 0) : 0;
@@ -14166,13 +14559,9 @@ window.google.script = {
       renderReconciliationContent();
     }
 
-    let reconcileSearchTimer_ = null;
     function handleReconciliationSearch(query) {
-      if (reconcileSearchTimer_) clearTimeout(reconcileSearchTimer_);
-      reconcileSearchTimer_ = setTimeout(() => {
-        currentReconciliationSearch = (query || '').trim().toLowerCase();
-        renderReconciliationContent(true);
-      }, 100);
+      currentReconciliationSearch = (query || '').trim().toLowerCase();
+      renderReconciliationContent(true);
     }
 
     function getReconciliationDateDisplay_() {
@@ -14241,22 +14630,17 @@ window.google.script = {
         const elAllSkusCount = document.getElementById('reconcile-all-skus-count');
         if (elAllSkusCount) elAllSkusCount.innerText = state.items.length;
 
-        const elNeedCheckCount = document.getElementById('reconcile-need-check-count');
-        if (elNeedCheckCount) elNeedCheckCount.innerText = state.countMismatchQty + state.countNotInExcel;
-
         const elFilterBadge = document.getElementById('reconcile-current-filter-badge');
         const elFilterIcon = document.getElementById('reconcile-current-filter-icon');
         const elFilterText = document.getElementById('reconcile-current-filter-text');
         const btnShowAll = document.getElementById('reconcile-btn-show-all');
-        const btnNeedCheck = document.getElementById('reconcile-btn-need-check');
 
         const filterLabels = {
           'dispatched': { text: `Hàng đã ghi phát (${state.dispatchedSkusCount})`, icon: 'bi-box-seam', badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
           'matched': { text: `Khớp chuẩn (${state.countMatched})`, icon: 'bi-check-circle-fill text-emerald-600', badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-          'discrepancy': { text: `Lệch số lượng (${state.countMismatchQty})`, icon: 'bi-exclamation-triangle-fill text-amber-600', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
+          'discrepancy': { text: `Cần kiểm tra (${state.countMismatchQty + state.countNotInExcel})`, icon: 'bi-exclamation-triangle-fill text-amber-600', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
           'not_in_excel': { text: `Không có trong file xuất (${state.countNotInExcel})`, icon: 'bi-x-octagon-fill text-rose-600', badgeClass: 'bg-rose-50 text-rose-700 border-rose-200' },
           'not_dispatched': { text: `File xuất chưa phát (${state.countNotDispatched})`, icon: 'bi-hourglass-split text-slate-500', badgeClass: 'bg-slate-100 text-slate-700 border-slate-300' },
-          'need_check': { text: `Cần kiểm tra (${state.countMismatchQty + state.countNotInExcel})`, icon: 'bi-exclamation-triangle-fill text-amber-600', badgeClass: 'bg-amber-50 text-amber-700 border-amber-200' },
           'all': { text: `Toàn bộ danh mục (${state.items.length})`, icon: 'bi-collection text-blue-600', badgeClass: 'bg-blue-50 text-blue-700 border-blue-200' }
         };
 
@@ -14272,14 +14656,6 @@ window.google.script = {
             btnShowAll.className = "text-xs font-bold px-3 py-1 rounded-xl bg-indigo-600 text-white shadow-xs cursor-pointer flex items-center space-x-1 ring-2 ring-indigo-300";
           } else {
             btnShowAll.className = "text-xs font-semibold px-2.5 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 transition cursor-pointer flex items-center space-x-1 shadow-2xs";
-          }
-        }
-
-        if (btnNeedCheck) {
-          if (currentReconciliationFilter === 'need_check') {
-            btnNeedCheck.className = "text-xs font-bold px-3 py-1 rounded-xl bg-amber-600 text-white shadow-xs cursor-pointer flex items-center space-x-1 ring-2 ring-amber-300";
-          } else {
-            btnNeedCheck.className = "text-xs font-semibold px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition cursor-pointer flex items-center space-x-1 shadow-2xs";
           }
         }
 
@@ -14336,16 +14712,13 @@ window.google.script = {
         if (currentReconciliationFilter === 'dispatched') {
           if (item.category !== 'dispatched') return false;
         } else if (currentReconciliationFilter === 'discrepancy') {
-          // CHỈ LẤY ĐÚNG CÁC MẶT HÀNG LỆCH SỐ LƯỢNG (THIẾU HOẶC VƯỢT), KHÔNG GOM NHẦM HÀNG KHÔNG CÓ TRONG FILE
-          if (item.status !== 'SHORTAGE' && item.status !== 'OVER') return false;
+          if (item.status === 'MATCHED' || item.status === 'NOT_DISPATCHED') return false;
         } else if (currentReconciliationFilter === 'matched') {
           if (item.status !== 'MATCHED') return false;
         } else if (currentReconciliationFilter === 'not_in_excel') {
           if (item.status !== 'NOT_IN_EXCEL') return false;
         } else if (currentReconciliationFilter === 'not_dispatched') {
           if (item.status !== 'NOT_DISPATCHED') return false;
-        } else if (currentReconciliationFilter === 'need_check') {
-          if (item.status !== 'SHORTAGE' && item.status !== 'OVER' && item.status !== 'NOT_IN_EXCEL') return false;
         }
 
         // Search query filter
@@ -15654,7 +16027,7 @@ window.google.script = {
     let fastDispatchItemsState = {};
     let customFastItemsList = null;
     let customFastGroupsList = null;
-    let checkedFastGroupsSet = null;
+    let checkedFastGroupsList = null;
 
     function escapeJsString(str) {
       return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
@@ -15662,37 +16035,120 @@ window.google.script = {
 
     // ========================================================
     // BỘ PHÂN TÍCH & SẮP XẾP SẢN PHẨM THEO ĐƯỜNG KÍNH DN & ÁP SUẤT PN
-    // Cùng DN nằm cạnh nhau, thứ tự từ nhỏ đến lớn: DN1 -> DN2 -> PN
+    // Hỗ trợ cả sản phẩm đơn DN và sản phẩm có dấu "-" (DN1 - DN2, ví dụ 60-21, 60-42)
+    // Sắp xếp: Số đầu tiên cùng chung 1 nhóm (DN1) -> Số thứ hai (DN2) -> PN từ nhỏ đến lớn
     // ========================================================
-    function parseProductDnPn(str) {
-      if (!str) return { dn1: 9999, dn2: 0, pn: 0, raw: '' };
-      const s = String(str).trim();
-      const numMatches = s.match(/\d+(?:[,\.]\d+)?/g);
-      if (!numMatches || numMatches.length === 0) {
-        return { dn1: 9999, dn2: 0, pn: 0, raw: s };
+    function parseProductDnPn(itemOrStr) {
+      if (!itemOrStr) return { dn1: 9999, dn2: 0, pn: 0, dn: 9999, dnLabel: '-', pnLabel: '-' };
+
+      let cName = '';
+      let fullName = '';
+      let code = '';
+
+      if (typeof itemOrStr === 'object') {
+        cName = String(itemOrStr.customName || '').trim();
+        fullName = String(itemOrStr.name || '').trim();
+        code = String(itemOrStr.code || '').trim();
+      } else {
+        cName = String(itemOrStr).trim();
       }
 
-      const num1 = parseFloat(numMatches[0].replace(',', '.'));
-      const num2 = numMatches.length > 1 ? parseFloat(numMatches[1].replace(',', '.')) : 0;
-      const num3 = numMatches.length > 2 ? parseFloat(numMatches[2].replace(',', '.')) : 0;
+      const fullText = `${cName} ${code} ${fullName}`.toUpperCase();
+
+      let dn1 = 9999;
+      let dn2 = 0;
+      let pn = 0;
+
+      // 1. TRƯỜNG HỢP 1: CÓ DẤU GẠCH NỐI GIỮA 2 ĐƯỜNG KÍNH DN (Ví dụ "60-21/8", "60-42/10", "DN 60-42 PN8", "60 - 42")
+      const dualMatch = cName.match(/(\d+)\s*[\-–—]\s*(\d+)(?:\s*[/xX]\s*(\d+(?:[\.,]\d+)?))?/) ||
+                        fullText.match(/(?:DN|Ø|D|PHI)?\s*(\d+)\s*[\-–—]\s*(\d+)(?:\s*(?:PN|[/xX])\s*(\d+(?:[\.,]\d+)?))?/i);
+
+      if (dualMatch) {
+        dn1 = parseFloat(dualMatch[1]);
+        dn2 = parseFloat(dualMatch[2]);
+        if (dualMatch[3]) {
+          pn = parseFloat(dualMatch[3].replace(',', '.'));
+        }
+      }
+
+      // 2. TRƯỜNG HỢP 2: ĐƠN DN CÓ DẤU GẠCH CHÉO / (Ví dụ "CHẾCH 60/6", "NỐI 75/8", "BỊT 90/10")
+      if (dn1 === 9999) {
+        const singleSlashMatch = cName.match(/(?:^|[^\d\-–—])(\d+)\s*[/xX]\s*(\d+(?:[\.,]\d+)?)/);
+        if (singleSlashMatch) {
+          dn1 = parseFloat(singleSlashMatch[1]);
+          dn2 = 0;
+          pn = parseFloat(singleSlashMatch[2].replace(',', '.'));
+        }
+      }
+
+      // 3. NẾU CHƯA CÓ DN1: Tìm theo tiền tố DN, D, Ø, Phi hoặc số đầu tiên
+      if (dn1 === 9999) {
+        const dnMatch = fullText.match(/\bDN\s*(\d+)\b/i) || 
+                        fullText.match(/\bD\s*(\d+)\b/i) || 
+                        fullText.match(/(?:PHI|Ø)\s*(\d+)/i);
+        if (dnMatch) {
+          dn1 = parseFloat(dnMatch[1]);
+          dn2 = 0;
+        } else {
+          const numMatch = cName.match(/\d+/) || code.match(/\d+/);
+          if (numMatch) {
+            dn1 = parseFloat(numMatch[0]);
+            dn2 = 0;
+          }
+        }
+      }
+
+      // 4. NẾU CHƯA CÓ PN: Tìm theo từ khóa PN, hoặc số sau dấu / hoặc đuôi mã sản phẩm
+      if (!pn) {
+        const pnMatch = fullText.match(/\bPN\s*(\d+(?:[\.,]\d+)?)\b/i) || 
+                        fullText.match(/\((?:PN)?\s*(\d+(?:[\.,]\d+)?)\)/i);
+        if (pnMatch) {
+          pn = parseFloat(pnMatch[1].replace(',', '.'));
+        } else {
+          const slashNum = cName.match(/[/](\d+(?:[\.,]\d+)?)/);
+          if (slashNum) {
+            pn = parseFloat(slashNum[1].replace(',', '.'));
+          } else if (/16$/.test(code)) pn = 16;
+          else if (/125$/.test(code) || /12\.5$/.test(code)) pn = 12.5;
+          else if (/10$/.test(code)) pn = 10;
+          else if (/8$/.test(code)) pn = 8;
+          else if (/6$/.test(code)) pn = 6;
+        }
+      }
+
+      // NHÃN HIỂN THỊ CHUẨN XÁC
+      let dnLabel = '-';
+      if (dn1 < 9999) {
+        if (dn2 > 0) {
+          dnLabel = `Ø ${dn1}-${dn2}`;
+        } else {
+          dnLabel = `Ø ${dn1}`;
+        }
+      }
+      let pnLabel = pn > 0 ? `PN ${pn}` : '-';
 
       return {
-        dn1: isNaN(num1) ? 9999 : num1,
-        dn2: isNaN(num2) ? 0 : num2,
-        pn: isNaN(num3) ? 0 : num3,
-        raw: s
+        dn1: isNaN(dn1) ? 9999 : dn1,
+        dn2: isNaN(dn2) ? 0 : dn2,
+        pn: isNaN(pn) ? 0 : pn,
+        dn: isNaN(dn1) ? 9999 : dn1,
+        dnLabel: dnLabel,
+        pnLabel: pnLabel
       };
     }
 
     function sortFastItemsByDnPn(items) {
       return [...items].sort((a, b) => {
-        const pA = parseProductDnPn(a.customName || a.name || a.code);
-        const pB = parseProductDnPn(b.customName || b.name || b.code);
+        const pA = parseProductDnPn(a);
+        const pB = parseProductDnPn(b);
 
-        if (pA.dn1 !== pB.dn1) return pA.dn1 - pB.dn1; // DN1 từ nhỏ đến lớn
-        if (pA.dn2 !== pB.dn2) return pA.dn2 - pB.dn2; // DN2 hoặc PN từ nhỏ đến lớn
-        if (pA.pn !== pB.pn) return pA.pn - pB.pn;     // PN từ nhỏ đến lớn
-        return (a.customName || '').localeCompare(b.customName || '', 'vi');
+        // 1. Số đầu tiên cùng chung 1 nhóm từ nhỏ đến lớn (ví dụ 60 đứng trước 75)
+        if (pA.dn1 !== pB.dn1) return pA.dn1 - pB.dn1;
+        // 2. Số thứ 1 "-" số thứ 2 cùng cạnh nhau và cùng nhóm số đầu tiên (ví dụ 60-21 rồi 60-27 rồi 60-34 rồi 60-42)
+        if (pA.dn2 !== pB.dn2) return pA.dn2 - pB.dn2;
+        // 3. Trong cùng cặp DN1-DN2 (ví dụ 60-42): PN từ nhỏ đến lớn (PN8 đứng trước, PN10 đứng sau)
+        if (pA.pn !== pB.pn) return pA.pn - pB.pn;
+        return (a.customName || a.name || '').localeCompare(b.customName || b.name || '', 'vi');
       });
     }
 
@@ -15768,15 +16224,16 @@ window.google.script = {
     }
 
     // MẶC ĐỊNH CHƯƠNG TRÌNH LÀ KHÔNG TÍCH CHỌN
+    // SỬ DỤNG MẢNG (ARRAY) ĐỂ LƯU THỨ TỰ TÍCH CHỌN: NHÓM TÍCH CHỌN SAU ĐƯỢC ĐƯA LÊN ĐẦU TIÊN (LIFO)
     function getCheckedFastGroups() {
-      if (checkedFastGroupsSet) return checkedFastGroupsSet;
+      if (Array.isArray(checkedFastGroupsList)) return checkedFastGroupsList;
       try {
         const stored = localStorage.getItem('checked_fast_dispatch_groups');
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            checkedFastGroupsSet = new Set(parsed);
-            return checkedFastGroupsSet;
+            checkedFastGroupsList = parsed;
+            return checkedFastGroupsList;
           }
         }
       } catch (e) {
@@ -15784,68 +16241,43 @@ window.google.script = {
       }
 
       // MẶC ĐỊNH BAN ĐẦU: KHÔNG TÍCH CHỌN NHÓM NÀO
-      checkedFastGroupsSet = new Set();
-      return checkedFastGroupsSet;
+      checkedFastGroupsList = [];
+      return checkedFastGroupsList;
     }
 
     function saveCheckedFastGroups() {
-      if (!checkedFastGroupsSet) return;
+      if (!Array.isArray(checkedFastGroupsList)) return;
       try {
-        localStorage.setItem('checked_fast_dispatch_groups', JSON.stringify(Array.from(checkedFastGroupsSet)));
+        localStorage.setItem('checked_fast_dispatch_groups', JSON.stringify(checkedFastGroupsList));
       } catch (e) {
         console.error('Lỗi lưu checked_fast_dispatch_groups:', e);
       }
     }
 
     function toggleFastGroup(groupName) {
-      const set = getCheckedFastGroups();
-      const isNowChecked = !set.has(groupName);
-      if (isNowChecked) {
-        set.add(groupName);
+      const list = getCheckedFastGroups();
+      const idx = list.indexOf(groupName);
+      if (idx >= 0) {
+        // Nếu đã có thì bỏ chọn
+        list.splice(idx, 1);
       } else {
-        set.delete(groupName);
+        // NẾU TÍCH CHỌN MỚI: ĐƯA LÊN ĐẦU TIÊN (LIFO) ĐỂ SẢN PHẨM HIỂN THỊ LÊN TRÊN CÙNG
+        list.unshift(groupName);
       }
       saveCheckedFastGroups();
-
-      // Cập nhật trực tiếp DOM của chip được bấm mà không phá hủy/tạo lại SortableJS
-      const container = document.getElementById('fast-items-group-checkboxes');
-      let updatedInPlace = false;
-      if (container) {
-        const chips = container.querySelectorAll('.fast-group-chip');
-        chips.forEach(chip => {
-          if (chip.getAttribute('data-group-name') === groupName) {
-            updatedInPlace = true;
-            if (isNowChecked) {
-              chip.className = "fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none bg-teal-600 text-white border-teal-600 shadow-xs font-black ring-2 ring-teal-500/20";
-              const icon = chip.querySelector('i.bi');
-              if (icon) icon.className = "bi pointer-events-none bi-check-square-fill text-white text-sm";
-              const dragHandle = chip.querySelector('.group-drag-handle');
-              if (dragHandle) dragHandle.className = "group-drag-handle cursor-grab active:cursor-grabbing text-teal-200 hover:text-white px-0.5 text-xs transition";
-            } else {
-              chip.className = "fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none bg-white text-slate-700 border-slate-300 hover:border-teal-400 hover:bg-teal-50/50 hover:text-teal-950 shadow-2xs";
-              const icon = chip.querySelector('i.bi');
-              if (icon) icon.className = "bi pointer-events-none bi-square text-slate-400 text-xs";
-              const dragHandle = chip.querySelector('.group-drag-handle');
-              if (dragHandle) dragHandle.className = "group-drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 px-0.5 text-xs transition";
-            }
-          }
-        });
-      }
-
-      if (!updatedInPlace) {
-        renderFastGroupCheckboxes();
-      }
-
+      renderFastGroupCheckboxes();
       renderFastItemsTable();
     }
 
     function selectAllFastGroups(isChecked) {
-      const set = getCheckedFastGroups();
-      set.clear();
+      checkedFastGroupsList = [];
       if (isChecked) {
         const allGroups = getCustomFastGroups();
-        allGroups.forEach(g => set.add(g));
-        set.add('Chưa phân nhóm');
+        // Giữ thứ tự hiển thị của các nhóm khi chọn tất cả
+        checkedFastGroupsList = [...allGroups];
+        if (!checkedFastGroupsList.includes('Chưa phân nhóm')) {
+          checkedFastGroupsList.push('Chưa phân nhóm');
+        }
       }
       saveCheckedFastGroups();
       renderFastGroupCheckboxes();
@@ -15871,7 +16303,7 @@ window.google.script = {
 
       const allGroups = getCustomFastGroups();
       const allItems = getCustomFastItems();
-      const checkedSet = getCheckedFastGroups();
+      const checkedList = getCheckedFastGroups();
 
       let hasUnassigned = false;
       const groupFilledCount = {};
@@ -15901,9 +16333,14 @@ window.google.script = {
 
       let html = '';
       displayGroups.forEach(grp => {
-        const isChecked = checkedSet.has(grp);
+        const isChecked = checkedList.includes(grp);
         const filledInGrp = groupFilledCount[grp] || 0;
         const hasFilled = filledInGrp > 0;
+
+        // BỎ HOÀN TOÀN Ô VUÔNG CHECKBOX; THAY BẰNG HIỆU ỨNG THẺ NÚT HOVER & ACTIVE RỰC RỠ NỔI BẬT
+        const chipClasses = isChecked
+          ? 'fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-black flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none transition-all duration-200 transform hover:scale-[1.03] active:scale-[0.98] bg-gradient-to-r from-teal-600 to-emerald-600 text-white border-teal-600 shadow-md ring-2 ring-teal-400/40'
+          : 'fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none transition-all duration-200 transform hover:scale-[1.03] active:scale-[0.98] bg-white text-slate-700 border-slate-300 hover:border-teal-500 hover:bg-teal-50/70 hover:text-teal-950 shadow-2xs hover:shadow-xs';
 
         html += `
           <div role="button" 
@@ -15911,16 +16348,11 @@ window.google.script = {
                data-group-name="${escapeHtml(grp)}"
                onclick="handleFastGroupChipClick(event, '${escapeJsString(grp)}')"
                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleFastGroupChipClick(event, '${escapeJsString(grp)}');}"
-               class="fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none ${
-                 isChecked 
-                   ? 'bg-teal-600 text-white border-teal-600 shadow-xs font-black ring-2 ring-teal-500/20' 
-                   : 'bg-white text-slate-700 border-slate-300 hover:border-teal-400 hover:bg-teal-50/50 hover:text-teal-950 shadow-2xs'
-               }"
-               title="${isChecked ? 'Bấm để bỏ chọn nhóm ' + escapeHtml(grp) : 'Bấm để tích chọn nhóm ' + escapeHtml(grp)} • Kéo thả bất kỳ vị trí nào trên nút để đổi thứ tự">
-            <span class="text-slate-300 pointer-events-none ${isChecked ? 'text-teal-200' : ''}">
+               class="${chipClasses}"
+               title="${isChecked ? 'Bấm để tắt hiển thị nhóm ' + escapeHtml(grp) : 'Bấm để hiển thị nhóm ' + escapeHtml(grp) + ' lên đầu bảng'} • Kéo thả để đổi thứ tự nhóm">
+            <span class="text-slate-300 pointer-events-none ${isChecked ? 'text-teal-200' : 'text-slate-400'}">
               <i class="bi bi-grip-vertical text-xs"></i>
             </span>
-            <i class="bi pointer-events-none ${isChecked ? 'bi-check-square-fill text-white text-sm' : 'bi-square text-slate-400 text-xs'}"></i>
             <span class="tracking-tight pointer-events-none">${escapeHtml(grp)}</span>
             ${hasFilled ? `<span class="fast-group-filled-dot w-2 h-2 rounded-full ${isChecked ? 'bg-amber-300' : 'bg-emerald-500'} inline-block shadow-2xs ml-0.5 pointer-events-none" title="Đã có sản phẩm điền số lượng"></span>` : ''}
           </div>
@@ -15944,9 +16376,6 @@ window.google.script = {
 
       fastGroupsSortableInstance = new Sortable(container, {
         animation: 150,
-        forceFallback: true,
-        fallbackClass: 'fast-group-sortable-drag',
-        fallbackTolerance: 3,
         touchStartThreshold: 3,
         delayOnTouchOnly: true,
         ghostClass: 'fast-group-sortable-ghost',
@@ -15965,14 +16394,6 @@ window.google.script = {
             const newGroupsOrder = [];
             chips.forEach(el => {
               const g = el.getAttribute('data-group-name');
-              if (g && g !== 'Chưa phân nhóm' && !newGroupsOrder.includes(g)) {
-                newGroupsOrder.push(g);
-              }
-            });
-
-            // Giữ lại các nhóm khác (nếu có) vào cuối danh sách
-            const allGroups = getCustomFastGroups();
-            allGroups.forEach(g => {
               if (g && g !== 'Chưa phân nhóm' && !newGroupsOrder.includes(g)) {
                 newGroupsOrder.push(g);
               }
@@ -16000,12 +16421,13 @@ window.google.script = {
         }
       });
 
+      const checkedList = getCheckedFastGroups();
       const chips = container.querySelectorAll('.fast-group-chip');
       chips.forEach(chip => {
         const grp = chip.getAttribute('data-group-name');
         let dot = chip.querySelector('.fast-group-filled-dot');
         const isFilled = !!groupFilledMap[grp];
-        const isChecked = chip.classList.contains('bg-teal-600');
+        const isChecked = checkedList.includes(grp);
         if (isFilled && !dot) {
           dot = document.createElement('span');
           dot.className = `fast-group-filled-dot w-2 h-2 rounded-full ${isChecked ? 'bg-amber-300' : 'bg-emerald-500'} inline-block shadow-2xs ml-0.5 pointer-events-none`;
@@ -16013,6 +16435,8 @@ window.google.script = {
           chip.appendChild(dot);
         } else if (!isFilled && dot) {
           dot.remove();
+        } else if (isFilled && dot) {
+          dot.className = `fast-group-filled-dot w-2 h-2 rounded-full ${isChecked ? 'bg-amber-300' : 'bg-emerald-500'} inline-block shadow-2xs ml-0.5 pointer-events-none`;
         }
       });
     }
@@ -16147,32 +16571,26 @@ window.google.script = {
 
       const allItems = getCustomFastItems();
       const allGroups = getCustomFastGroups();
-      const checkedGroups = getCheckedFastGroups();
+      const checkedList = getCheckedFastGroups();
 
-      // Nếu không có nhóm nào được tích chọn (mặc định ban đầu)
-      if (!checkedGroups || checkedGroups.size === 0) {
+      // Nếu không có nhóm nào được chọn (mặc định ban đầu)
+      if (!checkedList || checkedList.length === 0) {
         grid.innerHTML = `
-          <div class="py-12 px-4 text-center bg-white rounded-xl border-2 border-dashed border-teal-200 shadow-2xs select-none">
+          <div class="py-10 px-4 text-center bg-white rounded-xl border-2 border-dashed border-teal-200 shadow-2xs select-none">
             <div class="w-12 h-12 mx-auto rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-xl mb-2">
-              <i class="bi bi-check2-square"></i>
+              <i class="bi bi-tags-fill"></i>
             </div>
-            <h4 class="font-black text-xs sm:text-sm text-teal-950 tracking-wide">Chưa tích chọn nhóm sản phẩm nào</h4>
+            <h4 class="font-black text-xs sm:text-sm text-teal-950 tracking-wide">Chưa chọn nhóm sản phẩm nào</h4>
             <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-              Vui lòng tích chọn một hoặc nhiều nhóm sản phẩm ở hàng trên (VD: <b class="text-teal-800">Chếch, Bịt xả, Tê đều, Ba chạc 45°, Nối thẳng...</b>) để hiển thị danh sách sản phẩm cần điền số lượng.
+              Vui lòng bấm chọn thẻ nhóm sản phẩm ở hàng trên (VD: <b class="text-teal-800">Chếch, Bịt xả, Tê đều, Ba chạc 45°, Nối thẳng...</b>) để hiển thị danh sách sản phẩm cần điền số lượng.
             </p>
           </div>
         `;
         return;
       }
 
-      // Thứ tự nhóm hiển thị
-      const displayGroupsOrder = [];
-      allGroups.forEach(g => {
-        if (checkedGroups.has(g)) displayGroupsOrder.push(g);
-      });
-      if (checkedGroups.has('Chưa phân nhóm') && !displayGroupsOrder.includes('Chưa phân nhóm')) {
-        displayGroupsOrder.push('Chưa phân nhóm');
-      }
+      // THỨ TỰ NHÓM: DUYỆT TRỰC TIẾP THEO checkedList (NHÓM TÍCH CHỌN SAU ĐƯỢC unshift LÊN ĐẦU TIÊN)
+      const displayGroupsOrder = [...checkedList];
 
       let totalVisibleCards = 0;
       let html = '';
@@ -16189,13 +16607,18 @@ window.google.script = {
         const sortedItems = sortFastItemsByDnPn(grpItems);
         totalVisibleCards += sortedItems.length;
 
-        // Lấy danh sách các giá trị DN duy nhất trong nhóm để phân bổ màu pastel theo từng DN
-        const uniqueDns = [];
+        // Gom các sản phẩm theo từng đường kính DN riêng biệt
+        const dnBuckets = [];
+        const dnBucketMap = new Map();
         sortedItems.forEach(it => {
           const p = parseProductDnPn(it.customName || it.name || it.code);
-          if (!uniqueDns.includes(p.dn1)) {
-            uniqueDns.push(p.dn1);
+          const dnVal = p.dn1;
+          if (!dnBucketMap.has(dnVal)) {
+            const bucket = { dn: dnVal, items: [] };
+            dnBucketMap.set(dnVal, bucket);
+            dnBuckets.push(bucket);
           }
+          dnBucketMap.get(dnVal).items.push(it);
         });
 
         let grpFilledCount = 0;
@@ -16205,102 +16628,105 @@ window.google.script = {
         });
 
         html += `
-          <div class="fast-group-block mb-3.5 last:mb-0 bg-white p-3.5 rounded-xl border border-teal-200/90 shadow-2xs">
-            <!-- Header Nhóm: Hiển thị tên nhóm dạng chữ tự nhiên, không in hoa hết -->
-            <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-teal-100">
+          <div class="fast-group-block mb-3.5 last:mb-0 bg-white p-3 sm:p-3.5 rounded-xl border border-teal-200/90 shadow-2xs">
+            <!-- Header Nhóm: Hiển thị tên nhóm dạng chữ tự nhiên, nổi bật -->
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-teal-100">
               <div class="flex items-center space-x-2">
-                <span class="w-2 h-4.5 rounded-full bg-teal-600 shrink-0"></span>
+                <span class="w-2 h-4 rounded-full bg-teal-600 shrink-0"></span>
                 <h4 class="font-black text-xs sm:text-sm text-teal-950 tracking-tight flex items-center gap-1.5">
                   <i class="bi bi-tag-fill text-teal-600 text-xs"></i>
                   <span>Nhóm: ${escapeHtml(grpName)}</span>
                 </h4>
               </div>
-              <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] font-bold text-slate-500 font-mono">${sortedItems.length} SP</span>
                 ${grpFilledCount > 0 ? `<span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-600 text-white font-mono shadow-2xs">Đã điền ${grpFilledCount} SP</span>` : ''}
               </div>
             </div>
 
-            <!-- Lưới hiển thị: Tự động co giãn theo chiều rộng thẻ tối thiểu 260px, tràn đều màn hình -->
-            <div class="grid gap-2.5 sm:gap-3" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
+            <!-- CÁC SẢN PHẨM PHÂN TÁCH THEO TỪNG DN: CÙNG DN CHUNG 1 DÒNG (NẾU DÀI TỰ XUỐNG DÒNG), MỖI DN MỘT HÀNG ĐỂ PHÂN BIỆT CÁC PN -->
+            <div class="space-y-1.5 sm:space-y-2">
         `;
 
-        sortedItems.forEach(item => {
-          const state = fastDispatchItemsState[item.id] || { tallyExpr: '', calculatedQty: 0 };
-          const hasQty = state.calculatedQty > 0;
-          const isMultiTerm = state.tallyExpr && (state.tallyExpr.includes(',') || state.tallyExpr.includes('+') || state.tallyExpr.includes(' '));
-          
-          // CHỈ HIỂN THỊ DUY NHẤT TÊN SẢN PHẨM QUY TẮC RÚT GỌN (KHÔNG HIỂN THỊ PHI + ĐƯỜNG KÍNH)
-          const displayName = item.customName || item.code || '';
-          
-          // Phân nhóm màu sắc dịu nhẹ tươi sáng theo đường kính DN
-          const p = parseProductDnPn(item.customName || item.name || item.code);
-          const dnIdx = uniqueDns.indexOf(p.dn1);
-          const themeIdx = (dnIdx >= 0 ? dnIdx : 0) % DN_PASTEL_THEMES.length;
+        dnBuckets.forEach((bucket, bIdx) => {
+          const themeIdx = bIdx % DN_PASTEL_THEMES.length;
           const theme = DN_PASTEL_THEMES[themeIdx];
 
-          const inv = item.code ? inventoryMap[item.code.toLowerCase()] : null;
-          const invName = inv && inv.name ? inv.name : (item.name || '');
-          const tooltipDesc = (item.code ? item.code : '') + (invName && invName.toUpperCase() !== displayName.toUpperCase() ? (item.code ? ' • ' : '') + invName : '');
-
-          const cardClasses = hasQty 
-            ? 'fast-product-card group relative flex items-center justify-between p-2.5 rounded-xl border-2 border-emerald-600 bg-emerald-50/80 shadow-md ring-2 ring-emerald-400/30 transition select-none'
-            : `fast-product-card group relative flex items-center justify-between p-2.5 rounded-xl border ${theme.cardBorder} ${theme.cardBg} ${theme.cardHover} shadow-2xs transition select-none`;
-
-          const barClasses = hasQty
-            ? 'fast-card-bar w-2 h-9 rounded-full bg-emerald-600'
-            : `fast-card-bar w-1.5 h-8 rounded-full ${theme.barBg}`;
-
-          const titleColorClass = hasQty
-            ? 'text-emerald-950 font-black'
-            : `${theme.titleColor} font-black`;
-
-          const inputClasses = hasQty
-            ? 'fast-item-qty-input w-16 sm:w-20 px-2 py-1.5 text-right font-mono font-black text-xs sm:text-sm rounded-lg border-2 border-emerald-600 bg-white text-emerald-950 ring-2 ring-emerald-300/50 shadow-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-700 transition'
-            : `fast-item-qty-input w-16 sm:w-20 px-2 py-1.5 text-right font-mono font-bold text-xs sm:text-sm rounded-lg border-2 ${theme.inputBorder} ${theme.inputBg} text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
-
           html += `
-            <div class="${cardClasses}"
-                 id="fast_card_${item.id}"
-                 data-id="${item.id}"
-                 data-theme-idx="${themeIdx}"
-                 data-dn-val="${p.dn1 < 9999 ? p.dn1 : ''}">
-              
-              <!-- Trái: Vạch màu + Tên sản phẩm quy tắc rút gọn (rõ ràng, chỉ hiển thị tên quy tắc) + Nhãn Đã nhập khi có số lượng -->
-              <div class="flex items-center space-x-2.5 min-w-0 pr-2 flex-1">
-                <span class="${barClasses} shrink-0 transition"></span>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-xs sm:text-[13px] ${titleColorClass} leading-snug break-words tracking-tight cursor-default" 
-                          title="${escapeHtml(tooltipDesc || displayName)}">
-                      ${escapeHtml(displayName)}
-                    </span>
-                    <span class="fast-card-badge-container inline-flex items-center">
-                      ${hasQty ? `
-                        <span class="fast-entered-badge inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-black text-[9.5px] tracking-wide shadow-2xs">
-                          <i class="bi bi-check-circle-fill text-[9px]"></i>
-                          <span>ĐÃ NHẬP</span>
-                        </span>
-                      ` : ''}
-                    </span>
-                  </div>
+              <div class="flex flex-wrap gap-1.5 sm:gap-2 items-center" data-dn="${bucket.dn < 9999 ? bucket.dn : ''}">
+          `;
+
+          bucket.items.forEach(item => {
+            const state = fastDispatchItemsState[item.id] || { tallyExpr: '', calculatedQty: 0 };
+            const hasQty = state.calculatedQty > 0;
+            const isMultiTerm = state.tallyExpr && (state.tallyExpr.includes(',') || state.tallyExpr.includes('+') || state.tallyExpr.includes(' '));
+            
+            // CHỈ HIỂN THỊ DUY NHẤT TÊN SẢN PHẨM QUY TẮC RÚT GỌN
+            const displayName = item.customName || item.code || '';
+            const inv = item.code ? inventoryMap[item.code.toLowerCase()] : null;
+            const invName = inv && inv.name ? inv.name : (item.name || '');
+            const tooltipDesc = (item.code ? item.code : '') + (invName && invName.toUpperCase() !== displayName.toUpperCase() ? (item.code ? ' • ' : '') + invName : '');
+
+            // THẺ SẢN PHẨM THU HẸP: min-w-[135px] sm:min-w-[150px] để hiển thị được nhiều loại cùng nhóm trên 1 dòng
+            const cardClasses = hasQty 
+              ? 'fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border-2 border-emerald-600 bg-emerald-50/90 shadow-sm ring-1 ring-emerald-400/40 transition select-none'
+              : `fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border ${theme.cardBorder} ${theme.cardBg} ${theme.cardHover} shadow-2xs transition select-none`;
+
+            const barClasses = hasQty
+              ? 'fast-card-bar w-1.5 h-6.5 rounded-full bg-emerald-600'
+              : `fast-card-bar w-1 h-6 rounded-full ${theme.barBg}`;
+
+            const titleColorClass = hasQty
+              ? 'text-emerald-950 font-black'
+              : `${theme.titleColor} font-black`;
+
+            const inputClasses = hasQty
+              ? 'fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-black text-xs sm:text-[13px] rounded border-2 border-emerald-600 bg-white text-emerald-950 ring-1 ring-emerald-300 shadow-2xs focus:ring-2 focus:ring-emerald-500 transition'
+              : `fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-bold text-xs sm:text-[13px] rounded border ${theme.inputBorder} ${theme.inputBg} text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
+
+            html += `
+              <div class="${cardClasses}"
+                   id="fast_card_${item.id}"
+                   data-id="${item.id}"
+                   data-theme-idx="${themeIdx}"
+                   data-dn-val="${bucket.dn < 9999 ? bucket.dn : ''}">
+                
+                <!-- Trái: Vạch màu + Tên sản phẩm quy tắc rút gọn (thu hẹp, rõ ràng) -->
+                <div class="flex items-center space-x-1.5 min-w-0 pr-1 flex-1">
+                  <span class="${barClasses} shrink-0 transition"></span>
+                  <span class="text-[11px] sm:text-xs ${titleColorClass} leading-tight truncate cursor-default" 
+                        title="${escapeHtml(tooltipDesc || displayName)}">
+                    ${escapeHtml(displayName)}
+                  </span>
+                  <span class="fast-card-badge-container inline-flex items-center">
+                    ${hasQty ? `
+                      <span class="fast-entered-badge inline-flex items-center text-emerald-600" title="Đã nhập">
+                        <i class="bi bi-check-circle-fill text-[11px]"></i>
+                      </span>
+                    ` : ''}
+                  </span>
+                </div>
+
+                <!-- Phải: Nhãn tổng phụ (nếu có cộng dồn) + Ô nhập số lượng thu hẹp -->
+                <div class="flex items-center space-x-0.5 shrink-0">
+                  ${(hasQty && isMultiTerm) ? `<span class="fast-tally-badge text-[9px] font-black text-emerald-900 font-mono bg-emerald-100 px-1 py-0.5 rounded border border-emerald-300 shadow-2xs mr-0.5" title="Tổng các lần đếm: ${escapeHtml(state.tallyExpr)}">=${formatNumber(state.calculatedQty)}</span>` : ''}
+                  <input type="text" 
+                         id="fast_input_${item.id}"
+                         data-item-id="${item.id}"
+                         value="${state.tallyExpr || ''}"
+                         placeholder="0"
+                         autocomplete="off"
+                         oninput="onFastItemQtyInput('${item.id}', this)"
+                         onblur="onFastItemQtyBlur('${item.id}', this)"
+                         onkeydown="onFastItemQtyKeyDown(event, '${item.id}')"
+                         class="${inputClasses}">
                 </div>
               </div>
+            `;
+          });
 
-              <!-- Phải: Nhãn tổng phụ (nếu có biểu thức cộng dồn) + Ô nhập số lượng -->
-              <div class="flex items-center space-x-1 shrink-0">
-                ${(hasQty && isMultiTerm) ? `<span class="fast-tally-badge text-[9.5px] font-black text-emerald-900 font-mono bg-emerald-100 px-1 py-0.5 rounded border border-emerald-300 shadow-2xs mr-1" title="Tổng các lần đếm: ${escapeHtml(state.tallyExpr)}">=${formatNumber(state.calculatedQty)}</span>` : ''}
-                <input type="text" 
-                       id="fast_input_${item.id}"
-                       data-item-id="${item.id}"
-                       value="${state.tallyExpr || ''}"
-                       placeholder="0"
-                       autocomplete="off"
-                       oninput="onFastItemQtyInput('${item.id}', this)"
-                       onblur="onFastItemQtyBlur('${item.id}', this)"
-                       onkeydown="onFastItemQtyKeyDown(event, '${item.id}')"
-                       class="${inputClasses}">
+          html += `
               </div>
-            </div>
           `;
         });
 
@@ -16338,28 +16764,27 @@ window.google.script = {
         const badgeContainer = card.querySelector('.fast-card-badge-container');
 
         if (sum > 0) {
-          // Trạng thái: ĐÃ NHẬP SỐ LƯỢNG (Màu sắc nhận biết rõ ràng)
-          card.className = 'fast-product-card group relative flex items-center justify-between p-2.5 rounded-xl border-2 border-emerald-600 bg-emerald-50/80 shadow-md ring-2 ring-emerald-400/30 transition select-none';
+          // Trạng thái: ĐÃ NHẬP SỐ LƯỢNG (Giữ đúng độ rộng thu hẹp)
+          card.className = 'fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border-2 border-emerald-600 bg-emerald-50/90 shadow-sm ring-1 ring-emerald-400/40 transition select-none';
           if (leftBar) {
-            leftBar.className = 'fast-card-bar w-2 h-9 rounded-full bg-emerald-600 shrink-0 transition';
+            leftBar.className = 'fast-card-bar w-1.5 h-6.5 rounded-full bg-emerald-600 shrink-0 transition';
           }
-          inputEl.className = 'fast-item-qty-input w-16 sm:w-20 px-2 py-1.5 text-right font-mono font-black text-xs sm:text-sm rounded-lg border-2 border-emerald-600 bg-white text-emerald-950 ring-2 ring-emerald-300/50 shadow-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-700 transition';
+          inputEl.className = 'fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-black text-xs sm:text-[13px] rounded border-2 border-emerald-600 bg-white text-emerald-950 ring-1 ring-emerald-300 shadow-2xs focus:ring-2 focus:ring-emerald-500 transition';
 
           if (badgeContainer) {
             badgeContainer.innerHTML = `
-              <span class="fast-entered-badge inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-md bg-emerald-600 text-white font-black text-[9.5px] tracking-wide shadow-2xs">
-                <i class="bi bi-check-circle-fill text-[9px]"></i>
-                <span>ĐÃ NHẬP</span>
+              <span class="fast-entered-badge inline-flex items-center text-emerald-600" title="Đã nhập">
+                <i class="bi bi-check-circle-fill text-[11px]"></i>
               </span>
             `;
           }
         } else {
-          // Trạng thái: CHƯA NHẬP (Phân nhóm theo màu DN dịu nhẹ tươi sáng, KHÔNG hiện thêm Ø đường kính)
-          card.className = `fast-product-card group relative flex items-center justify-between p-2.5 rounded-xl border ${theme.cardBorder} ${theme.cardBg} ${theme.cardHover} shadow-2xs transition select-none`;
+          // Trạng thái: CHƯA NHẬP (Phân nhóm theo màu DN dịu nhẹ tươi sáng, thu hẹp gọn gàng)
+          card.className = `fast-product-card group relative flex items-center justify-between gap-1.5 w-auto min-w-[135px] sm:min-w-[150px] max-w-[210px] px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg border ${theme.cardBorder} ${theme.cardBg} ${theme.cardHover} shadow-2xs transition select-none`;
           if (leftBar) {
-            leftBar.className = `fast-card-bar w-1.5 h-8 rounded-full ${theme.barBg} shrink-0 transition`;
+            leftBar.className = `fast-card-bar w-1 h-6 rounded-full ${theme.barBg} shrink-0 transition`;
           }
-          inputEl.className = `fast-item-qty-input w-16 sm:w-20 px-2 py-1.5 text-right font-mono font-bold text-xs sm:text-sm rounded-lg border-2 ${theme.inputBorder} ${theme.inputBg} text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
+          inputEl.className = `fast-item-qty-input w-12 sm:w-14 px-1 py-0.5 text-right font-mono font-bold text-xs sm:text-[13px] rounded border ${theme.inputBorder} ${theme.inputBg} text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition`;
 
           if (badgeContainer) {
             badgeContainer.innerHTML = '';
@@ -16372,7 +16797,7 @@ window.google.script = {
         if (sum > 0 && isMultiTerm) {
           if (!tallyBadgeEl) {
             tallyBadgeEl = document.createElement('span');
-            tallyBadgeEl.className = 'fast-tally-badge text-[9.5px] font-black text-emerald-900 font-mono bg-emerald-100 px-1 py-0.5 rounded border border-emerald-300 shadow-2xs mr-1';
+            tallyBadgeEl.className = 'fast-tally-badge text-[9px] font-black text-emerald-900 font-mono bg-emerald-100 px-1 py-0.5 rounded border border-emerald-300 shadow-2xs mr-0.5';
             inputEl.parentNode.insertBefore(tallyBadgeEl, inputEl);
           }
           tallyBadgeEl.innerText = '=' + formatNumber(sum);
@@ -16382,7 +16807,7 @@ window.google.script = {
         }
       }
 
-      scheduleDispatchFormSummary();
+      calculateDispatchFormSummary();
     }
 
     function onFastItemQtyBlur(itemId, inputEl) {
@@ -16494,9 +16919,6 @@ window.google.script = {
         modal.classList.add('hidden');
         modal.style.display = 'none';
       }
-      renderFastGroupCheckboxes();
-      renderFastItemsTable();
-      calculateDispatchFormSummary();
     }
 
     function switchCustModalTab(tab) {
@@ -16622,17 +17044,23 @@ window.google.script = {
               </span>
             </td>
             <td class="px-3 py-2 text-center">
-              <div class="flex items-center justify-center space-x-1.5">
+              <div class="inline-flex items-center justify-center space-x-1.5 flex-nowrap whitespace-nowrap">
+                <button type="button" onclick="openGroupDetailModal('${escapeJsString(grp)}')"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-900 border border-sky-200 transition shadow-2xs cursor-pointer whitespace-nowrap"
+                        title="Xem danh sách sản phẩm trong nhóm ${escapeHtml(grp)} và thêm SP vào nhóm">
+                  <i class="bi bi-eye text-xs"></i>
+                  <span>Xem thông tin</span>
+                </button>
                 <button type="button" onclick="renameCustomGroupPrompt('${escapeJsString(grp)}')"
-                        class="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-300 transition flex items-center space-x-1 cursor-pointer shadow-2xs"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 border border-teal-200 transition shadow-2xs cursor-pointer whitespace-nowrap"
                         title="Đổi tên nhóm ${escapeHtml(grp)}">
-                  <i class="bi bi-pencil-square"></i>
+                  <i class="bi bi-pencil-square text-xs"></i>
                   <span>Sửa tên</span>
                 </button>
                 <button type="button" onclick="deleteCustomGroupFromModal('${escapeJsString(grp)}')"
-                        class="px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-300 transition flex items-center space-x-1 cursor-pointer shadow-2xs"
+                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 border border-rose-200 transition shadow-2xs cursor-pointer whitespace-nowrap"
                         title="Xóa nhóm ${escapeHtml(grp)}">
-                  <i class="bi bi-trash"></i>
+                  <i class="bi bi-trash text-xs"></i>
                   <span>Xóa</span>
                 </button>
               </div>
@@ -16642,6 +17070,727 @@ window.google.script = {
       });
 
       tbody.innerHTML = html;
+    }
+
+    // ========================================================
+    // MODAL CHI TIẾT NHÓM SẢN PHẨM & THÊM HÀNG VÀO NHÓM
+    // Sắp xếp sản phẩm theo DN trước, sau đó theo PN từ nhỏ đến lớn
+    // Tự động nhận diện tên viết tắt quy ước nếu sản phẩm đã có hoặc trùng nhóm
+    // ========================================================
+    let currentGroupDetailName = '';
+    let groupDetailSearchResults = [];
+    let groupDetailHighlightedIndex = 0;
+
+    function getDnPnForGroupSort(item) {
+      return parseProductDnPn(item);
+    }
+
+    // TÌM TÊN VIẾT TẮT QUY ƯỚC ĐÃ CÓ CHO SẢN PHẨM (TRÙNG MÃ, TRÙNG TÊN HOẶC TRÙNG DN/PN TRONG NHÓM)
+    function findExistingGroupConvention(code, name, groupName) {
+      const normCode = String(code || '').trim().toUpperCase();
+      const normName = String(name || '').trim().toLowerCase();
+      const targetGroup = (groupName || currentGroupDetailName || '').trim();
+
+      // 1. Kiểm tra chính xác theo mã sản phẩm
+      if (normCode) {
+        const exactByCode = tempCustomizerItems.find(it => (it.code || '').trim().toUpperCase() === normCode);
+        if (exactByCode && exactByCode.customName) {
+          return {
+            type: 'exact_code',
+            item: exactByCode,
+            customName: exactByCode.customName,
+            group: exactByCode.group || '',
+            inCurrentGroup: (exactByCode.group || '').trim() === targetGroup
+          };
+        }
+      }
+
+      // 2. Kiểm tra theo tên sản phẩm kho chuẩn
+      if (normName) {
+        const exactByName = tempCustomizerItems.find(it => (it.name || '').trim().toLowerCase() === normName);
+        if (exactByName && exactByName.customName) {
+          return {
+            type: 'exact_name',
+            item: exactByName,
+            customName: exactByName.customName,
+            group: exactByName.group || '',
+            inCurrentGroup: (exactByName.group || '').trim() === targetGroup
+          };
+        }
+      }
+
+      // 3. Nếu trong nhóm hiện tại đã có sản phẩm có cùng thông số kích thước (cùng DN1, DN2 và PN)
+      // Ví dụ: cùng là Nối thẳng 75 PN8 hoặc Tê CB 60-42 PN8 thì tự động nhận diện tên quy ước
+      if (targetGroup && (normCode || normName)) {
+        const fakeItem = { code: normCode, name: normName, customName: '' };
+        const targetDnPn = getDnPnForGroupSort(fakeItem);
+        if (targetDnPn.dn1 < 9999) {
+          const currentGroupItems = tempCustomizerItems.filter(it => (it.group || '').trim() === targetGroup);
+          const sameDnPn = currentGroupItems.find(it => {
+            const itDnPn = getDnPnForGroupSort(it);
+            return itDnPn.dn1 === targetDnPn.dn1 && 
+                   itDnPn.dn2 === targetDnPn.dn2 && 
+                   itDnPn.pn === targetDnPn.pn && 
+                   it.customName;
+          });
+          if (sameDnPn) {
+            return {
+              type: 'same_dnpn',
+              item: sameDnPn,
+              customName: sameDnPn.customName,
+              group: targetGroup,
+              inCurrentGroup: true
+            };
+          }
+        }
+      }
+
+      return null;
+    }
+
+    function showGroupDetailMatchHint(conv, prod) {
+      const hintEl = document.getElementById('group-detail-match-hint');
+      const tagEl = document.getElementById('group-detail-auto-detect-tag');
+      if (tagEl) tagEl.classList.remove('hidden');
+      if (!hintEl) return;
+
+      const cName = escapeHtml(conv.customName || '');
+      const prodCode = prod ? escapeHtml(prod.code || '') : '';
+
+      if (conv.inCurrentGroup) {
+        hintEl.className = 'p-2.5 rounded-xl text-xs font-semibold bg-teal-50 border border-teal-300 text-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-150';
+        hintEl.innerHTML = `
+          <div class="flex items-center space-x-2 min-w-0">
+            <span class="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center shrink-0 text-xs">
+              <i class="bi bi-check-lg font-black"></i>
+            </span>
+            <span class="truncate">
+              Sản phẩm <b>${prodCode ? `[${prodCode}] ` : ''}</b>đã có trong nhóm với tên quy ước: 
+              <span class="px-2 py-0.5 rounded-md bg-teal-200/90 text-teal-950 font-black font-mono border border-teal-400 text-xs">${cName}</span>
+            </span>
+          </div>
+          <span class="text-[11px] text-teal-800 font-bold bg-white px-2 py-0.5 rounded border border-teal-200 shrink-0">
+            ✓ Đã tự điền sẵn tên quy ước
+          </span>
+        `;
+      } else {
+        hintEl.className = 'p-2.5 rounded-xl text-xs font-semibold bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-150';
+        hintEl.innerHTML = `
+          <div class="flex items-center space-x-2 min-w-0">
+            <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 text-xs">
+              <i class="bi bi-tag-fill"></i>
+            </span>
+            <span class="truncate">
+              Tự động nhận diện tên viết tắt quy ước: 
+              <span class="px-2 py-0.5 rounded-md bg-emerald-200/90 text-emerald-950 font-black font-mono border border-emerald-400 text-xs">${cName}</span>
+            </span>
+          </div>
+          <span class="text-[11px] text-emerald-800 font-bold bg-white px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+            ✓ Đã tự điền sẵn tên quy ước
+          </span>
+        `;
+      }
+      hintEl.classList.remove('hidden');
+    }
+
+    function hideGroupDetailMatchHint() {
+      const hintEl = document.getElementById('group-detail-match-hint');
+      const tagEl = document.getElementById('group-detail-auto-detect-tag');
+      if (tagEl) tagEl.classList.add('hidden');
+      if (hintEl) {
+        hintEl.innerHTML = '';
+        hintEl.classList.add('hidden');
+      }
+    }
+
+    function clearGroupDetailAddSearch() {
+      const sInp = document.getElementById('group-detail-add-search');
+      if (sInp) {
+        sInp.value = '';
+        sInp.focus();
+      }
+      const cCodeInp = document.getElementById('group-detail-add-selected-code');
+      if (cCodeInp) cCodeInp.value = '';
+      const cNameInp = document.getElementById('group-detail-add-custom-name');
+      if (cNameInp) cNameInp.value = '';
+      const dropdown = document.getElementById('group-detail-add-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      hideGroupDetailMatchHint();
+    }
+
+    function highlightGroupDetailRow(itemId) {
+      if (!itemId) return;
+      setTimeout(() => {
+        const row = document.getElementById(`group-detail-row-${itemId}`);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          row.classList.add('bg-teal-100', 'ring-2', 'ring-teal-400');
+          setTimeout(() => {
+            row.classList.remove('bg-teal-100', 'ring-2', 'ring-teal-400');
+          }, 1800);
+        }
+      }, 50);
+    }
+
+    function openGroupDetailModal(grpName) {
+      currentGroupDetailName = grpName || '';
+      const titleEl = document.getElementById('group-detail-title-name');
+      if (titleEl) titleEl.innerText = currentGroupDetailName;
+
+      // Xóa trắng form thêm hàng
+      clearGroupDetailAddSearch();
+
+      const filterInp = document.getElementById('group-detail-table-filter');
+      if (filterInp) filterInp.value = '';
+
+      renderGroupDetailItemsTable();
+
+      const modal = document.getElementById('group-detail-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+      }
+    }
+
+    function closeGroupDetailModal() {
+      const modal = document.getElementById('group-detail-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+      }
+      // Đồng bộ lại bảng ngoài
+      renderCustModalGroupsTable();
+      renderCustModalGroupChips();
+      updateModalSummaryBadge();
+    }
+
+    function renderGroupDetailItemsTable() {
+      const tbody = document.getElementById('group-detail-items-tbody');
+      const badge = document.getElementById('group-detail-count-badge');
+      if (!tbody) return;
+
+      const filterVal = (document.getElementById('group-detail-table-filter')?.value || '').trim().toLowerCase();
+
+      // Lọc các mặt hàng thuộc nhóm hiện tại
+      let groupItems = tempCustomizerItems.filter(it => (it.group || '').trim() === currentGroupDetailName.trim());
+      if (badge) badge.innerText = `${groupItems.length} sản phẩm`;
+
+      if (filterVal) {
+        groupItems = groupItems.filter(it => 
+          (it.customName || '').toLowerCase().includes(filterVal) ||
+          (it.code || '').toLowerCase().includes(filterVal) ||
+          (it.name || '').toLowerCase().includes(filterVal)
+        );
+      }
+
+      // Sắp xếp theo đúng quy tắc: Số đầu tiên cùng chung 1 nhóm (DN1) -> Số thứ 1 "-" Số thứ 2 cùng cạnh nhau (DN2) -> PN từ nhỏ đến lớn
+      groupItems.sort((a, b) => {
+        const pA = getDnPnForGroupSort(a);
+        const pB = getDnPnForGroupSort(b);
+
+        // 1. Số đầu tiên cùng chung 1 nhóm từ nhỏ đến lớn (ví dụ tất cả sản phẩm 60-... đứng trước 75-...)
+        if (pA.dn1 !== pB.dn1) return pA.dn1 - pB.dn1;
+
+        // 2. Số thứ 1 "-" số thứ 2 cùng cạnh nhau và cùng nhóm của số đầu tiên (ví dụ 60-21 rồi 60-27 rồi 60-34 rồi 60-42)
+        if (pA.dn2 !== pB.dn2) return pA.dn2 - pB.dn2;
+
+        // 3. Trong cùng cặp DN1-DN2 (ví dụ 60-42): PN từ nhỏ đến lớn (PN8 đứng trước xong đến PN10)
+        if (pA.pn !== pB.pn) return pA.pn - pB.pn;
+
+        return (a.customName || a.name || '').localeCompare(b.customName || b.name || '', 'vi');
+      });
+
+      if (groupItems.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-slate-400 italic">
+              Chưa có sản phẩm nào trong nhóm <b>"${escapeHtml(currentGroupDetailName)}"</b>. Hãy dùng ô phía trên để thêm sản phẩm vào nhóm!
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let html = '';
+      groupItems.forEach((item, idx) => {
+        const dnpn = getDnPnForGroupSort(item);
+        const displayName = item.name || '';
+        const displayUnit = item.unit || 'Cái';
+
+        html += `
+          <tr id="group-detail-row-${item.id}" class="hover:bg-teal-50/40 transition border-b border-slate-100">
+            <td class="px-2.5 py-2 text-center text-slate-400 font-mono text-xs">${idx + 1}</td>
+            <td class="px-3 py-2 w-48">
+              <input type="text" 
+                     value="${escapeHtml(item.customName || '')}" 
+                     onchange="updateCustFastItemCustomName('${item.id}', this.value); renderGroupDetailItemsTable();"
+                     title="Bấm để chỉnh sửa tên rút gọn quy ước của sản phẩm này"
+                     class="w-full px-2.5 py-1 border border-slate-200 hover:border-teal-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100 rounded-lg font-bold text-teal-950 text-xs bg-slate-50/50 focus:bg-white transition shadow-2xs">
+            </td>
+            <td class="px-3 py-2 text-slate-700">
+              <div class="flex items-center space-x-2 min-w-0">
+                <span class="font-mono font-bold text-teal-900 bg-slate-100 px-2 py-0.5 rounded text-[11px] border border-slate-200 shrink-0">${escapeHtml(item.code || '')}</span>
+                <span class="truncate text-slate-700 text-xs font-medium" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+              </div>
+            </td>
+            <td class="px-2.5 py-2 text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-black bg-teal-50 text-teal-800 border border-teal-200">
+                ${dnpn.dnLabel} • ${dnpn.pnLabel}
+              </span>
+            </td>
+            <td class="px-2 py-2 text-center text-slate-600 font-semibold text-xs">${escapeHtml(displayUnit)}</td>
+            <td class="px-2.5 py-2 text-center">
+              <button type="button" onclick="deleteItemFromCurrentGroup('${item.id}')" 
+                      class="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition inline-flex items-center justify-center cursor-pointer" 
+                      title="Xóa khỏi nhóm ${escapeHtml(currentGroupDetailName)}">
+                <i class="bi bi-trash text-sm"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function deleteItemFromCurrentGroup(itemId) {
+      deleteFastItemFromCustomizerById(itemId);
+      renderGroupDetailItemsTable();
+    }
+
+    function handleGroupDetailSearchInput(val) {
+      const dropdown = document.getElementById('group-detail-add-dropdown');
+      const cCodeInp = document.getElementById('group-detail-add-selected-code');
+      const cNameInp = document.getElementById('group-detail-add-custom-name');
+      if (!dropdown) return;
+
+      const q = String(val || '').trim();
+      if (!q || q.length < 1) {
+        groupDetailSearchResults = [];
+        dropdown.classList.add('hidden');
+        if (cCodeInp) cCodeInp.value = '';
+        hideGroupDetailMatchHint();
+        return;
+      }
+
+      // KIỂM TRA NẾU NGƯỜI DÙNG GÕ KHỚP TRỰC TIẾP MÃ SẢN PHẨM HOẶC TÊN TRONG KHO
+      const qLower = q.toLowerCase();
+      const exactInv = inventoryMap[qLower] || 
+                       inventoryList.find(it => (it.code || '').toLowerCase() === qLower) ||
+                       tempCustomizerItems.find(it => (it.code || '').toLowerCase() === qLower);
+
+      if (exactInv) {
+        const exactCode = exactInv.code || q.toUpperCase();
+        if (cCodeInp) cCodeInp.value = exactCode;
+
+        // Tự động tìm tên viết tắt quy ước đã có
+        const conv = findExistingGroupConvention(exactCode, exactInv.name, currentGroupDetailName);
+        if (conv && conv.customName) {
+          if (cNameInp) cNameInp.value = conv.customName;
+          showGroupDetailMatchHint(conv, exactInv);
+        } else {
+          if (cNameInp) cNameInp.value = '';
+          hideGroupDetailMatchHint();
+        }
+      }
+
+      groupDetailSearchResults = rankProductMatches(inventoryList, q, 25);
+      groupDetailHighlightedIndex = 0;
+
+      if (groupDetailSearchResults.length === 0) {
+        dropdown.innerHTML = `<div class="p-3 text-slate-400 text-center italic">Không tìm thấy mã sản phẩm phù hợp</div>`;
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      renderGroupDetailSearchDropdown();
+      dropdown.classList.remove('hidden');
+    }
+
+    function renderGroupDetailSearchDropdown() {
+      const dropdown = document.getElementById('group-detail-add-dropdown');
+      if (!dropdown) return;
+
+      let html = '';
+      groupDetailSearchResults.forEach((m, idx) => {
+        const isSelected = idx === groupDetailHighlightedIndex;
+        const escapedCode = escapeHtml(m.code || '');
+        const escapedName = escapeHtml(m.name || '');
+        const escapedUnit = escapeHtml(m.unit || 'Cái');
+
+        // Kiểm tra xem mặt hàng này đã có tên viết tắt quy ước trong nhóm hoặc hệ thống chưa
+        const conv = findExistingGroupConvention(m.code, m.name, currentGroupDetailName);
+
+        html += `
+          <div class="p-2.5 cursor-pointer flex items-center justify-between transition border-b border-slate-100 last:border-b-0 ${
+            isSelected ? 'bg-teal-50 border-l-4 border-teal-600 font-bold' : 'hover:bg-slate-50'
+          }"
+               onmousedown="selectGroupDetailProduct('${escapedCode}', '${escapedName.replace(/'/g, "\\'")}', '${escapedUnit}')">
+            <div class="flex-1 pr-2 truncate">
+              <div class="flex items-center space-x-1.5">
+                <span class="font-mono font-black text-teal-800 text-xs">${escapedCode}</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-500">${escapedUnit}</span>
+              </div>
+              <div class="text-[11.5px] text-slate-700 truncate mt-0.5">${escapedName}</div>
+            </div>
+            ${conv && conv.customName ? `
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                conv.inCurrentGroup ? 'bg-teal-100 text-teal-900 border border-teal-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+              } shrink-0 shadow-2xs">
+                <i class="bi ${conv.inCurrentGroup ? 'bi-check-circle-fill text-teal-600' : 'bi-tag-fill text-emerald-600'} text-[10px]"></i>
+                <span>${conv.inCurrentGroup ? 'Đã có: ' : 'Quy ước: '}<b>${escapeHtml(conv.customName)}</b></span>
+              </span>
+            ` : `
+              <span class="text-[10.5px] text-slate-400 italic shrink-0">Mặt hàng mới</span>
+            `}
+          </div>
+        `;
+      });
+
+      dropdown.innerHTML = html;
+    }
+
+    function handleGroupDetailSearchKeydown(event) {
+      const dropdown = document.getElementById('group-detail-add-dropdown');
+      const isOpen = dropdown && !dropdown.classList.contains('hidden');
+
+      if (event.key === 'ArrowDown' && isOpen && groupDetailSearchResults.length > 0) {
+        event.preventDefault();
+        groupDetailHighlightedIndex = (groupDetailHighlightedIndex + 1) % groupDetailSearchResults.length;
+        renderGroupDetailSearchDropdown();
+      } else if (event.key === 'ArrowUp' && isOpen && groupDetailSearchResults.length > 0) {
+        event.preventDefault();
+        groupDetailHighlightedIndex = (groupDetailHighlightedIndex - 1 + groupDetailSearchResults.length) % groupDetailSearchResults.length;
+        renderGroupDetailSearchDropdown();
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        const sInp = document.getElementById('group-detail-add-search');
+        const val = (sInp ? sInp.value : '').trim();
+        if (groupDetailSearchResults.length > 0) {
+          const item = groupDetailSearchResults[groupDetailHighlightedIndex] || groupDetailSearchResults[0];
+          selectGroupDetailProduct(item.code, item.name, item.unit || 'Cái');
+        } else if (val) {
+          const matches = rankProductMatches(inventoryList, val, 1);
+          if (matches.length > 0) {
+            selectGroupDetailProduct(matches[0].code, matches[0].name, matches[0].unit || 'Cái');
+          }
+        }
+      } else if (event.key === 'Escape') {
+        if (dropdown) dropdown.classList.add('hidden');
+      }
+    }
+
+    function selectGroupDetailProduct(code, name, unit) {
+      const sInp = document.getElementById('group-detail-add-search');
+      const cCodeInp = document.getElementById('group-detail-add-selected-code');
+      const cNameInp = document.getElementById('group-detail-add-custom-name');
+      const dropdown = document.getElementById('group-detail-add-dropdown');
+
+      if (sInp) sInp.value = `${code} - ${name}`;
+      if (cCodeInp) cCodeInp.value = code;
+      if (dropdown) dropdown.classList.add('hidden');
+
+      // TỰ ĐỘNG KIỂM TRA TÊN VIẾT TẮT QUY ƯỚC NẾU ĐÃ CÓ TRONG NHÓM HOẶC TRÙNG ĐẶC TÍNH:
+      const conv = findExistingGroupConvention(code, name, currentGroupDetailName);
+
+      if (conv && conv.customName) {
+        // ĐÃ CÓ TÊN QUY ƯỚC: TỰ ĐỘNG HIỆN LUÔN TÊN VIẾT TẮT QUY ƯỚC ĐỂ KHÔNG PHẢI KIỂM TRA LẠI!
+        if (cNameInp) cNameInp.value = conv.customName;
+        showGroupDetailMatchHint(conv, { code, name });
+        if (conv.inCurrentGroup && conv.item) {
+          highlightGroupDetailRow(conv.item.id);
+        }
+      } else {
+        // HÀNG HOÀN TOÀN MỚI CHƯA CÓ QUY ƯỚC: Để trống ô để người dùng tự do điền
+        if (cNameInp) cNameInp.value = '';
+        hideGroupDetailMatchHint();
+      }
+
+      if (cNameInp) {
+        setTimeout(() => {
+          cNameInp.focus();
+          cNameInp.select();
+        }, 30);
+      }
+    }
+
+    function addGroupDetailItemDirectly() {
+      const codeInp = document.getElementById('group-detail-add-selected-code');
+      const searchInp = document.getElementById('group-detail-add-search');
+      const customNameInp = document.getElementById('group-detail-add-custom-name');
+
+      let code = (codeInp ? codeInp.value : '').trim().toUpperCase();
+      if (!code && searchInp) {
+        code = searchInp.value.trim().split(' ')[0].toUpperCase();
+      }
+
+      const customName = (customNameInp ? customNameInp.value : '').trim();
+
+      if (!code) {
+        Swal.fire('Chú ý', 'Vui lòng chọn hoặc gõ mã sản phẩm trong kho!', 'warning');
+        return;
+      }
+      if (!customName) {
+        Swal.fire('Chú ý', 'Vui lòng đặt tên gọi rút gọn theo ý bạn!', 'warning');
+        return;
+      }
+
+      const inv = inventoryMap[code.toLowerCase()];
+      const name = inv && inv.name ? inv.name : `Sản phẩm ${code}`;
+      const unit = inv && inv.unit ? inv.unit : 'Cái';
+
+      let targetItemId = '';
+      const existingIdx = tempCustomizerItems.findIndex(it => (it.code || '').trim().toUpperCase() === code);
+      if (existingIdx >= 0) {
+        tempCustomizerItems[existingIdx].customName = customName;
+        tempCustomizerItems[existingIdx].group = currentGroupDetailName;
+        tempCustomizerItems[existingIdx].name = name;
+        tempCustomizerItems[existingIdx].unit = unit;
+        targetItemId = tempCustomizerItems[existingIdx].id;
+      } else {
+        const newItem = {
+          id: 'fast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          group: currentGroupDetailName,
+          customName: customName,
+          code: code,
+          name: name,
+          unit: unit
+        };
+        tempCustomizerItems.push(newItem);
+        targetItemId = newItem.id;
+      }
+
+      autoSaveFastCustomizer(true, `Đã lưu: "${customName}" vào nhóm ${currentGroupDetailName}`);
+
+      // Xóa form để gõ tiếp
+      clearGroupDetailAddSearch();
+
+      renderGroupDetailItemsTable();
+      renderCustModalGroupsTable();
+      renderCustModalGroupChips();
+      updateModalSummaryBadge();
+
+      // Nổi bật sản phẩm vừa thêm/cập nhật
+      if (targetItemId) {
+        highlightGroupDetailRow(targetItemId);
+      }
+    }
+
+    // ========================================================
+    // TỰ ĐỘNG LƯU & CẬP NHẬT TỨC THÌ VÀO HỆ THỐNG
+    // ========================================================
+    function autoSaveFastCustomizer(showNotification = false, notificationTitle = 'Đã tự động lưu!') {
+      saveCustomFastItems(tempCustomizerItems);
+      saveCustomFastGroups(tempCustomizerGroups);
+      renderFastGroupCheckboxes();
+      renderFastItemsTable();
+      calculateDispatchFormSummary();
+
+      if (showNotification) {
+        const Toast = Swal.mixin({
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 1600,
+          timerProgressBar: true
+        });
+        Toast.fire({
+          icon: 'success',
+          title: notificationTitle
+        });
+      }
+    }
+
+    // ========================================================
+    // NHẬN DIỆN THÔNG MINH NHÓM & TÊN GỌI QUY ƯỚC RÚT GỌN
+    // Khi gõ hoặc chọn sản phẩm, tự động lấy tên và nhóm đã lưu
+    // hoặc suy đoán chính xác theo tiền tố, từ khóa và kích thước DN/PN
+    // ========================================================
+    function guessGroupAndCustomName(code, name) {
+      const normCode = String(code || '').trim().toUpperCase();
+      const normName = String(name || '').trim();
+      const fullText = (normCode + ' ' + normName).toUpperCase();
+
+      // 1. ƯU TIÊN 1: Tìm trong danh sách hiện tại nếu sản phẩm đã được cấu hình trước đó
+      const existing = tempCustomizerItems.find(it => (it.code || '').trim().toUpperCase() === normCode);
+      if (existing) {
+        return {
+          group: existing.group || '',
+          customName: existing.customName || normCode,
+          isExisting: true
+        };
+      }
+
+      // 2. Trích xuất áp lực PN: ví dụ "PN6", "PN 6", "PN10", "PN16", "PN8", "PN12.5"
+      let pn = null;
+      const pnMatch = fullText.match(/\bPN\s*(\d+(?:[\.,]\d+)?)\b/i) || normName.match(/\((?:PN)?\s*(\d+(?:[\.,]\d+)?)\)/i);
+      if (pnMatch) {
+        pn = pnMatch[1].replace(',', '.');
+        if (pn.endsWith('.0')) pn = pn.replace('.0', '');
+      } else {
+        // Thử tìm theo độ dày (mm) trong tên (vd: D60x2.0 -> PN6, D60x2.3 -> PN10, D60x3.6 -> PN16, D75x2.2 -> PN6, D75x2.9 -> PN10, D90x5.4 -> PN12.5)
+        const thickMatch = normName.match(/x\s*(\d+[\.,]\d+)/i);
+        if (thickMatch) {
+          const thk = parseFloat(thickMatch[1].replace(',', '.'));
+          if (thk <= 2.1) pn = '6';
+          else if (thk <= 2.6) pn = '8';
+          else if (thk <= 3.2) pn = '10';
+          else if (thk <= 4.0) pn = '12.5';
+          else if (thk <= 5.5) pn = '16';
+        }
+      }
+
+      // Nếu vẫn chưa có PN, xem đuôi mã sản phẩm (vd: LL608 -> PN8, LL6016 -> PN16, NC6016 -> PN16, NC758 -> PN8, NC7510 -> PN10, T6016 -> PN16, DBT60 -> PN10)
+      if (!pn) {
+        if (/16$/.test(normCode) && normCode.length >= 5) pn = '16';
+        else if (/125$/.test(normCode) || /12\.5$/.test(normCode)) pn = '12.5';
+        else if (/10$/.test(normCode) && normCode.length >= 5) pn = '10';
+        else if (/8$/.test(normCode) && normCode.length >= 5) pn = '8';
+        else if (/6$/.test(normCode) && normCode.length >= 5) pn = '6';
+      }
+
+      // 3. Trích xuất đường kính DN: DN1 và DN2 (nếu có chuyển bậc / thu / bạc)
+      let dn1 = null;
+      let dn2 = null;
+
+      // Tìm dạng cặp kích thước: "D60x21", "75x34", "60x42", "90x60", "D90x75"
+      const pairMatch = normName.match(/(?:D|DN|\b)?(\d+)\s*[xX/]\s*(\d+)(?!\.)\b/);
+      if (pairMatch) {
+        const v1 = parseInt(pairMatch[1], 10);
+        const v2 = parseInt(pairMatch[2], 10);
+        if (v1 >= 20 && v2 >= 15 && v1 !== v2) {
+          dn1 = v1;
+          dn2 = v2;
+        }
+      }
+
+      // Nếu chưa có dn1, tìm theo "DN 90", "DN90", "D90", "Phi 90", "Ø90"
+      if (!dn1) {
+        const dnMatch = fullText.match(/\bDN\s*(\d+)\b/i) || 
+                        normName.match(/\bD\s*(\d+)\b/i) || 
+                        normName.match(/(?:PHI|Ø)\s*(\d+)/i);
+        if (dnMatch) {
+          dn1 = parseInt(dnMatch[1], 10);
+        }
+      }
+
+      // Nếu vẫn chưa có dn1, trích xuất số từ mã sản phẩm (vd: L90 -> 90, L60 -> 60, BX75 -> 75, BX90 -> 90, T60 -> 60)
+      if (!dn1) {
+        const codeNumMatch = normCode.match(/\d+/);
+        if (codeNumMatch) {
+          const numStr = codeNumMatch[0];
+          if (numStr.length <= 3) {
+            dn1 = parseInt(numStr, 10);
+          } else if (numStr.length === 4) {
+            const prefix = parseInt(numStr.substr(0, 2), 10);
+            const suffix = numStr.substr(2);
+            if ([60, 75, 90, 48, 42, 34, 27, 21].includes(prefix)) {
+              dn1 = prefix;
+              if (!pn && ['6', '8', '10', '16'].includes(suffix)) pn = suffix;
+            }
+          }
+        }
+      }
+
+      // 4. Nhận diện Nhóm sản phẩm (targetGroup) và Tiền tố tên rút gọn (namePrefix)
+      let targetGroup = '';
+      let namePrefix = '';
+
+      if (fullText.includes('NỐI GÓC') || fullText.includes('CÚT') || fullText.includes('CO 90') || fullText.includes('90 ĐỘ') || fullText.includes('90ĐỘ') || /^L\d+/i.test(normCode)) {
+        targetGroup = 'Góc';
+        namePrefix = 'GÓC';
+      } else if (fullText.includes('CHẾCH') || fullText.includes('45 ĐỘ') || fullText.includes('45ĐỘ') || /^LL\d+/i.test(normCode)) {
+        targetGroup = 'Chếch';
+        namePrefix = 'CHẾCH';
+      } else if (fullText.includes('BỊT XẢ') || fullText.includes('THÔNG TẮC') || /^BX\d+/i.test(normCode)) {
+        targetGroup = 'Bịt xả';
+        namePrefix = 'BỊT XẢ';
+      } else if (fullText.includes('BA CHẠC 45') || fullText.includes(' Y ') || /^Y\d+/i.test(normCode) || /^YCT/i.test(normCode)) {
+        targetGroup = 'Ba chạc 45°';
+        namePrefix = 'Y';
+      } else if (fullText.includes('BẠC') || /^BC\d+/i.test(normCode)) {
+        targetGroup = 'Bạc';
+        namePrefix = 'BẠC';
+      } else if (fullText.includes('NỐI THẲNG') || fullText.includes('MĂNG SÔNG') || /^NC\d+/i.test(normCode)) {
+        targetGroup = 'Nối thẳng';
+        namePrefix = 'NỐI THẲNG';
+      } else if (fullText.includes('BÍCH') || /^B\d+/i.test(normCode)) {
+        targetGroup = 'Bích';
+        namePrefix = 'BÍCH';
+      } else if (fullText.includes('TCB') || fullText.includes('CHUYỂN BẬC') || /^TC/i.test(normCode) || /^TCD/i.test(normCode)) {
+        targetGroup = 'TCB';
+        namePrefix = 'TCB';
+      } else if (fullText.includes('BA CHẠC 90') || fullText.includes('TÊ ĐỀU') || fullText.includes('TÊ') || /^T\d+/i.test(normCode)) {
+        targetGroup = 'Tê đều';
+        namePrefix = 'T';
+      } else if (fullText.includes('ĐẦU BỊT') || fullText.includes('BỊT ') || /^DBT/i.test(normCode)) {
+        targetGroup = 'Bịt';
+        namePrefix = 'BỊT';
+      } else if (fullText.includes('THÔNG SÀN') || /^NTS/i.test(normCode)) {
+        targetGroup = 'Thông sàn';
+        namePrefix = 'THÔNG SÀN';
+      } else if (fullText.includes('VAN') || fullText.includes('KHÓA')) {
+        targetGroup = 'Van';
+        namePrefix = 'VAN';
+      }
+
+      // Khớp targetGroup với nhóm hiện có trong tempCustomizerGroups (kể cả khi người dùng đặt là "T" hay "Tê đều", "Ba chạc 45°" hay "Y")
+      if (targetGroup) {
+        const found = tempCustomizerGroups.find(g => {
+          const gLow = g.toLowerCase();
+          const tLow = targetGroup.toLowerCase();
+          if (gLow === tLow) return true;
+          if (tLow === 'tê đều' && (gLow === 't' || gLow === 'tê' || gLow === 'tê đều')) return true;
+          if (tLow === 'ba chạc 45°' && (gLow === 'y' || gLow === 'ba chạc 45°' || gLow === 'ba chạc 45')) return true;
+          if (tLow === 'bịt' && (gLow === 'đầu bịt' || gLow === 'bịt')) return true;
+          return false;
+        });
+        if (found) {
+          targetGroup = found;
+        }
+      }
+
+      // 5. Tạo tên gọi rút gọn chuẩn đẹp:
+      let customName = '';
+      if (namePrefix && dn1) {
+        if (dn2) {
+          customName = `${namePrefix} ${dn1}/${dn2}${pn ? '/' + pn : ''}`;
+        } else {
+          if (['BÍCH', 'BỊT XẢ', 'THÔNG SÀN'].includes(namePrefix)) {
+            customName = `${namePrefix} ${dn1}`;
+          } else {
+            customName = `${namePrefix} ${dn1}${pn ? '/' + pn : ''}`;
+          }
+        }
+      } else if (namePrefix) {
+        customName = `${namePrefix} ${normCode}`;
+      } else {
+        customName = normCode;
+      }
+
+      return {
+        group: targetGroup,
+        customName: customName,
+        isExisting: false
+      };
+    }
+
+    function ensureTargetGroupOption(groupName) {
+      if (!groupName) return;
+      const targetGroupSelect = document.getElementById('cust-fast-item-target-group');
+      if (!targetGroupSelect) return;
+      const exists = Array.from(targetGroupSelect.options).some(opt => opt.value.toLowerCase() === groupName.toLowerCase());
+      if (!exists) {
+        if (!tempCustomizerGroups.some(g => g.toLowerCase() === groupName.toLowerCase())) {
+          tempCustomizerGroups.push(groupName);
+          renderCustModalGroupChips();
+          renderCustModalGroupsTable();
+        }
+        const opt = document.createElement('option');
+        opt.value = groupName;
+        opt.innerText = groupName;
+        targetGroupSelect.appendChild(opt);
+      }
     }
 
     function renameCustomGroupPrompt(oldName) {
@@ -16683,28 +17832,20 @@ window.google.script = {
             }
           });
 
-          // TỰ ĐỘNG LƯU TRỰC TIẾP VÀO HỆ THỐNG
-          saveCustomFastGroups(tempCustomizerGroups);
-          saveCustomFastItems(tempCustomizerItems);
-
           renderCustModalGroupsTable();
           renderCustModalGroupChips();
           renderCustModalGroupsTab();
           updateModalSummaryBadge();
 
-          renderFastGroupCheckboxes();
-          renderFastItemsTable();
+          // TỰ ĐỘNG LƯU NGẦM
+          autoSaveFastCustomizer(false);
 
-          const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 1800,
-            timerProgressBar: true
-          });
-          Toast.fire({
+          Swal.fire({
             icon: 'success',
-            title: `Đã đổi thành "${newName}" & lưu vào hệ thống!`
+            title: 'Đã đổi tên nhóm!',
+            text: `Đã đổi thành "${newName}" và cập nhật ${updatedItemsCount} sản phẩm liên quan.`,
+            timer: 1500,
+            showConfirmButton: false
           });
         }
       });
@@ -16727,29 +17868,23 @@ window.google.script = {
       tempCustomizerGroups.push(val);
       if (inp) inp.value = '';
 
-      // TỰ ĐỘNG LƯU TRỰC TIẾP VÀO HỆ THỐNG & LOCALSTORAGE CHO CÁC PHIÊN TIẾP THEO
-      saveCustomFastGroups(tempCustomizerGroups);
-      saveCustomFastItems(tempCustomizerItems);
-
       renderCustModalGroupChips();
       renderCustModalGroupsTable();
       renderCustModalGroupsTab();
       updateModalSummaryBadge();
 
-      // Đồng bộ ngay ra bảng phát nhanh bên ngoài hệ thống
-      renderFastGroupCheckboxes();
-      renderFastItemsTable();
+      // TỰ ĐỘNG LƯU NGẦM
+      autoSaveFastCustomizer(false);
 
       const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
         showConfirmButton: false,
-        timer: 1800,
-        timerProgressBar: true
+        timer: 1500
       });
       Toast.fire({
         icon: 'success',
-        title: `Đã lưu nhóm "${val}" vào hệ thống!`
+        title: `Đã tạo nhóm "${val}"`
       });
     }
 
@@ -16763,30 +17898,13 @@ window.google.script = {
             it.group = '';
           }
         });
-
-        // TỰ ĐỘNG LƯU TRỰC TIẾP VÀO HỆ THỐNG
-        saveCustomFastGroups(tempCustomizerGroups);
-        saveCustomFastItems(tempCustomizerItems);
-
         renderCustModalGroupChips();
         renderCustModalGroupsTable();
         renderCustModalGroupsTab();
         updateModalSummaryBadge();
 
-        renderFastGroupCheckboxes();
-        renderFastItemsTable();
-
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 1600,
-          timerProgressBar: true
-        });
-        Toast.fire({
-          icon: 'info',
-          title: `Đã xóa nhóm "${groupName}" khỏi hệ thống!`
-        });
+        // TỰ ĐỘNG LƯU NGẦM
+        autoSaveFastCustomizer(false);
       };
 
       if (itemsInGroup.length > 0) {
@@ -16904,6 +18022,8 @@ window.google.script = {
             renderCustModalGroupsTable();
             renderCustModalGroupsTab();
             updateModalSummaryBadge();
+            // TỰ ĐỘNG LƯU NGẦM
+            autoSaveFastCustomizer(false);
           } else {
             renderCustModalGroupsTab();
           }
@@ -16914,12 +18034,11 @@ window.google.script = {
       const item = tempCustomizerItems.find(it => it.id === itemId);
       if (item) {
         item.group = newGroup || '';
-        saveCustomFastItems(tempCustomizerItems);
         renderCustModalGroupChips();
         renderCustModalGroupsTable();
         updateModalSummaryBadge();
-        renderFastGroupCheckboxes();
-        renderFastItemsTable();
+        // TỰ ĐỘNG LƯU NGẦM
+        autoSaveFastCustomizer(false);
       }
     }
 
@@ -16952,25 +18071,13 @@ window.google.script = {
         }
       });
 
-      // TỰ ĐỘNG LƯU TRỰC TIẾP VÀO HỆ THỐNG
-      saveCustomFastGroups(tempCustomizerGroups);
-      saveCustomFastItems(tempCustomizerItems);
-
       renderCustModalGroupChips();
       renderCustModalGroupsTable();
       renderCustModalGroupsTab();
       updateModalSummaryBadge();
 
-      renderFastGroupCheckboxes();
-      renderFastItemsTable();
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Tự động phân nhóm hoàn tất!',
-        text: `Đã tự động gán nhóm thông minh cho ${changedCount} mặt hàng & lưu vào hệ thống.`,
-        timer: 1500,
-        showConfirmButton: false
-      });
+      // TỰ ĐỘNG LƯU NGAY
+      autoSaveFastCustomizer(true, `Đã tự động phân nhóm và lưu ${changedCount} mặt hàng!`);
     }
 
     // ========================================================
@@ -16985,10 +18092,12 @@ window.google.script = {
 
       const targetGroupSelect = document.getElementById('cust-fast-item-target-group');
       if (targetGroupSelect) {
+        const curVal = targetGroupSelect.value;
         targetGroupSelect.innerHTML = `
           <option value="">-- Chưa gán nhóm --</option>
           ${tempCustomizerGroups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('')}
         `;
+        if (curVal) targetGroupSelect.value = curVal;
       }
 
       if (tempCustomizerItems.length === 0) {
@@ -17059,6 +18168,8 @@ window.google.script = {
         renderCustModalGroupChips();
         renderCustModalGroupsTable();
         updateModalSummaryBadge();
+        // TỰ ĐỘNG LƯU NGẦM KHI ĐỔI NHÓM
+        autoSaveFastCustomizer(false);
       }
     }
 
@@ -17067,6 +18178,9 @@ window.google.script = {
 
     function handleCustFastItemSearchInput(val) {
       const dropdown = document.getElementById('cust-fast-item-search-dropdown');
+      const cCodeInp = document.getElementById('cust-fast-item-selected-code');
+      const cNameInp = document.getElementById('cust-fast-item-custom-name');
+      const targetGroupSelect = document.getElementById('cust-fast-item-target-group');
       if (!dropdown) return;
 
       const q = String(val || '').trim();
@@ -17074,6 +18188,35 @@ window.google.script = {
         custFastItemSearchResults = [];
         dropdown.classList.add('hidden');
         return;
+      }
+
+      // NẾU NGƯỜI DÙNG GÕ KHỚP MÃ SẢN PHẨM HOẶC SẢN PHẨM ĐÃ CÓ TRONG BẢNG:
+      const qLower = q.toLowerCase();
+      const exactInv = inventoryMap[qLower] || 
+                       inventoryList.find(it => (it.code || '').toLowerCase() === qLower) || 
+                       tempCustomizerItems.find(it => (it.code || '').toLowerCase() === qLower);
+
+      if (exactInv) {
+        const exactCode = exactInv.code || q.toUpperCase();
+        if (cCodeInp) cCodeInp.value = exactCode;
+
+        // KIỂM TRA XEM HÀNG NÀY ĐÃ CÓ TRONG BẢNG NHÓM CHƯA
+        const existing = tempCustomizerItems.find(it => (it.code || '').trim().toUpperCase() === exactCode.toUpperCase());
+        if (existing) {
+          if (cNameInp) cNameInp.value = existing.customName || '';
+          if (targetGroupSelect && existing.group) {
+            ensureTargetGroupOption(existing.group);
+            for (let i = 0; i < targetGroupSelect.options.length; i++) {
+              if (targetGroupSelect.options[i].value.toLowerCase() === existing.group.toLowerCase()) {
+                targetGroupSelect.selectedIndex = i;
+                break;
+              }
+            }
+          }
+        } else {
+          // HÀNG CHƯA CÓ TRONG NHÓM: ĐỂ TRỐNG Ô TÊN RÚT GỌN ĐỂ NGƯỜI DÙNG TỰ ĐIỀN!
+          if (cNameInp) cNameInp.value = '';
+        }
       }
 
       custFastItemSearchResults = rankProductMatches(inventoryList, q, 25);
@@ -17150,14 +18293,52 @@ window.google.script = {
       const sInp = document.getElementById('cust-fast-item-search');
       const cCodeInp = document.getElementById('cust-fast-item-selected-code');
       const cNameInp = document.getElementById('cust-fast-item-custom-name');
+      const targetGroupSelect = document.getElementById('cust-fast-item-target-group');
       const dropdown = document.getElementById('cust-fast-item-search-dropdown');
 
       if (sInp) sInp.value = `${code} - ${name}`;
       if (cCodeInp) cCodeInp.value = code;
       if (dropdown) dropdown.classList.add('hidden');
 
-      if (cNameInp && !cNameInp.value) {
-        cNameInp.value = code;
+      // KIỂM TRA SẢN PHẨM ĐÃ CÓ TRONG DANH SÁCH BẢNG NHÓM CHƯA:
+      const normCode = String(code || '').trim().toUpperCase();
+      const existing = tempCustomizerItems.find(it => (it.code || '').trim().toUpperCase() === normCode);
+
+      if (existing) {
+        // NẾU ĐÃ CÓ TRONG NHÓM: Hiển thị đúng tên rút gọn và nhóm đã cấu hình trước đó
+        if (cNameInp) cNameInp.value = existing.customName || '';
+        if (targetGroupSelect && existing.group) {
+          ensureTargetGroupOption(existing.group);
+          for (let i = 0; i < targetGroupSelect.options.length; i++) {
+            if (targetGroupSelect.options[i].value.toLowerCase() === existing.group.toLowerCase()) {
+              targetGroupSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      } else {
+        // NẾU HÀNG CHƯA CÓ TRONG NHÓM:
+        // ĐỂ TRỐNG Ô TÊN RÚT GỌN ĐỂ NGƯỜI DÙNG TỰ ĐIỀN (KHÔNG HIỂN THỊ LẠI GỢI Ý CŨ HOẶC TỰ ĐOÁN)
+        if (cNameInp) cNameInp.value = '';
+
+        // Tự động nhận diện nhóm sản phẩm theo tên để hỗ trợ người dùng chọn đúng nhóm (ví dụ: Chếch, Góc, Bịt...)
+        const guess = guessGroupAndCustomName(code, name);
+        if (targetGroupSelect && guess && guess.group) {
+          ensureTargetGroupOption(guess.group);
+          for (let i = 0; i < targetGroupSelect.options.length; i++) {
+            if (targetGroupSelect.options[i].value.toLowerCase() === guess.group.toLowerCase()) {
+              targetGroupSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      // Focus vào ô tên rút gọn để sẵn sàng cho người dùng gõ ngay
+      if (cNameInp) {
+        setTimeout(() => {
+          cNameInp.focus();
+        }, 30);
       }
     }
 
@@ -17188,39 +18369,52 @@ window.google.script = {
       const name = inv && inv.name ? inv.name : `Sản phẩm ${code}`;
       const unit = inv && inv.unit ? inv.unit : 'Cái';
 
-      const newItem = {
-        id: 'fast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        group: targetGroup,
-        customName: customName,
-        code: code,
-        name: name,
-        unit: unit
-      };
+      if (targetGroup && !tempCustomizerGroups.some(g => g.toLowerCase() === targetGroup.toLowerCase())) {
+        tempCustomizerGroups.push(targetGroup);
+      }
 
-      tempCustomizerItems.push(newItem);
+      // KIỂM TRA SẢN PHẨM ĐÃ CÓ TRONG BẢNG CHƯA: CẬP NHẬT ĐÈ THAY VÌ TẠO DÒNG TRÙNG LẶP
+      const existingIdx = tempCustomizerItems.findIndex(it => (it.code || '').trim().toUpperCase() === code);
+      if (existingIdx >= 0) {
+        tempCustomizerItems[existingIdx].customName = customName;
+        tempCustomizerItems[existingIdx].group = targetGroup;
+        tempCustomizerItems[existingIdx].name = name;
+        tempCustomizerItems[existingIdx].unit = unit;
+      } else {
+        const newItem = {
+          id: 'fast_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          group: targetGroup,
+          customName: customName,
+          code: code,
+          name: name,
+          unit: unit
+        };
+        tempCustomizerItems.push(newItem);
+      }
 
       renderCustModalItemsTable();
       renderCustModalGroupChips();
       renderCustModalGroupsTable();
       updateModalSummaryBadge();
 
-      if (searchInp) searchInp.value = '';
+      // TỰ ĐỘNG LƯU TỨC THÌ VÀO LOCALSTORAGE VÀ CẬP NHẬT BẢNG NGOÀI
+      autoSaveFastCustomizer(true, `Đã lưu: "${customName}"${targetGroup ? ' (Nhóm ' + targetGroup + ')' : ''}`);
+
+      // Xóa trắng form để người dùng gõ tiếp mặt hàng khác cực kỳ thuận tiện
+      if (searchInp) {
+        searchInp.value = '';
+        searchInp.focus();
+      }
       if (codeInp) codeInp.value = '';
       if (customNameInp) customNameInp.value = '';
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Đã thêm sản phẩm!',
-        text: `Đã thêm "${customName}"${targetGroup ? ` vào nhóm ${targetGroup}` : ''}.`,
-        timer: 1200,
-        showConfirmButton: false
-      });
     }
 
     function updateCustFastItemCustomName(itemId, val) {
       const item = tempCustomizerItems.find(it => it.id === itemId);
       if (item) {
         item.customName = String(val || '').trim();
+        // TỰ ĐỘNG LƯU NGẦM KHI SỬA TÊN TRỰC TIẾP TRÊN BẢNG
+        autoSaveFastCustomizer(false);
       }
     }
 
@@ -17232,6 +18426,8 @@ window.google.script = {
         renderCustModalGroupChips();
         renderCustModalGroupsTable();
         updateModalSummaryBadge();
+        // TỰ ĐỘNG LƯU NGAY KHI XÓA
+        autoSaveFastCustomizer(true, 'Đã xóa mặt hàng và tự động lưu!');
       }
     }
 
@@ -17255,26 +18451,15 @@ window.google.script = {
             renderCustModalItemsTable();
           }
           updateModalSummaryBadge();
+          // TỰ ĐỘNG LƯU NGAY KHI XÓA HẾT
+          autoSaveFastCustomizer(true, 'Đã xóa toàn bộ và tự động lưu!');
         }
       });
     }
 
     function saveAndApplyFastItemsCustomizer() {
-      saveCustomFastItems(tempCustomizerItems);
-      saveCustomFastGroups(tempCustomizerGroups);
-
+      autoSaveFastCustomizer(true, 'Đã lưu và cập nhật bảng phát nhanh!');
       closeFastItemsCustomizerModal();
-      renderFastGroupCheckboxes();
-      renderFastItemsTable();
-      calculateDispatchFormSummary();
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Đã cập nhật danh mục phát nhanh!',
-        text: `Đã lưu thành công ${tempCustomizerItems.length} mặt hàng và ${tempCustomizerGroups.length} nhóm sản phẩm.`,
-        timer: 1500,
-        showConfirmButton: false
-      });
     }
 
 
