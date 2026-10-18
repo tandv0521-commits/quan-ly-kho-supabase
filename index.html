@@ -2815,18 +2815,18 @@
         <!-- Form thêm thành viên -->
         <div id="staff-form-box" class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 transition-all">
           <div id="staff-form-title" class="font-bold text-slate-700 uppercase text-[11px]">Thêm thành viên mới:</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-2">
               <label class="block text-slate-500 font-semibold mb-0.5">Họ và tên <span class="text-rose-500">*</span>:</label>
               <input type="text" id="staff-modal-input-name" placeholder="VD: Nguyễn Văn Tuấn" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-semibold">
             </div>
             <div>
-              <label class="block text-slate-500 font-semibold mb-0.5">Vai trò / Chức danh:</label>
-              <input type="text" id="staff-modal-input-role" placeholder="VD: Thủ kho, Nhân viên..." class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+              <label class="block text-slate-500 font-semibold mb-0.5">Số điện thoại (tùy chọn):</label>
+              <input type="text" id="staff-modal-input-phone" placeholder="VD: 0912..." class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-mono">
             </div>
+            <input type="hidden" id="staff-modal-input-role" value="Nhân viên kho">
           </div>
-          <div class="flex items-center justify-between gap-2 pt-1">
-            <input type="text" id="staff-modal-input-phone" placeholder="Số điện thoại (tùy chọn)" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs w-48 font-mono">
+          <div class="flex items-center justify-end gap-2 pt-1">
             <div id="staff-form-actions" class="flex items-center space-x-2 shrink-0">
               <button type="button" onclick="saveNewWarehouseStaff()" id="btn-save-staff" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg shadow-xs transition flex items-center space-x-1 shrink-0 cursor-pointer">
                 <i class="bi bi-person-plus-fill" id="btn-save-staff-icon"></i>
@@ -2848,14 +2848,13 @@
             <table class="min-w-full divide-y divide-slate-200 text-xs">
               <thead class="bg-slate-50 text-slate-600 font-semibold">
                 <tr>
-                  <th class="px-3 py-2 text-center w-10">STT</th>
+                  <th class="px-3 py-2 text-center w-12">STT</th>
                   <th class="px-3 py-2 text-left">Họ và tên</th>
-                  <th class="px-3 py-2 text-left">Vai trò</th>
-                  <th class="px-3 py-2 text-center w-24">Thao tác</th>
+                  <th class="px-3 py-2 text-center w-28">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="staff-modal-tbody" class="divide-y divide-slate-100 bg-white">
-                <tr><td colspan="4" class="text-center py-4 text-slate-400">Đang tải...</td></tr>
+                <tr><td colspan="3" class="text-center py-4 text-slate-400">Đang tải...</td></tr>
               </tbody>
             </table>
           </div>
@@ -12440,10 +12439,9 @@ window.google.script = {
 
         let hasMatchedTarget = false;
         activeStaffList.forEach(st => {
-          const roleText = st.role ? ` (${st.role})` : '';
           const isSel = (st.name === targetVal);
           if (isSel) hasMatchedTarget = true;
-          optionsHtml += `<option value="${escapeHtml(st.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(st.name)}${roleText}</option>`;
+          optionsHtml += `<option value="${escapeHtml(st.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(st.name)}</option>`;
         });
 
         // Bổ sung tên chủ kho đang đăng nhập nếu chưa có trong danh sách
@@ -12453,7 +12451,7 @@ window.google.script = {
           if (!alreadyInList) {
             const isSel = (curFullName === targetVal);
             if (isSel) hasMatchedTarget = true;
-            optionsHtml += `<option value="${escapeHtml(curFullName)}" ${isSel ? 'selected' : ''}>${escapeHtml(curFullName)} (Chủ kho)</option>`;
+            optionsHtml += `<option value="${escapeHtml(curFullName)}" ${isSel ? 'selected' : ''}>${escapeHtml(curFullName)}</option>`;
           }
         }
 
@@ -12471,7 +12469,7 @@ window.google.script = {
       const modalTbody = document.getElementById('staff-modal-tbody');
       if (modalTbody) {
         if (activeStaffList.length === 0) {
-          modalTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">Chưa có thành viên nào trong kho này. Hãy thêm thành viên phía trên!</td></tr>';
+          modalTbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">Chưa có thành viên nào trong kho này. Hãy thêm thành viên phía trên!</td></tr>';
         } else {
           modalTbody.innerHTML = activeStaffList.map((st, idx) => {
             const isEditing = typeof editingStaffId !== 'undefined' && editingStaffId === st.id;
@@ -12479,14 +12477,13 @@ window.google.script = {
             return `
             <tr class="${rowClass}">
               <td class="px-3 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
-              <td class="px-3 py-2 font-bold text-slate-800">${escapeHtml(st.name)}</td>
-              <td class="px-3 py-2 text-slate-600">
-                <span class="inline-block px-2 py-0.5 rounded text-[11px] bg-slate-100 text-slate-700 font-semibold">${escapeHtml(st.role || 'Nhân viên')}</span>
-                ${st.phone ? `<span class="ml-1 text-slate-400 font-mono text-[11px]">${escapeHtml(st.phone)}</span>` : ''}
+              <td class="px-3 py-2">
+                <span class="font-bold text-slate-800">${escapeHtml(st.name)}</span>
+                ${st.phone ? `<span class="ml-2 text-slate-400 font-mono text-[11px]"><i class="bi bi-telephone text-[10px] mr-0.5"></i>${escapeHtml(st.phone)}</span>` : ''}
               </td>
               <td class="px-3 py-2 text-center whitespace-nowrap">
                 <div class="flex items-center justify-center space-x-1">
-                  <button type="button" onclick="editWarehouseStaffRecord(${st.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-md font-semibold text-[11px] transition flex items-center space-x-1 cursor-pointer" title="Sửa thông tin thành viên">
+                  <button type="button" onclick="editWarehouseStaffRecord(${st.id})" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-md font-semibold text-[11px] transition flex items-center space-x-1 cursor-pointer" title="Sửa tên thành viên">
                     <i class="bi bi-pencil-square text-xs"></i>
                     <span>Sửa</span>
                   </button>
@@ -21611,4 +21608,22 @@ window.google.script = {
         google.script.run
           .withSuccessHandler(function(res) {
             if (res && res.success) {
- 
+              Swal.fire({
+                icon: 'success',
+                title: 'Đã đưa phần mềm về trắng như mới!',
+                text: res.message,
+                confirmButtonText: 'OK (Làm mới phần mềm)'
+              }).then(() => {
+                location.reload();
+              });
+            } else {
+              Swal.fire('Không thành công', res ? res.message : 'Có lỗi xảy ra', 'error');
+            }
+          })
+          .withFailureHandler(err => Swal.fire('Lỗi kết nối', err.message, 'error'))
+          .clearAllWarehouseData(pwd, clearVehiclesAndStaff);
+      });
+    }
+  </script>
+</body>
+</html>
