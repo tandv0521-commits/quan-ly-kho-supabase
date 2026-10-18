@@ -479,6 +479,169 @@
     .voucher-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
     .voucher-table th, .voucher-table td { border: 1px solid #000; padding: 5px 8px; }
     .voucher-table th { background-color: #f8fafc; text-align: center; }
+
+    /* ========================================================================== */
+    /* HỆ THỐNG THÔNG BÁO & TOAST ĐẲNG CẤP CHUYÊN NGHIỆP (ENTERPRISE NOTIFICATIONS) */
+    /* ========================================================================== */
+    @keyframes swalToastSlideIn {
+      0% {
+        opacity: 0;
+        transform: translate3d(50px, 0, 0) scale(0.94);
+      }
+      60% {
+        opacity: 1;
+        transform: translate3d(-4px, 0, 0) scale(1.01);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+    }
+
+    /* 1. TOAST THÔNG BÁO Ở GÓC MÀN HÌNH (GLASSMORPHISM TOAST) */
+    .swal2-container.swal2-top-end > .swal2-popup.swal2-toast,
+    .swal2-container.swal2-top-right > .swal2-popup.swal2-toast {
+      background: rgba(255, 255, 255, 0.95) !important;
+      backdrop-filter: blur(20px) saturate(180%) !important;
+      -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+      border-radius: 16px !important;
+      border: 1px solid rgba(226, 232, 240, 0.95) !important;
+      box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.16),
+                  0 4px 12px -2px rgba(15, 23, 42, 0.06),
+                  0 0 0 1px rgba(255, 255, 255, 0.8) inset !important;
+      padding: 12px 18px !important;
+      animation: swalToastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      margin-top: 14px !important;
+      margin-right: 14px !important;
+      min-width: 320px !important;
+      max-width: 440px !important;
+      overflow: hidden !important;
+    }
+
+    /* Viền màu Accent phát sáng cho Toast theo từng loại thông báo */
+    .swal2-popup.swal2-toast.swal2-icon-success {
+      border-left: 4.5px solid #10b981 !important;
+      box-shadow: 0 16px 36px -6px rgba(16, 185, 129, 0.2), 0 4px 12px -2px rgba(15, 23, 42, 0.06) !important;
+    }
+    .swal2-popup.swal2-toast.swal2-icon-error {
+      border-left: 4.5px solid #f43f5e !important;
+      box-shadow: 0 16px 36px -6px rgba(244, 63, 94, 0.2), 0 4px 12px -2px rgba(15, 23, 42, 0.06) !important;
+    }
+    .swal2-popup.swal2-toast.swal2-icon-warning {
+      border-left: 4.5px solid #f59e0b !important;
+      box-shadow: 0 16px 36px -6px rgba(245, 158, 11, 0.2), 0 4px 12px -2px rgba(15, 23, 42, 0.06) !important;
+    }
+    .swal2-popup.swal2-toast.swal2-icon-info {
+      border-left: 4.5px solid #0284c7 !important;
+      box-shadow: 0 16px 36px -6px rgba(2, 132, 199, 0.2), 0 4px 12px -2px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    /* Tiêu đề & nội dung Toast */
+    .swal2-popup.swal2-toast .swal2-title {
+      color: #0f172a !important;
+      font-size: 13.5px !important;
+      font-weight: 800 !important;
+      line-height: 1.4 !important;
+      margin: 0 !important;
+      letter-spacing: -0.01em !important;
+    }
+    .swal2-popup.swal2-toast .swal2-html-container {
+      color: #475569 !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      margin-top: 4px !important;
+      line-height: 1.45 !important;
+    }
+
+    /* Icon trong Toast */
+    .swal2-popup.swal2-toast .swal2-icon {
+      margin: 0 12px 0 0 !important;
+      width: 26px !important;
+      height: 26px !important;
+      border-width: 2px !important;
+      transform: scale(0.9) !important;
+      flex-shrink: 0 !important;
+    }
+
+    /* Thanh tiến trình thời gian Toast */
+    .swal2-popup.swal2-toast .swal2-timer-progress-bar {
+      height: 3px !important;
+      border-radius: 9999px !important;
+      background: linear-gradient(90deg, #10b981, #06b6d4) !important;
+    }
+    .swal2-popup.swal2-toast.swal2-icon-error .swal2-timer-progress-bar {
+      background: linear-gradient(90deg, #f43f5e, #fb7185) !important;
+    }
+    .swal2-popup.swal2-toast.swal2-icon-warning .swal2-timer-progress-bar {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24) !important;
+    }
+    .swal2-popup.swal2-toast.swal2-icon-info .swal2-timer-progress-bar {
+      background: linear-gradient(90deg, #0284c7, #38bdf8) !important;
+    }
+
+    /* 2. HỘP THOẠI MODAL THAO TÁC (ENTERPRISE CONFIRM & ALERT MODALS) */
+    .swal2-popup:not(.swal2-toast) {
+      border-radius: 24px !important;
+      padding: 28px 24px !important;
+      background: #ffffff !important;
+      border: 1px solid rgba(226, 232, 240, 0.9) !important;
+      box-shadow: 0 25px 65px -15px rgba(15, 23, 42, 0.25),
+                  0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+      font-family: inherit !important;
+    }
+    .swal2-container:not(.swal2-top-end):not(.swal2-bottom-end) {
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      background: rgba(15, 23, 42, 0.5) !important;
+    }
+    .swal2-popup:not(.swal2-toast) .swal2-title {
+      font-size: 18px !important;
+      font-weight: 900 !important;
+      color: #0f172a !important;
+      letter-spacing: -0.02em !important;
+      padding-top: 6px !important;
+    }
+    .swal2-popup:not(.swal2-toast) .swal2-html-container {
+      font-size: 13px !important;
+      color: #475569 !important;
+      line-height: 1.6 !important;
+      margin-top: 10px !important;
+    }
+    .swal2-actions {
+      gap: 12px !important;
+      margin-top: 24px !important;
+      width: 100% !important;
+      justify-content: center !important;
+    }
+    .swal2-styled.swal2-confirm {
+      border-radius: 12px !important;
+      padding: 10px 24px !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      cursor: pointer !important;
+    }
+    .swal2-styled.swal2-confirm:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45) !important;
+    }
+    .swal2-styled.swal2-cancel {
+      border-radius: 12px !important;
+      padding: 10px 22px !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      background: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #e2e8f0 !important;
+      transition: all 0.2s !important;
+      cursor: pointer !important;
+    }
+    .swal2-styled.swal2-cancel:hover {
+      background: #e2e8f0 !important;
+      color: #1e293b !important;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
@@ -2157,7 +2320,7 @@
             <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse shrink-0"></span>
             <b class="text-slate-800 font-bold">Sẵn sàng</b>
           </span>
-          <span class="text-slate-300">|</span>
+          <span class="text-slate-300" id="sb-server-divider">|</span>
           <span class="flex items-center space-x-1.5 shrink-0 text-slate-700 cursor-pointer hover:text-emerald-700 font-medium whitespace-nowrap" onclick="openDatabaseSettingsModal()" id="sb-server-label" title="Cấu hình kết nối cơ sở dữ liệu">
             <i class="bi bi-hdd-fill text-emerald-600 shrink-0"></i>
             <span>Lưu trữ: <b class="text-emerald-700 font-bold">Độc lập (Máy tính)</b></span>
@@ -4097,6 +4260,16 @@ async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
 function updateDatabaseBadge_() {
   const badgeEl = document.getElementById('btn-db-status');
   if (!badgeEl) return;
+
+  // BỎ CHỮ MÁY CHỦ ĐÁM MÂY Ở TRÊN ĐỐI VỚI CÁC TÀI KHOẢN THÀNH VIÊN
+  if (typeof isUserAdmin === 'function' && !isUserAdmin()) {
+    badgeEl.style.display = 'none';
+    badgeEl.classList.add('hidden');
+    return;
+  }
+  badgeEl.style.display = '';
+  badgeEl.classList.remove('hidden');
+
   if (STORAGE_MODE !== 'CLOUD') {
     badgeEl.className = "px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-2xs cursor-pointer whitespace-nowrap shrink-0";
     badgeEl.innerHTML = `
@@ -6736,6 +6909,19 @@ window.google.script = {
         }
       }
 
+      // BỎ CHỮ MÁY CHỦ ĐÁM MÂY Ở TRÊN VÀ DƯỚI ĐỐI VỚI CÁC TÀI KHOẢN THÀNH VIÊN
+      if (typeof updateDatabaseBadge_ === 'function') {
+        updateDatabaseBadge_();
+      }
+      const sbDb = document.getElementById('sb-server-label');
+      const sbDivider = document.getElementById('sb-server-divider');
+      if (sbDb) {
+        sbDb.style.display = isAdmin ? '' : 'none';
+      }
+      if (sbDivider) {
+        sbDivider.style.display = isAdmin ? '' : 'none';
+      }
+
       // Tự động chọn tên nhân viên kho đang đăng nhập vào ô người phát hàng nếu chưa có lưu trước đó
       const lastStaff = localStorage.getItem('last_dispatch_staff');
       const staffSelect = document.getElementById('dispatch-input-staff');
@@ -6755,6 +6941,21 @@ window.google.script = {
       if (typeof reloadWarehouseFastItems === 'function') {
         reloadWarehouseFastItems();
       }
+    }
+
+    // HÀM TIỆN ÍCH THÔNG BÁO GÓC ĐẲNG CẤP CHUYÊN NGHIỆP CHO MỌI THAO TÁC
+    function showAppToast(title, html = '', icon = 'success', timer = 2200) {
+      if (typeof Swal === 'undefined') return;
+      return Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: icon,
+        title: title,
+        html: html,
+        showConfirmButton: false,
+        timer: timer,
+        timerProgressBar: true
+      });
     }
 
     async function checkAuthSession() {
@@ -7884,14 +8085,28 @@ window.google.script = {
       async function checkHealth() {
         const sbStatus = document.getElementById('sb-system-status');
         const sbDb = document.getElementById('sb-server-label');
+        const sbDivider = document.getElementById('sb-server-divider');
+        const isAdmin = (typeof isUserAdmin === 'function') ? isUserAdmin() : false;
+
+        // BỎ CHỮ MÁY CHỦ ĐÁM MÂY Ở DƯỚI ĐỐI VỚI CÁC TÀI KHOẢN THÀNH VIÊN
+        if (!isAdmin) {
+          if (sbDb) sbDb.style.display = 'none';
+          if (sbDivider) sbDivider.style.display = 'none';
+        } else {
+          if (sbDb) sbDb.style.display = '';
+          if (sbDivider) sbDivider.style.display = '';
+        }
+
         if (sbStatus && sbStatus.dataset.refreshing) return;
 
         if (STORAGE_MODE !== 'CLOUD') {
           if (sbStatus && !sbStatus.dataset.refreshing && sbStatus.dataset.mode !== 'STANDALONE') {
             sbStatus.dataset.mode = 'STANDALONE';
-            sbStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5"></span><b class="text-slate-800">Sẵn sàng (Độc lập)</b>';
+            sbStatus.innerHTML = isAdmin 
+              ? '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5"></span><b class="text-slate-800">Sẵn sàng (Độc lập)</b>'
+              : '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5"></span><b class="text-slate-800">Hệ thống sẵn sàng</b>';
           }
-          if (sbDb && sbDb.dataset.mode !== 'STANDALONE') {
+          if (isAdmin && sbDb && sbDb.dataset.mode !== 'STANDALONE') {
             sbDb.dataset.mode = 'STANDALONE';
             sbDb.innerHTML = '<i class="bi bi-hdd-fill text-emerald-600 mr-1"></i><span>Lưu trữ: <b class="text-emerald-700">Độc lập (Máy tính)</b></span>';
           }
@@ -7904,9 +8119,11 @@ window.google.script = {
           });
           if (res.ok) {
             if (sbStatus && !sbStatus.dataset.refreshing) {
-              sbStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse mr-1.5"></span><b class="text-slate-800">Sẵn sàng (Cloud)</b>';
+              sbStatus.innerHTML = isAdmin
+                ? '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse mr-1.5"></span><b class="text-slate-800">Sẵn sàng (Cloud)</b>'
+                : '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse mr-1.5"></span><b class="text-slate-800">Hệ thống sẵn sàng</b>';
             }
-            if (sbDb) {
+            if (isAdmin && sbDb) {
               sbDb.innerHTML = '<i class="bi bi-cloud-check text-sky-600 mr-1"></i><span>Máy chủ: <b class="text-sky-700">Đám mây Supabase</b></span>';
             }
           }
@@ -7914,7 +8131,7 @@ window.google.script = {
           if (sbStatus && !sbStatus.dataset.refreshing) {
             sbStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 inline-block mr-1.5"></span><b class="text-amber-700">Mất kết nối Internet</b>';
           }
-          if (sbDb) {
+          if (isAdmin && sbDb) {
             sbDb.innerHTML = '<i class="bi bi-exclamation-triangle text-rose-600 mr-1"></i><span>Máy chủ: <b class="text-rose-600">Ngoại tuyến</b></span>';
           }
         }
