@@ -7477,6 +7477,7 @@ window.google.script = {
           users = LocalDB.cache['app_users'] || DEFAULT_APP_USERS;
         }
 
+        appUsersCachedList = users;
         if (countEl) countEl.innerText = users.length;
         if (!tbody) return;
 
@@ -7514,8 +7515,8 @@ window.google.script = {
               <td class="px-2.5 py-2 text-center">${statusBadge}</td>
               <td class="px-2.5 py-2 text-center">
                 <div class="flex items-center justify-center space-x-1">
-                  <button type="button" onclick="resetAppUserPassword(${u.id}, '${u.username}')" class="p-1 text-slate-400 hover:text-blue-600 rounded transition cursor-pointer" title="Đặt lại mật khẩu">
-                    <i class="bi bi-key-fill text-xs"></i>
+                  <button type="button" onclick="openEditAppUserModal(${u.id})" class="p-1 text-slate-400 hover:text-teal-700 rounded transition cursor-pointer" title="Chỉnh sửa tài khoản (Tên đăng nhập, họ tên, mật khẩu)">
+                    <i class="bi bi-pencil-square text-xs"></i>
                   </button>
                   <button type="button" onclick="toggleAppUserActive(${u.id}, ${u.active !== false})" class="p-1 text-slate-400 ${u.active !== false ? 'hover:text-amber-600' : 'hover:text-emerald-600'} rounded transition cursor-pointer" title="${u.active !== false ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}">
                     <i class="bi ${u.active !== false ? 'bi-lock-fill' : 'bi-unlock-fill'} text-xs"></i>
@@ -7595,6 +7596,155 @@ window.google.script = {
 
       } catch (err) {
         Swal.fire('Lỗi', 'Không thể tạo tài khoản: ' + err.message, 'error');
+      }
+    }
+
+    let appUsersCachedList = [];
+
+    async function openEditAppUserModal(userId) {
+      if (!isUserAdmin()) return;
+
+      let targetUser = (appUsersCachedList || []).find(u => u.id === userId);
+      if (!targetUser) {
+        try {
+          const res = await callSupabaseSingle_(`app_users?id=eq.${userId}`, 'GET');
+          if (Array.isArray(res) && res.length > 0) targetUser = res[0];
+        } catch (e) {}
+      }
+
+      if (!targetUser) {
+        Swal.fire('Lỗi', 'Không tìm thấy thông tin tài khoản cần sửa!', 'error');
+        return;
+      }
+
+      const isCurrent = currentAppUser && (currentAppUser.id === targetUser.id);
+
+      const htmlContent = `
+        <div class="text-left space-y-3.5 text-xs text-slate-700 pt-2">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Tên đăng nhập (viết liền, không dấu) <span class="text-rose-500">*</span>:</label>
+            <input type="text" id="swal-edit-username" value="${escapeHtml(targetUser.username || '')}" placeholder="VD: tuan, trang, ketoan..." class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 text-xs">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Họ và tên hiển thị <span class="text-rose-500">*</span>:</label>
+            <input type="text" id="swal-edit-fullname" value="${escapeHtml(targetUser.full_name || '')}" placeholder="VD: Nguyễn Văn Tuấn" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-bold text-slate-800 focus:ring-2 focus:ring-teal-500 text-xs">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Mật khẩu mới (bỏ trống nếu không muốn đổi):</label>
+            <input type="text" id="swal-edit-password" placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự) hoặc để trống..." class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-slate-800 focus:ring-2 focus:ring-teal-500 text-xs">
+            <span class="text-[11px] text-slate-400 italic block mt-0.5">Bỏ trống nếu giữ nguyên mật khẩu cũ</span>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Phân quyền vai trò:</label>
+            <select id="swal-edit-role" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-bold focus:ring-2 focus:ring-teal-500 text-xs bg-white text-slate-800" ${isCurrent && targetUser.role === 'admin' ? 'disabled' : ''}>
+              <option value="warehouse" ${targetUser.role === 'warehouse' ? 'selected' : ''}>Nhân viên kho (Xem tồn, nhập/xuất, phát hàng)</option>
+              <option value="admin" ${targetUser.role === 'admin' ? 'selected' : ''}>Quản trị viên (Toàn quyền hệ thống)</option>
+            </select>
+            ${isCurrent && targetUser.role === 'admin' ? '<span class="text-[10.5px] text-amber-600 italic block mt-0.5">Không thể tự hạ quyền của chính tài khoản Quản trị viên đang đăng nhập</span>' : ''}
+          </div>
+        </div>
+      `;
+
+      const result = await Swal.fire({
+        title: `Chỉnh sửa tài khoản: <b>${escapeHtml(targetUser.username)}</b>`,
+        html: htmlContent,
+        showCancelButton: true,
+        confirmButtonText: 'Lưu thay đổi',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#0d9488',
+        focusConfirm: false,
+        didOpen: () => {
+          const inp = document.getElementById('swal-edit-fullname');
+          if (inp) inp.focus();
+        },
+        preConfirm: () => {
+          const uVal = (document.getElementById('swal-edit-username')?.value || '').trim().toLowerCase();
+          const fVal = (document.getElementById('swal-edit-fullname')?.value || '').trim();
+          const pVal = (document.getElementById('swal-edit-password')?.value || '').trim();
+          const rVal = (document.getElementById('swal-edit-role')?.value || targetUser.role || 'warehouse');
+
+          if (!uVal) {
+            Swal.showValidationMessage('Vui lòng nhập Tên đăng nhập!');
+            return false;
+          }
+          if (/\s/.test(uVal)) {
+            Swal.showValidationMessage('Tên đăng nhập phải viết liền, không chứa khoảng trắng!');
+            return false;
+          }
+          if (!fVal) {
+            Swal.showValidationMessage('Vui lòng nhập Họ và tên hiển thị!');
+            return false;
+          }
+          if (pVal && pVal.length < 6) {
+            Swal.showValidationMessage('Mật khẩu mới phải có ít nhất 6 ký tự!');
+            return false;
+          }
+
+          // Kiểm tra trùng username với user khác
+          const isDuplicate = (appUsersCachedList || []).some(x => x.id !== userId && String(x.username || '').toLowerCase() === uVal);
+          if (isDuplicate) {
+            Swal.showValidationMessage(`Tên đăng nhập "${uVal}" đã tồn tại! Vui lòng chọn tên khác.`);
+            return false;
+          }
+
+          return { username: uVal, fullName: fVal, password: pVal, role: rVal };
+        }
+      });
+
+      if (!result.isConfirmed || !result.value) return;
+
+      const { username: cleanUsername, fullName: cleanFullName, password: cleanPassword, role: cleanRole } = result.value;
+
+      Swal.fire({
+        title: 'Đang lưu cập nhật...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const payload = {
+          username: cleanUsername,
+          full_name: cleanFullName,
+          role: cleanRole
+        };
+
+        if (cleanPassword) {
+          payload.password_hash = await sha256Hex(cleanPassword);
+        }
+
+        await callSupabaseSingle_(`app_users?id=eq.${userId}`, 'PATCH', payload);
+
+        // Cập nhật LocalDB nếu có
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache && Array.isArray(LocalDB.cache['app_users'])) {
+          const idx = LocalDB.cache['app_users'].findIndex(x => x.id === userId);
+          if (idx >= 0) {
+            LocalDB.cache['app_users'][idx] = { ...LocalDB.cache['app_users'][idx], ...payload };
+          }
+        }
+
+        // Nếu chính tài khoản đang đăng nhập được chỉnh sửa: cập nhật session và giao diện tức thì
+        if (currentAppUser && currentAppUser.id === userId) {
+          currentAppUser.username = cleanUsername;
+          currentAppUser.full_name = cleanFullName;
+          currentAppUser.role = cleanRole;
+          localStorage.setItem('wh_auth_user', JSON.stringify(currentAppUser));
+          sessionStorage.setItem('wh_auth_user', JSON.stringify(currentAppUser));
+          if (typeof updateHeaderUserProfile === 'function') updateHeaderUserProfile();
+        }
+
+        await loadAppUsersList();
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Cập nhật thành công!',
+          text: `Đã cập nhật thông tin tài khoản "${cleanUsername}".` + (cleanPassword ? ' Mật khẩu mới đã có hiệu lực.' : ''),
+          timer: 2000,
+          showConfirmButton: false
+        });
+
+      } catch (err) {
+        console.error('Lỗi cập nhật tài khoản:', err);
+        Swal.fire('Lỗi', err.message || 'Không thể cập nhật tài khoản!', 'error');
       }
     }
 
@@ -14271,16 +14421,28 @@ window.google.script = {
       let tripsHtml = '';
       s.trips.forEach((trip, idx) => {
         const tripTargetId = trip.firstRecordId || trip.items?.[0]?.id || 0;
+        const itemIds = (trip.items || []).map(x => x.id);
+        const itemIdsStr = itemIds.join(',');
+
         const rowsHtml = trip.items.map((it, i) => `
-          <tr ondblclick="Swal.close(); openEditDispatchVoucher(${it.id || tripTargetId})" 
-              onmousedown="event.detail > 1 && event.preventDefault()"
-              class="hover:bg-amber-50/50 cursor-pointer transition border-b border-slate-100 last:border-b-0 select-none"
-              title="Nhấp đúp chuột để sửa dòng phiếu này">
+          <tr class="hover:bg-amber-50/50 transition border-b border-slate-100 last:border-b-0 select-none">
             <td class="px-3 py-2 text-center text-slate-400 font-mono text-[11px] col-center font-bold">${i + 1}</td>
-            <td class="px-3 py-2 text-center font-mono font-bold text-teal-800 text-xs col-center bg-slate-50/40">${escapeHtml(it.product_code)}</td>
-            <td class="px-3 py-2 text-slate-900 font-medium text-xs">${escapeHtml(it.product_name)}</td>
+            <td class="px-3 py-2 text-center font-mono font-bold text-teal-800 text-xs col-center bg-slate-50/40"
+                ondblclick="Swal.close(); openEditDispatchVoucher(${it.id || tripTargetId})"
+                title="Nhấp đúp chuột để sửa dòng phiếu này">${escapeHtml(it.product_code)}</td>
+            <td class="px-3 py-2 text-slate-900 font-medium text-xs"
+                ondblclick="Swal.close(); openEditDispatchVoucher(${it.id || tripTargetId})"
+                title="Nhấp đúp chuột để sửa dòng phiếu này">${escapeHtml(it.product_name)}</td>
             <td class="px-3 py-2 text-center text-slate-500 font-semibold text-xs col-center">${escapeHtml(it.unit)}</td>
             <td class="px-3 py-2 text-right font-mono font-black text-slate-900 text-xs col-num">${formatNumber(it.quantity)}</td>
+            <td class="px-2 py-1 text-center col-center w-10">
+              <button type="button" 
+                      onclick="confirmDeleteDispatchItemInModal(${it.id}, '${escapeJsString(it.product_code)}', ${it.quantity}, '${escapeJsString(s.staff_name)}')"
+                      class="p-1 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer" 
+                      title="Xóa mặt hàng này khỏi phiếu">
+                <i class="bi bi-trash3 text-xs"></i>
+              </button>
+            </td>
           </tr>
         `).join('');
 
@@ -14303,9 +14465,16 @@ window.google.script = {
                 </span>
                 ${driverInfo}
               </div>
-              <div class="flex items-center space-x-3 text-[11px] font-mono text-slate-500">
+              <div class="flex items-center space-x-2.5 text-[11px] font-mono text-slate-500">
                 <span>Số phiếu: <b class="text-slate-800">${escapeHtml(trip.voucher_no)}</b></span>
                 <span>Thời gian: <b class="text-slate-800">${fullDateStr}</b></span>
+                <button type="button" 
+                        onclick="confirmDeleteDispatchTrip('${escapeJsString(trip.voucher_no)}', '${escapeJsString(trip.license_plate)}', '${itemIdsStr}', '${escapeJsString(s.staff_name)}')"
+                        class="px-2.5 py-1 text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-lg text-xs font-bold transition flex items-center space-x-1 cursor-pointer shrink-0 shadow-2xs ml-1"
+                        title="Xóa phiếu và toàn bộ hàng phát của xe ${escapeHtml(trip.license_plate)}">
+                  <i class="bi bi-trash3-fill text-xs"></i>
+                  <span>Xóa xe &amp; phiếu</span>
+                </button>
               </div>
             </div>
 
@@ -14316,7 +14485,8 @@ window.google.script = {
                   <th class="px-3 py-2 text-center w-28 font-mono col-center">Mã SP</th>
                   <th class="px-3 py-2 text-left">Tên mặt hàng phát</th>
                   <th class="px-3 py-2 text-center w-20 col-center">ĐVT</th>
-                  <th class="px-3 py-2 text-right w-28 font-mono col-num">Số lượng</th>
+                  <th class="px-3 py-2 text-right w-24 font-mono col-num">Số lượng</th>
+                  <th class="px-2 py-2 text-center w-10 col-center" title="Xóa mặt hàng">Xóa</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 bg-white">
@@ -14326,6 +14496,7 @@ window.google.script = {
                 <tr>
                   <td colspan="4" class="px-3 py-2 text-right uppercase text-[10px] text-slate-500">Tổng sản lượng xe này:</td>
                   <td class="px-3 py-2 text-right font-mono font-black text-teal-800 text-xs">${formatNumber(trip.totalQty)}</td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
@@ -14396,6 +14567,138 @@ window.google.script = {
           exportStaffDispatchedVehiclesDetailExcel(s.staff_name);
         }
       });
+    }
+
+    // XÓA TOÀN BỘ PHIẾU VÀ CÁC MẶT HÀNG CỦA MỘT XE PHÁT HÀNG TỪ MODAL
+    async function confirmDeleteDispatchTrip(voucherNo, plate, idsStr, staffName) {
+      const ids = (idsStr || '').split(',').map(x => parseInt(x, 10)).filter(x => !isNaN(x) && x > 0);
+      if (ids.length === 0) {
+        Swal.fire('Lỗi', 'Không tìm thấy danh sách dòng phiếu cần xóa!', 'error');
+        return;
+      }
+
+      const res = await Swal.fire({
+        title: 'Xóa phiếu & xe phát hàng?',
+        html: `
+          <div class="text-left text-xs text-slate-600 space-y-2">
+            <p>Bạn có chắc muốn xóa phiếu <b>${escapeHtml(voucherNo || 'Không số')}</b> của xe <b>${escapeHtml(plate)}</b> không?</p>
+            <div class="p-2.5 bg-rose-50 rounded-lg border border-rose-200 text-rose-800">
+              <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+              Toàn bộ <b>${ids.length} mặt hàng</b> của xe này sẽ được xóa và bảng thống kê tổng sẽ tự động cập nhật lại ngay lập tức.
+            </div>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Đồng ý xóa xe & phiếu',
+        cancelButtonText: 'Hủy bỏ',
+        confirmButtonColor: '#e11d48'
+      });
+
+      if (!res.isConfirmed) return;
+
+      Swal.fire({
+        title: 'Đang xóa dữ liệu xe...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        // 1. Xóa trên Supabase Cloud
+        if (voucherNo && voucherNo !== '-') {
+          await callSupabaseSingle_(`phat_hang?voucher_no=eq.${encodeURIComponent(voucherNo)}`, 'DELETE');
+        } else {
+          await callSupabaseSingle_(`phat_hang?id=in.(${ids.join(',')})`, 'DELETE');
+        }
+
+        // 2. Cập nhật cache cục bộ
+        const idSet = new Set(ids);
+        dispatchListCached = dispatchListCached.filter(x => !idSet.has(x.id));
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
+          LocalDB.cache['phat_hang'] = dispatchListCached;
+        }
+
+        // 3. Cập nhật bộ lọc bảng phát hàng chính
+        filterDailyDispatchTable();
+
+        // 4. Kiểm tra xem nhân sự này còn xe nào không
+        const currentList = currentDispatchFilteredList.length > 0 ? currentDispatchFilteredList : dispatchListCached;
+        const staffStats = getDispatchStaffStatistics(currentList);
+        const s = staffStats.find(x => x.staff_name.toLowerCase() === (staffName || '').toLowerCase());
+
+        if (s && s.trips && s.trips.length > 0) {
+          openStaffDispatchedVehiclesModal(staffName);
+          if (typeof showAppToast === 'function') {
+            showAppToast(`Đã xóa xe ${plate} & phiếu ${voucherNo}!`, '', 'success', 2000);
+          }
+        } else {
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã xóa thành công!',
+            text: `Đã xóa toàn bộ phiếu của xe ${plate}. Nhân viên này không còn lượt xe nào trong khoảng thời gian đang lọc.`,
+            timer: 2200,
+            showConfirmButton: false
+          });
+        }
+
+      } catch (err) {
+        console.error('Lỗi xóa phiếu xe:', err);
+        Swal.fire('Lỗi', err.message || 'Không thể xóa phiếu xe!', 'error');
+      }
+    }
+
+    // XÓA LẺ TỪNG MẶT HÀNG TRONG BẢNG CHI TIẾT XE
+    async function confirmDeleteDispatchItemInModal(itemId, productCode, qty, staffName) {
+      const res = await Swal.fire({
+        title: 'Xóa mặt hàng này?',
+        html: `Bạn có chắc muốn xóa mặt hàng <b>${escapeHtml(productCode)}</b> (Số lượng: <b>${formatNumber(qty)}</b>) khỏi phiếu không?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Xóa mặt hàng',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#e11d48'
+      });
+
+      if (!res.isConfirmed) return;
+
+      Swal.fire({
+        title: 'Đang xóa...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        await callSupabaseSingle_(`phat_hang?id=eq.${itemId}`, 'DELETE');
+
+        dispatchListCached = dispatchListCached.filter(x => x.id !== itemId);
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
+          LocalDB.cache['phat_hang'] = dispatchListCached;
+        }
+
+        filterDailyDispatchTable();
+
+        const currentList = currentDispatchFilteredList.length > 0 ? currentDispatchFilteredList : dispatchListCached;
+        const staffStats = getDispatchStaffStatistics(currentList);
+        const s = staffStats.find(x => x.staff_name.toLowerCase() === (staffName || '').toLowerCase());
+
+        if (s && s.trips && s.trips.length > 0) {
+          openStaffDispatchedVehiclesModal(staffName);
+          if (typeof showAppToast === 'function') {
+            showAppToast(`Đã xóa mặt hàng ${productCode}!`, '', 'success', 1500);
+          }
+        } else {
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã xóa!',
+            text: 'Đã xóa mặt hàng thành công.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+      } catch (err) {
+        console.error('Lỗi xóa mặt hàng:', err);
+        Swal.fire('Lỗi', err.message || 'Không thể xóa mặt hàng!', 'error');
+      }
     }
 
     // IN BẢNG CHI TIẾT CÁC XE PHÁT HÀNG - TRÌNH BÀY ĐẸP NHƯ GIAO DIỆN HIỂN THỊ
@@ -18853,14 +19156,14 @@ window.google.script = {
     }
 
     function getCheckedFastGroups() {
-      if (Array.isArray(checkedFastGroupsList)) return checkedFastGroupsList;
+      if (Array.isArray(checkedFastGroupsList)) return checkedFastGroupsList.filter(g => g && g !== 'Chưa phân nhóm');
       const storageKey = getFastItemsStorageKey('checked_fast_dispatch_groups');
       try {
         const stored = localStorage.getItem(storageKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            checkedFastGroupsList = parsed;
+            checkedFastGroupsList = parsed.filter(g => g && g !== 'Chưa phân nhóm');
             return checkedFastGroupsList;
           }
         }
@@ -18902,11 +19205,8 @@ window.google.script = {
       checkedFastGroupsList = [];
       if (isChecked) {
         const allGroups = getCustomFastGroups();
-        // Giữ thứ tự hiển thị của các nhóm khi chọn tất cả
-        checkedFastGroupsList = [...allGroups];
-        if (!checkedFastGroupsList.includes('Chưa phân nhóm')) {
-          checkedFastGroupsList.push('Chưa phân nhóm');
-        }
+        // Giữ thứ tự hiển thị của các nhóm khi chọn tất cả (chỉ lấy các nhóm được tạo)
+        checkedFastGroupsList = [...allGroups].filter(g => g && g !== 'Chưa phân nhóm');
       }
       saveCheckedFastGroups();
       renderFastGroupCheckboxes();
@@ -18930,35 +19230,28 @@ window.google.script = {
       const container = document.getElementById('fast-items-group-checkboxes');
       if (!container) return;
 
-      const allGroups = getCustomFastGroups();
+      const allGroups = getCustomFastGroups().filter(g => g && g !== 'Chưa phân nhóm');
       const allItems = getCustomFastItems();
       const checkedList = getCheckedFastGroups();
 
-      let hasUnassigned = false;
       const groupFilledCount = {};
 
       allGroups.forEach(g => {
         groupFilledCount[g] = 0;
       });
-      groupFilledCount['Chưa phân nhóm'] = 0;
 
       allItems.forEach(it => {
-        const g = (it.group && String(it.group).trim()) || 'Chưa phân nhóm';
-        if (groupFilledCount[g] === undefined) {
-          groupFilledCount[g] = 0;
-        }
-        if (g === 'Chưa phân nhóm') hasUnassigned = true;
-
-        const state = fastDispatchItemsState[it.id];
-        if (state && state.calculatedQty > 0) {
-          groupFilledCount[g]++;
+        const g = (it.group && String(it.group).trim());
+        if (g && groupFilledCount[g] !== undefined) {
+          const state = fastDispatchItemsState[it.id];
+          if (state && state.calculatedQty > 0) {
+            groupFilledCount[g]++;
+          }
         }
       });
 
+      // LOẠI BỎ HOÀN TOÀN THẺ "Chưa phân nhóm": Chỉ hiển thị các nhóm được tạo
       const displayGroups = [...allGroups];
-      if (hasUnassigned && !displayGroups.includes('Chưa phân nhóm')) {
-        displayGroups.push('Chưa phân nhóm');
-      }
 
       let html = '';
       displayGroups.forEach(grp => {
