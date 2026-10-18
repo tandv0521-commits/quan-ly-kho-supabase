@@ -1899,18 +1899,17 @@
                     <th class="px-3 py-2.5 text-left col-item-name">Tên mặt hàng phát</th>
                     <th class="px-3 py-2.5 text-center w-16 col-center">ĐVT</th>
                     <th class="px-3 py-2.5 text-right w-24 col-num font-mono">SL Phát</th>
-                    <th class="px-3 py-2.5 text-left col-truncate-note">Khách hàng / Ghi chú xe</th>
                     <th class="px-3 py-2.5 text-center w-20 no-print">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="dispatch-tbody" class="divide-y divide-slate-100 bg-white">
-                  <tr><td colspan="11" class="text-center py-8 text-slate-400">Đang nạp dữ liệu phát hàng...</td></tr>
+                  <tr><td colspan="10" class="text-center py-8 text-slate-400">Đang nạp dữ liệu phát hàng...</td></tr>
                 </tbody>
                 <tfoot class="bg-slate-50 font-bold text-slate-800 text-xs border-t-2 border-slate-200">
                   <tr>
                     <td colspan="8" class="px-3 py-2 text-right uppercase">Tổng cộng hiển thị:</td>
                     <td id="dispatch-footer-total-qty" class="px-3 py-2 text-right font-black font-mono text-teal-700">0</td>
-                    <td colspan="2" id="dispatch-footer-summary-note" class="px-3 py-2 text-slate-500 font-normal">0 dòng</td>
+                    <td id="dispatch-footer-summary-note" class="px-3 py-2 text-center text-slate-500 font-normal">0 dòng</td>
                   </tr>
                 </tfoot>
               </table>
@@ -14354,28 +14353,62 @@ window.google.script = {
       `;
 
       staffStats.forEach((s, idx) => {
-        const platesList = s.distinctPlates || [];
-        const platesHtml = platesList.map(p => {
+        const rawPlates = s.distinctPlates || [];
+
+        // Gom và gắn số thứ tự xe (daily sequence) của người này cho từng biển số
+        const platesInfo = rawPlates.map((p, pIdx) => {
           const tripCount = s.plateTripsMap ? (s.plateTripsMap.get(p) || 1) : 1;
           const multiBadge = tripCount > 1 
             ? `<span class="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-teal-100 text-teal-800 border border-teal-200 shrink-0" title="Phát ${tripCount} lượt">${tripCount} lượt</span>` 
             : '';
-          const matchingTrip = s.trips.find(t => (t.license_plate || '').toUpperCase() === p.toUpperCase());
+          const matchingTrips = (s.trips || []).filter(t => (t.license_plate || '').toUpperCase() === p.toUpperCase());
+          const matchingTrip = matchingTrips[0] || null;
           const targetRecId = matchingTrip ? (matchingTrip.firstRecordId || matchingTrip.items?.[0]?.id || 0) : 0;
           const dblClickAttr = targetRecId ? `ondblclick="event.stopPropagation(); openEditDispatchVoucher(${targetRecId})"` : '';
+
+          // Lấy danh sách số thứ tự chuyến xe trong ngày của người này
+          const seqs = matchingTrips.map(t => {
+            return (typeof resolveDailyVehicleSeq === 'function')
+              ? resolveDailyVehicleSeq(t.items?.[0] || t, dispatchListCached)
+              : null;
+          }).filter(n => typeof n === 'number' && !isNaN(n) && n > 0);
+
+          const uniqueSeqs = Array.from(new Set(seqs)).sort((a, b) => a - b);
+          const firstSeq = uniqueSeqs.length > 0 ? uniqueSeqs[0] : (pIdx + 1);
+          const seqLabel = uniqueSeqs.length > 0 ? uniqueSeqs.join(', ') : `${pIdx + 1}`;
+
+          return {
+            plate: p,
+            firstSeq: firstSeq,
+            seqLabel: seqLabel,
+            tripCount: tripCount,
+            multiBadge: multiBadge,
+            dblClickAttr: dblClickAttr,
+            targetRecId: targetRecId
+          };
+        });
+
+        // Sắp xếp các thẻ biển số theo thứ tự chuyến xe của người đó tăng dần (Xe 1, Xe 2, Xe 3...)
+        platesInfo.sort((a, b) => a.firstSeq - b.firstSeq || a.plate.localeCompare(b.plate));
+
+        const platesHtml = platesInfo.map(info => {
           return `
-            <span ${dblClickAttr} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-white text-slate-800 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs transition-all tracking-wide select-none cursor-pointer" title="Biển số: ${escapeHtml(p)}${tripCount > 1 ? ` (${tripCount} lượt)` : ''} - Nhấp đúp chuột để sửa phiếu">
-              <i class="bi bi-truck text-teal-600 mr-1.5 text-xs shrink-0"></i>
-              <span>${escapeHtml(p)}</span>
-              ${multiBadge}
+            <span ${info.dblClickAttr} onmousedown="event.detail > 1 && event.preventDefault()" 
+                  class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-mono font-bold bg-white text-slate-800 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs transition-all tracking-wide select-none cursor-pointer" 
+                  title="Chuyến xe thứ ${info.seqLabel} của ${escapeHtml(s.staff_name)} - Biển số: ${escapeHtml(info.plate)}${info.tripCount > 1 ? ` (${info.tripCount} lượt)` : ''} - Nhấp đúp chuột để sửa phiếu">
+              <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-teal-50 text-teal-800 border border-teal-200 text-[10.5px] font-sans font-black mr-1.5 shrink-0">
+                Xe ${info.seqLabel}
+              </span>
+              <span>${escapeHtml(info.plate)}</span>
+              ${info.multiBadge}
             </span>
           `;
         }).join('');
 
-        const platesHeader = platesList.length >= 4 
+        const platesHeader = rawPlates.length >= 4 
           ? `<div class="mb-1 flex items-center">
                <span class="inline-flex items-center text-[10.5px] text-teal-900 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
-                 <i class="bi bi-collection-fill mr-1 text-teal-600 text-[10px]"></i> ${platesList.length} biển số xe
+                 <i class="bi bi-collection-fill mr-1 text-teal-600 text-[10px]"></i> ${rawPlates.length} biển số xe
                </span>
              </div>`
           : '';
@@ -14485,12 +14518,12 @@ window.google.script = {
           <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs text-left select-none">
             <div class="bg-gradient-to-r from-teal-50/90 to-slate-50 px-3.5 py-2.5 border-b border-teal-100 flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center space-x-2">
-                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 font-mono font-black text-xs shrink-0 shadow-2xs" title="Chuyến xe thứ #${tripSeq} trong ngày của ${escapeHtml(s.staff_name)}">#${tripSeq}</span>
                 <span ondblclick="Swal.close(); openEditDispatchVoucher(${tripTargetId})"
                       onmousedown="event.detail > 1 && event.preventDefault()"
-                      class="px-2.5 py-1 rounded-lg font-mono font-black text-xs bg-white text-teal-950 border border-teal-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs cursor-pointer transition select-none"
+                      class="px-2.5 py-1 rounded-lg font-mono font-black text-xs bg-white text-teal-950 border border-teal-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs cursor-pointer transition select-none inline-flex items-center"
                       title="Nhấp đúp chuột để sửa phiếu xe này">
-                  <i class="bi bi-truck mr-1 text-teal-600"></i>${escapeHtml(trip.license_plate)}
+                  <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-teal-50 text-teal-800 border border-teal-200 text-[10.5px] font-sans font-black mr-1.5 shrink-0">Xe ${tripSeq}</span>
+                  <span>${escapeHtml(trip.license_plate)}</span>
                 </span>
                 ${driverInfo}
               </div>
@@ -14771,14 +14804,18 @@ window.google.script = {
           ? `Lái xe: <b>${escapeHtml(trip.driver_name)}</b>${trip.driver_phone ? ` (${escapeHtml(trip.driver_phone)})` : ''}` 
           : '';
 
+        const tripSeq = (typeof resolveDailyVehicleSeq === 'function') 
+          ? resolveDailyVehicleSeq(trip.items?.[0] || trip, dispatchListCached) 
+          : (idx + 1);
+
         printVehiclesHtml += `
           <div style="border: 1px solid #94a3b8; border-radius: 8px; overflow: hidden; margin-bottom: 14px; page-break-inside: avoid; background-color: #ffffff;">
             <!-- Thanh tiêu đề xe (trình bày y hệt như trên bảng hiển thị) -->
             <div style="background-color: #f0fdfa; border-bottom: 1px solid #99f6e4; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="background-color: #0d9488; color: #ffffff; border-radius: 9999px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 11px;">${idx + 1}</span>
-                <span style="background-color: #ffffff; color: #042f2e; border: 1px solid #5eead4; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: bold; font-size: 12px;">
-                  🚚 ${escapeHtml(trip.license_plate)}
+                <span style="background-color: #ffffff; color: #042f2e; border: 1px solid #5eead4; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: bold; font-size: 12px; display: inline-flex; align-items: center;">
+                  <span style="background-color: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; padding: 1px 5px; border-radius: 4px; font-size: 10.5px; font-weight: bold; margin-right: 5px;">Xe ${tripSeq}</span>${escapeHtml(trip.license_plate)}
                 </span>
                 ${driverInfo ? `<span style="color: #334155; margin-left: 6px;">${driverInfo}</span>` : ''}
               </div>
@@ -15498,7 +15535,7 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
         const footQ = document.getElementById('dispatch-footer-total-qty');
         const footN = document.getElementById('dispatch-footer-summary-note');
         if (footQ) footQ.innerText = '0';
@@ -15527,7 +15564,7 @@ window.google.script = {
         const fullNote = noteParts.join(' | ') || '-';
 
         return `
-          <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này">
+          <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này${fullNote !== '-' ? ` (${escapeHtml(fullNote)})` : ''}">
             <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
             <td class="px-3 py-2 text-center font-mono text-slate-600 col-center whitespace-nowrap text-[11px]">${dateTimeFull}</td>
             <td class="px-2 py-2 text-center col-center whitespace-nowrap">
@@ -15549,7 +15586,6 @@ window.google.script = {
             <td class="px-3 py-2 text-slate-900 font-medium col-item-name" title="${it.product_name || '-'}">${it.product_name || '-'}</td>
             <td class="px-3 py-2 text-center text-slate-500 font-semibold col-center">${it.unit || '-'}</td>
             <td class="px-3 py-2 text-right font-black font-mono text-slate-900 col-num text-sm">${formatNumber(qty)}</td>
-            <td class="px-3 py-2 text-slate-500 text-xs col-truncate-note" title="${fullNote}">${fullNote}</td>
             <td class="px-3 py-2 text-center col-center no-print whitespace-nowrap">
               <button onclick="openEditDispatchVoucher(${it.id})" class="p-1 text-slate-400 hover:text-blue-600 rounded transition cursor-pointer" title="Sửa phiếu phát cho xe này">
                 <i class="bi bi-pencil-square text-sm"></i>
@@ -15635,12 +15671,9 @@ window.google.script = {
 
       const titleEl = document.getElementById('dispatch-create-view-title');
       if (titleEl) {
-        titleEl.innerHTML = `SỬA PHIẾU PHÁT HÀNG: <span class="text-teal-700 font-mono">${escapeHtml(targetItem.license_plate || '')}</span> ${targetItem.voucher_no ? '(' + escapeHtml(targetItem.voucher_no) + ')' : ''}`;
+        titleEl.innerHTML = `SỬA PHIẾU PHÁT HÀNG: <span class="text-indigo-700 font-mono">${escapeHtml(targetItem.license_plate || '')}</span> ${targetItem.voucher_no ? '(' + escapeHtml(targetItem.voucher_no) + ')' : ''}`;
       }
-      const submitBtnText = document.getElementById('btn-submit-dispatch-text');
-      if (submitBtnText) {
-        submitBtnText.innerText = 'Cập nhật phiếu';
-      }
+      updateDispatchSubmitButtonState(true);
 
       populateWarehouseStaffUI();
       populateVehiclesUI();
@@ -15739,12 +15772,36 @@ window.google.script = {
       }
     }
 
+    function updateDispatchSubmitButtonState(isEditing) {
+      const submitBtn = document.getElementById('btn-submit-dispatch');
+      const submitBtnText = document.getElementById('btn-submit-dispatch-text');
+      const btnNew = document.getElementById('btn-submit-dispatch-new');
+      if (isEditing) {
+        if (btnNew) btnNew.classList.add('hidden');
+        if (submitBtn) {
+          submitBtn.className = 'px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-black rounded-xl text-xs sm:text-sm shadow-md ring-2 ring-indigo-200 transition flex items-center justify-center space-x-1.5 cursor-pointer';
+          submitBtn.title = 'Lưu các nội dung đã chỉnh sửa cho phiếu phát hàng này';
+          const iconEl = submitBtn.querySelector('i');
+          if (iconEl) iconEl.className = 'bi bi-pencil-square text-base';
+        }
+        if (submitBtnText) submitBtnText.innerText = 'Cập nhật phiếu';
+      } else {
+        if (btnNew) btnNew.classList.remove('hidden');
+        if (submitBtn) {
+          submitBtn.className = 'px-5 py-2 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center justify-center space-x-1.5 cursor-pointer';
+          submitBtn.title = 'Lưu phiếu và quay ra danh sách';
+          const iconEl = submitBtn.querySelector('i');
+          if (iconEl) iconEl.className = 'bi bi-check2-circle text-base';
+        }
+        if (submitBtnText) submitBtnText.innerText = 'Lưu và quay ra';
+      }
+    }
+
     function openCreateDispatchForm() {
       editingDispatchContext = null;
       const titleEl = document.getElementById('dispatch-create-view-title');
       if (titleEl) titleEl.innerHTML = 'GHI NHẬN PHÁT HÀNG CHO XE LẤY HÀNG';
-      const submitBtnText = document.getElementById('btn-submit-dispatch-text');
-      if (submitBtnText) submitBtnText.innerText = 'Lưu và quay ra';
+      updateDispatchSubmitButtonState(false);
 
       document.getElementById('dispatch-list-view').classList.add('hidden');
       document.getElementById('dispatch-create-view').classList.remove('hidden');
@@ -15821,8 +15878,7 @@ window.google.script = {
       editingDispatchContext = null;
       const titleEl = document.getElementById('dispatch-create-view-title');
       if (titleEl) titleEl.innerHTML = 'GHI NHẬN PHÁT HÀNG CHO XE LẤY HÀNG';
-      const submitBtnText = document.getElementById('btn-submit-dispatch-text');
-      if (submitBtnText) submitBtnText.innerText = 'Lưu và quay ra';
+      updateDispatchSubmitButtonState(false);
 
       document.getElementById('dispatch-create-view').classList.add('hidden');
       document.getElementById('dispatch-list-view').classList.remove('hidden');
@@ -16158,7 +16214,6 @@ window.google.script = {
           dispatch_date: date,
           dispatch_time: time || '',
           staff_name: staff,
-          daily_seq: dailySeq,
           license_plate: vehicle.toUpperCase(),
           driver_name: driver || '',
           driver_phone: driverPhone || '',
@@ -16185,10 +16240,10 @@ window.google.script = {
               await callSupabaseSingle_('phat_hang?id=eq.' + oId, 'DELETE').catch(() => {});
             }
           }
-          editingDispatchContext = null;
         }
 
         await callSupabaseSingle_('phat_hang', 'POST', payload);
+        editingDispatchContext = null;
 
         // TỰ ĐỘNG LƯU SỐ XE MỚI VÀO DANH MỤC XE NẾU CHƯA TỪNG CÓ
         const cleanPlate = vehicle.trim().toUpperCase();
@@ -16249,8 +16304,7 @@ window.google.script = {
       editingDispatchContext = null;
       const titleEl = document.getElementById('dispatch-create-view-title');
       if (titleEl) titleEl.innerHTML = 'GHI NHẬN PHÁT HÀNG CHO XE LẤY HÀNG';
-      const submitBtnText = document.getElementById('btn-submit-dispatch-text');
-      if (submitBtnText) submitBtnText.innerText = 'Lưu và quay ra';
+      updateDispatchSubmitButtonState(false);
 
       // Sinh số phiếu phát hàng mới
       generateDispatchVoucherNo();
@@ -17820,7 +17874,7 @@ window.google.script = {
       if (!window._currentProductDetailRecords) return;
       const item = window._currentProductDetailItem || {};
       const unit = window._currentModalDetailUnit || item.unit || 'cái';
-      const sort = sortType || window._currentProductDetailSort || 'qty';
+      const sort = sortType || window._currentProductDetailSort || 'staff_seq';
       window._currentProductDetailSort = sort;
 
       const qInp = document.getElementById('product-detail-search-input');
@@ -17858,8 +17912,31 @@ window.google.script = {
         const qA = parseSmartNumber(a.qty || 0);
         const qB = parseSmartNumber(b.qty || 0);
 
+        if (sort === 'staff_seq') {
+          // MẶC ĐỊNH: SẮP XẾP THEO NGƯỜI PHÁT HÀNG / THỦ KHO -> THỨ TỰ XE (dailySeq) -> MÃ THAM CHIẾU (voucherNo)
+          const staffA = (a.staff || '').trim();
+          const staffB = (b.staff || '').trim();
+          const sCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+          if (sCmp !== 0) return sCmp;
+
+          const seqA = a.dailySeq || 0;
+          const seqB = b.dailySeq || 0;
+          if (seqA !== seqB) return seqA - seqB;
+
+          const vA = (a.voucherNo || '').trim();
+          const vB = (b.voucherNo || '').trim();
+          const vCmp = vA.localeCompare(vB, 'vi', { numeric: true, sensitivity: 'base' });
+          if (vCmp !== 0) return vCmp;
+
+          const timeA = `${a.date || ''} ${a.time || ''}`;
+          const timeB = `${b.date || ''} ${b.time || ''}`;
+          if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+          return (a.id || 0) - (b.id || 0);
+        }
+
         if (sort === 'qty') {
-          // MẶC ĐỊNH: LỌC/SẮP XẾP THEO SỐ LƯỢNG LẤY HÀNG TRƯỚC (GIẢM DẦN - LỚN NHẤT ĐẦU TIÊN)
+          // LỌC/SẮP XẾP THEO SỐ LƯỢNG LẤY HÀNG (GIẢM DẦN - LỚN NHẤT ĐẦU TIÊN)
           if (qB !== qA) return qB - qA;
           const timeA = `${a.date || ''} ${a.time || ''}`;
           const timeB = `${b.date || ''} ${b.time || ''}`;
@@ -17915,7 +17992,7 @@ window.google.script = {
           let isGroupStart = false;
           if (idx > 0) {
             const prev = list[idx - 1];
-            if (sort === 'staff') {
+            if (sort === 'staff_seq' || sort === 'staff') {
               isGroupStart = (r.staff || '').trim() !== (prev.staff || '').trim();
             } else if (sort === 'plate') {
               isGroupStart = (r.plate || '').trim().toUpperCase() !== (prev.plate || '').trim().toUpperCase();
@@ -17935,8 +18012,11 @@ window.google.script = {
             <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
               <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
               <td class="px-3 py-2 text-center whitespace-nowrap">
-                <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Nhấp đúp chuột để sửa phiếu xe này">
-                  <i class="bi bi-truck mr-1 text-indigo-500"></i>${escapeHtml(r.plate || '-')}
+                <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+                  <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[10px] font-sans font-black mr-1.5 shrink-0">
+                    Xe ${r.dailySeq || 1}
+                  </span>
+                  <span>${escapeHtml(r.plate || '-')}</span>
                 </span>
               </td>
               <td class="px-3 py-2 text-left font-bold text-slate-800 whitespace-nowrap">
@@ -18113,11 +18193,32 @@ window.google.script = {
         return;
       }
 
-      // Sắp xếp các lượt phát theo tiêu chí người dùng đang chọn (mặc định: số lượng lấy hàng trước)
-      const currentSort = window._currentProductDetailSort || 'qty';
+      // Sắp xếp các lượt phát theo tiêu chí người dùng đang chọn (mặc định: Người phát & Thứ tự xe)
+      const currentSort = window._currentProductDetailSort || 'staff_seq';
       records.sort((a, b) => {
         const qA = parseSmartNumber(a.qty || 0);
         const qB = parseSmartNumber(b.qty || 0);
+        if (currentSort === 'staff_seq') {
+          const staffA = (a.staff || '').trim();
+          const staffB = (b.staff || '').trim();
+          const sCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+          if (sCmp !== 0) return sCmp;
+
+          const seqA = a.dailySeq || 0;
+          const seqB = b.dailySeq || 0;
+          if (seqA !== seqB) return seqA - seqB;
+
+          const vA = (a.voucherNo || '').trim();
+          const vB = (b.voucherNo || '').trim();
+          const vCmp = vA.localeCompare(vB, 'vi', { numeric: true, sensitivity: 'base' });
+          if (vCmp !== 0) return vCmp;
+
+          const timeA = `${a.date || ''} ${a.time || ''}`;
+          const timeB = `${b.date || ''} ${b.time || ''}`;
+          if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+          return (a.id || 0) - (b.id || 0);
+        }
         if (currentSort === 'qty') {
           if (qB !== qA) return qB - qA;
           const timeA = `${a.date || ''} ${a.time || ''}`;
@@ -18156,10 +18257,11 @@ window.google.script = {
         if (r.plate) vehiclesSet.add(r.plate.trim());
         if (r.staff) staffSet.add(r.staff.trim());
 
+        const xeLabel = r.dailySeq ? `[Xe ${r.dailySeq}] ` : '';
         return `
           <tr>
             <td style="border: 1px solid #000; padding: 5px; text-align: center;">${idx + 1}</td>
-            <td style="border: 1px solid #000; padding: 5px; text-align: center; font-family: monospace; font-weight: bold;">${escapeHtml(r.plate || '-')}</td>
+            <td style="border: 1px solid #000; padding: 5px; text-align: center; font-family: monospace; font-weight: bold;">${xeLabel}${escapeHtml(r.plate || '-')}</td>
             <td style="border: 1px solid #000; padding: 5px; text-align: left; font-weight: bold;">${escapeHtml(r.staff || '-')}</td>
             <td style="border: 1px solid #000; padding: 5px; text-align: left;">${escapeHtml(r.driver || '-')}${r.phone ? ` <span style="font-size: 10px; color: #64748b;">(${escapeHtml(r.phone)})</span>` : ''}</td>
             <td style="border: 1px solid #000; padding: 5px; text-align: right; font-family: monospace; font-weight: bold;">${formatNumber(q)}</td>
@@ -18356,17 +18458,29 @@ window.google.script = {
       // Lưu vào biến toàn cục để filter / sort động không cần mở lại modal
       window._currentProductDetailRecords = records;
       window._currentProductDetailItem = item;
-      window._currentProductDetailSort = 'qty'; // MẶC ĐỊNH: LỌC/SẮP XẾP THEO SỐ LƯỢNG LẤY HÀNG TRƯỚC (GIẢM DẦN)
+      window._currentProductDetailSort = 'staff_seq'; // MẶC ĐỊNH: NGƯỜI PHÁT HÀNG -> THỨ TỰ XE (dailySeq) -> MÃ THAM CHIẾU
 
-      // Sắp xếp ban đầu theo SỐ LƯỢNG LẤY HÀNG (MẶC ĐỊNH LỚN NHẤT ĐẦU TIÊN)
+      // Sắp xếp ban đầu theo NGƯỜI PHÁT HÀNG / THỦ KHO -> THỨ TỰ XE (dailySeq) -> MÃ THAM CHIẾU (voucherNo)
       records.sort((a, b) => {
-        const qA = parseSmartNumber(a.qty || 0);
-        const qB = parseSmartNumber(b.qty || 0);
-        if (qB !== qA) return qB - qA;
+        const staffA = (a.staff || '').trim();
+        const staffB = (b.staff || '').trim();
+        const sCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+        if (sCmp !== 0) return sCmp;
+
+        const seqA = a.dailySeq || 0;
+        const seqB = b.dailySeq || 0;
+        if (seqA !== seqB) return seqA - seqB;
+
+        const vA = (a.voucherNo || '').trim();
+        const vB = (b.voucherNo || '').trim();
+        const vCmp = vA.localeCompare(vB, 'vi', { numeric: true, sensitivity: 'base' });
+        if (vCmp !== 0) return vCmp;
+
         const timeA = `${a.date || ''} ${a.time || ''}`;
         const timeB = `${b.date || ''} ${b.time || ''}`;
-        if (timeB !== timeA) return timeB.localeCompare(timeA);
-        return (b.id || 0) - (a.id || 0);
+        if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+        return (a.id || 0) - (b.id || 0);
       });
 
       // Danh sách các hàng chi tiết trong bảng (kèm data-search và data-qty để lọc tức thì khi có nhiều số liệu)
@@ -18381,8 +18495,11 @@ window.google.script = {
           <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs border-b border-slate-100 select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
             <td class="px-3 py-2 text-center whitespace-nowrap">
-              <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Nhấp đúp chuột để sửa phiếu xe này">
-                <i class="bi bi-truck mr-1 text-indigo-500"></i>${escapeHtml(r.plate || '-')}
+              <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+                <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[10px] font-sans font-black mr-1.5 shrink-0">
+                  Xe ${r.dailySeq || 1}
+                </span>
+                <span>${escapeHtml(r.plate || '-')}</span>
               </span>
             </td>
             <td class="px-3 py-2 text-left font-bold text-slate-800 whitespace-nowrap">
@@ -18416,13 +18533,13 @@ window.google.script = {
         showConfirmButton: false,
         showCloseButton: false,
         customClass: {
-          popup: '!rounded-2xl !p-0 !overflow-hidden !border !border-slate-200 !shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col',
-          htmlContainer: '!p-0 !m-0 !overflow-hidden flex-1 flex flex-col'
+          popup: '!rounded-2xl !p-0 !overflow-hidden !border !border-slate-200 !shadow-2xl max-w-5xl w-full !max-h-[88vh] !flex !flex-col',
+          htmlContainer: '!p-0 !m-0 !overflow-hidden !flex-1 !flex !flex-col !min-h-0'
         },
         html: `
-          <div class="text-left font-sans text-slate-800 flex flex-col h-full max-h-[92vh]">
+          <div class="text-left font-sans text-slate-800 flex flex-col h-full max-h-[88vh] min-h-0 overflow-hidden">
             <!-- 1. HEADER BANNER (Tone màu dịu nhẹ, thanh lịch dễ nhìn) -->
-            <div class="bg-gradient-to-r from-slate-100 via-indigo-50/70 to-slate-100 text-slate-800 px-6 py-3.5 border-b border-slate-200 flex items-center justify-between gap-4 shrink-0">
+            <div class="bg-gradient-to-r from-slate-100 via-indigo-50/70 to-slate-100 text-slate-800 px-6 py-3 border-b border-slate-200 flex items-center justify-between gap-4 shrink-0">
               <div class="space-y-1">
                 <div class="flex items-center flex-wrap gap-2">
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[11px] font-bold uppercase tracking-wider border border-indigo-200 shadow-2xs">
@@ -18453,7 +18570,7 @@ window.google.script = {
             </div>
 
             <!-- 2. BODY CONTENT (Cuộn mượt mà khi có nhiều số liệu) -->
-            <div class="p-4 sm:p-5 space-y-3.5 bg-slate-50/70 overflow-y-auto flex-1 custom-scroll">
+            <div class="p-3.5 sm:p-4 space-y-3 bg-slate-50/70 overflow-y-auto flex-1 min-h-0 custom-scroll">
               <!-- Grid 4 thẻ KPI tóm tắt số liệu -->
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div class="bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs flex flex-col justify-between">
@@ -18504,7 +18621,7 @@ window.google.script = {
               <!-- Bảng nhật ký chi tiết các lượt phát hàng (Tối ưu cho lượng dữ liệu nhiều) -->
               <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
                 <!-- Thanh công cụ tìm kiếm nhanh & đếm số lượng & BỘ CHỌN LỌC / SẮP XẾP -->
-                <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+                <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
                   <div class="flex items-center space-x-2">
                     <span class="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
                       <i class="bi bi-table text-indigo-600"></i>
@@ -18514,16 +18631,16 @@ window.google.script = {
                   </div>
 
                   <div class="flex items-center flex-wrap gap-2.5">
-                    <!-- BỘ CHỌN LỌC & SẮP XẾP: SỐ LƯỢNG (MẶC ĐỊNH), SỐ XE, TÊN THỦ KHO, SỐ PHIẾU -->
+                    <!-- BỘ CHỌN LỌC & SẮP XẾP: NGƯỜI PHÁT & STT XE (MẶC ĐỊNH), SỐ LƯỢNG, SỐ XE, SỐ PHIẾU -->
                     <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs">
                       <span class="text-[11px] font-bold text-indigo-900 flex items-center gap-1 shrink-0">
                         <i class="bi bi-arrow-down-up text-indigo-600"></i>
                         <span>Lọc/Xếp theo:</span>
                       </span>
                       <select id="product-detail-sort-select" onchange="applyProductDetailSorting(this.value)" class="text-xs bg-transparent border-0 font-bold text-indigo-950 focus:ring-0 focus:outline-none cursor-pointer py-0 pl-1 pr-6" title="Chọn tiêu chí lọc và sắp xếp nhật ký">
-                        <option value="qty" selected>⚡ Số lượng lấy hàng (Mặc định)</option>
+                        <option value="staff_seq" selected>👤 Người phát & STT Xe (Mặc định)</option>
+                        <option value="qty">⚡ Số lượng lấy hàng</option>
                         <option value="plate">🚚 Số xe nhận hàng</option>
-                        <option value="staff">👤 Tên thủ kho</option>
                         <option value="voucher">📄 Số phiếu phát</option>
                       </select>
                     </div>
@@ -18538,7 +18655,7 @@ window.google.script = {
                 </div>
 
                 <!-- Bảng dữ liệu có scroll mượt và thead/tfoot sticky -->
-                <div class="max-h-[50vh] sm:max-h-[440px] overflow-y-auto custom-scroll overflow-x-auto">
+                <div class="max-h-[36vh] sm:max-h-[290px] overflow-y-auto custom-scroll overflow-x-auto">
                   <table class="min-w-full divide-y divide-slate-200 text-xs">
                     <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider shadow-2xs">
                       <tr>
@@ -18574,7 +18691,7 @@ window.google.script = {
             </div>
 
             <!-- 3. FOOTER ACTION BAR (Thêm nút Xuất Excel chi tiết ở góc dưới) -->
-            <div class="px-6 py-3 bg-white border-t border-slate-200 flex items-center justify-between gap-3 flex-wrap shrink-0">
+            <div class="px-6 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between gap-3 shrink-0 z-20 shadow-xs">
               <div class="text-xs text-slate-500 flex items-center space-x-1.5">
                 <i class="bi bi-shield-check text-emerald-600 text-sm"></i>
                 <span>Dữ liệu phát hàng được trích xuất trực tiếp từ các phiếu phát hàng thực tế</span>
