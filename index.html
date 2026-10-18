@@ -14201,18 +14201,27 @@ window.google.script = {
           sData.distinctPlates.add(plate);
         }
 
-        const tripKey = it.voucher_no ? String(it.voucher_no).trim() : `${plate}_${it.dispatch_date || ''}_${it.dispatch_time || ''}`;
+        const vNoClean = (it.voucher_no && String(it.voucher_no).trim() !== '-' && String(it.voucher_no).trim() !== '') 
+          ? String(it.voucher_no).trim() 
+          : '';
+        const tripDate = String(it.dispatch_date || '').substring(0, 10);
+        const tripTime = String(it.dispatch_time || '').trim();
+        const tripKey = vNoClean ? `v_${vNoClean.toLowerCase()}` : `${plate}_${tripDate}_${tripTime}`;
+        const itSeq = getRecordDailyVehicleSeq(it);
+
         if (!sData.tripsMap.has(tripKey)) {
           sData.tripsMap.set(tripKey, {
             tripKey: tripKey,
-            voucher_no: it.voucher_no || '-',
+            voucher_no: vNoClean || '-',
             license_plate: plate,
             driver_name: it.driver_name || '',
             driver_phone: it.driver_phone || '',
             customer_name: it.customer_name || '',
+            staff_name: sName,
             dispatch_date: it.dispatch_date || '',
             dispatch_time: it.dispatch_time || '',
             note: it.note || '',
+            daily_seq: itSeq,
             items: [],
             totalQty: 0,
             firstRecordId: it.id || 0
@@ -14223,14 +14232,23 @@ window.google.script = {
         }
 
         const trip = sData.tripsMap.get(tripKey);
+        if (itSeq && !trip.daily_seq) {
+          trip.daily_seq = itSeq;
+        }
         trip.totalQty += qty;
         trip.items.push({
           id: it.id,
+          voucher_no: vNoClean || it.voucher_no || '',
+          license_plate: plate,
+          staff_name: sName,
+          dispatch_date: it.dispatch_date || '',
+          dispatch_time: it.dispatch_time || '',
           product_code: it.product_code || '-',
           product_name: it.product_name || '-',
           unit: it.unit || '-',
           quantity: qty,
-          note: it.note || ''
+          note: it.note || '',
+          daily_seq: itSeq
         });
       });
 
@@ -14369,7 +14387,7 @@ window.google.script = {
           // Lấy danh sách số thứ tự chuyến xe trong ngày của người này
           const seqs = matchingTrips.map(t => {
             return (typeof resolveDailyVehicleSeq === 'function')
-              ? resolveDailyVehicleSeq(t.items?.[0] || t, dispatchListCached)
+              ? resolveDailyVehicleSeq(t, dispatchListCached)
               : null;
           }).filter(n => typeof n === 'number' && !isNaN(n) && n > 0);
 
@@ -14480,9 +14498,18 @@ window.google.script = {
         : `Từ ${formatDateVN(fromDateVal) || '...'} đến ${formatDateVN(toDateVal) || '...'}`;
 
       let tripsHtml = '';
-      s.trips.forEach((trip, idx) => {
+      const sortedTrips = [...s.trips].sort((a, b) => {
+        const seqA = resolveDailyVehicleSeq(a, dispatchListCached);
+        const seqB = resolveDailyVehicleSeq(b, dispatchListCached);
+        if (seqA !== seqB) return seqA - seqB;
+        const timeA = `${a.dispatch_date} ${a.dispatch_time}`;
+        const timeB = `${b.dispatch_date} ${b.dispatch_time}`;
+        return timeA.localeCompare(timeB);
+      });
+
+      sortedTrips.forEach((trip, idx) => {
         const tripTargetId = trip.firstRecordId || trip.items?.[0]?.id || 0;
-        const tripSeq = resolveDailyVehicleSeq(trip.items?.[0] || trip, dispatchListCached);
+        const tripSeq = resolveDailyVehicleSeq(trip, dispatchListCached);
         const itemIds = (trip.items || []).map(x => x.id);
         const itemIdsStr = itemIds.join(',');
 
@@ -14805,7 +14832,7 @@ window.google.script = {
           : '';
 
         const tripSeq = (typeof resolveDailyVehicleSeq === 'function') 
-          ? resolveDailyVehicleSeq(trip.items?.[0] || trip, dispatchListCached) 
+          ? resolveDailyVehicleSeq(trip, dispatchListCached) 
           : (idx + 1);
 
         printVehiclesHtml += `
@@ -15451,6 +15478,13 @@ window.google.script = {
         const n = parseInt(m[1], 10);
         if (!isNaN(n) && n > 0) return n;
       }
+      // Kiểm tra trong items nếu it là trip hoặc phiếu phát nhóm nhiều dòng
+      if (Array.isArray(it.items) && it.items.length > 0) {
+        for (const subItem of it.items) {
+          const s = getRecordDailyVehicleSeq(subItem);
+          if (s) return s;
+        }
+      }
       return null;
     }
 
@@ -15459,7 +15493,12 @@ window.google.script = {
       const direct = getRecordDailyVehicleSeq(it);
       if (direct) return direct;
 
-      const list = allRecordsList || dispatchListCached || [];
+      // Ưu tiên dùng dispatchListCached toàn diện để STT xe luôn cố định theo ngày của nhân viên,
+      // không bị thay đổi / nhảy số khi người dùng lọc theo mã hàng hoặc từ khóa.
+      const list = (Array.isArray(dispatchListCached) && dispatchListCached.length > 0)
+        ? dispatchListCached
+        : (Array.isArray(allRecordsList) ? allRecordsList : []);
+
       const staff = String(it.staff_name || it.staff || '').trim().toLowerCase();
       const date = String(it.dispatch_date || it.date || '').substring(0, 10);
       if (!staff || !date) return 1;
@@ -15471,18 +15510,82 @@ window.google.script = {
         return rStaff === staff && rDate === date;
       });
 
-      // Gom danh sách chuyến xe (theo voucher_no hoặc id/plate)
-      const voucherOrder = [];
+      // Gom các chuyến xe độc lập và sắp xếp
+      const tripsMap = new Map();
       sameDayStaffRecords.forEach(r => {
-        const vKey = r.voucher_no || `voucher_${r.license_plate || r.plate}_${r.dispatch_time || ''}`;
-        if (!voucherOrder.includes(vKey)) {
-          voucherOrder.push(vKey);
+        const vClean = (r.voucher_no && String(r.voucher_no).trim() !== '-' && String(r.voucher_no).trim() !== '') 
+          ? String(r.voucher_no).trim() 
+          : ((r.voucherNo && String(r.voucherNo).trim() !== '-' && String(r.voucherNo).trim() !== '') ? String(r.voucherNo).trim() : '');
+        const plate = String(r.license_plate || r.plate || '').trim().toUpperCase();
+        const time = String(r.dispatch_time || r.time || '').trim();
+        const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
+        const vKey = vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time}`;
+        
+        const rSeq = getRecordDailyVehicleSeq(r);
+        if (!tripsMap.has(vKey)) {
+          tripsMap.set(vKey, {
+            key: vKey,
+            plate: plate,
+            time: time,
+            id: Number(r.id) || 0,
+            directSeq: rSeq
+          });
+        } else if (rSeq && !tripsMap.get(vKey).directSeq) {
+          tripsMap.get(vKey).directSeq = rSeq;
         }
       });
 
-      const targetKey = it.voucher_no || `voucher_${it.license_plate || it.plate}_${it.dispatch_time || ''}`;
-      const idx = voucherOrder.indexOf(targetKey);
-      return idx >= 0 ? (idx + 1) : 1;
+      const sortedTrips = Array.from(tripsMap.values()).sort((a, b) => {
+        if (a.directSeq && b.directSeq && a.directSeq !== b.directSeq) {
+          return a.directSeq - b.directSeq;
+        }
+        if (a.time && b.time && a.time !== b.time) {
+          return a.time.localeCompare(b.time);
+        }
+        return a.id - b.id;
+      });
+
+      // Gán số thứ tự duy nhất không trùng lặp (1, 2, 3...)
+      const assignedSeqs = new Set();
+      sortedTrips.forEach(t => {
+        if (t.directSeq && !assignedSeqs.has(t.directSeq)) {
+          t.assignedSeq = t.directSeq;
+          assignedSeqs.add(t.directSeq);
+        }
+      });
+      let nextAvailableSeq = 1;
+      sortedTrips.forEach(t => {
+        if (!t.assignedSeq) {
+          while (assignedSeqs.has(nextAvailableSeq)) {
+            nextAvailableSeq++;
+          }
+          t.assignedSeq = nextAvailableSeq;
+          assignedSeqs.add(nextAvailableSeq);
+        }
+      });
+
+      // Xác định chuyến xe cần tra cứu
+      const itVClean = (it.voucher_no && String(it.voucher_no).trim() !== '-' && String(it.voucher_no).trim() !== '') 
+        ? String(it.voucher_no).trim() 
+        : ((it.voucherNo && String(it.voucherNo).trim() !== '-' && String(it.voucherNo).trim() !== '') ? String(it.voucherNo).trim() : '');
+      const itPlate = String(it.license_plate || it.plate || '').trim().toUpperCase();
+      const itTime = String(it.dispatch_time || it.time || '').trim();
+      const targetKey = itVClean ? `v_${itVClean.toLowerCase()}` : `${itPlate}_${date}_${itTime}`;
+
+      const matchedTrip = sortedTrips.find(t => t.key === targetKey);
+      if (matchedTrip && matchedTrip.assignedSeq) {
+        return matchedTrip.assignedSeq;
+      }
+
+      // Dự phòng tìm theo biển số xe nếu thời gian bị lệch nhẹ
+      if (itPlate) {
+        const matchedByPlate = sortedTrips.find(t => t.plate === itPlate);
+        if (matchedByPlate && matchedByPlate.assignedSeq) {
+          return matchedByPlate.assignedSeq;
+        }
+      }
+
+      return 1;
     }
 
     function calculateNextDailyVehicleSeq(targetStaff, targetDate, excludeVoucherNo = null) {
@@ -15491,25 +15594,21 @@ window.google.script = {
       if (!cleanStaff || !cleanDate) return 1;
 
       const list = dispatchListCached || [];
-      const usedSeqs = new Set();
+      let maxSeq = 0;
 
       list.forEach(r => {
         const rStaff = String(r.staff_name || r.staff || '').trim().toLowerCase();
         const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
         if (rStaff === cleanStaff && rDate === cleanDate) {
           if (excludeVoucherNo && r.voucher_no === excludeVoucherNo) {
-            return; // Đang sửa phiếu này thì bỏ qua
+            return;
           }
           const s = resolveDailyVehicleSeq(r, list);
-          if (s && s > 0) usedSeqs.add(s);
+          if (s && s > maxSeq) maxSeq = s;
         }
       });
 
-      let next = 1;
-      while (usedSeqs.has(next)) {
-        next++;
-      }
-      return next;
+      return maxSeq + 1;
     }
 
     function updateDailyVehicleSeqInput() {
@@ -16159,11 +16258,13 @@ window.google.script = {
 
       // Kiểm tra trùng lặp số thứ tự xe trong ngày của người phát hàng này
       const currentEditingVoucher = isEditing ? editingDispatchContext?.voucher_no : null;
+      const editingOriginalIds = (isEditing && Array.isArray(editingDispatchContext?.originalIds)) ? new Set(editingDispatchContext.originalIds.map(String)) : new Set();
       const isDuplicateSeq = (dispatchListCached || []).some(r => {
         const rStaff = String(r.staff_name || '').trim().toLowerCase();
         const rDate = String(r.dispatch_date || '').substring(0, 10);
         if (rStaff === staff.toLowerCase() && rDate === date) {
-          if (currentEditingVoucher && r.voucher_no === currentEditingVoucher) return false;
+          if (currentEditingVoucher && currentEditingVoucher !== '-' && r.voucher_no === currentEditingVoucher) return false;
+          if (editingOriginalIds.has(String(r.id))) return false;
           const rSeq = resolveDailyVehicleSeq(r, dispatchListCached);
           return rSeq === dailySeq;
         }
