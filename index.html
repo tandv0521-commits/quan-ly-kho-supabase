@@ -2274,76 +2274,169 @@
   </div>
 
   <!-- ============================================================== -->
-  <!-- 1. MÀN HÌNH ĐĂNG NHẬP HỆ THỐNG (LOGIN OVERLAY) -->
+  <!-- 1. MÀN HÌNH ĐĂNG NHẬP HỆ THỐNG (LOGIN OVERLAY VỚI BANNER CÔNG TY) -->
   <!-- ============================================================== -->
-  <div id="app-login-overlay" class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto" style="display: none;">
-    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-      <!-- Gradient Top Header Banner -->
-      <div class="bg-gradient-to-br from-blue-700 via-indigo-700 to-teal-600 p-6 sm:p-7 text-center text-white relative overflow-hidden">
-        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="absolute -left-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-        
-        <div class="w-16 h-16 mx-auto mb-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-3xl shadow-inner shadow-white/20">
-          <i class="bi bi-box-seam-fill text-white"></i>
-        </div>
-        <h2 class="text-xl sm:text-2xl font-black uppercase tracking-wider leading-tight">QUẢN LÝ KHO HÀNG</h2>
-        <p class="text-xs text-blue-100 font-medium mt-1">Đăng nhập tài khoản để truy cập dữ liệu và vận hành</p>
-      </div>
+  <div id="app-login-overlay" class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md overflow-y-auto" style="display: none;">
+    <div class="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row min-h-[530px]">
+      
+      <!-- CỘT TRÁI: BANNER CÔNG TY CỔ PHẦN NHỰA TIỀN PHONG -->
+      <div class="md:w-5/12 relative bg-slate-900 overflow-hidden min-h-[220px] md:min-h-full flex flex-col justify-between p-6 sm:p-7 text-white shrink-0">
+        <!-- Ảnh nền Banner -->
+        <img src="banner.JPG" alt="Nhựa Tiền Phong Banner" class="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.82] contrast-[1.08] transition duration-700 hover:scale-105">
+        <!-- Lớp phủ Gradient đa tầng tôn nổi chữ -->
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-blue-950/40 backdrop-blur-[0.5px]"></div>
 
-      <!-- Form Body -->
-      <div class="p-6 sm:p-7 space-y-4 text-xs">
-        <!-- Error Alert Container -->
-        <div id="login-error-box" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start space-x-2">
-          <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm shrink-0 mt-0.5"></i>
-          <div class="flex-1 font-semibold" id="login-error-text">Tên đăng nhập hoặc mật khẩu không chính xác!</div>
+        <!-- Header Cột Trái -->
+        <div class="relative z-10 flex items-center space-x-2">
+          <span class="px-2.5 py-1 rounded-full text-[10.5px] font-black uppercase tracking-wider bg-white/20 backdrop-blur-md border border-white/30 text-emerald-300 shadow-xs flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Hệ Thống Nội Bộ
+          </span>
         </div>
 
-        <form id="app-login-form" onsubmit="event.preventDefault(); handleLoginSubmit();" class="space-y-3.5">
-          <div>
-            <label class="block text-slate-700 font-bold mb-1">Tên đăng nhập / Tài khoản:</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <i class="bi bi-person-fill text-sm"></i>
-              </span>
-              <input type="text" id="login-username" required autocomplete="username"
-                     placeholder="Ví dụ: admin hoặc tuan, trong, hung, dung"
-                     class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold text-slate-900 transition">
+        <!-- Nội dung Thương hiệu Cột Trái -->
+        <div class="relative z-10 my-auto py-6">
+          <div class="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-2xl text-white shadow-inner mb-3">
+            <i class="bi bi-buildings-fill"></i>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-black uppercase tracking-wide leading-tight drop-shadow-md text-white">
+            NHỰA TIỀN PHONG
+          </h1>
+          <p class="text-xs text-blue-200 font-semibold mt-1 drop-shadow">
+            Công ty Cổ phần Nhựa Thiếu niên Tiền Phong
+          </p>
+          <div class="w-12 h-0.5 bg-blue-400 my-3 rounded-full"></div>
+          <p class="text-[11.5px] text-slate-300 leading-relaxed drop-shadow">
+            Phân hệ Quản lý Kho Thông Minh &amp; Điều phối Bàn giao Phát hàng Vận tải
+          </p>
+
+          <!-- Badges tính năng -->
+          <div class="mt-4 space-y-2 text-[11px] text-blue-100 font-medium">
+            <div class="flex items-center space-x-2">
+              <i class="bi bi-check-circle-fill text-emerald-400 text-xs shrink-0"></i>
+              <span>Phân hệ dữ liệu kho riêng biệt từng thành viên</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="bi bi-check-circle-fill text-emerald-400 text-xs shrink-0"></i>
+              <span>Kiểm soát tồn kho thời gian thực</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <i class="bi bi-check-circle-fill text-emerald-400 text-xs shrink-0"></i>
+              <span>Bàn giao &amp; Nhật ký phát hàng xe tải</span>
             </div>
           </div>
+        </div>
 
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-slate-700 font-bold">Mật khẩu:</label>
+        <!-- Footer Cột Trái -->
+        <div class="relative z-10 text-[10.5px] text-slate-400 font-medium flex items-center justify-between border-t border-white/15 pt-3">
+          <span>Phiên bản: v3.0 Pro</span>
+          <span class="flex items-center gap-1 text-slate-300"><i class="bi bi-shield-lock-fill text-blue-400"></i> An toàn &amp; Bảo mật</span>
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI: FORM ĐĂNG NHẬP -->
+      <div class="md:w-7/12 p-6 sm:p-8 flex flex-col justify-between bg-white">
+        <div>
+          <!-- Title & Subtitle -->
+          <div class="mb-5">
+            <div class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold mb-2">
+              <i class="bi bi-shield-lock-fill"></i>
+              <span>Xác Thực Người Dùng</span>
             </div>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <i class="bi bi-lock-fill text-sm"></i>
-              </span>
-              <input type="password" id="login-password" required autocomplete="current-password"
-                     placeholder="Nhập mật khẩu..."
-                     class="w-full pl-9 pr-10 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold text-slate-900 transition">
-              <button type="button" onclick="togglePasswordVisibility('login-password', this)"
-                      class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
-                <i class="bi bi-eye text-base"></i>
+            <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">ĐĂNG NHẬP HỆ THỐNG</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Vui lòng đăng nhập bằng tài khoản Quản trị hoặc Thành viên kho</p>
+          </div>
+
+          <!-- Error Alert Box -->
+          <div id="login-error-box" class="hidden mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start space-x-2 text-xs">
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm shrink-0 mt-0.5"></i>
+            <div class="flex-1 font-semibold" id="login-error-text">Tên đăng nhập hoặc mật khẩu không chính xác!</div>
+          </div>
+
+          <!-- Form Fields -->
+          <form id="app-login-form" onsubmit="event.preventDefault(); handleLoginSubmit();" class="space-y-4 text-xs">
+            <div>
+              <label class="block text-slate-700 font-bold mb-1.5">Tên đăng nhập / Tài khoản:</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i class="bi bi-person-fill text-base"></i>
+                </span>
+                <input type="text" id="login-username" required autocomplete="username"
+                       placeholder="Nhập tên đăng nhập (admin, tuan, trong, hung, dung)"
+                       class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-slate-900 transition text-xs sm:text-sm">
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-slate-700 font-bold">Mật khẩu:</label>
+              </div>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <i class="bi bi-lock-fill text-base"></i>
+                </span>
+                <input type="password" id="login-password" required autocomplete="current-password"
+                       placeholder="Nhập mật khẩu truy cập..."
+                       class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-slate-900 transition text-xs sm:text-sm">
+                <button type="button" onclick="togglePasswordVisibility('login-password', this)"
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
+                  <i class="bi bi-eye text-base"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-0.5">
+              <label class="flex items-center space-x-2 text-slate-600 font-medium select-none cursor-pointer">
+                <input type="checkbox" id="login-remember-me" checked
+                       class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer">
+                <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+              </label>
+            </div>
+
+            <button type="submit" id="btn-login-submit"
+                    class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center space-x-2 text-sm cursor-pointer active:scale-[0.99]">
+              <i class="bi bi-box-arrow-in-right text-base"></i>
+              <span id="btn-login-submit-text">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
+            </button>
+          </form>
+
+          <!-- Quick login chips for testing -->
+          <div class="mt-4 pt-3.5 border-t border-slate-100">
+            <div class="text-[11px] font-bold text-slate-500 mb-2 flex items-center justify-between">
+              <span>Đăng nhập nhanh mẫu:</span>
+              <span class="text-[10px] text-blue-600 font-semibold cursor-default">Bấm để điền sẵn</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="fillQuickLogin('admin', 'admin123')"
+                      class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 font-bold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                <i class="bi bi-shield-fill text-[10px]"></i>
+                <span>Admin (Toàn quyền)</span>
+              </button>
+              <button type="button" onclick="fillQuickLogin('tuan', '123456')"
+                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                <span>📦 Kho Tuấn</span>
+              </button>
+              <button type="button" onclick="fillQuickLogin('trong', '123456')"
+                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                <span>📦 Kho Trọng</span>
+              </button>
+              <button type="button" onclick="fillQuickLogin('hung', '123456')"
+                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                <span>📦 Kho Hùng</span>
+              </button>
+              <button type="button" onclick="fillQuickLogin('dung', '123456')"
+                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                <span>📦 Kho Dũng</span>
               </button>
             </div>
           </div>
+        </div>
 
-          <div class="flex items-center justify-between pt-0.5">
-            <label class="flex items-center space-x-2 text-slate-600 font-medium select-none cursor-pointer">
-              <input type="checkbox" id="login-remember-me" checked
-                     class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer">
-              <span>Ghi nhớ đăng nhập trên máy này</span>
-            </label>
-          </div>
-
-          <button type="submit" id="btn-login-submit"
-                  class="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/25 transition flex items-center justify-center space-x-2 text-sm cursor-pointer active:scale-[0.99]">
-            <i class="bi bi-box-arrow-in-right text-base"></i>
-            <span id="btn-login-submit-text">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
-          </button>
-        </form>
+        <div class="mt-4 pt-3 border-t border-slate-100 text-center text-[10.5px] text-slate-400">
+          © Bản quyền thuộc Công ty Cổ phần Nhựa Thiếu niên Tiền Phong
+        </div>
       </div>
+
     </div>
   </div>
 
@@ -2515,7 +2608,7 @@
           </div>
           <div>
             <h3 class="font-black text-sm text-teal-900 uppercase">QUẢN LÝ THÀNH VIÊN KHO</h3>
-            <p class="text-[11px] text-teal-700">Thêm và quản lý nhân sự phát hàng trong bộ phận kho</p>
+            <p id="staff-modal-warehouse-desc" class="text-[11px] text-teal-700">Thêm và quản lý nhân sự phát hàng trong bộ phận kho</p>
           </div>
         </div>
         <button type="button" onclick="closeWarehouseStaffModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"><i class="bi bi-x-lg text-sm"></i></button>
@@ -4298,10 +4391,7 @@ async function fetchProductsForItems_(rawCodes) {
     prods.forEach(p => {
       if (p && p.code) prodMap[p.code.toLowerCase()] = p;
     });
-    return prodMap;
-  }
-
-  // Dự phòng khi nhập hàng loạt từ Excel (> 150 mã): Tải toàn bộ danh mục song song
+  } else {
   const baseEp = "products?select=code,name,unit,stock_tp,stock_pp,total_stock,pack_qty,pack_unit&order=code.asc";
   const [b1, b2] = await Promise.all([
     callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
@@ -4561,7 +4651,11 @@ const ClientBackend = {
         });
 
         try {
-          localStorage.setItem('CACHED_INVENTORY', JSON.stringify(list));
+          const cacheKey = 'CACHED_INVENTORY_' + activeScope;
+          localStorage.setItem(cacheKey, JSON.stringify(list));
+          if (activeScope === 'all' || activeScope === 'admin') {
+            localStorage.setItem('CACHED_INVENTORY', JSON.stringify(list));
+          }
         } catch(e) {}
 
         return list;
@@ -6364,7 +6458,15 @@ window.google.script = {
         return !note.includes('[Kho:') || note.includes('[Kho: admin]') || wh === 'admin' || wh === 'main';
       }
 
-      return note.includes(`[Kho: ${scope}]`) || wh === scope.toLowerCase() || staff.includes(scope.toLowerCase());
+      let isStaffInCurrentWh = false;
+      try {
+        if (typeof getStaffListForCurrentWarehouse === 'function') {
+          const sList = getStaffListForCurrentWarehouse();
+          isStaffInCurrentWh = sList.some(s => s.name && s.name.trim().toLowerCase() === staff.trim());
+        }
+      } catch(e) {}
+
+      return note.includes(`[Kho: ${scope}]`) || wh === scope.toLowerCase() || staff.includes(scope.toLowerCase()) || isStaffInCurrentWh;
     }
 
     function getWarehouseScopeLabel(scope) {
@@ -6479,6 +6581,13 @@ window.google.script = {
       if (typeof loadReportData === 'function') {
         try { loadReportData(); } catch(e) {}
       }
+
+      if (typeof populateWarehouseStaffUI === 'function') {
+        populateWarehouseStaffUI();
+      }
+      if (typeof populateDispatchFilterDropdowns === 'function') {
+        populateDispatchFilterDropdowns();
+      }
     }
 
     function isUserAdmin() {
@@ -6553,6 +6662,13 @@ window.google.script = {
         }
       }
 
+      if (typeof populateWarehouseStaffUI === 'function') {
+        populateWarehouseStaffUI();
+      }
+      if (typeof populateDispatchFilterDropdowns === 'function') {
+        populateDispatchFilterDropdowns();
+      }
+
       applyUserPermissions();
     }
 
@@ -6593,6 +6709,11 @@ window.google.script = {
           if (user && user.username) {
             setCurrentUser(user);
             hideLoginOverlay();
+            inventoryList = [];
+            inventoryMap = {};
+            if (typeof loadInventory === 'function') {
+              loadInventory();
+            }
             return true;
           }
         }
@@ -6724,6 +6845,22 @@ window.google.script = {
         // Xóa trường mật khẩu trên form đăng nhập
         if (pInput) pInput.value = '';
 
+        // TẢI LẠI TOÀN BỘ BẢNG TỒN KHO VÀ DỮ LIỆU ĐỂ TÁCH BIỆT THEO TÀI KHOẢN VỪA ĐĂNG NHẬP
+        inventoryList = [];
+        inventoryMap = {};
+        if (typeof loadInventory === 'function') {
+          loadInventory();
+        }
+        if (typeof loadDispatchHistoryData === 'function') {
+          try { loadDispatchHistoryData(); } catch(e) {}
+        }
+        if (typeof loadDailyReport === 'function') {
+          try { loadDailyReport(); } catch(e) {}
+        }
+        if (typeof loadReportData === 'function') {
+          try { loadReportData(); } catch(e) {}
+        }
+
         Swal.fire({
           icon: 'success',
           title: `Xin chào, ${sessionUser.full_name}!`,
@@ -6764,6 +6901,8 @@ window.google.script = {
       localStorage.removeItem('wh_auth_user');
       sessionStorage.removeItem('wh_auth_user');
       currentAppUser = null;
+      inventoryList = [];
+      inventoryMap = {};
 
       showLoginOverlay();
 
@@ -7767,10 +7906,13 @@ window.google.script = {
     function loadInventory(callback) {
       const tbody = document.getElementById('inventory-tbody');
 
-      // 1. Cache-first: Hien thi tuc thi tu bo nho dem LocalStorage
+      const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+      const cacheKey = 'CACHED_INVENTORY_' + activeScope;
+
+      // 1. Cache-first: Hien thi tuc thi tu bo nho dem LocalStorage rieng cua kho nay
       if (inventoryList.length === 0) {
         try {
-          const cachedStr = localStorage.getItem('CACHED_INVENTORY');
+          const cachedStr = localStorage.getItem(cacheKey);
           if (cachedStr) {
             const cachedData = JSON.parse(cachedStr);
             if (Array.isArray(cachedData) && cachedData.length > 0) {
@@ -11709,22 +11851,71 @@ window.google.script = {
       }
     }
 
+    function getStaffListForCurrentWarehouse() {
+      if (!currentAppUser) return warehouseStaffListCached;
+      const isAdmin = (currentAppUser.role === 'admin');
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+
+      if (isAdmin && scope === 'all') {
+        return warehouseStaffListCached;
+      }
+
+      // Lọc danh sách nhân viên phát hàng theo phạm vi kho hiện tại
+      return warehouseStaffListCached.filter(st => {
+        const stWh = String(st.warehouse || '').toLowerCase();
+        const stName = String(st.name || '').trim().toLowerCase();
+        const curName = String(currentAppUser.full_name || '').trim().toLowerCase();
+        const curUser = String(currentAppUser.username || '').trim().toLowerCase();
+
+        // Nếu là tài khoản nhân viên kho: CHỈ hiển thị nhân viên của kho mình (hoặc chính mình)
+        if (!isAdmin) {
+          if (stWh && stWh === scope.toLowerCase()) return true;
+          if (curName && stName === curName) return true;
+          if (curUser && stName.includes(curUser)) return true;
+          if (st.id && currentAppUser.staff_id && st.id === currentAppUser.staff_id) return true;
+          return false;
+        }
+
+        // Nếu là Admin đang lọc theo kho cụ thể
+        if (scope === 'admin') {
+          return !stWh || stWh === 'admin' || stWh === 'main';
+        }
+        if (stWh && stWh === scope.toLowerCase()) return true;
+        if (stName.includes(scope.toLowerCase())) return true;
+        return false;
+      });
+    }
+
     function populateWarehouseStaffUI() {
+      const activeStaffList = getStaffListForCurrentWarehouse();
+
       // 1. Cập nhật dropdown chọn người phát hàng ở form tạo phiếu
       const staffSelect = document.getElementById('dispatch-input-staff');
       if (staffSelect) {
         const currentSelected = staffSelect.value;
         const lastSelected = localStorage.getItem('last_dispatch_staff') || '';
-        const targetVal = currentSelected || lastSelected;
+        let targetVal = currentSelected;
 
-        let optionsHtml = '<option value="">-- Chọn thành viên kho --</option>';
+        // Nếu là nhân viên kho, mặc định luôn là tên của nhân viên kho đang đăng nhập
+        if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name) {
+          targetVal = currentAppUser.full_name;
+        } else if (!targetVal) {
+          targetVal = lastSelected;
+        }
+
+        let optionsHtml = '';
+        if (isUserAdmin()) {
+          optionsHtml = '<option value="">-- Chọn thành viên kho --</option>';
+        }
+
         let hasMatchedTarget = false;
-        warehouseStaffListCached.forEach(st => {
+        activeStaffList.forEach(st => {
           const roleText = st.role ? ` (${st.role})` : '';
           const isSel = (st.name === targetVal);
           if (isSel) hasMatchedTarget = true;
           optionsHtml += `<option value="${escapeHtml(st.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(st.name)}${roleText}</option>`;
         });
+
         if (targetVal && !hasMatchedTarget) {
           optionsHtml += `<option value="${escapeHtml(targetVal)}" selected>${escapeHtml(targetVal)}</option>`;
         }
@@ -11734,14 +11925,14 @@ window.google.script = {
 
       // 2. Cập nhật modal quản lý thành viên kho
       const countEl = document.getElementById('staff-modal-count');
-      if (countEl) countEl.innerText = warehouseStaffListCached.length;
+      if (countEl) countEl.innerText = activeStaffList.length;
 
       const modalTbody = document.getElementById('staff-modal-tbody');
       if (modalTbody) {
-        if (warehouseStaffListCached.length === 0) {
-          modalTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">Chưa có thành viên nào. Hãy thêm thành viên phía trên!</td></tr>';
+        if (activeStaffList.length === 0) {
+          modalTbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-slate-400">Chưa có thành viên nào trong kho này. Hãy thêm thành viên phía trên!</td></tr>';
         } else {
-          modalTbody.innerHTML = warehouseStaffListCached.map((st, idx) => {
+          modalTbody.innerHTML = activeStaffList.map((st, idx) => {
             const isEditing = typeof editingStaffId !== 'undefined' && editingStaffId === st.id;
             const rowClass = isEditing ? 'bg-amber-50/80 border-b border-amber-300 font-semibold' : 'hover:bg-slate-50 border-b border-slate-100';
             return `
@@ -12123,27 +12314,32 @@ window.google.script = {
     }
 
     function populateDispatchFilterDropdowns() {
+      const activeStaffList = (typeof getStaffListForCurrentWarehouse === 'function') ? getStaffListForCurrentWarehouse() : warehouseStaffListCached;
       const staffSet = new Set();
       const vehicleSet = new Set();
 
-      // Đưa danh mục nhân sự và danh mục xe vào bộ lọc
-      warehouseStaffListCached.forEach(st => {
+      // Đưa danh mục nhân sự thuộc kho hiện tại vào bộ lọc
+      activeStaffList.forEach(st => {
         if (st.name && st.name.trim()) staffSet.add(st.name.trim());
       });
       vehiclesListCached.forEach(v => {
         if (v.plate && v.plate.trim()) vehicleSet.add(v.plate.trim().toUpperCase());
       });
 
-      // Bổ sung dữ liệu lịch sử từ bảng phát hàng
+      // Bổ sung dữ liệu lịch sử từ bảng phát hàng thuộc kho hiện tại
       dispatchListCached.forEach(it => {
-        if (it.staff_name && it.staff_name.trim()) staffSet.add(it.staff_name.trim());
-        if (it.license_plate && it.license_plate.trim()) vehicleSet.add(it.license_plate.trim().toUpperCase());
+        if (typeof isDispatchInCurrentWarehouse !== 'function' || isDispatchInCurrentWarehouse(it)) {
+          if (it.staff_name && it.staff_name.trim()) staffSet.add(it.staff_name.trim());
+          if (it.license_plate && it.license_plate.trim()) vehicleSet.add(it.license_plate.trim().toUpperCase());
+        }
       });
 
       const staffSelect = document.getElementById('dispatch-filter-staff');
       if (staffSelect) {
         const currentVal = staffSelect.value;
-        staffSelect.innerHTML = '<option value="">Tất cả thành viên</option>' + 
+        const isAdmin = isUserAdmin();
+        const placeholder = isAdmin ? 'Tất cả thành viên' : 'Thành viên kho';
+        staffSelect.innerHTML = (isAdmin ? `<option value="">${placeholder}</option>` : '') + 
           Array.from(staffSet).sort().map(s => `<option value="${escapeHtml(s)}" ${s === currentVal ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
       }
 
@@ -12247,6 +12443,15 @@ window.google.script = {
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
         cancelEditWarehouseStaff();
+        const descEl = document.getElementById('staff-modal-warehouse-desc');
+        if (descEl) {
+          if (currentAppUser && currentAppUser.role !== 'admin') {
+            descEl.innerText = `Thành viên phát hàng thuộc kho: ${currentAppUser.full_name || currentAppUser.username}`;
+          } else {
+            const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+            descEl.innerText = `Thành viên phát hàng (${getWarehouseScopeLabel(scope)})`;
+          }
+        }
         const inputName = document.getElementById('staff-modal-input-name');
         if (inputName) {
           inputName.value = '';
@@ -12315,10 +12520,12 @@ window.google.script = {
             showConfirmButton: false
           });
         } else {
+          const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
           const payload = {
             name: name,
             role: role || 'Nhân viên kho',
             phone: phone,
+            warehouse: activeScope,
             created_at: new Date().toISOString()
           };
           const res = await callSupabaseSingle_('warehouse_staff', 'POST', payload);
@@ -12401,10 +12608,12 @@ window.google.script = {
 
       Swal.fire({ title: 'Đang lưu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
       try {
+        const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
         const payload = {
           name: cleanName,
           role: 'Nhân viên kho',
           phone: '',
+          warehouse: activeScope,
           created_at: new Date().toISOString()
         };
         const res = await callSupabaseSingle_('warehouse_staff', 'POST', payload);
@@ -14572,10 +14781,14 @@ window.google.script = {
       const genNoteEl = document.getElementById('dispatch-input-general-note');
       if (genNoteEl) genNoteEl.value = '';
 
-      const lastStaff = localStorage.getItem('last_dispatch_staff') || '';
-      if (lastStaff) {
-        const staffEl = document.getElementById('dispatch-input-staff');
-        if (staffEl) staffEl.value = lastStaff;
+      const staffEl = document.getElementById('dispatch-input-staff');
+      if (staffEl) {
+        if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name) {
+          staffEl.value = currentAppUser.full_name;
+        } else {
+          const lastStaff = localStorage.getItem('last_dispatch_staff') || '';
+          if (lastStaff) staffEl.value = lastStaff;
+        }
       }
 
       resetFastItemsQuantities();
@@ -15029,7 +15242,9 @@ window.google.script = {
       const staffInput = document.getElementById('dispatch-input-staff');
       const savedStaff = localStorage.getItem('last_dispatch_staff') || '';
       if (staffInput) {
-        if (!staffInput.value && savedStaff) {
+        if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name) {
+          staffInput.value = currentAppUser.full_name;
+        } else if (!staffInput.value && savedStaff) {
           staffInput.value = savedStaff;
         } else if (staffInput.value) {
           localStorage.setItem('last_dispatch_staff', staffInput.value);
@@ -15074,11 +15289,12 @@ window.google.script = {
       const item = dispatchListCached.find(x => x.id === id);
       if (!item) return;
 
-      const staffOptionsHtml = warehouseStaffListCached.map(s => 
+      const staffList = (typeof getStaffListForCurrentWarehouse === 'function') ? getStaffListForCurrentWarehouse() : warehouseStaffListCached;
+      const staffOptionsHtml = staffList.map(s => 
         `<option value="${escapeHtml(s.name)}" ${s.name === item.staff_name ? 'selected' : ''}>${escapeHtml(s.name)}${s.role ? ' (' + escapeHtml(s.role) + ')' : ''}</option>`
       ).join('');
 
-      const customStaffOpt = (!warehouseStaffListCached.some(s => s.name === item.staff_name) && item.staff_name) 
+      const customStaffOpt = (!staffList.some(s => s.name === item.staff_name) && item.staff_name) 
         ? `<option value="${escapeHtml(item.staff_name)}" selected>${escapeHtml(item.staff_name)}</option>` : '';
 
       const { value: formValues } = await Swal.fire({
