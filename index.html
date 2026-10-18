@@ -14,7 +14,7 @@
   <!-- TỐI ƯU OFFLINE 100%: DÙNG FONT NATIVE HỆ THỐNG WINDOWS (SEGOE UI / CASCADIA CODE) SIÊU MƯỢT, 0MS NETWORK -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   
   <!-- THƯ VIỆN CỤC BỘ OFFLINE 100% (KHÔNG CẦN INTERNET, KHÔNG BỊ TREO GIẬT LAG KHI MỞ) -->
   <link rel="stylesheet" href="libs/bootstrap-icons.min.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css';">
@@ -100,10 +100,12 @@
       -webkit-user-drag: none;
       user-drag: none;
     }
-    .font-mono, .col-num, [inputmode="decimal"], .stat-num {
-      font-family: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace !important;
-      font-variant-numeric: tabular-nums !important;
-      letter-spacing: -0.025em !important;
+    /* ĐỊNH DẠNG FONT CHỮ SỐ CHUẨN: PHÂN BIỆT RẠCH RÒI SỐ "0" VÀ SỐ "8", KHÔNG BỊ LẪN NÉT, THẲNG HÀNG TABULAR ĐẸP MẮT */
+    .font-mono, .col-num, [inputmode="decimal"], .stat-num, .num-tabular, .voucher-badge, .pack-pill {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+      font-variant-numeric: tabular-nums lining-nums !important;
+      font-feature-settings: "tnum" 1, "lnum" 1, "zero" 0 !important;
+      letter-spacing: 0.015em !important;
     }
     /* TỐI ƯU HIỆU NĂNG PHẦN CỨNG (GPU ACCELERATION) - LOẠI BỎ GIẬT LAG KHI CUỘN VÀ HIỂN THỊ BẢNG */
     #inventory-table-container, #packaging-table-container, .custom-scroll {
@@ -216,7 +218,7 @@
 
     .voucher-badge {
       display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.6rem;
-      border-radius: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      border-radius: 0.5rem; font-size: 0.75rem;
       font-weight: 700; transition: all 0.15s ease; cursor: pointer; user-select: none;
     }
     .voucher-badge-blue { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
@@ -242,7 +244,7 @@
     /* ĐỊNH DẠNG QUY CÁCH BAO GÓI TỐI GIẢN, TRANG NHÃ */
     .pack-pill {
       display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.12rem 0.45rem;
-      border-radius: 0.375rem; font-size: 11px; font-weight: 600; font-family: 'JetBrains Mono', monospace;
+      border-radius: 0.375rem; font-size: 11px; font-weight: 600;
       background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; margin-top: 0.15rem;
     }
 
@@ -1745,11 +1747,11 @@
                   </div>
                 </div>
 
-                <!-- NÚT ĐỐI CHIẾU VỚI FILE TỔNG HỢP XUẤT KHO -->
+                <!-- NÚT ĐỐI CHIẾU VỚI FILE TỔNG HỢP XUẤT KHO (TỰ ĐỘNG LƯU FILE SUỐT PHIÊN LÀM VIỆC) -->
                 <button type="button" 
-                        onclick="triggerDispatchReconciliationUpload()" 
+                        onclick="openOrTriggerDispatchReconciliation()" 
                         class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" 
-                        title="Tải lên file Excel Tổng Hợp Xuất Kho để đối chiếu số lượng và mã sản phẩm đã phát">
+                        title="Bấm để mở bảng đối chiếu phát hàng thực tế với file tổng hợp xuất (Tự động lưu file trong phiên)">
                   <i class="bi bi-file-earmark-diff-fill text-indigo-100 text-sm"></i>
                   <span>Đối Chiếu Xuất Kho</span>
                 </button>
@@ -1890,6 +1892,7 @@
                   <tr>
                     <th class="px-3 py-2.5 text-center w-12 col-center">STT</th>
                     <th class="px-3 py-2.5 text-center w-36 col-center">Thời gian phát</th>
+                    <th class="px-2 py-2.5 text-center w-20 col-center">STT Xe</th>
                     <th class="px-3 py-2.5 text-center w-32 col-center">Số xe lấy hàng</th>
                     <th class="px-3 py-2.5 text-left w-36">Thành viên phát</th>
                     <th class="px-3 py-2.5 text-center w-28 col-center font-mono">Mã sản phẩm</th>
@@ -1901,11 +1904,11 @@
                   </tr>
                 </thead>
                 <tbody id="dispatch-tbody" class="divide-y divide-slate-100 bg-white">
-                  <tr><td colspan="10" class="text-center py-8 text-slate-400">Đang nạp dữ liệu phát hàng...</td></tr>
+                  <tr><td colspan="11" class="text-center py-8 text-slate-400">Đang nạp dữ liệu phát hàng...</td></tr>
                 </tbody>
                 <tfoot class="bg-slate-50 font-bold text-slate-800 text-xs border-t-2 border-slate-200">
                   <tr>
-                    <td colspan="7" class="px-3 py-2 text-right uppercase">Tổng cộng hiển thị:</td>
+                    <td colspan="8" class="px-3 py-2 text-right uppercase">Tổng cộng hiển thị:</td>
                     <td id="dispatch-footer-total-qty" class="px-3 py-2 text-right font-black font-mono text-teal-700">0</td>
                     <td colspan="2" id="dispatch-footer-summary-note" class="px-3 py-2 text-slate-500 font-normal">0 dòng</td>
                   </tr>
@@ -1958,7 +1961,7 @@
               <div>
                 <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1">Ngày & Giờ phát hàng <span class="text-rose-500">*</span>:</label>
                 <div class="grid grid-cols-2 gap-1.5">
-                  <input type="date" id="dispatch-input-date" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
+                  <input type="date" id="dispatch-input-date" onchange="if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
                   <input type="time" id="dispatch-input-time" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
                 </div>
               </div>
@@ -1973,7 +1976,7 @@
                   </button>
                 </div>
                 <div class="flex gap-1.5">
-                  <select id="dispatch-input-staff" onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value);" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500 bg-white text-slate-800 text-xs">
+                  <select id="dispatch-input-staff" onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500 bg-white text-slate-800 text-xs">
                     <option value="">-- Chọn thành viên kho --</option>
                   </select>
                   <button type="button" onclick="quickAddStaffPrompt()" class="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer" title="Thêm nhanh thành viên mới">
@@ -1982,8 +1985,33 @@
                 </div>
               </div>
 
-              <!-- Cột 1 - Hàng 2: Số xe / Mã xe lấy hàng -->
-              <div>
+              <!-- Cột 1 - Hàng 2: STT Xe phát trong ngày của người phụ trách -->
+              <div class="col-span-1 md:col-span-1 lg:col-span-1">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="font-bold text-teal-900 uppercase text-[11px] flex items-center space-x-1" title="Số thứ tự xe phát hàng trong ngày của từng người (tự động chạy từ 1, không trùng lặp)">
+                    <i class="bi bi-sort-numeric-down text-teal-600"></i>
+                    <span>STT Xe (Ngày) <span class="text-rose-500">*</span>:</span>
+                  </label>
+                  <span class="text-[10px] text-teal-600 font-semibold italic">Tự động tăng</span>
+                </div>
+                <div class="relative">
+                  <input type="number" 
+                         id="dispatch-input-daily-seq"
+                         min="1" 
+                         step="1"
+                         value="1"
+                         oninput="if(this.value && this.value < 1) this.value = 1;"
+                         class="w-full text-center px-2 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-black text-sm bg-teal-50/40 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-600 shadow-2xs"
+                         placeholder="1" 
+                         title="Số thứ tự chuyến xe phát trong ngày của người phát này (chạy tự động 1, 2, 3... không trùng nhau)">
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 italic truncate">
+                  Xe số mấy trong ngày của người này
+                </p>
+              </div>
+
+              <!-- Cột 2 - Hàng 2: Số xe / Mã xe lấy hàng -->
+              <div class="col-span-1 md:col-span-1 lg:col-span-1">
                 <div class="flex items-center justify-between mb-1">
                   <label class="font-bold text-teal-900 uppercase text-[11px] flex items-center space-x-1">
                     <i class="bi bi-truck text-teal-600"></i>
@@ -2025,39 +2053,39 @@
                 </p>
               </div>
 
-              <!-- Cột 2 - Hàng 2: Lái xe / Người vận chuyển -->
-              <div>
-                <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1">Lái xe / Người vận chuyển:</label>
-                <div class="relative flex items-center">
-                  <i class="bi bi-person absolute left-2.5 text-slate-400 text-xs"></i>
-                  <input type="text" id="dispatch-input-driver" 
-                         name="wh_driver_noname"
-                         autocomplete="off"
-                         autocorrect="off"
-                         autocapitalize="off"
-                         spellcheck="false"
-                         data-lpignore="true"
-                         data-form-type="other"
-                         placeholder="VD: Bác Hùng, Xe bưu chính..." 
-                         class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500">
+              <!-- Cột 3 - Hàng 2: Lái xe (RÚT GỌN) & SĐT Lái xe -->
+              <div class="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1 truncate" title="Lái xe / Người vận chuyển">Lái xe / Người nhận:</label>
+                  <div class="relative flex items-center">
+                    <i class="bi bi-person absolute left-2 text-slate-400 text-xs"></i>
+                    <input type="text" id="dispatch-input-driver" 
+                           name="wh_driver_noname"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-form-type="other"
+                           placeholder="Tên lái xe..." 
+                           class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500">
+                  </div>
                 </div>
-              </div>
-
-              <!-- Cột 3 - Hàng 2: SĐT Lái xe -->
-              <div>
-                <label class="block font-bold text-teal-800 uppercase text-[11px] mb-1">SĐT lái xe (tự động hiện):</label>
-                <div class="relative flex items-center">
-                  <i class="bi bi-telephone-fill absolute left-2.5 text-teal-600 text-xs"></i>
-                  <input type="text" id="dispatch-input-driver-phone" 
-                         name="wh_phone_notel"
-                         autocomplete="off"
-                         autocorrect="off"
-                         autocapitalize="off"
-                         spellcheck="false"
-                         data-lpignore="true"
-                         data-form-type="other"
-                         placeholder="VD: 0912.345.678" 
-                         class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
+                <div>
+                  <label class="block font-bold text-teal-800 uppercase text-[11px] mb-1 truncate" title="SĐT lái xe (tự động hiện theo xe)">SĐT Lái xe:</label>
+                  <div class="relative flex items-center">
+                    <i class="bi bi-telephone-fill absolute left-2 text-teal-600 text-xs"></i>
+                    <input type="text" id="dispatch-input-driver-phone" 
+                           name="wh_phone_notel"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           data-lpignore="true"
+                           data-form-type="other"
+                           placeholder="SĐT..." 
+                           class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
+                  </div>
                 </div>
               </div>
             </div>
@@ -14421,6 +14449,7 @@ window.google.script = {
       let tripsHtml = '';
       s.trips.forEach((trip, idx) => {
         const tripTargetId = trip.firstRecordId || trip.items?.[0]?.id || 0;
+        const tripSeq = resolveDailyVehicleSeq(trip.items?.[0] || trip, dispatchListCached);
         const itemIds = (trip.items || []).map(x => x.id);
         const itemIdsStr = itemIds.join(',');
 
@@ -14456,7 +14485,7 @@ window.google.script = {
           <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs text-left select-none">
             <div class="bg-gradient-to-r from-teal-50/90 to-slate-50 px-3.5 py-2.5 border-b border-teal-100 flex flex-wrap items-center justify-between gap-2">
               <div class="flex items-center space-x-2">
-                <span class="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center font-mono font-black text-xs shrink-0">${idx + 1}</span>
+                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-950 border border-amber-300 font-mono font-black text-xs shrink-0 shadow-2xs" title="Chuyến xe thứ #${tripSeq} trong ngày của ${escapeHtml(s.staff_name)}">#${tripSeq}</span>
                 <span ondblclick="Swal.close(); openEditDispatchVoucher(${tripTargetId})"
                       onmousedown="event.detail > 1 && event.preventDefault()"
                       class="px-2.5 py-1 rounded-lg font-mono font-black text-xs bg-white text-teal-950 border border-teal-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs cursor-pointer transition select-none"
@@ -14620,6 +14649,9 @@ window.google.script = {
 
         // 3. Cập nhật bộ lọc bảng phát hàng chính
         filterDailyDispatchTable();
+        if (typeof autoRefreshReconciliationIfActive_ === 'function') {
+          autoRefreshReconciliationIfActive_();
+        }
 
         // 4. Kiểm tra xem nhân sự này còn xe nào không
         const currentList = currentDispatchFilteredList.length > 0 ? currentDispatchFilteredList : dispatchListCached;
@@ -14676,6 +14708,9 @@ window.google.script = {
         }
 
         filterDailyDispatchTable();
+        if (typeof autoRefreshReconciliationIfActive_ === 'function') {
+          autoRefreshReconciliationIfActive_();
+        }
 
         const currentList = currentDispatchFilteredList.length > 0 ? currentDispatchFilteredList : dispatchListCached;
         const staffStats = getDispatchStaffStatistics(currentList);
@@ -14998,11 +15033,13 @@ window.google.script = {
         if (item.note) pData.notes.add(item.note);
         if (item.customer_name) pData.notes.add(`KH: ${item.customer_name}`);
 
+        const dSeq = resolveDailyVehicleSeq(item, list);
         pData.records.push({
           id: item.id,
           voucherNo: item.voucher_no || '',
           date: item.dispatch_date || '',
           time: item.dispatch_time || '',
+          dailySeq: dSeq,
           plate: item.license_plate || 'Chưa rõ xe',
           driver: item.driver_name || '',
           phone: item.driver_phone || '',
@@ -15117,8 +15154,9 @@ window.google.script = {
               <span ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"
                     onmousedown="event.detail > 1 && event.preventDefault()"
                     class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-950 text-slate-800 border border-slate-200/80 font-bold text-xs shadow-2xs cursor-pointer transition select-none"
-                    title="Nhấp đúp chuột để sửa phiếu xe này">
-                <i class="bi bi-truck mr-1.5 text-teal-600"></i> ${escapeHtml(r.plate || '-')}
+                    title="Chuyến xe #${r.dailySeq || 1} trong ngày của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+                <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black bg-amber-100 text-amber-950 border border-amber-300 mr-1.5">#${r.dailySeq || 1}</span>
+                <i class="bi bi-truck mr-1 text-teal-600"></i> ${escapeHtml(r.plate || '-')}
               </span>
             </td>
             <td class="px-3 py-2.5 whitespace-nowrap">
@@ -15356,12 +15394,111 @@ window.google.script = {
       if (elSt) elSt.innerText = formatNumber(uniqueStaff.size);
     }
 
+    // ========================================================
+    // QUẢN LÝ SỐ THỨ TỰ XE PHÁT HÀNG TRONG NGÀY CỦA TỪNG NGƯỜI
+    // (Chạy tự động từ 1 đến khi dừng, số nguyên dương, không trùng lặp)
+    // ========================================================
+    function getRecordDailyVehicleSeq(it) {
+      if (!it) return null;
+      if (it.daily_seq !== undefined && it.daily_seq !== null && it.daily_seq !== '') {
+        const n = parseInt(it.daily_seq, 10);
+        if (!isNaN(n) && n > 0) return n;
+      }
+      if (it.dailySeq !== undefined && it.dailySeq !== null && it.dailySeq !== '') {
+        const n = parseInt(it.dailySeq, 10);
+        if (!isNaN(n) && n > 0) return n;
+      }
+      const note = String(it.note || '');
+      const m = note.match(/\[(?:STT\s+)?Xe\s*[:#]\s*#?(\d+)\]/i);
+      if (m && m[1]) {
+        const n = parseInt(m[1], 10);
+        if (!isNaN(n) && n > 0) return n;
+      }
+      return null;
+    }
+
+    function resolveDailyVehicleSeq(it, allRecordsList = null) {
+      if (!it) return 1;
+      const direct = getRecordDailyVehicleSeq(it);
+      if (direct) return direct;
+
+      const list = allRecordsList || dispatchListCached || [];
+      const staff = String(it.staff_name || it.staff || '').trim().toLowerCase();
+      const date = String(it.dispatch_date || it.date || '').substring(0, 10);
+      if (!staff || !date) return 1;
+
+      // Tìm tất cả các phiếu của người đó trong ngày đó
+      const sameDayStaffRecords = list.filter(r => {
+        const rStaff = String(r.staff_name || r.staff || '').trim().toLowerCase();
+        const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
+        return rStaff === staff && rDate === date;
+      });
+
+      // Gom danh sách chuyến xe (theo voucher_no hoặc id/plate)
+      const voucherOrder = [];
+      sameDayStaffRecords.forEach(r => {
+        const vKey = r.voucher_no || `voucher_${r.license_plate || r.plate}_${r.dispatch_time || ''}`;
+        if (!voucherOrder.includes(vKey)) {
+          voucherOrder.push(vKey);
+        }
+      });
+
+      const targetKey = it.voucher_no || `voucher_${it.license_plate || it.plate}_${it.dispatch_time || ''}`;
+      const idx = voucherOrder.indexOf(targetKey);
+      return idx >= 0 ? (idx + 1) : 1;
+    }
+
+    function calculateNextDailyVehicleSeq(targetStaff, targetDate, excludeVoucherNo = null) {
+      const cleanStaff = String(targetStaff || '').trim().toLowerCase();
+      const cleanDate = String(targetDate || '').substring(0, 10);
+      if (!cleanStaff || !cleanDate) return 1;
+
+      const list = dispatchListCached || [];
+      const usedSeqs = new Set();
+
+      list.forEach(r => {
+        const rStaff = String(r.staff_name || r.staff || '').trim().toLowerCase();
+        const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
+        if (rStaff === cleanStaff && rDate === cleanDate) {
+          if (excludeVoucherNo && r.voucher_no === excludeVoucherNo) {
+            return; // Đang sửa phiếu này thì bỏ qua
+          }
+          const s = resolveDailyVehicleSeq(r, list);
+          if (s && s > 0) usedSeqs.add(s);
+        }
+      });
+
+      let next = 1;
+      while (usedSeqs.has(next)) {
+        next++;
+      }
+      return next;
+    }
+
+    function updateDailyVehicleSeqInput() {
+      const staffEl = document.getElementById('dispatch-input-staff');
+      const dateEl = document.getElementById('dispatch-input-date');
+      const seqEl = document.getElementById('dispatch-input-daily-seq');
+      if (!seqEl) return;
+
+      const isEditing = editingDispatchContext && editingDispatchContext.isEdit;
+      if (isEditing && editingDispatchContext.daily_seq) {
+        seqEl.value = editingDispatchContext.daily_seq;
+        return;
+      }
+
+      const staff = staffEl ? staffEl.value.trim() : '';
+      const date = dateEl ? dateEl.value : '';
+      const nextSeq = calculateNextDailyVehicleSeq(staff, date);
+      seqEl.value = nextSeq;
+    }
+
     function renderDailyDispatchTable(list) {
       const tbody = document.getElementById('dispatch-tbody');
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
         const footQ = document.getElementById('dispatch-footer-total-qty');
         const footN = document.getElementById('dispatch-footer-summary-note');
         if (footQ) footQ.innerText = '0';
@@ -15376,6 +15513,7 @@ window.google.script = {
 
         const dateDisplay = it.dispatch_date ? `${formatDateVN(it.dispatch_date)}` : '-';
         const dateTimeFull = it.dispatch_time ? `${it.dispatch_time} • ${dateDisplay}` : dateDisplay;
+        const dailySeq = resolveDailyVehicleSeq(it, list);
 
         const noteParts = [];
         if (it.driver_name) {
@@ -15392,6 +15530,12 @@ window.google.script = {
           <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
             <td class="px-3 py-2 text-center font-mono text-slate-600 col-center whitespace-nowrap text-[11px]">${dateTimeFull}</td>
+            <td class="px-2 py-2 text-center col-center whitespace-nowrap">
+              <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-mono font-black bg-amber-100 text-amber-950 border border-amber-300 shadow-2xs" 
+                    title="Chuyến xe thứ #${dailySeq} trong ngày ${it.dispatch_date || ''} của ${escapeHtml(it.staff_name || '')}">
+                #${dailySeq}
+              </span>
+            </td>
             <td class="px-3 py-2 text-center col-center whitespace-nowrap">
               <span ondblclick="event.stopPropagation(); openEditDispatchVoucher(${it.id})"
                     onmousedown="event.detail > 1 && event.preventDefault()"
@@ -15515,6 +15659,12 @@ window.google.script = {
         dStaffEl.value = targetItem.staff_name || '';
         if (targetItem.staff_name) localStorage.setItem('last_dispatch_staff', targetItem.staff_name);
       }
+
+      // Nạp số thứ tự chuyến xe trong ngày của người đó
+      const dSeqEl = document.getElementById('dispatch-input-daily-seq');
+      const curSeq = resolveDailyVehicleSeq(targetItem, dispatchListCached);
+      if (dSeqEl) dSeqEl.value = curSeq;
+      editingDispatchContext.daily_seq = curSeq;
 
       const dVehEl = document.getElementById('dispatch-input-vehicle');
       if (dVehEl) dVehEl.value = targetItem.license_plate || '';
@@ -15642,6 +15792,9 @@ window.google.script = {
           if (lastStaff) staffEl.value = lastStaff;
         }
       }
+
+      // Tự động tính số thứ tự chuyến xe tiếp theo trong ngày
+      updateDailyVehicleSeqInput();
 
       resetFastItemsQuantities();
       checkedFastGroupsList = [];
@@ -15943,8 +16096,41 @@ window.google.script = {
       const totalQty = allValidItems.reduce((sum, r) => sum + parseSmartNumber(r.quantity), 0);
       const isEditing = !!(editingDispatchContext && editingDispatchContext.isEdit);
 
+      // LẤY VÀ KIỂM TRA SỐ THỨ TỰ CHUYẾN XE TRONG NGÀY
+      const seqInp = document.getElementById('dispatch-input-daily-seq');
+      let dailySeq = parseInt(seqInp?.value || '1', 10);
+      if (isNaN(dailySeq) || dailySeq < 1) dailySeq = 1;
+
+      // Kiểm tra trùng lặp số thứ tự xe trong ngày của người phát hàng này
+      const currentEditingVoucher = isEditing ? editingDispatchContext?.voucher_no : null;
+      const isDuplicateSeq = (dispatchListCached || []).some(r => {
+        const rStaff = String(r.staff_name || '').trim().toLowerCase();
+        const rDate = String(r.dispatch_date || '').substring(0, 10);
+        if (rStaff === staff.toLowerCase() && rDate === date) {
+          if (currentEditingVoucher && r.voucher_no === currentEditingVoucher) return false;
+          const rSeq = resolveDailyVehicleSeq(r, dispatchListCached);
+          return rSeq === dailySeq;
+        }
+        return false;
+      });
+
       const btnSave = document.getElementById('btn-submit-dispatch');
       const btnNew = document.getElementById('btn-submit-dispatch-new');
+
+      if (isDuplicateSeq) {
+        const suggestedSeq = calculateNextDailyVehicleSeq(staff, date, currentEditingVoucher);
+        Swal.fire({
+          icon: 'warning',
+          title: 'Trùng số thứ tự chuyến xe!',
+          html: `Thành viên <b>${escapeHtml(staff)}</b> trong ngày <b>${formatDateVN(date)}</b> đã có chuyến xe số <b>#${dailySeq}</b>!<br><br>Vui lòng đổi sang số khác (Gợi ý số tiếp theo: <b class="text-teal-700 font-mono text-base">#${suggestedSeq}</b>) để không bị trùng xe.`
+        });
+        if (seqInp) {
+          seqInp.focus();
+          seqInp.select();
+        }
+        return;
+      }
+
       if (btnSave) { btnSave.disabled = true; btnSave.classList.add('opacity-70', 'pointer-events-none'); }
       if (btnNew) { btnNew.disabled = true; btnNew.classList.add('opacity-70', 'pointer-events-none'); }
 
@@ -15961,6 +16147,7 @@ window.google.script = {
       const currentWh = (activeScope && activeScope !== 'all') ? activeScope : 'admin';
       const payload = allValidItems.map(r => {
         const itemNoteParts = [];
+        itemNoteParts.push(`[Xe #${dailySeq}]`);
         if (r.note) itemNoteParts.push(r.note);
         if (generalNote) itemNoteParts.push(`(Ghi chung: ${generalNote})`);
         if (activeScope && activeScope !== 'all') itemNoteParts.push(`[Kho: ${activeScope}]`);
@@ -15971,6 +16158,7 @@ window.google.script = {
           dispatch_date: date,
           dispatch_time: time || '',
           staff_name: staff,
+          daily_seq: dailySeq,
           license_plate: vehicle.toUpperCase(),
           driver_name: driver || '',
           driver_phone: driverPhone || '',
@@ -16045,6 +16233,10 @@ window.google.script = {
           closeCreateDispatchForm();
           loadDailyDispatchTab();
         }
+
+        if (typeof autoRefreshReconciliationIfActive_ === 'function') {
+          autoRefreshReconciliationIfActive_();
+        }
       } catch (err) {
         Swal.fire('Lỗi lưu dữ liệu', err.message, 'error');
       } finally {
@@ -16092,6 +16284,9 @@ window.google.script = {
           staffInput.value = savedStaff;
         }
       }
+
+      // Tự động tính tăng số thứ tự chuyến xe tiếp theo trong ngày
+      updateDailyVehicleSeqInput();
 
       // Xóa trắng bảng danh sách mặt hàng và tạo 1 dòng trống mới
       dispatchFormRows = [];
@@ -16246,6 +16441,9 @@ window.google.script = {
 
         Swal.fire({ icon: 'success', title: 'Đã cập nhật!', timer: 1500, showConfirmButton: false });
         filterDailyDispatchTable();
+        if (typeof autoRefreshReconciliationIfActive_ === 'function') {
+          autoRefreshReconciliationIfActive_();
+        }
       } catch (err) {
         Swal.fire('Lỗi', err.message, 'error');
       }
@@ -16277,6 +16475,9 @@ window.google.script = {
         dispatchListCached = dispatchListCached.filter(x => x.id !== id);
         Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false });
         filterDailyDispatchTable();
+        if (typeof autoRefreshReconciliationIfActive_ === 'function') {
+          autoRefreshReconciliationIfActive_();
+        }
       } catch (err) {
         Swal.fire('Lỗi', err.message, 'error');
       }
@@ -16655,6 +16856,111 @@ window.google.script = {
       return null;
     }
 
+    // =========================================================================
+    // HỆ THỐNG LƯU TRỮ FILE ĐỐI CHIẾU XUẤT KHO TRONG SUỐT PHIÊN LÀM VIỆC (SESSION)
+    // Giúp lưu file trong chương trình để đối chiếu các sửa đổi phiếu trong ngày.
+    // Tự động giải phóng khi đóng/tắt web hoàn toàn.
+    // =========================================================================
+    function arrayBufferToBase64_(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 32768;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+      }
+      return window.btoa(binary);
+    }
+
+    function base64ToArrayBuffer_(base64) {
+      const binaryStr = window.atob(base64);
+      const len = binaryStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    function saveReconciliationToSession_(arrayBuffer, fileName, fileSize) {
+      try {
+        const b64 = arrayBufferToBase64_(arrayBuffer);
+        sessionStorage.setItem('wh_reconcile_file_b64', b64);
+        sessionStorage.setItem('wh_reconcile_file_name', fileName || 'TongHopXuat.xlsx');
+        sessionStorage.setItem('wh_reconcile_file_size', String(fileSize || 0));
+        sessionStorage.setItem('wh_reconcile_saved_date', new Date().toISOString());
+      } catch (e) {
+        console.warn('Không thể lưu file Excel vào sessionStorage (dung lượng có thể vượt hạn mức):', e);
+      }
+    }
+
+    function restoreReconciliationFromSession_() {
+      // 1. Nếu đã có dữ liệu trong bộ nhớ RAM
+      if (currentReconciliationState && currentReconciliationState.parsedExcel && currentReconciliationState.parsedExcel.productsMap && currentReconciliationState.parsedExcel.productsMap.size > 0) {
+        return true;
+      }
+
+      // 2. Khôi phục từ sessionStorage của phiên làm việc
+      try {
+        const b64 = sessionStorage.getItem('wh_reconcile_file_b64');
+        const fName = sessionStorage.getItem('wh_reconcile_file_name');
+        if (b64 && fName) {
+          const ab = base64ToArrayBuffer_(b64);
+          const parsed = parseExcelTongHopXuat(ab, fName);
+          if (parsed && parsed.productsMap && parsed.productsMap.size > 0) {
+            let initialDate = getYesterdayISO_();
+            let initialQuickType = 'yesterday';
+            if (parsed.detectedDate && parsed.detectedDate.isoDate) {
+              initialDate = parsed.detectedDate.isoDate;
+              initialQuickType = 'file_date';
+            }
+            if (!currentReconciliationFromDate) currentReconciliationFromDate = initialDate;
+            if (!currentReconciliationToDate) currentReconciliationToDate = initialDate;
+            if (!currentReconciliationQuickType) currentReconciliationQuickType = initialQuickType;
+
+            currentReconciliationState = {
+              fileName: fName,
+              fileSize: parseInt(sessionStorage.getItem('wh_reconcile_file_size') || '0', 10),
+              arrayBuffer: ab,
+              parsedExcel: parsed,
+              lastReconciledAt: new Date().toISOString()
+            };
+            return true;
+          }
+        }
+      } catch (e) {
+        console.warn('Lỗi khôi phục file đối chiếu từ sessionStorage:', e);
+      }
+      return false;
+    }
+
+    // Mở bảng đối chiếu xuất kho (Nếu có file đã lưu trong phiên làm việc thì mở ngay, ngược lại mới hiện hộp thoại chọn file)
+    function openOrTriggerDispatchReconciliation() {
+      if (restoreReconciliationFromSession_()) {
+        recalculateReconciliation();
+        openDispatchReconciliationModal();
+      } else {
+        triggerDispatchReconciliationUpload();
+      }
+    }
+
+    // Tự động tính toán lại đối chiếu xuất kho khi có thao tác thêm / sửa / xóa phiếu phát hàng trong ngày
+    function autoRefreshReconciliationIfActive_() {
+      try {
+        if (typeof restoreReconciliationFromSession_ === 'function') {
+          restoreReconciliationFromSession_();
+        }
+        if (currentReconciliationState && typeof recalculateReconciliation === 'function') {
+          recalculateReconciliation();
+          const recModal = document.getElementById('dispatch-reconciliation-modal');
+          if (recModal && recModal.style.display !== 'none' && !recModal.classList.contains('hidden')) {
+            renderReconciliationContent();
+          }
+        }
+      } catch (e) {
+        console.warn('Lỗi tự động tính lại đối chiếu xuất kho:', e);
+      }
+    }
+
     function triggerDispatchReconciliationUpload() {
       const fileInput = document.getElementById('dispatch-reconcile-file-input');
       if (fileInput) {
@@ -16682,6 +16988,9 @@ window.google.script = {
           throw new Error('Không tìm thấy danh sách sản phẩm hoặc cột số lượng hợp lệ trong file Excel đã chọn!');
         }
 
+        // Tự động lưu file vào sessionStorage để dùng cho mọi lần đối chiếu và sửa đổi trong ngày
+        saveReconciliationToSession_(arrayBuffer, file.name, file.size);
+
         // Tự động thiết lập ngày đối chiếu:
         // Ưu tiên 1: Ngày phát hiện từ file Excel (ví dụ Ngày 03/10/26)
         // Ưu tiên 2: Ngày HÔM QUA (thói quen nghiệp vụ: phát hôm qua, hôm nay đối chiếu)
@@ -16700,6 +17009,7 @@ window.google.script = {
         currentReconciliationState = {
           fileName: file.name,
           fileSize: file.size,
+          arrayBuffer: arrayBuffer,
           parsedExcel: parsedExcel,
           lastReconciledAt: new Date().toISOString()
         };
@@ -17171,9 +17481,14 @@ window.google.script = {
 
     function openDispatchReconciliationModal() {
       if (!currentReconciliationState) {
-        triggerDispatchReconciliationUpload();
-        return;
+        if (!restoreReconciliationFromSession_()) {
+          triggerDispatchReconciliationUpload();
+          return;
+        }
       }
+
+      // Luôn tính toán lại đối chiếu với danh sách phiếu phát hàng mới nhất (kể cả các phiếu vừa sửa trong ngày)
+      recalculateReconciliation();
 
       const modal = document.getElementById('dispatch-reconciliation-modal');
       if (!modal) return;
@@ -17500,32 +17815,175 @@ window.google.script = {
     // Lưu đơn vị tính hiện tại của modal chi tiết để hỗ trợ lọc tìm kiếm nhanh
     window._currentModalDetailUnit = '';
 
-    // Hàm lọc nhanh các dòng trong bảng chi tiết khi số lượng dữ liệu phát nhiều
-    window.filterProductDetailRows = function(query) {
-      const q = (query || '').trim().toLowerCase();
-      const rows = document.querySelectorAll('.product-detail-row');
-      let visibleCount = 0;
-      let visibleQty = 0;
-      rows.forEach(r => {
-        const s = r.getAttribute('data-search') || '';
-        const val = parseFloat(r.getAttribute('data-qty') || '0');
-        if (!q || s.includes(q)) {
-          r.style.display = '';
-          visibleCount++;
-          visibleQty += val;
+    // Hàm hiển thị & sắp xếp / lọc bảng chi tiết phát hàng thực tế của sản phẩm
+    window.renderProductDetailTableBody = function(sortType, query) {
+      if (!window._currentProductDetailRecords) return;
+      const item = window._currentProductDetailItem || {};
+      const unit = window._currentModalDetailUnit || item.unit || 'cái';
+      const sort = sortType || window._currentProductDetailSort || 'qty';
+      window._currentProductDetailSort = sort;
+
+      const qInp = document.getElementById('product-detail-search-input');
+      const q = (typeof query === 'string' ? query : (qInp ? qInp.value : '')).trim().toLowerCase();
+
+      // Đồng bộ giá trị dropdown nếu truyền sortType từ ngoài
+      const sortSelect = document.getElementById('product-detail-sort-select');
+      if (sortSelect && sortSelect.value !== sort) {
+        sortSelect.value = sort;
+      }
+
+      // Cập nhật trạng thái active của các nút chọn nhanh
+      const pills = document.querySelectorAll('.product-detail-sort-pill');
+      pills.forEach(p => {
+        const val = p.getAttribute('data-sort');
+        if (val === sort) {
+          p.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600', 'shadow-xs');
+          p.classList.remove('bg-white', 'text-slate-700', 'border-slate-200');
         } else {
-          r.style.display = 'none';
+          p.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600', 'shadow-xs');
+          p.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
         }
       });
 
+      // 1. Lọc theo từ khóa tìm kiếm (hỗ trợ số xe, tên thủ kho, lái xe, số phiếu, số lượng, ghi chú)
+      let list = window._currentProductDetailRecords.filter(r => {
+        if (!q) return true;
+        const qNum = parseSmartNumber(r.qty || 0);
+        const searchStr = `${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''} ${qNum}`.toLowerCase();
+        return searchStr.includes(q);
+      });
+
+      // 2. Sắp xếp theo tiêu chí:
+      list.sort((a, b) => {
+        const qA = parseSmartNumber(a.qty || 0);
+        const qB = parseSmartNumber(b.qty || 0);
+
+        if (sort === 'qty') {
+          // MẶC ĐỊNH: LỌC/SẮP XẾP THEO SỐ LƯỢNG LẤY HÀNG TRƯỚC (GIẢM DẦN - LỚN NHẤT ĐẦU TIÊN)
+          if (qB !== qA) return qB - qA;
+          const timeA = `${a.date || ''} ${a.time || ''}`;
+          const timeB = `${b.date || ''} ${b.time || ''}`;
+          if (timeB !== timeA) return timeB.localeCompare(timeA);
+          return (b.id || 0) - (a.id || 0);
+        }
+
+        if (sort === 'plate') {
+          // THEO SỐ XE
+          const plateA = (a.plate || '').trim();
+          const plateB = (b.plate || '').trim();
+          const pCmp = plateA.localeCompare(plateB, 'vi', { numeric: true, sensitivity: 'base' });
+          if (pCmp !== 0) return pCmp;
+          return qB - qA;
+        }
+
+        if (sort === 'staff') {
+          // THEO TÊN THỦ KHO
+          const staffA = (a.staff || '').trim();
+          const staffB = (b.staff || '').trim();
+          const sCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+          if (sCmp !== 0) return sCmp;
+          return qB - qA;
+        }
+
+        if (sort === 'voucher') {
+          // THEO SỐ PHIẾU
+          const vA = (a.voucherNo || '').trim();
+          const vB = (b.voucherNo || '').trim();
+          const vCmp = vB.localeCompare(vA, 'vi', { numeric: true, sensitivity: 'base' });
+          if (vCmp !== 0) return vCmp;
+          return qB - qA;
+        }
+
+        return 0;
+      });
+
+      // 3. Render tbody
+      let totalVisibleQty = 0;
+      const tbody = document.getElementById('product-detail-tbody');
+      if (!tbody) return;
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-slate-400 italic bg-white">Không có lượt phát hàng nào phù hợp với bộ lọc tìm kiếm.</td></tr>';
+      } else {
+        tbody.innerHTML = list.map((r, idx) => {
+          const q = parseSmartNumber(r.qty || 0);
+          totalVisibleQty += q;
+          const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''} ${q}`.toLowerCase();
+          const dblClickAction = r.id ? `ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
+          const badgeDblClick = r.id ? `ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
+
+          let isGroupStart = false;
+          if (idx > 0) {
+            const prev = list[idx - 1];
+            if (sort === 'staff') {
+              isGroupStart = (r.staff || '').trim() !== (prev.staff || '').trim();
+            } else if (sort === 'plate') {
+              isGroupStart = (r.plate || '').trim().toUpperCase() !== (prev.plate || '').trim().toUpperCase();
+            } else if (sort === 'voucher') {
+              isGroupStart = (r.voucherNo || '').trim() !== (prev.voucherNo || '').trim();
+            }
+          }
+          const groupBorderClass = isGroupStart ? 'border-t-2 border-indigo-300' : 'border-b border-slate-100';
+          const noteText = (r.note || '').trim() || '-';
+
+          // Khi sắp xếp theo số lượng, làm nổi bật ô số lượng với badge màu dịu mắt
+          const qtyCellClass = (sort === 'qty')
+            ? 'px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/90 whitespace-nowrap border-l border-indigo-200'
+            : 'px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/50 whitespace-nowrap border-l border-indigo-100';
+
+          return `
+            <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
+              <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
+              <td class="px-3 py-2 text-center whitespace-nowrap">
+                <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Nhấp đúp chuột để sửa phiếu xe này">
+                  <i class="bi bi-truck mr-1 text-indigo-500"></i>${escapeHtml(r.plate || '-')}
+                </span>
+              </td>
+              <td class="px-3 py-2 text-left font-bold text-slate-800 whitespace-nowrap">
+                <span class="inline-flex items-center space-x-1">
+                  <i class="bi bi-person-fill text-emerald-600"></i>
+                  <span>${escapeHtml(r.staff || '-')}</span>
+                </span>
+              </td>
+              <td class="px-3 py-2 text-left text-slate-700 whitespace-nowrap">
+                ${escapeHtml(r.driver || '-')} ${r.phone ? `<span class="text-slate-400 font-mono text-[10px] block">(${escapeHtml(r.phone)})</span>` : ''}
+              </td>
+              <td class="${qtyCellClass}">
+                ${formatNumber(q)} <span class="text-[10px] font-normal text-slate-500">${escapeHtml(unit)}</span>
+              </td>
+              <td class="px-3 py-2 text-center font-mono text-slate-600 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-[11px]">${escapeHtml(r.voucherNo || '-')}</span>
+              </td>
+              <td class="px-3 py-2 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1">${escapeHtml(r.time)}</span>` : ''}
+              </td>
+              <td class="px-3 py-2 text-left text-slate-500 text-[11px] whitespace-nowrap max-w-[180px] truncate" title="${escapeHtml(noteText)}">
+                ${escapeHtml(noteText)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 4. Cập nhật các badge và tfoot
       const countBadge = document.getElementById('product-detail-visible-count');
-      if (countBadge) countBadge.innerText = `${visibleCount}/${rows.length} lượt`;
+      if (countBadge) countBadge.innerText = `${list.length}/${window._currentProductDetailRecords.length} lượt phát`;
 
       const footLabel = document.getElementById('product-detail-foot-label');
-      if (footLabel) footLabel.innerText = `Tổng cộng (${visibleCount} lượt hiển thị):`;
+      if (footLabel) footLabel.innerText = `Tổng cộng (${list.length} lượt hiển thị):`;
 
       const footQty = document.getElementById('product-detail-foot-qty');
-      if (footQty) footQty.innerHTML = `${formatNumber(visibleQty)} <span class="text-[11px] font-normal text-slate-500">${escapeHtml(window._currentModalDetailUnit || '')}</span>`;
+      if (footQty) footQty.innerHTML = `${formatNumber(totalVisibleQty)} <span class="text-[11px] font-normal text-slate-500">${escapeHtml(unit)}</span>`;
+    };
+
+    // Hàm lọc nhanh các dòng khi gõ ô tìm kiếm
+    window.filterProductDetailRows = function(query) {
+      window.renderProductDetailTableBody(window._currentProductDetailSort || 'qty', query);
+    };
+
+    // Hàm chuyển đổi tiêu chí lọc / sắp xếp (Số lượng, Số xe, Tên thủ kho, Số phiếu)
+    window.applyProductDetailSorting = function(sortType) {
+      window.renderProductDetailTableBody(sortType, document.getElementById('product-detail-search-input')?.value || '');
     };
 
     // Xuất Excel chi tiết các lượt phát hàng của 1 sản phẩm cụ thể
@@ -17560,16 +18018,34 @@ window.google.script = {
           "GIỜ PHÁT"
         ];
 
-        // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho)
+        // Sắp xếp các lượt phát theo tiêu chí người dùng đang chọn (mặc định: số lượng lấy hàng trước)
+        const currentSort = window._currentProductDetailSort || 'qty';
         records.sort((a, b) => {
-          const staffA = (a.staff || '').trim();
-          const staffB = (b.staff || '').trim();
-          const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
-          if (staffCmp !== 0) return staffCmp;
-          const timeA = `${a.date || ''} ${a.time || ''}`;
-          const timeB = `${b.date || ''} ${b.time || ''}`;
-          if (timeA !== timeB) return timeA.localeCompare(timeB);
-          return (a.id || 0) - (b.id || 0);
+          const qA = parseSmartNumber(a.qty || 0);
+          const qB = parseSmartNumber(b.qty || 0);
+          if (currentSort === 'qty') {
+            if (qB !== qA) return qB - qA;
+            const timeA = `${a.date || ''} ${a.time || ''}`;
+            const timeB = `${b.date || ''} ${b.time || ''}`;
+            if (timeB !== timeA) return timeB.localeCompare(timeA);
+            return (b.id || 0) - (a.id || 0);
+          }
+          if (currentSort === 'plate') {
+            const pCmp = (a.plate || '').trim().localeCompare((b.plate || '').trim(), 'vi', { numeric: true, sensitivity: 'base' });
+            if (pCmp !== 0) return pCmp;
+            return qB - qA;
+          }
+          if (currentSort === 'staff') {
+            const sCmp = (a.staff || '').trim().localeCompare((b.staff || '').trim(), 'vi', { sensitivity: 'base' });
+            if (sCmp !== 0) return sCmp;
+            return qB - qA;
+          }
+          if (currentSort === 'voucher') {
+            const vCmp = (b.voucherNo || '').trim().localeCompare((a.voucherNo || '').trim(), 'vi', { numeric: true, sensitivity: 'base' });
+            if (vCmp !== 0) return vCmp;
+            return qB - qA;
+          }
+          return qB - qA;
         });
 
         let totalQty = 0;
@@ -17637,16 +18113,34 @@ window.google.script = {
         return;
       }
 
-      // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho)
+      // Sắp xếp các lượt phát theo tiêu chí người dùng đang chọn (mặc định: số lượng lấy hàng trước)
+      const currentSort = window._currentProductDetailSort || 'qty';
       records.sort((a, b) => {
-        const staffA = (a.staff || '').trim();
-        const staffB = (b.staff || '').trim();
-        const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
-        if (staffCmp !== 0) return staffCmp;
-        const timeA = `${a.date || ''} ${a.time || ''}`;
-        const timeB = `${b.date || ''} ${b.time || ''}`;
-        if (timeA !== timeB) return timeA.localeCompare(timeB);
-        return (a.id || 0) - (b.id || 0);
+        const qA = parseSmartNumber(a.qty || 0);
+        const qB = parseSmartNumber(b.qty || 0);
+        if (currentSort === 'qty') {
+          if (qB !== qA) return qB - qA;
+          const timeA = `${a.date || ''} ${a.time || ''}`;
+          const timeB = `${b.date || ''} ${b.time || ''}`;
+          if (timeB !== timeA) return timeB.localeCompare(timeA);
+          return (b.id || 0) - (a.id || 0);
+        }
+        if (currentSort === 'plate') {
+          const pCmp = (a.plate || '').trim().localeCompare((b.plate || '').trim(), 'vi', { numeric: true, sensitivity: 'base' });
+          if (pCmp !== 0) return pCmp;
+          return qB - qA;
+        }
+        if (currentSort === 'staff') {
+          const sCmp = (a.staff || '').trim().localeCompare((b.staff || '').trim(), 'vi', { sensitivity: 'base' });
+          if (sCmp !== 0) return sCmp;
+          return qB - qA;
+        }
+        if (currentSort === 'voucher') {
+          const vCmp = (b.voucherNo || '').trim().localeCompare((a.voucherNo || '').trim(), 'vi', { numeric: true, sensitivity: 'base' });
+          if (vCmp !== 0) return vCmp;
+          return qB - qA;
+        }
+        return qB - qA;
       });
 
       const timeSubtitle = getReconciliationDateDisplay_();
@@ -17859,31 +18353,32 @@ window.google.script = {
         statusBadgeHtml = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-800 text-[11px] font-bold border border-rose-200 shadow-2xs"><i class="bi bi-x-octagon-fill mr-1.5 text-rose-600"></i>Không có trong file xuất</span>`;
       }
 
-      // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho) để các dòng cùng người đứng cạnh nhau
-      records.sort((a, b) => {
-        const staffA = (a.staff || '').trim();
-        const staffB = (b.staff || '').trim();
-        const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
-        if (staffCmp !== 0) return staffCmp;
+      // Lưu vào biến toàn cục để filter / sort động không cần mở lại modal
+      window._currentProductDetailRecords = records;
+      window._currentProductDetailItem = item;
+      window._currentProductDetailSort = 'qty'; // MẶC ĐỊNH: LỌC/SẮP XẾP THEO SỐ LƯỢNG LẤY HÀNG TRƯỚC (GIẢM DẦN)
 
+      // Sắp xếp ban đầu theo SỐ LƯỢNG LẤY HÀNG (MẶC ĐỊNH LỚN NHẤT ĐẦU TIÊN)
+      records.sort((a, b) => {
+        const qA = parseSmartNumber(a.qty || 0);
+        const qB = parseSmartNumber(b.qty || 0);
+        if (qB !== qA) return qB - qA;
         const timeA = `${a.date || ''} ${a.time || ''}`;
         const timeB = `${b.date || ''} ${b.time || ''}`;
-        if (timeA !== timeB) return timeA.localeCompare(timeB);
-
-        return (a.id || 0) - (b.id || 0);
+        if (timeB !== timeA) return timeB.localeCompare(timeA);
+        return (b.id || 0) - (a.id || 0);
       });
 
       // Danh sách các hàng chi tiết trong bảng (kèm data-search và data-qty để lọc tức thì khi có nhiều số liệu)
       const rowsHtml = records.map((r, idx) => {
         const q = parseSmartNumber(r.qty || 0);
-        const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''}`.toLowerCase();
+        const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''} ${q}`.toLowerCase();
         const dblClickAction = r.id ? `ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
         const badgeDblClick = r.id ? `ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
-        const isGroupStart = idx > 0 && (r.staff || '').trim() !== (records[idx - 1].staff || '').trim();
-        const groupBorderClass = isGroupStart ? 'border-t-2 border-slate-300' : 'border-b border-slate-100';
+        const noteText = (r.note || '').trim() || '-';
 
         return `
-          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
+          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs border-b border-slate-100 select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Nhấp đúp chuột để sửa phiếu xe này">
@@ -17899,7 +18394,7 @@ window.google.script = {
             <td class="px-3 py-2 text-left text-slate-700 whitespace-nowrap">
               ${escapeHtml(r.driver || '-')} ${r.phone ? `<span class="text-slate-400 font-mono text-[10px] block">(${escapeHtml(r.phone)})</span>` : ''}
             </td>
-            <td class="px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/50 whitespace-nowrap border-l border-indigo-100">
+            <td class="px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/90 whitespace-nowrap border-l border-indigo-200">
               ${formatNumber(q)} <span class="text-[10px] font-normal text-slate-500">${escapeHtml(item.unit || '')}</span>
             </td>
             <td class="px-3 py-2 text-center font-mono text-slate-600 whitespace-nowrap">
@@ -17908,13 +18403,16 @@ window.google.script = {
             <td class="px-3 py-2 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
               ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1">${escapeHtml(r.time)}</span>` : ''}
             </td>
+            <td class="px-3 py-2 text-left text-slate-500 text-[11px] whitespace-nowrap max-w-[180px] truncate" title="${escapeHtml(noteText)}">
+              ${escapeHtml(noteText)}
+            </td>
           </tr>
         `;
       }).join('');
 
       Swal.fire({
         padding: '0',
-        width: '1020px',
+        width: '1060px',
         showConfirmButton: false,
         showCloseButton: false,
         customClass: {
@@ -18005,8 +18503,8 @@ window.google.script = {
 
               <!-- Bảng nhật ký chi tiết các lượt phát hàng (Tối ưu cho lượng dữ liệu nhiều) -->
               <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
-                <!-- Thanh công cụ tìm kiếm nhanh & đếm số lượng -->
-                <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <!-- Thanh công cụ tìm kiếm nhanh & đếm số lượng & BỘ CHỌN LỌC / SẮP XẾP -->
+                <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
                   <div class="flex items-center space-x-2">
                     <span class="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
                       <i class="bi bi-table text-indigo-600"></i>
@@ -18015,11 +18513,25 @@ window.google.script = {
                     <span id="product-detail-visible-count" class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[11px] border border-indigo-200">${records.length} lượt phát</span>
                   </div>
 
-                  <div class="flex items-center space-x-2.5">
+                  <div class="flex items-center flex-wrap gap-2.5">
+                    <!-- BỘ CHỌN LỌC & SẮP XẾP: SỐ LƯỢNG (MẶC ĐỊNH), SỐ XE, TÊN THỦ KHO, SỐ PHIẾU -->
+                    <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs">
+                      <span class="text-[11px] font-bold text-indigo-900 flex items-center gap-1 shrink-0">
+                        <i class="bi bi-arrow-down-up text-indigo-600"></i>
+                        <span>Lọc/Xếp theo:</span>
+                      </span>
+                      <select id="product-detail-sort-select" onchange="applyProductDetailSorting(this.value)" class="text-xs bg-transparent border-0 font-bold text-indigo-950 focus:ring-0 focus:outline-none cursor-pointer py-0 pl-1 pr-6" title="Chọn tiêu chí lọc và sắp xếp nhật ký">
+                        <option value="qty" selected>⚡ Số lượng lấy hàng (Mặc định)</option>
+                        <option value="plate">🚚 Số xe nhận hàng</option>
+                        <option value="staff">👤 Tên thủ kho</option>
+                        <option value="voucher">📄 Số phiếu phát</option>
+                      </select>
+                    </div>
+
                     <!-- Ô lọc nhanh theo xe, người phát, lái xe, số phiếu -->
                     <div class="relative">
                       <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                      <input type="text" id="product-detail-search-input" oninput="filterProductDetailRows(this.value)" placeholder="Lọc nhanh xe, người phát, lái xe, số phiếu..." class="w-56 sm:w-68 pl-7 pr-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-2xs">
+                      <input type="text" id="product-detail-search-input" oninput="filterProductDetailRows(this.value)" placeholder="Lọc nhanh xe, người phát, lái xe, số..." class="w-48 sm:w-56 pl-7 pr-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-2xs">
                     </div>
                     <span class="text-[11px] font-medium text-slate-500 shrink-0 hidden sm:inline">ĐVT: <b class="text-slate-800">${escapeHtml(item.unit || '')}</b></span>
                   </div>
@@ -18037,6 +18549,7 @@ window.google.script = {
                         <th class="px-3 py-2 text-right w-28 bg-indigo-50/80 font-mono text-indigo-950 border-l border-indigo-100">Số lượng</th>
                         <th class="px-3 py-2 text-center w-28 font-mono">Số phiếu</th>
                         <th class="px-3 py-2 text-center w-36 font-mono">Thời gian</th>
+                        <th class="px-3 py-2 text-left w-32">Ghi chú</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white" id="product-detail-tbody">
@@ -18050,7 +18563,7 @@ window.google.script = {
                         <td class="px-3 py-2 text-right font-black font-mono text-sm text-indigo-950 bg-indigo-100/70 border-l border-indigo-200" id="product-detail-foot-qty">
                           ${formatNumber(totalQty)} <span class="text-[11px] font-normal text-slate-500">${escapeHtml(item.unit || '')}</span>
                         </td>
-                        <td colspan="2" class="px-3 py-2 text-slate-400 font-normal italic text-[11px]">
+                        <td colspan="3" class="px-3 py-2 text-slate-400 font-normal italic text-[11px]">
                           Chứng từ hợp lệ trên hệ thống
                         </td>
                       </tr>
