@@ -14063,6 +14063,41 @@ window.google.script = {
       filterDailyDispatchTable();
     }
 
+    function sortDispatchesByStaffAndSeq(a, b) {
+      if (!a && !b) return 0;
+      if (!a) return 1;
+      if (!b) return -1;
+
+      // 1. Nhóm thành viên phát giống nhau nằm cạnh nhau (A-Z theo tiếng Việt)
+      const staffA = String(a.staff_name || a.staff || '').trim();
+      const staffB = String(b.staff_name || b.staff || '').trim();
+      const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
+      if (staffCmp !== 0) return staffCmp;
+
+      // 2. Ngày phát (nếu xem nhiều ngày: ngày gần nhất lên trước)
+      const dateA = String(a.dispatch_date || a.date || '').substring(0, 10);
+      const dateB = String(b.dispatch_date || b.date || '').substring(0, 10);
+      if (dateA !== dateB) return dateB.localeCompare(dateA);
+
+      // 3. Số thứ tự xe trong ngày (STT Xe) chạy từ nhỏ đến lớn (1 -> N theo chiều từ trên xuống)
+      const seqA = typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(a, dispatchListCached) : 1;
+      const seqB = typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(b, dispatchListCached) : 1;
+      if (seqA !== seqB) return seqA - seqB;
+
+      // 4. Giờ phát (nếu có: theo thứ tự thời gian)
+      const timeA = String(a.dispatch_time || a.time || '');
+      const timeB = String(b.dispatch_time || b.time || '');
+      if (timeA !== timeB) return timeA.localeCompare(timeB);
+
+      // 5. Cùng chuyến xe / phiếu phát: giữ thứ tự ID hoặc sản phẩm
+      const codeA = String(a.product_code || '');
+      const codeB = String(b.product_code || '');
+      const codeCmp = codeA.localeCompare(codeB, 'vi');
+      if (codeCmp !== 0) return codeCmp;
+
+      return (Number(a.id) || 0) - (Number(b.id) || 0);
+    }
+
     function filterDailyDispatchTable() {
       const fromDate = document.getElementById('dispatch-filter-from')?.value;
       const toDate = document.getElementById('dispatch-filter-to')?.value;
@@ -14101,6 +14136,9 @@ window.google.script = {
         }
         return true;
       });
+
+      // Sắp xếp: Cùng thành viên phát nằm cạnh nhau, STT xe chạy từ nhỏ đến lớn từ trên xuống
+      filtered.sort(sortDispatchesByStaffAndSeq);
 
       currentDispatchFilteredList = filtered;
       renderDailyDispatchKPI(filtered);
@@ -15652,14 +15690,17 @@ window.google.script = {
         return;
       }
 
+      // Đảm bảo danh sách luôn được sắp xếp: Cùng thành viên phát nằm cạnh nhau, STT xe chạy từ nhỏ đến lớn (1 -> N)
+      const sortedList = [...list].sort(sortDispatchesByStaffAndSeq);
+
       let totalQty = 0;
-      tbody.innerHTML = list.map((it, idx) => {
+      tbody.innerHTML = sortedList.map((it, idx) => {
         const qty = parseSmartNumber(it.quantity || 0);
         totalQty += qty;
 
         const dateDisplay = it.dispatch_date ? `${formatDateVN(it.dispatch_date)}` : '-';
         const dateTimeFull = it.dispatch_time ? `${it.dispatch_time} • ${dateDisplay}` : dateDisplay;
-        const dailySeq = resolveDailyVehicleSeq(it, list);
+        const dailySeq = resolveDailyVehicleSeq(it, dispatchListCached);
 
         const noteParts = [];
         if (it.driver_name) {
@@ -15672,8 +15713,12 @@ window.google.script = {
         if (it.note) noteParts.push(it.note);
         const fullNote = noteParts.join(' | ') || '-';
 
+        // Phân tách trực quan giữa các thành viên phát khác nhau
+        const isDifferentStaff = idx > 0 && String(it.staff_name || '').trim().toLowerCase() !== String(sortedList[idx - 1].staff_name || '').trim().toLowerCase();
+        const borderStyle = isDifferentStaff ? 'style="border-top: 2px solid #5eead4;"' : '';
+
         return `
-          <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này${fullNote !== '-' ? ` (${escapeHtml(fullNote)})` : ''}">
+          <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" ${borderStyle} class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này${fullNote !== '-' ? ` (${escapeHtml(fullNote)})` : ''}">
             <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
             <td class="px-3 py-2 text-center font-mono text-slate-600 col-center whitespace-nowrap text-[11px]">${dateTimeFull}</td>
             <td class="px-2 py-2 text-center col-center whitespace-nowrap">
@@ -15710,7 +15755,7 @@ window.google.script = {
       const footQ = document.getElementById('dispatch-footer-total-qty');
       const footN = document.getElementById('dispatch-footer-summary-note');
       if (footQ) footQ.innerText = formatNumber(totalQty);
-      if (footN) footN.innerText = `${list.length} dòng hiển thị`;
+      if (footN) footN.innerText = `${sortedList.length} dòng hiển thị`;
     }
 
     let editingDispatchContext = null;
