@@ -18706,15 +18706,15 @@ window.google.script = {
 
       Swal.fire({
         padding: '0',
-        width: '1060px',
+        width: '1180px',
         showConfirmButton: false,
         showCloseButton: false,
         customClass: {
-          popup: '!rounded-2xl !p-0 !overflow-hidden !border !border-slate-200 !shadow-2xl max-w-5xl w-full !max-h-[88vh] !flex !flex-col',
+          popup: '!rounded-2xl !p-0 !overflow-hidden !border !border-slate-200 !shadow-2xl max-w-6xl w-[95vw] !max-h-[92vh] !flex !flex-col',
           htmlContainer: '!p-0 !m-0 !overflow-hidden !flex-1 !flex !flex-col !min-h-0'
         },
         html: `
-          <div class="text-left font-sans text-slate-800 flex flex-col h-full max-h-[88vh] min-h-0 overflow-hidden">
+          <div class="text-left font-sans text-slate-800 flex flex-col h-full max-h-[92vh] min-h-0 overflow-hidden">
             <!-- 1. HEADER BANNER (Tone màu dịu nhẹ, thanh lịch dễ nhìn) -->
             <div class="bg-gradient-to-r from-slate-100 via-indigo-50/70 to-slate-100 text-slate-800 px-6 py-3 border-b border-slate-200 flex items-center justify-between gap-4 shrink-0">
               <div class="space-y-1">
@@ -18724,6 +18724,9 @@ window.google.script = {
                   </span>
                   <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-white text-slate-700 text-[11px] font-semibold border border-slate-200 shadow-2xs">
                     ĐVT: <b class="ml-1 text-slate-900">${escapeHtml(item.unit || 'cái')}</b>
+                  </span>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white text-indigo-950 text-[11px] font-semibold border border-indigo-200 shadow-2xs">
+                    Tổng phát: <b class="ml-1 font-mono text-indigo-700 text-xs">${formatNumber(totalQty)}</b>
                   </span>
                   ${statusBadgeHtml}
                 </div>
@@ -18746,73 +18749,26 @@ window.google.script = {
               </div>
             </div>
 
-            <!-- 2. BODY CONTENT (Cuộn mượt mà khi có nhiều số liệu) -->
-            <div class="p-3.5 sm:p-4 space-y-3 bg-slate-50/70 overflow-y-auto flex-1 min-h-0 custom-scroll">
-              <!-- Grid 4 thẻ KPI tóm tắt số liệu -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <div class="bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs flex flex-col justify-between">
-                  <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase">
-                    <span>Tổng SL đã phát</span>
-                    <i class="bi bi-box-seam text-indigo-600 text-sm"></i>
-                  </div>
-                  <div class="mt-1">
-                    <div class="font-mono font-black text-lg text-indigo-950">${formatNumber(totalQty)} <span class="text-xs font-medium text-slate-500">${escapeHtml(item.unit || '')}</span></div>
-                    <div class="text-[10px] text-slate-400 truncate mt-0.5">Kế hoạch xuất: ${item.excelQty > 0 ? formatNumber(item.excelQty) + ' ' + (item.unit||'') : 'Chưa có file'}</div>
-                  </div>
-                </div>
-
-                <div class="bg-white p-3 rounded-xl border border-blue-100 shadow-2xs flex flex-col justify-between">
-                  <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase">
-                    <span>Xe nhận hàng</span>
-                    <i class="bi bi-truck text-blue-600 text-sm"></i>
-                  </div>
-                  <div class="mt-1">
-                    <div class="font-mono font-black text-lg text-blue-950">${Object.keys(vehiclesMap).length} <span class="text-xs font-medium text-slate-500">xe</span></div>
-                    <div class="text-[10px] text-slate-400 truncate mt-0.5">Phương tiện nhận thực tế</div>
-                  </div>
-                </div>
-
-                <div class="bg-white p-3 rounded-xl border border-purple-100 shadow-2xs flex flex-col justify-between">
-                  <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase">
-                    <span>Số lượt phát</span>
-                    <i class="bi bi-receipt text-purple-600 text-sm"></i>
-                  </div>
-                  <div class="mt-1">
-                    <div class="font-mono font-black text-lg text-purple-950">${records.length} <span class="text-xs font-medium text-slate-500">lần xuất</span></div>
-                    <div class="text-[10px] text-slate-400 truncate mt-0.5">Phiếu xuất trong ngày</div>
-                  </div>
-                </div>
-
-                <div class="bg-white p-3 rounded-xl border border-emerald-100 shadow-2xs flex flex-col justify-between">
-                  <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase">
-                    <span>Thủ kho phụ trách</span>
-                    <i class="bi bi-people-fill text-emerald-600 text-sm"></i>
-                  </div>
-                  <div class="mt-1">
-                    <div class="font-mono font-black text-lg text-emerald-950">${Object.keys(staffMap).length} <span class="text-xs font-medium text-slate-500">nhân sự</span></div>
-                    <div class="text-[10px] text-slate-400 truncate mt-0.5">Xác nhận phát hàng</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Bảng nhật ký chi tiết các lượt phát hàng (Tối ưu cho lượng dữ liệu nhiều) -->
-              <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
-                <!-- Thanh công cụ tìm kiếm nhanh & đếm số lượng & BỘ CHỌN LỌC / SẮP XẾP -->
-                <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
-                      <i class="bi bi-table text-indigo-600"></i>
+            <!-- 2. BODY CONTENT (Cuộn mượt mà khi có nhiều số liệu, bảng mở rộng tối đa) -->
+            <div class="p-3.5 sm:p-4 bg-slate-50/70 overflow-y-auto flex-1 min-h-0 custom-scroll flex flex-col">
+              <!-- Bảng nhật ký chi tiết các lượt phát hàng (Mở rộng toàn bộ chiều cao) -->
+              <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs flex-1 flex flex-col min-h-0">
+                <!-- Thanh công cụ: đếm số lượng, chọn lọc/sắp xếp & tìm kiếm nhanh trên cùng 1 hàng thẳng tắp -->
+                <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+                  <div class="flex items-center space-x-2 shrink-0">
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wide flex items-center space-x-1.5">
+                      <i class="bi bi-clock-history text-indigo-600 text-sm"></i>
                       <span>Nhật ký từng lần phát hàng thực tế</span>
                     </span>
-                    <span id="product-detail-visible-count" class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[11px] border border-indigo-200">${records.length} lượt phát</span>
+                    <span id="product-detail-visible-count" class="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-[11px] border border-indigo-200 shadow-2xs">${records.length} lượt phát</span>
                   </div>
 
-                  <div class="flex items-center flex-wrap gap-2.5">
+                  <div class="flex items-center space-x-2.5 shrink-0">
                     <!-- BỘ CHỌN LỌC & SẮP XẾP: NGƯỜI PHÁT & STT XE (MẶC ĐỊNH), SỐ LƯỢNG, SỐ XE, SỐ PHIẾU -->
-                    <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-2xs">
+                    <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-indigo-200 shadow-2xs">
                       <span class="text-[11px] font-bold text-indigo-900 flex items-center gap-1 shrink-0">
                         <i class="bi bi-arrow-down-up text-indigo-600"></i>
-                        <span>Lọc/Xếp theo:</span>
+                        <span>Xếp theo:</span>
                       </span>
                       <select id="product-detail-sort-select" onchange="applyProductDetailSorting(this.value)" class="text-xs bg-transparent border-0 font-bold text-indigo-950 focus:ring-0 focus:outline-none cursor-pointer py-0 pl-1 pr-6" title="Chọn tiêu chí lọc và sắp xếp nhật ký">
                         <option value="staff_seq" selected>👤 Người phát & STT Xe (Mặc định)</option>
@@ -18823,16 +18779,15 @@ window.google.script = {
                     </div>
 
                     <!-- Ô lọc nhanh theo xe, người phát, lái xe, số phiếu -->
-                    <div class="relative">
-                      <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                      <input type="text" id="product-detail-search-input" oninput="filterProductDetailRows(this.value)" placeholder="Lọc nhanh xe, người phát, lái xe, số..." class="w-48 sm:w-56 pl-7 pr-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-2xs">
+                    <div class="relative w-56 sm:w-64">
+                      <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                      <input type="text" id="product-detail-search-input" oninput="filterProductDetailRows(this.value)" placeholder="Lọc nhanh xe, người phát, lái xe, số..." class="w-full pl-8 pr-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs">
                     </div>
-                    <span class="text-[11px] font-medium text-slate-500 shrink-0 hidden sm:inline">ĐVT: <b class="text-slate-800">${escapeHtml(item.unit || '')}</b></span>
                   </div>
                 </div>
 
-                <!-- Bảng dữ liệu có scroll mượt và thead/tfoot sticky -->
-                <div class="max-h-[36vh] sm:max-h-[290px] overflow-y-auto custom-scroll overflow-x-auto">
+                <!-- Bảng dữ liệu có scroll mượt và thead/tfoot sticky (Mở rộng chiều cao thoải mái quan sát) -->
+                <div class="max-h-[62vh] sm:max-h-[540px] overflow-y-auto custom-scroll overflow-x-auto flex-1">
                   <table class="min-w-full divide-y divide-slate-200 text-xs">
                     <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider shadow-2xs">
                       <tr>
