@@ -3143,7 +3143,7 @@
               <i class="bi bi-plus-circle-fill text-teal-600 text-sm"></i>
               <span>Thêm mặt hàng mới vào nhóm này:</span>
             </span>
-            <span class="text-[11px] text-slate-500 italic">Chọn sản phẩm kho, tự động nhận diện tên quy ước hoặc tự điền</span>
+            <span class="text-[11px] text-slate-500 italic">Chọn sản phẩm kho và tự điền tên viết tắt quy ước của kho bạn</span>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-end">
@@ -3173,10 +3173,10 @@
             <div class="md:col-span-4">
               <label class="block font-bold text-teal-950 text-[11px] mb-1 flex items-center justify-between">
                 <span>Tên viết tắt quy ước <span class="text-rose-500">*</span>:</span>
-                <span id="group-detail-auto-detect-tag" class="hidden text-[10.5px] text-emerald-700 font-bold">✓ Tự nhận diện</span>
+                <span class="text-[10.5px] text-slate-400 font-normal">Tự gõ quy ước kho</span>
               </label>
               <input type="text" id="group-detail-add-custom-name" 
-                     placeholder="VD: CHẾCH 75/6, BỊT XẢ 75..." 
+                     placeholder="VD: Chếch 75/10 Trắng, Chếch 75/10T..." 
                      onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addGroupDetailItemDirectly(); }"
                      class="w-full px-3 py-1.5 border-2 border-teal-400/80 rounded-lg font-bold text-xs bg-white text-teal-950 focus:ring-2 focus:ring-teal-500 focus:border-teal-600 transition shadow-2xs">
             </div>
@@ -19060,13 +19060,12 @@ window.google.script = {
       return parseProductDnPn(item);
     }
 
-    // TÌM TÊN VIẾT TẮT QUY ƯỚC ĐÃ CÓ CHO SẢN PHẨM (TRÙNG MÃ, TRÙNG TÊN HOẶC TRÙNG DN/PN TRONG NHÓM)
+    // KIỂM TRA MÃ SẢN PHẨM ĐÃ CÓ TRONG NHÓM CHƯA (CHỈ KHỚP ĐÚNG MÃ, BỎ TỰ ĐỘNG NHẬN DIỆN ĐỂ TRÁNH TRÙNG LẶP)
     function findExistingGroupConvention(code, name, groupName) {
       const normCode = String(code || '').trim().toUpperCase();
-      const normName = String(name || '').trim().toLowerCase();
       const targetGroup = (groupName || currentGroupDetailName || '').trim();
 
-      // 1. Kiểm tra chính xác theo mã sản phẩm
+      // Chỉ kiểm tra chính xác theo mã sản phẩm
       if (normCode) {
         const exactByCode = tempCustomizerItems.find(it => (it.code || '').trim().toUpperCase() === normCode);
         if (exactByCode && exactByCode.customName) {
@@ -19080,92 +19079,38 @@ window.google.script = {
         }
       }
 
-      // 2. Kiểm tra theo tên sản phẩm kho chuẩn
-      if (normName) {
-        const exactByName = tempCustomizerItems.find(it => (it.name || '').trim().toLowerCase() === normName);
-        if (exactByName && exactByName.customName) {
-          return {
-            type: 'exact_name',
-            item: exactByName,
-            customName: exactByName.customName,
-            group: exactByName.group || '',
-            inCurrentGroup: (exactByName.group || '').trim() === targetGroup
-          };
-        }
-      }
-
-      // 3. Nếu trong nhóm hiện tại đã có sản phẩm có cùng thông số kích thước (cùng DN1, DN2 và PN)
-      // Ví dụ: cùng là Nối thẳng 75 PN8 hoặc Tê CB 60-42 PN8 thì tự động nhận diện tên quy ước
-      if (targetGroup && (normCode || normName)) {
-        const fakeItem = { code: normCode, name: normName, customName: '' };
-        const targetDnPn = getDnPnForGroupSort(fakeItem);
-        if (targetDnPn.dn1 < 9999) {
-          const currentGroupItems = tempCustomizerItems.filter(it => (it.group || '').trim() === targetGroup);
-          const sameDnPn = currentGroupItems.find(it => {
-            const itDnPn = getDnPnForGroupSort(it);
-            return itDnPn.dn1 === targetDnPn.dn1 && 
-                   itDnPn.dn2 === targetDnPn.dn2 && 
-                   itDnPn.pn === targetDnPn.pn && 
-                   it.customName;
-          });
-          if (sameDnPn) {
-            return {
-              type: 'same_dnpn',
-              item: sameDnPn,
-              customName: sameDnPn.customName,
-              group: targetGroup,
-              inCurrentGroup: true
-            };
-          }
-        }
-      }
-
       return null;
     }
 
     function showGroupDetailMatchHint(conv, prod) {
       const hintEl = document.getElementById('group-detail-match-hint');
       const tagEl = document.getElementById('group-detail-auto-detect-tag');
-      if (tagEl) tagEl.classList.remove('hidden');
+      if (tagEl) tagEl.classList.add('hidden');
       if (!hintEl) return;
 
       const cName = escapeHtml(conv.customName || '');
       const prodCode = prod ? escapeHtml(prod.code || '') : '';
 
       if (conv.inCurrentGroup) {
-        hintEl.className = 'p-2.5 rounded-xl text-xs font-semibold bg-teal-50 border border-teal-300 text-teal-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-150';
+        hintEl.className = 'p-2.5 rounded-xl text-xs font-semibold bg-sky-50 border border-sky-300 text-sky-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-150';
         hintEl.innerHTML = `
           <div class="flex items-center space-x-2 min-w-0">
-            <span class="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center shrink-0 text-xs">
-              <i class="bi bi-check-lg font-black"></i>
+            <span class="w-6 h-6 rounded-lg bg-sky-600 text-white flex items-center justify-center shrink-0 text-xs">
+              <i class="bi bi-info-circle-fill"></i>
             </span>
             <span class="truncate">
-              Sản phẩm <b>${prodCode ? `[${prodCode}] ` : ''}</b>đã có trong nhóm với tên quy ước: 
-              <span class="px-2 py-0.5 rounded-md bg-teal-200/90 text-teal-950 font-black font-mono border border-teal-400 text-xs">${cName}</span>
+              Mã <b>[${prodCode}]</b> đã có trong nhóm này với tên: 
+              <span class="px-2 py-0.5 rounded-md bg-sky-200/90 text-sky-950 font-black font-mono border border-sky-400 text-xs">${cName}</span>
             </span>
           </div>
-          <span class="text-[11px] text-teal-800 font-bold bg-white px-2 py-0.5 rounded border border-teal-200 shrink-0">
-            ✓ Đã tự điền sẵn tên quy ước
+          <span class="text-[11px] text-sky-800 italic shrink-0">
+            (Có thể sửa tên mới rồi bấm Thêm vào nhóm để cập nhật)
           </span>
         `;
+        hintEl.classList.remove('hidden');
       } else {
-        hintEl.className = 'p-2.5 rounded-xl text-xs font-semibold bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-150';
-        hintEl.innerHTML = `
-          <div class="flex items-center space-x-2 min-w-0">
-            <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 text-xs">
-              <i class="bi bi-tag-fill"></i>
-            </span>
-            <span class="truncate">
-              Tự động nhận diện tên viết tắt quy ước: 
-              <span class="px-2 py-0.5 rounded-md bg-emerald-200/90 text-emerald-950 font-black font-mono border border-emerald-400 text-xs">${cName}</span>
-            </span>
-          </div>
-          <span class="text-[11px] text-emerald-800 font-bold bg-white px-2 py-0.5 rounded border border-emerald-200 shrink-0">
-            ✓ Đã tự điền sẵn tên quy ước
-          </span>
-        `;
+        hintEl.classList.add('hidden');
       }
-      hintEl.classList.remove('hidden');
     }
 
     function hideGroupDetailMatchHint() {
@@ -19358,9 +19303,9 @@ window.google.script = {
         const exactCode = exactInv.code || q.toUpperCase();
         if (cCodeInp) cCodeInp.value = exactCode;
 
-        // Tự động tìm tên viết tắt quy ước đã có
+        // Chỉ hiển thị tên nếu chính mã này đã có trong nhóm hiện tại
         const conv = findExistingGroupConvention(exactCode, exactInv.name, currentGroupDetailName);
-        if (conv && conv.customName) {
+        if (conv && conv.inCurrentGroup && conv.customName) {
           if (cNameInp) cNameInp.value = conv.customName;
           showGroupDetailMatchHint(conv, exactInv);
         } else {
@@ -19393,8 +19338,9 @@ window.google.script = {
         const escapedName = escapeHtml(m.name || '');
         const escapedUnit = escapeHtml(m.unit || 'Cái');
 
-        // Kiểm tra xem mặt hàng này đã có tên viết tắt quy ước trong nhóm hoặc hệ thống chưa
+        // Chỉ kiểm tra xem chính mã này đã có trong nhóm hay chưa
         const conv = findExistingGroupConvention(m.code, m.name, currentGroupDetailName);
+        const inThisGroup = conv && conv.inCurrentGroup && conv.customName;
 
         html += `
           <div class="p-2.5 cursor-pointer flex items-center justify-between transition border-b border-slate-100 last:border-b-0 ${
@@ -19408,15 +19354,13 @@ window.google.script = {
               </div>
               <div class="text-[11.5px] text-slate-700 truncate mt-0.5">${escapedName}</div>
             </div>
-            ${conv && conv.customName ? `
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                conv.inCurrentGroup ? 'bg-teal-100 text-teal-900 border border-teal-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-              } shrink-0 shadow-2xs">
-                <i class="bi ${conv.inCurrentGroup ? 'bi-check-circle-fill text-teal-600' : 'bi-tag-fill text-emerald-600'} text-[10px]"></i>
-                <span>${conv.inCurrentGroup ? 'Đã có: ' : 'Quy ước: '}<b>${escapeHtml(conv.customName)}</b></span>
+            ${inThisGroup ? `
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-900 border border-teal-300 shrink-0 shadow-2xs">
+                <i class="bi bi-check-circle-fill text-teal-600 text-[10px]"></i>
+                <span>Đã có: <b>${escapeHtml(conv.customName)}</b></span>
               </span>
             ` : `
-              <span class="text-[10.5px] text-slate-400 italic shrink-0">Mặt hàng mới</span>
+              <span class="text-[10.5px] text-slate-400 italic shrink-0">+ Thêm mới</span>
             `}
           </div>
         `;
@@ -19465,18 +19409,20 @@ window.google.script = {
       if (cCodeInp) cCodeInp.value = code;
       if (dropdown) dropdown.classList.add('hidden');
 
-      // TỰ ĐỘNG KIỂM TRA TÊN VIẾT TẮT QUY ƯỚC NẾU ĐÃ CÓ TRONG NHÓM HOẶC TRÙNG ĐẶC TÍNH:
+      // CHỈ KIỂM TRA NẾU CHÍNH MÃ SẢN PHẨM NÀY ĐÃ CÓ TRONG NHÓM HIỆN TẠI
       const conv = findExistingGroupConvention(code, name, currentGroupDetailName);
 
-      if (conv && conv.customName) {
-        // ĐÃ CÓ TÊN QUY ƯỚC: TỰ ĐỘNG HIỆN LUÔN TÊN VIẾT TẮT QUY ƯỚC ĐỂ KHÔNG PHẢI KIỂM TRA LẠI!
+      if (conv && conv.inCurrentGroup && conv.customName) {
+        // Chính mã sản phẩm này đã có trong nhóm: hiện tên hiện tại để người dùng biết hoặc sửa lại
         if (cNameInp) cNameInp.value = conv.customName;
         showGroupDetailMatchHint(conv, { code, name });
-        if (conv.inCurrentGroup && conv.item) {
+        if (conv.item) {
           highlightGroupDetailRow(conv.item.id);
         }
       } else {
-        // HÀNG HOÀN TOÀN MỚI CHƯA CÓ QUY ƯỚC: Để trống ô để người dùng tự do điền
+        // SẢN PHẨM MỚI (CHƯA CÓ TRONG NHÓM NÀY):
+        // BỎ HOÀN TOÀN TỰ ĐỘNG NHẬN DIỆN TÊN QUY TẮC ĐỂ TRÁNH TRÙNG LẶP TÊN GỌI TẮT!
+        // Để trống ô để người dùng tự gõ chính xác quy ước kho mình
         if (cNameInp) cNameInp.value = '';
         hideGroupDetailMatchHint();
       }
@@ -19507,6 +19453,34 @@ window.google.script = {
       }
       if (!customName) {
         Swal.fire('Chú ý', 'Vui lòng đặt tên gọi rút gọn theo ý bạn!', 'warning');
+        if (customNameInp) customNameInp.focus();
+        return;
+      }
+
+      // KIỂM TRA TRÙNG LẶP TÊN VIẾT TẮT TRONG CÙNG NHÓM:
+      // Ngăn chặn 100% hiện tượng 2 mã sản phẩm khác nhau trong nhóm bị đặt trùng tên gọi tắt!
+      const duplicateItem = tempCustomizerItems.find(it => 
+        (it.group || '').trim() === currentGroupDetailName.trim() &&
+        (it.code || '').trim().toUpperCase() !== code &&
+        (it.customName || '').trim().toLowerCase() === customName.toLowerCase()
+      );
+
+      if (duplicateItem) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Trùng lặp tên viết tắt!',
+          html: `Tên viết tắt quy ước <b>"${escapeHtml(customName)}"</b> đã được đặt cho sản phẩm:<br><br>` +
+                `<div class="p-2.5 bg-slate-100 rounded-lg text-left text-xs border border-slate-200">` +
+                `<b>Mã:</b> <span class="font-mono text-teal-800 font-bold">${escapeHtml(duplicateItem.code)}</span><br>` +
+                `<b>Tên SP:</b> ${escapeHtml(duplicateItem.name || '')}` +
+                `</div><br>` +
+                `Vui lòng đặt tên viết tắt phân biệt (ví dụ thêm màu, loại, ký hiệu nhận diện...) để tránh nhầm lẫn khi phát hàng!`,
+          confirmButtonText: 'Đã hiểu'
+        });
+        if (customNameInp) {
+          customNameInp.focus();
+          customNameInp.select();
+        }
         return;
       }
 
@@ -20337,6 +20311,33 @@ window.google.script = {
       }
       if (!customName) {
         Swal.fire('Chú ý', 'Vui lòng đặt tên gọi rút gọn theo ý bạn!', 'warning');
+        if (customNameInp) customNameInp.focus();
+        return;
+      }
+
+      // KIỂM TRA TRÙNG LẶP TÊN VIẾT TẮT TRONG CÙNG NHÓM:
+      const duplicateItem = tempCustomizerItems.find(it => 
+        (it.group || '').trim().toLowerCase() === targetGroup.toLowerCase() &&
+        (it.code || '').trim().toUpperCase() !== code &&
+        (it.customName || '').trim().toLowerCase() === customName.toLowerCase()
+      );
+
+      if (duplicateItem) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Trùng lặp tên viết tắt!',
+          html: `Tên viết tắt quy ước <b>"${escapeHtml(customName)}"</b> đã được đặt cho sản phẩm:<br><br>` +
+                `<div class="p-2.5 bg-slate-100 rounded-lg text-left text-xs border border-slate-200">` +
+                `<b>Mã:</b> <span class="font-mono text-teal-800 font-bold">${escapeHtml(duplicateItem.code)}</span><br>` +
+                `<b>Tên SP:</b> ${escapeHtml(duplicateItem.name || '')}` +
+                `</div><br>` +
+                `Vui lòng đặt tên viết tắt phân biệt để tránh nhầm lẫn khi phát hàng!`,
+          confirmButtonText: 'Đã hiểu'
+        });
+        if (customNameInp) {
+          customNameInp.focus();
+          customNameInp.select();
+        }
         return;
       }
 
@@ -20387,7 +20388,27 @@ window.google.script = {
     function updateCustFastItemCustomName(itemId, val) {
       const item = tempCustomizerItems.find(it => it.id === itemId);
       if (item) {
-        item.customName = String(val || '').trim();
+        const newVal = String(val || '').trim();
+        // Kiểm tra xem có bị trùng với item khác trong cùng nhóm không
+        if (newVal) {
+          const dup = tempCustomizerItems.find(it => 
+            it.id !== itemId &&
+            (it.group || '').trim().toLowerCase() === (item.group || '').trim().toLowerCase() &&
+            (it.customName || '').trim().toLowerCase() === newVal.toLowerCase()
+          );
+          if (dup) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Trùng lặp tên viết tắt!',
+              html: `Tên viết tắt "${escapeHtml(newVal)}" đã có trong nhóm cho mã <b>[${escapeHtml(dup.code)}]</b>.<br>Vui lòng đặt tên phân biệt để không trùng lặp!`,
+              confirmButtonText: 'Đã hiểu'
+            });
+            renderGroupDetailItemsTable();
+            renderCustModalItemsTable();
+            return;
+          }
+        }
+        item.customName = newVal;
         // TỰ ĐỘNG LƯU NGẦM KHI SỬA TÊN TRỰC TIẾP TRÊN BẢNG
         autoSaveFastCustomizer(false);
       }
