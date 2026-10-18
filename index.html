@@ -2499,9 +2499,17 @@
 
         <!-- Nội dung Thương hiệu & Lời chúc 20/10 -->
         <div class="relative z-10 my-auto py-5">
-          <div class="text-[11px] font-extrabold uppercase tracking-widest text-rose-300 mb-1.5 flex items-center gap-1.5">
-            <i class="bi bi-buildings-fill text-rose-400"></i>
-            <span>CÔNG TY CỔ PHẦN NHỰA THIẾU NIÊN TIỀN PHONG</span>
+          <div class="flex items-center gap-3 mb-3.5">
+            <div class="p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-md border border-white/50 flex items-center justify-center shrink-0">
+              <img src="logo_tien_phong.png" alt="Nhựa Tiền Phong" class="h-9 sm:h-10 w-auto object-contain" />
+            </div>
+            <div>
+              <div class="text-[11px] font-extrabold uppercase tracking-widest text-rose-300 flex items-center gap-1.5 leading-tight">
+                <i class="bi bi-buildings-fill text-rose-400"></i>
+                <span>CÔNG TY CP NHỰA THIẾU NIÊN TIỀN PHONG</span>
+              </div>
+              <div class="text-[10px] text-rose-100/80 font-medium mt-0.5">Tiền Phong Plastic • Hải Phòng, Việt Nam</div>
+            </div>
           </div>
           <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white drop-shadow-md leading-tight">
             HỆ THỐNG QUẢN LÝ KHO &amp; BÀN GIAO PHÁT HÀNG
@@ -2550,17 +2558,21 @@
       <!-- CỘT PHẢI: FORM ĐĂNG NHẬP GLASSMORPHISM -->
       <div class="lg:w-1/2 p-6 sm:p-8 flex flex-col justify-between bg-white/95 backdrop-blur-xl">
         <div>
-          <!-- Tiêu đề Form -->
-          <div class="mb-5">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold mb-2 border border-rose-200">
-              <i class="bi bi-key-fill text-rose-600"></i>
-              <span>Đăng Nhập Tài Khoản Kho</span>
+          <!-- Header Form Đăng nhập với Logo Nhựa Tiền Phong -->
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <img src="logo_tien_phong.png" alt="Logo Nhựa Tiền Phong" class="h-11 sm:h-12 w-auto object-contain" />
+              </div>
+              <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Phân Hệ Quản Lý Kho</span>
+              </div>
             </div>
             <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>XÁC THỰC TRUY CẬP</span>
-              <span class="text-base">🌸</span>
+              <span>ĐĂNG NHẬP HỆ THỐNG</span>
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">Vui lòng đăng nhập để vào phân hệ quản lý kho của bạn</p>
+            <p class="text-xs text-slate-500 mt-1">Vui lòng nhập tài khoản và mật khẩu của bạn để truy cập</p>
           </div>
 
           <!-- Error Alert Box -->
@@ -2578,7 +2590,7 @@
                   <i class="bi bi-person-fill text-base text-rose-600"></i>
                 </span>
                 <input type="text" id="login-username" required autocomplete="username"
-                       placeholder="Nhập tên đăng nhập (trang, admin, tuan, trong, hung, dung)"
+                       placeholder="Nhập tên tài khoản của bạn..."
                        class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl bg-slate-50/70 focus:bg-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 font-bold text-slate-900 transition text-xs sm:text-sm shadow-2xs">
               </div>
             </div>
@@ -2615,44 +2627,9 @@
               <span id="btn-login-submit-text">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
             </button>
           </form>
-
-          <!-- Quick login chips for testing -->
-          <div class="mt-4 pt-3.5 border-t border-slate-100">
-            <div class="text-[11px] font-bold text-slate-500 mb-2 flex items-center justify-between">
-              <span>Đăng nhập nhanh mẫu:</span>
-              <span class="text-[10px] text-rose-600 font-semibold cursor-default">Bấm để điền sẵn</span>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <button type="button" onclick="fillQuickLogin('trang', '123456')"
-                      class="px-2.5 py-1 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-900 border border-pink-300 font-extrabold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
-                <span>🌸 Kho Trang</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('admin', 'admin123')"
-                      class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 font-bold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
-                <i class="bi bi-shield-fill text-[10px]"></i>
-                <span>Admin (Toàn quyền)</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('tuan', '123456')"
-                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
-                <span>📦 Kho Tuấn</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('trong', '123456')"
-                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
-                <span>📦 Kho Trọng</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('hung', '123456')"
-                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
-                <span>📦 Kho Hùng</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('dung', '123456')"
-                      class="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-semibold text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs">
-                <span>📦 Kho Dũng</span>
-              </button>
-            </div>
-          </div>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-slate-100 text-center text-[10.5px] text-slate-400">
+        <div class="mt-6 pt-4 border-t border-slate-100 text-center text-[10.5px] text-slate-400">
           © Bản quyền thuộc Công ty Cổ phần Nhựa Thiếu niên Tiền Phong
         </div>
       </div>
@@ -3311,10 +3288,12 @@
                          onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addNewCustomGroupFromModal(); }"
                          class="w-full pl-8 pr-3 py-2 border-2 border-teal-300 focus:border-teal-500 rounded-xl font-semibold text-xs bg-teal-50/20 text-teal-950 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-400/30 shadow-2xs transition">
                 </div>
-                <button type="button" onclick="addNewCustomGroupFromModal()" 
+                <button type="button" id="btn-add-custom-group" onclick="addNewCustomGroupFromModal()" 
                         class="px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all duration-150 flex items-center gap-1.5 shadow-sm hover:shadow cursor-pointer shrink-0" 
                         title="Thêm nhóm mới vào danh sách">
-                  <i class="bi bi-plus-circle-fill text-sm"></i>
+                  <svg class="w-4 h-4 shrink-0 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                  </svg>
                   <span>Thêm nhóm</span>
                 </button>
               </div>
@@ -7008,7 +6987,7 @@ window.google.script = {
 
     // HÀM TIỆN ÍCH THÔNG BÁO GÓC ĐẲNG CẤP CHUYÊN NGHIỆP - TỰ BIẾN MẤT 100%, CHỐNG TREO TUYỆT ĐỐI
     let appToastSafetyTimer = null;
-    function showAppToast(title, html = '', icon = 'success', timer = 2000) {
+    function showAppToast(title, html = '', icon = 'success', timer = 1600) {
       if (typeof Swal === 'undefined') return;
 
       if (appToastSafetyTimer) {
@@ -7018,12 +6997,12 @@ window.google.script = {
 
       // Đóng ngay lập tức toast cũ nếu đang hiển thị
       try {
-        if (Swal.isVisible() && Swal.getPopup() && Swal.getPopup().classList.contains('swal2-toast')) {
+        if (Swal.isVisible()) {
           Swal.close();
         }
       } catch (e) {}
 
-      const duration = Math.max(1200, parseInt(timer, 10) || 2000);
+      const duration = Math.min(3000, Math.max(1000, parseInt(timer, 10) || 1600));
 
       const toastInstance = Swal.fire({
         toast: true,
@@ -7036,11 +7015,15 @@ window.google.script = {
         timer: duration,
         timerProgressBar: true,
         didOpen: (toast) => {
-          // VÔ HIỆU HÓA HOÀN TOÀN TÍNH NĂNG DỪNG TIMER KHI RÊ CHUỘT (NGUYÊN NHÂN GÂY TREO THÔNG BÁO)
-          toast.onmouseenter = null;
-          toast.onmouseleave = null;
+          // Rê chuột vào không được dừng timer (tiếp tục chạy đếm ngược để tự ẩn)
+          toast.addEventListener('mouseenter', () => {
+            try { Swal.resumeTimer(); } catch(e) {}
+          });
+          toast.addEventListener('mouseleave', () => {
+            try { Swal.resumeTimer(); } catch(e) {}
+          });
 
-          // CLICK CHUỘT VÀO THÔNG BÁO ĐỂ TẮT NGAY TỨC THÌ
+          // Click chuột vào toast để tắt ngay lập tức
           toast.style.cursor = 'pointer';
           toast.title = 'Bấm vào để đóng thông báo này';
           toast.addEventListener('click', () => {
@@ -7049,15 +7032,22 @@ window.google.script = {
         }
       });
 
-      // BẢO HIỂM 2 LỚP: TỰ ĐỘNG CƯỠNG CHẾ ĐÓNG TOAST ĐÚNG THỜI GIAN ĐỂ CHỐNG TREO 100%
+      // BẢO HIỂM CƯỠNG CHẾ ĐÓNG TỰ ĐỘNG: Hiệu ứng mờ dần (fade out) và trượt lên biến mất 100%
       appToastSafetyTimer = setTimeout(() => {
         try {
-          const currentPopup = Swal.getPopup();
-          if (currentPopup && currentPopup.classList.contains('swal2-toast')) {
-            Swal.close();
+          if (Swal.isVisible()) {
+            const popup = Swal.getPopup();
+            if (popup) {
+              popup.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+              popup.style.opacity = '0';
+              popup.style.transform = 'translateY(-10px)';
+            }
+            setTimeout(() => {
+              try { Swal.close(); } catch(err) {}
+            }, 250);
           }
         } catch (err) {}
-      }, duration + 300);
+      }, duration);
 
       return toastInstance;
     }
@@ -7074,8 +7064,27 @@ window.google.script = {
             hideLoginOverlay();
             inventoryList = [];
             inventoryMap = {};
+            dispatchListCached = [];
+            currentDispatchFilteredList = [];
+            fastDispatchItemsState = {};
+            customFastGroupsList = null;
+            customFastItemsList = null;
+            checkedFastGroupsList = null;
+
+            if (typeof loadWarehouseFastConfigFromCloud === 'function') {
+              loadWarehouseFastConfigFromCloud().catch(() => {});
+            }
+            if (typeof renderFastGroupCheckboxes === 'function') {
+              renderFastGroupCheckboxes();
+            }
+            if (typeof renderFastItemsTable === 'function') {
+              renderFastItemsTable();
+            }
             if (typeof loadInventory === 'function') {
               loadInventory();
+            }
+            if (typeof loadDailyDispatchTab === 'function') {
+              try { loadDailyDispatchTab(); } catch(e) {}
             }
             return true;
           }
@@ -7307,11 +7316,52 @@ window.google.script = {
         // TẢI LẠI TOÀN BỘ BẢNG TỒN KHO VÀ DỮ LIỆU ĐỂ TÁCH BIỆT THEO TÀI KHOẢN VỪA ĐĂNG NHẬP
         inventoryList = [];
         inventoryMap = {};
+        dispatchListCached = [];
+        currentDispatchFilteredList = [];
+        warehouseStaffListCached = [];
+        vehiclesListCached = [];
+        fastDispatchItemsState = {};
+        customFastGroupsList = null;
+        customFastItemsList = null;
+        checkedFastGroupsList = null;
+
+        // Xóa trắng bảng dữ liệu phát hàng và đặt trạng thái đang nạp để người dùng không thấy tàn dư của kho trước
+        const dispatchTbody = document.getElementById('dispatch-tbody');
+        if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-slate-400"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Đang nạp dữ liệu phát hàng của kho...</td></tr>';
+        const dispatchSummary = document.getElementById('dispatch-summary-container');
+        if (dispatchSummary) dispatchSummary.innerHTML = '<div class="text-center py-12 bg-white rounded-xl border border-slate-200"><i class="bi bi-arrow-repeat animate-spin text-2xl text-teal-600 mb-2 block"></i><p class="text-slate-500 text-xs font-semibold">Đang nạp dữ liệu phát hàng của kho...</p></div>';
+        const dispatchStaffSummary = document.getElementById('dispatch-staff-summary-container');
+        if (dispatchStaffSummary) dispatchStaffSummary.innerHTML = '';
+        const summaryBadge = document.getElementById('dispatch-summary-badge');
+        if (summaryBadge) summaryBadge.innerText = '0 SKU';
+        const staffBadge = document.getElementById('dispatch-staff-badge');
+        if (staffBadge) staffBadge.innerText = '0 NV';
+
+        // 1. Tải cấu hình nhóm sản phẩm điền nhanh riêng biệt cho kho vừa đăng nhập
+        if (typeof loadWarehouseFastConfigFromCloud === 'function') {
+          loadWarehouseFastConfigFromCloud().catch(() => {});
+        }
+        if (typeof renderFastGroupCheckboxes === 'function') {
+          renderFastGroupCheckboxes();
+        }
+        if (typeof renderFastItemsTable === 'function') {
+          renderFastItemsTable();
+        }
+
+        // 2. Tải tồn kho phân hệ của kho
         if (typeof loadInventory === 'function') {
           loadInventory();
         }
-        if (typeof loadDispatchHistoryData === 'function') {
-          try { loadDispatchHistoryData(); } catch(e) {}
+
+        // 3. Tải dữ liệu phát hàng ĐÚNG PHÂN HỆ KHO vừa đăng nhập (kho nào ra kho đó 100%)
+        if (typeof loadDailyDispatchTab === 'function') {
+          try { await loadDailyDispatchTab(); } catch(e) {}
+        }
+        if (typeof loadNhapTraVouchersList === 'function') {
+          try { loadNhapTraVouchersList(); } catch(e) {}
+        }
+        if (typeof loadDailyMovement === 'function') {
+          try { loadDailyMovement(); } catch(e) {}
         }
         if (typeof loadDailyReport === 'function') {
           try { loadDailyReport(); } catch(e) {}
@@ -7324,7 +7374,7 @@ window.google.script = {
           `Xin chào, ${sessionUser.full_name}!`,
           `Đăng nhập thành công (${sessionUser.role === 'admin' ? 'Quản Trị Viên' : 'Nhân Viên Kho'})`,
           'success',
-          1800
+          1400
         );
 
       } catch (err) {
@@ -7359,6 +7409,26 @@ window.google.script = {
       currentAppUser = null;
       inventoryList = [];
       inventoryMap = {};
+      dispatchListCached = [];
+      currentDispatchFilteredList = [];
+      warehouseStaffListCached = [];
+      vehiclesListCached = [];
+      fastDispatchItemsState = {};
+      customFastGroupsList = null;
+      customFastItemsList = null;
+      checkedFastGroupsList = null;
+
+      // Xóa trắng bảng dữ liệu phát hàng trên DOM để không còn lưu vết kho cũ
+      const dispatchTbody = document.getElementById('dispatch-tbody');
+      if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu phát hàng của kho</td></tr>';
+      const dispatchSummary = document.getElementById('dispatch-summary-container');
+      if (dispatchSummary) dispatchSummary.innerHTML = '';
+      const dispatchStaffSummary = document.getElementById('dispatch-staff-summary-container');
+      if (dispatchStaffSummary) dispatchStaffSummary.innerHTML = '';
+      const summaryBadge = document.getElementById('dispatch-summary-badge');
+      if (summaryBadge) summaryBadge.innerText = '0 SKU';
+      const staffBadge = document.getElementById('dispatch-staff-badge');
+      if (staffBadge) staffBadge.innerText = '0 NV';
 
       showLoginOverlay();
 
@@ -19490,9 +19560,24 @@ window.google.script = {
 
     function updateModalSummaryBadge() {
       const badge = document.getElementById('cust-modal-summary-badge');
-      if (badge) {
-        badge.innerText = `${tempCustomizerItems.length} sản phẩm • ${tempCustomizerGroups.length} nhóm`;
-      }
+      if (!badge) return;
+
+      // Danh sách tên các nhóm được tạo trong kho hiện tại (chuẩn hóa chữ thường để so sánh an toàn)
+      const validGroupsLower = (tempCustomizerGroups || [])
+        .map(g => (g || '').trim().toLowerCase())
+        .filter(Boolean);
+      const validGroupSet = new Set(validGroupsLower);
+
+      // CHỈ THỐNG KÊ SẢN PHẨM TRONG CÁC NHÓM ĐƯỢC TẠO
+      const itemsInGroups = (tempCustomizerItems || []).filter(it => {
+        const grp = (it.group || '').trim().toLowerCase();
+        return grp && validGroupSet.has(grp);
+      });
+
+      const totalItemsInGroups = itemsInGroups.length;
+      const totalGroups = tempCustomizerGroups.length;
+
+      badge.innerText = `${totalItemsInGroups} sản phẩm • ${totalGroups} nhóm`;
     }
 
     // ========================================================
@@ -19563,7 +19648,7 @@ window.google.script = {
       tempCustomizerGroups.forEach((grp, idx) => {
         const count = countMap[grp] || 0;
         html += `
-          <tr class="hover:bg-teal-50/40 transition border-b border-slate-100">
+          <tr id="cust-group-row-${encodeURIComponent(grp)}" class="hover:bg-teal-50/40 transition border-b border-slate-100">
             <td class="px-3 py-2 text-center text-slate-400 font-mono text-xs">${idx + 1}</td>
             <td class="px-3 py-2">
               <div class="flex items-center space-x-2">
@@ -20364,19 +20449,52 @@ window.google.script = {
         return;
       }
 
+      // 1. Thêm vào mảng nhóm trong modal
       tempCustomizerGroups.push(val);
-      if (inp) inp.value = '';
+      if (inp) {
+        inp.value = '';
+        inp.focus();
+      }
 
+      // 2. Cập nhật tức thì giao diện bên trong modal
       renderCustModalGroupChips();
       renderCustModalGroupsTable();
       renderCustModalGroupsTab();
       updateModalSummaryBadge();
 
-      // TỰ ĐỘNG LƯU NGẦM
+      // 3. Tự động lưu ngầm và cập nhật bảng ngoài
       autoSaveFastCustomizer(false);
 
+      // 4. Tự động tích chọn nhóm mới vào danh sách nhóm hiển thị ngoài bảng phát hàng
+      try {
+        const checked = getCheckedFastGroups();
+        if (!checked.includes(val)) {
+          checked.push(val);
+          saveCheckedFastGroups(checked);
+          renderFastGroupCheckboxes();
+          renderFastItemsTable();
+        }
+      } catch (err) {}
+
+      // 5. Đồng bộ ngầm lên Supabase Cloud
+      if (typeof syncWarehouseFastConfigToCloud === 'function') {
+        syncWarehouseFastConfigToCloud().catch(() => {});
+      }
+
+      // 6. Tự động cuộn mượt đến dòng nhóm vừa tạo và nhấp nháy phát sáng highlight
+      setTimeout(() => {
+        const row = document.getElementById(`cust-group-row-${encodeURIComponent(val)}`);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('bg-emerald-100', 'ring-2', 'ring-emerald-500', 'transition-all', 'duration-300');
+          setTimeout(() => {
+            row.classList.remove('bg-emerald-100', 'ring-2', 'ring-emerald-500');
+          }, 2500);
+        }
+      }, 80);
+
       if (typeof showAppToast === 'function') {
-        showAppToast(`Đã tạo nhóm "${val}"`, '', 'success', 1500);
+        showAppToast(`Đã tạo nhóm "${val}"`, 'Đã cập nhật tức thì vào danh sách nhóm!', 'success', 1500);
       }
     }
 
@@ -21493,22 +21611,4 @@ window.google.script = {
         google.script.run
           .withSuccessHandler(function(res) {
             if (res && res.success) {
-              Swal.fire({
-                icon: 'success',
-                title: 'Đã đưa phần mềm về trắng như mới!',
-                text: res.message,
-                confirmButtonText: 'OK (Làm mới phần mềm)'
-              }).then(() => {
-                location.reload();
-              });
-            } else {
-              Swal.fire('Không thành công', res ? res.message : 'Có lỗi xảy ra', 'error');
-            }
-          })
-          .withFailureHandler(err => Swal.fire('Lỗi kết nối', err.message, 'error'))
-          .clearAllWarehouseData(pwd, clearVehiclesAndStaff);
-      });
-    }
-  </script>
-</body>
-</html>
+ 
