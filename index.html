@@ -576,6 +576,7 @@
                 <div class="flex items-center space-x-1 mt-0.5">
                   <span id="sidebar-user-role-badge" class="px-1.5 py-0.2 text-[9px] font-bold rounded bg-rose-100 text-rose-700 border border-rose-200">Admin</span>
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Đang trực tuyến"></span>
+                  <span id="sidebar-user-warehouse" class="text-[9.5px] font-bold text-blue-600 truncate ml-0.5"></span>
                 </div>
               </div>
             </div>
@@ -642,6 +643,23 @@
             <span id="db-mode-label" class="whitespace-nowrap">Độc Lập (Máy tính)</span>
             <i class="bi bi-hdd-fill text-emerald-600 shrink-0 text-sm"></i>
           </button>
+
+          <!-- WAREHOUSE SWITCHER / BADGE WIDGET -->
+          <div id="header-warehouse-widget" class="flex items-center space-x-1.5 px-2.5 py-1 bg-amber-50/90 hover:bg-amber-100/90 text-amber-900 border border-amber-200/90 rounded-lg text-xs font-bold transition shadow-2xs shrink-0">
+            <i class="bi bi-buildings-fill text-amber-700 text-sm shrink-0"></i>
+            <span class="text-[11px] text-amber-800 font-semibold hidden md:inline shrink-0">Kho:</span>
+            <!-- Dành cho Admin chọn kho xem -->
+            <select id="select-active-warehouse" onchange="handleChangeWarehouseScope(this.value)" class="bg-transparent font-bold text-xs text-amber-950 outline-none cursor-pointer border-none py-0.5 max-w-[170px] truncate">
+              <option value="all">🌐 Tổng hợp (Tất cả kho)</option>
+              <option value="admin">🏢 Kho Tổng (Chính)</option>
+              <option value="tuan">📦 Kho Tuấn (Nguyễn Văn Tuấn)</option>
+              <option value="trong">📦 Kho Trọng (Trần Đình Trọng)</option>
+              <option value="hung">📦 Kho Hùng (Lê Văn Hùng)</option>
+              <option value="dung">📦 Kho Dũng (Phạm Quốc Dũng)</option>
+            </select>
+            <!-- Dành cho Nhân viên kho cố định kho của mình -->
+            <span id="label-staff-warehouse" class="hidden font-bold text-amber-950 text-xs truncate max-w-[160px]"></span>
+          </div>
 
           <!-- USER PROFILE & LOGOUT IN HEADER -->
           <div class="flex items-center space-x-1 pl-2 border-l border-slate-200 shrink-0" id="header-user-section">
@@ -2325,43 +2343,6 @@
             <span id="btn-login-submit-text">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
           </button>
         </form>
-
-        <!-- Quick Demo Accounts -->
-        <div class="pt-3 border-t border-slate-100">
-          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-            <span>Tài khoản có sẵn (Bấm để điền nhanh):</span>
-          </div>
-          <div class="space-y-1.5">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" onclick="fillQuickLogin('admin', 'admin123')"
-                      class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer">
-                <i class="bi bi-shield-lock-fill text-rose-600"></i>
-                <span>Admin (admin)</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('tuan', '123456')"
-                      class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer">
-                <i class="bi bi-person-fill text-blue-600"></i>
-                <span>Tuấn (tuan)</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('trong', '123456')"
-                      class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer">
-                <i class="bi bi-person-fill text-blue-600"></i>
-                <span>Trọng (trong)</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('hung', '123456')"
-                      class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer">
-                <i class="bi bi-person-fill text-blue-600"></i>
-                <span>Hùng (hung)</span>
-              </button>
-              <button type="button" onclick="fillQuickLogin('dung', '123456')"
-                      class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-[11px] font-bold transition flex items-center space-x-1 cursor-pointer">
-                <i class="bi bi-person-fill text-blue-600"></i>
-                <span>Dũng (dung)</span>
-              </button>
-            </div>
-            <p class="text-[10.5px] text-slate-400 italic">Mật khẩu: Admin là <code>admin123</code>, các tài khoản kho là <code>123456</code>.</p>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -3599,7 +3580,7 @@ const isWebHostingEnv = window.location.protocol.startsWith('http') &&
                         !window.location.hostname.includes('localhost') && 
                         !window.location.hostname.includes('127.0.0.1');
 
-let STORAGE_MODE = localStorage.getItem('wh_storage_mode') || (isWebHostingEnv ? 'CLOUD' : 'STANDALONE');
+let STORAGE_MODE = localStorage.getItem('wh_storage_mode') || 'CLOUD';
 
 const DEFAULT_APP_USERS = [
   {
@@ -3655,10 +3636,10 @@ const DEFAULT_APP_USERS = [
 
 const LocalDB = {
   dbName: 'QUAN_LY_KHO_STANDALONE_DB',
-  version: 1,
+  version: 2,
   tables: [
     'products', 'inventory_transactions', 'phieu_nhap', 'phieu_xuat',
-    'hang_nhap_tra', 'voucher_audit_logs', 'phat_hang', 'vehicles', 'warehouse_staff', 'app_users'
+    'hang_nhap_tra', 'voucher_audit_logs', 'phat_hang', 'vehicles', 'warehouse_staff', 'app_users', 'warehouse_stock'
   ],
   cache: {},
   initialized: false,
@@ -3998,7 +3979,7 @@ async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
 
   if (status >= 400) {
     const tableName = cleanEp.split('?')[0].split('/')[0];
-    if (status === 404 && ['phat_hang', 'vehicles', 'warehouse_staff', 'app_users'].includes(tableName)) {
+    if (status === 404 && ['phat_hang', 'vehicles', 'warehouse_staff', 'app_users', 'warehouse_stock'].includes(tableName)) {
       console.warn(`Bảng ${tableName} chưa được tạo trên Supabase, tự động lưu trên bộ nhớ cục bộ.`);
       return await LocalDB.query(endpoint, method, payload);
     }
@@ -4330,6 +4311,29 @@ async function fetchProductsForItems_(rawCodes) {
   prods.forEach(p => {
     if (p && p.code) prodMap[p.code.toLowerCase()] = p;
   });
+
+  // TỒN KHO RIÊNG: Nếu đang ở kho riêng của nhân viên, nạp tồn kho từ warehouse_stock
+  const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+  if (activeScope !== 'admin' && activeScope !== 'all') {
+    try {
+      const inParam = uniqueCodes.map(c => `"${c.replace(/"/g, '')}"`).join(',');
+      const whStock = (await callSupabaseSingle_(`warehouse_stock?warehouse=eq.${encodeURIComponent(activeScope)}&code=in.(${inParam})`, "GET").catch(() => [])) || [];
+      const whStockMap = {};
+      if (Array.isArray(whStock)) {
+        whStock.forEach(ws => {
+          if (ws && ws.code) whStockMap[ws.code.toLowerCase()] = ws;
+        });
+      }
+      Object.keys(prodMap).forEach(k => {
+        const p = prodMap[k];
+        const ws = whStockMap[k];
+        p.stock_tp = ws ? (Number(ws.stock_tp) || 0) : 0;
+        p.stock_pp = ws ? (Number(ws.stock_pp) || 0) : 0;
+        p.total_stock = p.stock_tp + p.stock_pp;
+      });
+    } catch(e) {}
+  }
+
   return prodMap;
 }
 
@@ -4478,16 +4482,71 @@ const ClientBackend = {
           products = (batch1 || []).concat(batch2 || []);
         }
 
+        const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+
+        let whStockMap = {};
+        if (activeScope !== 'all' && activeScope !== 'admin') {
+          // 1. Tải tồn kho riêng từ warehouse_stock
+          try {
+            const whStockList = (await callSupabaseSingle_(`warehouse_stock?warehouse=eq.${encodeURIComponent(activeScope)}&select=*`, "GET").catch(() => [])) || [];
+            if (Array.isArray(whStockList) && whStockList.length > 0) {
+              whStockList.forEach(ws => {
+                if (ws && ws.code) {
+                  whStockMap[ws.code.toLowerCase()] = {
+                    tp: Number(ws.stock_tp) || 0,
+                    pp: Number(ws.stock_pp) || 0,
+                    total: Number(ws.total_stock) || 0
+                  };
+                }
+              });
+            }
+          } catch(e) {}
+
+          // 2. Dự phòng: Tính trực tiếp từ các giao dịch của kho này
+          if (Object.keys(whStockMap).length === 0) {
+            try {
+              const myTxs = (await callSupabase_(`inventory_transactions?note=ilike.*%5BKho:%20${encodeURIComponent(activeScope)}%5D*&select=code,quantity,type,quality`, "GET").catch(() => [])) || [];
+              if (Array.isArray(myTxs) && myTxs.length > 0) {
+                myTxs.forEach(t => {
+                  const ck = String(t.code || '').trim().toLowerCase();
+                  if (!whStockMap[ck]) whStockMap[ck] = { tp: 0, pp: 0, total: 0 };
+                  const q = Number(t.quantity) || 0;
+                  const isAdd = (t.type === 'NHAP' || t.type === 'NHAPTRA');
+                  if (t.quality === 'PP') {
+                    whStockMap[ck].pp += isAdd ? q : -q;
+                  } else {
+                    whStockMap[ck].tp += isAdd ? q : -q;
+                  }
+                  whStockMap[ck].total = whStockMap[ck].tp + whStockMap[ck].pp;
+                });
+              }
+            } catch(e) {}
+          }
+        }
+
         const list = products.map(p => {
           const c = String(p.code || "").trim();
+          const ck = c.toLowerCase();
           const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
             ? Number(p.pack_qty) 
             : null;
-          const tp = Number(p.stock_tp) || 0;
-          const pp = Number(p.stock_pp) || 0;
-          const total = (p.total_stock !== null && p.total_stock !== undefined && p.total_stock !== "") 
-            ? Number(p.total_stock) 
-            : (tp + pp);
+
+          let tp = 0;
+          let pp = 0;
+          let total = 0;
+
+          if (activeScope === 'all' || activeScope === 'admin') {
+            tp = Number(p.stock_tp) || 0;
+            pp = Number(p.stock_pp) || 0;
+            total = (p.total_stock !== null && p.total_stock !== undefined && p.total_stock !== "") 
+              ? Number(p.total_stock) 
+              : (tp + pp);
+          } else {
+            const ws = whStockMap[ck];
+            tp = ws ? Math.max(0, ws.tp) : 0;
+            pp = ws ? Math.max(0, ws.pp) : 0;
+            total = ws ? Math.max(0, ws.total) : 0;
+          }
 
           return {
             code: c,
@@ -4513,7 +4572,7 @@ const ClientBackend = {
       const [b1, b2, txs] = await Promise.all([
         callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
         callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => []),
-        callSupabase_(`inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality`, "GET").catch(() => [])
+        callSupabase_(`inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality,note,warehouse`, "GET").catch(() => [])
       ]);
 
       const products = (b1 || []).concat(b2 || []);
@@ -4539,6 +4598,7 @@ const ClientBackend = {
       });
 
       (txs || []).forEach(t => {
+        if (!isTransactionInCurrentWarehouse(t)) return;
         const c = String(t.code || "").trim();
         if (!c) return;
         const key = c.toLowerCase();
@@ -4922,7 +4982,9 @@ const ClientBackend = {
           combinedNote = unique.join(' | ');
         }
 
-        const fullNote = combinedNote ? `${combinedNote} [${qualityDisplay}]` : `[${qualityDisplay}]`;
+        const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
+        const warehouseTag = `[Kho: ${activeScope}]`;
+        const fullNote = combinedNote ? `${combinedNote} [${qualityDisplay}] ${warehouseTag}` : `[${qualityDisplay}] ${warehouseTag}`;
 
         ledgerLogs.push({
           voucher_date: voucher.date,
@@ -4952,11 +5014,46 @@ const ClientBackend = {
         });
       });
 
+      const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
       const productList = Object.values(updatedProductsMap);
-      if (productList.length > 0) {
-        await callSupabaseBatchPost_("products?on_conflict=code", productList, {
-          "Prefer": "resolution=merge-duplicates,return=minimal"
-        }, 250);
+
+      if (activeScope === 'admin' || activeScope === 'all') {
+        if (productList.length > 0) {
+          await callSupabaseBatchPost_("products?on_conflict=code", productList, {
+            "Prefer": "resolution=merge-duplicates,return=minimal"
+          }, 250);
+        }
+      } else {
+        // LƯU TỒN KHO RIÊNG: Chỉ cập nhật bảng warehouse_stock cho kho này, không ghi đè kho tổng
+        const whStockPayload = productList.map(up => ({
+          warehouse: activeScope,
+          code: up.code,
+          stock_tp: up.stock_tp,
+          stock_pp: up.stock_pp,
+          total_stock: up.total_stock,
+          updated_at: new Date().toISOString()
+        }));
+
+        try {
+          await callSupabaseBatchPost_("warehouse_stock?on_conflict=warehouse,code", whStockPayload, {
+            "Prefer": "resolution=merge-duplicates,return=minimal"
+          }, 250);
+        } catch(e) {
+          console.warn("Lưu warehouse_stock trên Supabase lỗi hoặc chưa tạo bảng:", e);
+        }
+
+        if (LocalDB && LocalDB.cache) {
+          if (!LocalDB.cache['warehouse_stock']) LocalDB.cache['warehouse_stock'] = [];
+          whStockPayload.forEach(item => {
+            const idx = LocalDB.cache['warehouse_stock'].findIndex(x => x.warehouse === item.warehouse && x.code.toLowerCase() === item.code.toLowerCase());
+            if (idx >= 0) {
+              LocalDB.cache['warehouse_stock'][idx] = item;
+            } else {
+              LocalDB.cache['warehouse_stock'].push(item);
+            }
+          });
+          LocalDB.persist('warehouse_stock');
+        }
       }
 
       if (ledgerLogs.length > 0) {
@@ -5128,10 +5225,28 @@ const ClientBackend = {
         }
       });
 
-      if (Object.keys(revertMap).length > 0) {
-        await callSupabaseBatchPost_("products?on_conflict=code", Object.values(revertMap), {
-          "Prefer": "resolution=merge-duplicates,return=minimal"
-        }, 250);
+      const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
+      if (activeScope === 'admin' || activeScope === 'all') {
+        if (Object.keys(revertMap).length > 0) {
+          await callSupabaseBatchPost_("products?on_conflict=code", Object.values(revertMap), {
+            "Prefer": "resolution=merge-duplicates,return=minimal"
+          }, 250);
+        }
+      } else {
+        // Hoàn tác tồn kho riêng của kho nhân viên trong warehouse_stock
+        const whStockPayload = Object.values(revertMap).map(up => ({
+          warehouse: activeScope,
+          code: up.code,
+          stock_tp: up.stock_tp,
+          stock_pp: up.stock_pp,
+          total_stock: up.total_stock,
+          updated_at: new Date().toISOString()
+        }));
+        try {
+          await callSupabaseBatchPost_("warehouse_stock?on_conflict=warehouse,code", whStockPayload, {
+            "Prefer": "resolution=merge-duplicates,return=minimal"
+          }, 250);
+        } catch(e) {}
       }
 
       await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
@@ -5152,12 +5267,12 @@ const ClientBackend = {
       const cleanCode = String(code || "").trim();
       const [pArr, txs] = await Promise.all([
         callSupabaseSingle_(`products?code=ilike.${encodeURIComponent(cleanCode)}&select=code,name,unit,total_stock,pack_qty,pack_unit`, "GET"),
-        callSupabaseSingle_(`inventory_transactions?code=ilike.${encodeURIComponent(cleanCode)}&select=id,voucher_date,voucher_no,type,quantity,quality,note&order=voucher_date.asc,id.asc&limit=10000`, "GET")
+        callSupabaseSingle_(`inventory_transactions?code=ilike.${encodeURIComponent(cleanCode)}&select=id,voucher_date,voucher_no,type,quantity,quality,note,warehouse&order=voucher_date.asc,id.asc&limit=10000`, "GET")
       ]);
 
       if (!pArr || pArr.length === 0) throw new Error(`Không tìm thấy mã "${cleanCode}".`);
 
-      const txList = txs || [];
+      const txList = (txs || []).filter(t => isTransactionInCurrentWarehouse(t));
       txList.sort((a, b) => {
         if (a.voucher_date !== b.voucher_date) {
           return String(a.voucher_date).localeCompare(String(b.voucher_date));
@@ -5255,6 +5370,7 @@ const ClientBackend = {
 
       const beforeStockMap = {};
       (beforeTxs || []).forEach(t => {
+        if (!isTransactionInCurrentWarehouse(t)) return;
         const cKey = String(t.code || '').toLowerCase();
         const q = Number(t.quantity) || 0;
         const isNhap = String(t.type || '').toUpperCase().includes("NHAP");
@@ -5267,6 +5383,7 @@ const ClientBackend = {
       let totalXuat = 0;
 
       (dayTxs || []).forEach(t => {
+        if (!isTransactionInCurrentWarehouse(t)) return;
         const cKey = String(t.code || '').toLowerCase();
         if (!itemTxsMap[cKey]) itemTxsMap[cKey] = [];
         itemTxsMap[cKey].push(t);
@@ -5375,6 +5492,7 @@ const ClientBackend = {
       let grandTotalQty = 0;
 
       (txs || []).forEach(t => {
+        if (!isTransactionInCurrentWarehouse(t)) return;
         const code = String(t.code || '').trim();
         const name = String(t.name || '').trim();
         const voucherNo = String(t.voucher_no || 'CHƯA_CÓ_SỐ').trim();
@@ -6210,12 +6328,174 @@ window.google.script = {
       if (btn) btn.focus();
     }
 
+    let currentWarehouseScope = 'all';
+
+    function getActiveWarehouseScope() {
+      if (!currentAppUser) return 'all';
+      if (currentAppUser.role !== 'admin') {
+        return String(currentAppUser.username || 'staff').toLowerCase();
+      }
+      return currentWarehouseScope || 'all';
+    }
+
+    function isTransactionInCurrentWarehouse(tx) {
+      const scope = getActiveWarehouseScope();
+      if (scope === 'all') return true;
+
+      const note = String((tx && tx.note) || '');
+      const wh = String((tx && tx.warehouse) || '').toLowerCase();
+
+      if (scope === 'admin') {
+        return !note.includes('[Kho:') || note.includes('[Kho: admin]') || wh === 'admin' || wh === 'main';
+      }
+
+      return note.includes(`[Kho: ${scope}]`) || wh === scope.toLowerCase();
+    }
+
+    function isDispatchInCurrentWarehouse(dp) {
+      const scope = getActiveWarehouseScope();
+      if (scope === 'all') return true;
+
+      const note = String((dp && dp.note) || '');
+      const staff = String((dp && dp.staff_name) || '').toLowerCase();
+      const wh = String((dp && dp.warehouse) || '').toLowerCase();
+
+      if (scope === 'admin') {
+        return !note.includes('[Kho:') || note.includes('[Kho: admin]') || wh === 'admin' || wh === 'main';
+      }
+
+      return note.includes(`[Kho: ${scope}]`) || wh === scope.toLowerCase() || staff.includes(scope.toLowerCase());
+    }
+
+    function getWarehouseScopeLabel(scope) {
+      if (scope === 'all') return '🌐 Tổng hợp (Tất cả kho)';
+      if (scope === 'admin') return '🏢 Kho Tổng (Chính)';
+      if (scope === 'tuan') return '📦 Kho Tuấn (Nguyễn Văn Tuấn)';
+      if (scope === 'trong') return '📦 Kho Trọng (Trần Đình Trọng)';
+      if (scope === 'hung') return '📦 Kho Hùng (Lê Văn Hùng)';
+      if (scope === 'dung') return '📦 Kho Dũng (Phạm Quốc Dũng)';
+      return `📦 Kho ${scope}`;
+    }
+
+    function updateWarehouseScopeUI() {
+      const widget = document.getElementById('header-warehouse-widget');
+      const select = document.getElementById('select-active-warehouse');
+      const staffLabel = document.getElementById('label-staff-warehouse');
+      const sideWh = document.getElementById('sidebar-user-warehouse');
+
+      if (!currentAppUser) {
+        if (widget) widget.classList.add('hidden');
+        return;
+      }
+      if (widget) widget.classList.remove('hidden');
+
+      const isAdmin = (currentAppUser.role === 'admin');
+
+      if (isAdmin) {
+        if (select) {
+          select.classList.remove('hidden');
+          select.value = currentWarehouseScope || 'all';
+        }
+        if (staffLabel) staffLabel.classList.add('hidden');
+        if (sideWh) {
+          sideWh.innerText = (currentWarehouseScope === 'all') ? '🌐 Tất cả kho' : getWarehouseScopeLabel(currentWarehouseScope);
+        }
+      } else {
+        if (select) select.classList.add('hidden');
+        if (staffLabel) {
+          staffLabel.classList.remove('hidden');
+          staffLabel.innerText = `Kho: ${currentAppUser.full_name || currentAppUser.username}`;
+        }
+        if (sideWh) {
+          sideWh.innerText = `Kho ${currentAppUser.full_name || currentAppUser.username}`;
+        }
+      }
+    }
+
+    async function populateWarehouseSelectorOptions() {
+      const select = document.getElementById('select-active-warehouse');
+      if (!select || !isUserAdmin()) return;
+
+      const defaultOptions = [
+        { value: 'all', label: '🌐 Tổng hợp (Tất cả kho)' },
+        { value: 'admin', label: '🏢 Kho Tổng (Chính)' },
+        { value: 'tuan', label: '📦 Kho Tuấn (Nguyễn Văn Tuấn)' },
+        { value: 'trong', label: '📦 Kho Trọng (Trần Đình Trọng)' },
+        { value: 'hung', label: '📦 Kho Hùng (Lê Văn Hùng)' },
+        { value: 'dung', label: '📦 Kho Dũng (Phạm Quốc Dũng)' }
+      ];
+
+      try {
+        const users = await callSupabaseSingle_('app_users?order=id.asc', 'GET').catch(() => []);
+        if (Array.isArray(users) && users.length > 0) {
+          users.forEach(u => {
+            const uName = String(u.username || '').toLowerCase();
+            if (u.role !== 'admin' && !defaultOptions.some(o => o.value === uName)) {
+              defaultOptions.push({
+                value: uName,
+                label: `📦 Kho ${u.full_name || u.username}`
+              });
+            }
+          });
+        }
+      } catch(e) {}
+
+      select.innerHTML = defaultOptions.map(o => 
+        `<option value="${o.value}" ${o.value === currentWarehouseScope ? 'selected' : ''}>${o.label}</option>`
+      ).join('');
+    }
+
+    async function handleChangeWarehouseScope(val) {
+      currentWarehouseScope = val;
+      if (isUserAdmin()) {
+        localStorage.setItem('wh_admin_selected_warehouse', val);
+      }
+      updateWarehouseScopeUI();
+
+      Swal.fire({
+        icon: 'info',
+        title: 'Đang xem phạm vi kho:',
+        text: getWarehouseScopeLabel(val),
+        timer: 1200,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+
+      try { localStorage.removeItem('CACHED_INVENTORY'); } catch(e) {}
+
+      if (typeof loadInventory === 'function') {
+        loadInventory();
+      }
+
+      if (typeof loadDispatchHistoryData === 'function') {
+        try { loadDispatchHistoryData(); } catch(e) {}
+      }
+
+      if (typeof loadDailyReport === 'function') {
+        try { loadDailyReport(); } catch(e) {}
+      }
+
+      if (typeof loadReportData === 'function') {
+        try { loadReportData(); } catch(e) {}
+      }
+    }
+
     function isUserAdmin() {
       return !!(currentAppUser && currentAppUser.role === 'admin');
     }
 
     function setCurrentUser(user) {
       currentAppUser = user;
+
+      const isAdmin = (user.role === 'admin');
+      if (isAdmin) {
+        currentWarehouseScope = localStorage.getItem('wh_admin_selected_warehouse') || 'all';
+      } else {
+        currentWarehouseScope = String(user.username || 'staff').toLowerCase();
+      }
+      updateWarehouseScopeUI();
+      populateWarehouseSelectorOptions();
 
       // Cập nhật giao diện Sidebar
       const sideAvatar = document.getElementById('sidebar-user-avatar');
@@ -6236,7 +6516,6 @@ window.google.script = {
         .join('')
         .toUpperCase();
 
-      const isAdmin = (user.role === 'admin');
       const roleText = isAdmin ? 'Quản Trị Viên' : 'Nhân Viên Kho';
       const roleBadgeClass = isAdmin 
         ? 'px-1.5 py-0.2 text-[9px] font-bold rounded bg-rose-100 text-rose-700 border border-rose-200' 
@@ -11413,7 +11692,8 @@ window.google.script = {
           callSupabaseSingle_('vehicles?order=plate.asc', 'GET')
         ]);
 
-        dispatchListCached = (phatHangRes.status === 'fulfilled' && Array.isArray(phatHangRes.value)) ? phatHangRes.value : [];
+        const rawDispatches = (phatHangRes.status === 'fulfilled' && Array.isArray(phatHangRes.value)) ? phatHangRes.value : [];
+        dispatchListCached = rawDispatches.filter(it => isDispatchInCurrentWarehouse(it));
         warehouseStaffListCached = (staffRes.status === 'fulfilled' && Array.isArray(staffRes.value)) ? staffRes.value : [];
         vehiclesListCached = (vehiclesRes.status === 'fulfilled' && Array.isArray(vehiclesRes.value)) ? vehiclesRes.value : [];
 
@@ -14612,10 +14892,12 @@ window.google.script = {
         didOpen: () => Swal.showLoading()
       });
 
+      const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
       const payload = allValidItems.map(r => {
         const itemNoteParts = [];
         if (r.note) itemNoteParts.push(r.note);
         if (generalNote) itemNoteParts.push(`(Ghi chung: ${generalNote})`);
+        if (activeScope && activeScope !== 'all') itemNoteParts.push(`[Kho: ${activeScope}]`);
         const itemNote = itemNoteParts.join(' ');
 
         return {
