@@ -17557,8 +17557,7 @@ window.google.script = {
           `SỐ LƯỢNG (${(item.unit || '').toUpperCase()})`,
           "SỐ PHIẾU PHÁT",
           "NGÀY PHÁT",
-          "GIỜ PHÁT",
-          "GHI CHÚ"
+          "GIỜ PHÁT"
         ];
 
         // Sắp xếp các lượt phát gom nhóm theo tên người phát hàng (thủ kho)
@@ -17586,8 +17585,7 @@ window.google.script = {
             q,
             r.voucherNo || '-',
             r.date ? formatDateVN(r.date) : '-',
-            r.time || '-',
-            r.note || '-'
+            r.time || '-'
           ];
         });
 
@@ -17601,12 +17599,11 @@ window.google.script = {
           totalQty,
           `${records.length} lượt phát`,
           "",
-          "",
           ""
         ]);
 
-        const colWidths = [8, 18, 20, 24, 16, 20, 20, 16, 14, 30];
-        const colAligns = ['center', 'center', 'left', 'left', 'center', 'right', 'center', 'center', 'center', 'left'];
+        const colWidths = [8, 18, 20, 24, 16, 20, 20, 16, 14];
+        const colAligns = ['center', 'center', 'left', 'left', 'center', 'right', 'center', 'center', 'center'];
 
         await exportExcelDocument({
           sheetName: `PhatHang_${(item.code || 'SKU').replace(/[^a-zA-Z0-9_-]/g, '_')}`,
@@ -17674,7 +17671,6 @@ window.google.script = {
             <td style="border: 1px solid #000; padding: 5px; text-align: right; font-family: monospace; font-weight: bold;">${formatNumber(q)}</td>
             <td style="border: 1px solid #000; padding: 5px; text-align: center; font-family: monospace;">${escapeHtml(r.voucherNo || '-')}</td>
             <td style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 10.5px;">${r.date ? formatDateVN(r.date) : ''} ${r.time ? escapeHtml(r.time) : ''}</td>
-            <td style="border: 1px solid #000; padding: 5px; text-align: left; font-size: 10.5px;">${escapeHtml(r.note || '-')}</td>
           </tr>
         `;
       }).join('');
@@ -17728,7 +17724,6 @@ window.google.script = {
                 <th style="border: 1px solid #000; padding: 6px; text-align: right; width: 95px;">Số Lượng (${escapeHtml(item.unit || '')})</th>
                 <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 110px;">Số Phiếu</th>
                 <th style="border: 1px solid #000; padding: 6px; text-align: center; width: 120px;">Thời Gian</th>
-                <th style="border: 1px solid #000; padding: 6px; text-align: left;">Ghi Chú</th>
               </tr>
             </thead>
             <tbody>
@@ -17738,7 +17733,7 @@ window.google.script = {
               <tr style="font-weight: bold; background: #f1f5f9;">
                 <td colspan="4" style="border: 1px solid #000; padding: 6px; text-align: right; text-transform: uppercase;">Tổng cộng (${records.length} lượt phát):</td>
                 <td style="border: 1px solid #000; padding: 6px; text-align: right; font-family: monospace; font-size: 12px;">${formatNumber(totalQty)}</td>
-                <td colspan="3" style="border: 1px solid #000; padding: 6px; text-align: left; font-size: 11px; font-style: italic; color: #475569;">Chứng từ hợp lệ trên hệ thống</td>
+                <td colspan="2" style="border: 1px solid #000; padding: 6px; text-align: left; font-size: 11px; font-style: italic; color: #475569;">Chứng từ hợp lệ trên hệ thống</td>
               </tr>
             </tfoot>
           </table>
@@ -17913,9 +17908,6 @@ window.google.script = {
             <td class="px-3 py-2 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
               ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1">${escapeHtml(r.time)}</span>` : ''}
             </td>
-            <td class="px-3 py-2 text-left text-slate-600 text-[11px] max-w-xs truncate" title="${escapeHtml(r.note || '')}">
-              ${r.note ? escapeHtml(r.note) : '<span class="text-slate-300">-</span>'}
-            </td>
           </tr>
         `;
       }).join('');
@@ -18045,7 +18037,6 @@ window.google.script = {
                         <th class="px-3 py-2 text-right w-28 bg-indigo-50/80 font-mono text-indigo-950 border-l border-indigo-100">Số lượng</th>
                         <th class="px-3 py-2 text-center w-28 font-mono">Số phiếu</th>
                         <th class="px-3 py-2 text-center w-36 font-mono">Thời gian</th>
-                        <th class="px-3 py-2 text-left">Ghi chú</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white" id="product-detail-tbody">
@@ -18059,7 +18050,7 @@ window.google.script = {
                         <td class="px-3 py-2 text-right font-black font-mono text-sm text-indigo-950 bg-indigo-100/70 border-l border-indigo-200" id="product-detail-foot-qty">
                           ${formatNumber(totalQty)} <span class="text-[11px] font-normal text-slate-500">${escapeHtml(item.unit || '')}</span>
                         </td>
-                        <td colspan="3" class="px-3 py-2 text-slate-400 font-normal italic text-[11px]">
+                        <td colspan="2" class="px-3 py-2 text-slate-400 font-normal italic text-[11px]">
                           Chứng từ hợp lệ trên hệ thống
                         </td>
                       </tr>
@@ -19156,8 +19147,10 @@ window.google.script = {
     }
 
     function getCheckedFastGroups() {
-      if (Array.isArray(checkedFastGroupsList)) return checkedFastGroupsList.filter(g => g && g !== 'Chưa phân nhóm');
       const storageKey = getFastItemsStorageKey('checked_fast_dispatch_groups');
+      if (Array.isArray(checkedFastGroupsList)) {
+        return checkedFastGroupsList;
+      }
       try {
         const stored = localStorage.getItem(storageKey);
         if (stored) {
@@ -19176,7 +19169,10 @@ window.google.script = {
       return checkedFastGroupsList;
     }
 
-    function saveCheckedFastGroups() {
+    function saveCheckedFastGroups(newList) {
+      if (Array.isArray(newList)) {
+        checkedFastGroupsList = newList.filter(g => g && g !== 'Chưa phân nhóm');
+      }
       if (!Array.isArray(checkedFastGroupsList)) return;
       const storageKey = getFastItemsStorageKey('checked_fast_dispatch_groups');
       try {
@@ -19187,14 +19183,19 @@ window.google.script = {
     }
 
     function toggleFastGroup(groupName) {
-      const list = getCheckedFastGroups();
-      const idx = list.indexOf(groupName);
+      if (!Array.isArray(checkedFastGroupsList)) {
+        getCheckedFastGroups();
+      }
+      const cleanGrp = String(groupName || '').trim();
+      if (!cleanGrp) return;
+
+      const idx = checkedFastGroupsList.findIndex(g => g.trim().toLowerCase() === cleanGrp.toLowerCase());
       if (idx >= 0) {
         // Nếu đã có thì bỏ chọn
-        list.splice(idx, 1);
+        checkedFastGroupsList.splice(idx, 1);
       } else {
         // NẾU TÍCH CHỌN MỚI: ĐƯA LÊN ĐẦU TIÊN (LIFO) ĐỂ SẢN PHẨM HIỂN THỊ LÊN TRÊN CÙNG
-        list.unshift(groupName);
+        checkedFastGroupsList.unshift(cleanGrp);
       }
       saveCheckedFastGroups();
       renderFastGroupCheckboxes();
@@ -19221,6 +19222,9 @@ window.google.script = {
           event.preventDefault();
           event.stopPropagation();
         }
+        return;
+      }
+      if (event && event.target && event.target.closest('.fast-group-drag-handle')) {
         return;
       }
       toggleFastGroup(grpName);
@@ -19255,14 +19259,14 @@ window.google.script = {
 
       let html = '';
       displayGroups.forEach(grp => {
-        const isChecked = checkedList.includes(grp);
+        const isChecked = checkedList.some(c => c.trim().toLowerCase() === grp.trim().toLowerCase());
         const filledInGrp = groupFilledCount[grp] || 0;
         const hasFilled = filledInGrp > 0;
 
         // BỎ HOÀN TOÀN Ô VUÔNG CHECKBOX; THAY BẰNG HIỆU ỨNG THẺ NÚT HOVER & ACTIVE RỰC RỠ NỔI BẬT
         const chipClasses = isChecked
-          ? 'fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-black flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none transition-all duration-200 transform hover:scale-[1.03] active:scale-[0.98] bg-gradient-to-r from-teal-600 to-emerald-600 text-white border-teal-600 shadow-md ring-2 ring-teal-400/40'
-          : 'fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold flex items-center space-x-1.5 cursor-grab active:cursor-grabbing border select-none transition-all duration-200 transform hover:scale-[1.03] active:scale-[0.98] bg-white text-slate-700 border-slate-300 hover:border-teal-500 hover:bg-teal-50/70 hover:text-teal-950 shadow-2xs hover:shadow-xs';
+          ? 'fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-black flex items-center space-x-1.5 cursor-pointer border select-none transition-all duration-200 transform hover:scale-[1.03] active:scale-[0.98] bg-gradient-to-r from-teal-600 to-emerald-600 text-white border-teal-600 shadow-md ring-2 ring-teal-400/40'
+          : 'fast-group-chip px-3 py-1.5 rounded-xl text-xs sm:text-[13px] font-bold flex items-center space-x-1.5 cursor-pointer border select-none transition-all duration-200 transform hover:scale-[1.03] active:scale-[0.98] bg-white text-slate-700 border-slate-300 hover:border-teal-500 hover:bg-teal-50/70 hover:text-teal-950 shadow-2xs hover:shadow-xs';
 
         html += `
           <div role="button" 
@@ -19271,9 +19275,9 @@ window.google.script = {
                onclick="handleFastGroupChipClick(event, '${escapeJsString(grp)}')"
                onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleFastGroupChipClick(event, '${escapeJsString(grp)}');}"
                class="${chipClasses}"
-               title="${isChecked ? 'Bấm để tắt hiển thị nhóm ' + escapeHtml(grp) : 'Bấm để hiển thị nhóm ' + escapeHtml(grp) + ' lên đầu bảng'} • Kéo thả để đổi thứ tự nhóm">
-            <span class="text-slate-300 pointer-events-none ${isChecked ? 'text-teal-200' : 'text-slate-400'}">
-              <i class="bi bi-grip-vertical text-xs"></i>
+               title="${isChecked ? 'Bấm để tắt hiển thị nhóm ' + escapeHtml(grp) : 'Bấm để hiển thị nhóm ' + escapeHtml(grp) + ' lên đầu bảng'} • Kéo icon grip để đổi thứ tự nhóm">
+            <span class="fast-group-drag-handle text-slate-300 hover:text-teal-600 cursor-grab active:cursor-grabbing p-0.5 rounded transition ${isChecked ? 'text-teal-200 hover:text-white' : 'text-slate-400'}" title="Kéo thả icon này để đổi thứ tự nhóm">
+              <i class="bi bi-grip-vertical text-xs pointer-events-none"></i>
             </span>
             <span class="tracking-tight pointer-events-none">${escapeHtml(grp)}</span>
             ${hasFilled ? `<span class="fast-group-filled-dot w-2 h-2 rounded-full ${isChecked ? 'bg-amber-300' : 'bg-emerald-500'} inline-block shadow-2xs ml-0.5 pointer-events-none" title="Đã có sản phẩm điền số lượng"></span>` : ''}
@@ -19297,9 +19301,8 @@ window.google.script = {
       }
 
       fastGroupsSortableInstance = new Sortable(container, {
+        handle: '.fast-group-drag-handle',
         animation: 150,
-        touchStartThreshold: 3,
-        delayOnTouchOnly: true,
         ghostClass: 'fast-group-sortable-ghost',
         chosenClass: 'fast-group-sortable-chosen',
         dragClass: 'fast-group-sortable-drag',
@@ -19309,7 +19312,7 @@ window.google.script = {
         onEnd: function(evt) {
           setTimeout(() => {
             isDraggingFastGroup = false;
-          }, 80);
+          }, 100);
 
           if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
             const chips = container.querySelectorAll('.fast-group-chip');
@@ -19518,9 +19521,10 @@ window.google.script = {
       let html = '';
 
       displayGroupsOrder.forEach(grpName => {
+        const cleanGrpName = String(grpName || '').trim().toLowerCase();
         const grpItems = allItems.filter(it => {
-          const itGrp = (it.group && String(it.group).trim()) || 'Chưa phân nhóm';
-          return itGrp === grpName;
+          const itGrp = String((it.group && String(it.group).trim()) || 'Chưa phân nhóm').trim().toLowerCase();
+          return itGrp === cleanGrpName;
         });
 
         if (grpItems.length === 0) return;
