@@ -1945,146 +1945,121 @@
               </div>
             </div>
 
-            <!-- THÔNG TIN CHUYẾN XE & THÀNH VIÊN PHÁT (3 CỘT X 2 HÀNG CÂN ĐỐI) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pb-4 border-b border-slate-100 text-xs bg-slate-50/50 p-4 rounded-xl border border-slate-200/70">
-              <!-- Cột 1 - Hàng 1: Số phiếu phát hàng -->
-              <div>
-                <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1">Số Phiếu Phát Hàng:</label>
+            <!-- THÔNG TIN CHUYẾN XE & THÀNH VIÊN PHÁT (TRÊN CÙNG 1 DÒNG DUY NHẤT, CO GIÃN PHÙ HỢP MỌI MÀN HÌNH) -->
+            <div class="flex flex-wrap lg:flex-nowrap items-end gap-2.5 pb-3.5 text-xs bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+              <!-- Ô 1: Số phiếu phát hàng -->
+              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-36 min-w-[125px]">
+                <label class="block font-bold text-slate-700 uppercase text-[10.5px] mb-1 truncate" title="Số phiếu phát hàng">Số phiếu:</label>
                 <div class="relative flex items-center">
-                  <i class="bi bi-hash absolute left-2.5 text-teal-600 text-xs"></i>
-                  <input type="text" id="dispatch-input-voucherno" readonly class="w-full pl-7 pr-3 py-1.5 border border-slate-300 rounded-lg bg-slate-100/90 font-mono font-bold text-teal-900 select-all cursor-default">
+                  <i class="bi bi-hash absolute left-2 text-teal-600 text-xs"></i>
+                  <input type="text" id="dispatch-input-voucherno" readonly class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg bg-slate-100/90 font-mono font-bold text-teal-900 text-xs select-all cursor-default shadow-2xs">
                 </div>
               </div>
 
-              <!-- Cột 2 - Hàng 1: Ngày & Giờ phát hàng -->
-              <div>
-                <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1">Ngày & Giờ phát hàng <span class="text-rose-500">*</span>:</label>
-                <div class="grid grid-cols-2 gap-1.5">
-                  <input type="date" id="dispatch-input-date" onchange="if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
-                  <input type="time" id="dispatch-input-time" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
-                </div>
+              <!-- Ô 2: Ngày phát hàng (Đã bỏ ô nhập giờ, lưu ngầm không ảnh hưởng hệ thống) -->
+              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-32 min-w-[120px]">
+                <label class="block font-bold text-slate-700 uppercase text-[10.5px] mb-1 truncate" title="Ngày phát hàng">Ngày phát <span class="text-rose-500">*</span>:</label>
+                <input type="date" id="dispatch-input-date" onchange="if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500 shadow-2xs">
+                <input type="hidden" id="dispatch-input-time">
               </div>
 
-              <!-- Cột 3 - Hàng 1: Thành viên phát hàng -->
-              <div>
+              <!-- Ô 3: Thành viên phát hàng (Kho) -->
+              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-44 min-w-[160px]">
                 <div class="flex items-center justify-between mb-1">
-                  <label class="font-bold text-slate-700 uppercase text-[11px]">Thành viên phát hàng (Kho) <span class="text-rose-500">*</span>:</label>
-                  <button type="button" onclick="openWarehouseStaffModal()" class="text-[10px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1 cursor-pointer" title="Quản lý / Thêm thành viên kho">
-                    <i class="bi bi-people-fill"></i>
-                    <span>QL Thành viên</span>
+                  <label class="font-bold text-slate-700 uppercase text-[10.5px] truncate" title="Thành viên phát hàng (Kho)">Người phát <span class="text-rose-500">*</span>:</label>
+                  <button type="button" onclick="openWarehouseStaffModal()" class="text-[10px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-0.5 cursor-pointer" title="Quản lý thành viên kho">
+                    <i class="bi bi-people-fill text-[10px]"></i>
+                    <span>QL</span>
                   </button>
                 </div>
-                <div class="flex gap-1.5">
-                  <select id="dispatch-input-staff" onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500 bg-white text-slate-800 text-xs">
-                    <option value="">-- Chọn thành viên kho --</option>
+                <div class="flex gap-1">
+                  <select id="dispatch-input-staff" onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500 bg-white text-slate-800 text-xs truncate shadow-2xs">
+                    <option value="">-- Chọn NV kho --</option>
                   </select>
-                  <button type="button" onclick="quickAddStaffPrompt()" class="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer" title="Thêm nhanh thành viên mới">
+                  <button type="button" onclick="quickAddStaffPrompt()" class="px-2 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer shadow-2xs" title="Thêm nhanh thành viên mới">
                     <i class="bi bi-plus-lg"></i>
                   </button>
                 </div>
               </div>
 
-              <!-- Cột 1 - Hàng 2: STT Xe phát trong ngày của người phụ trách -->
-              <div class="col-span-1 md:col-span-1 lg:col-span-1">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="font-bold text-teal-900 uppercase text-[11px] flex items-center space-x-1" title="Số thứ tự xe phát hàng trong ngày của từng người (tự động chạy từ 1, không trùng lặp)">
-                    <i class="bi bi-sort-numeric-down text-teal-600"></i>
-                    <span>STT Xe (Ngày) <span class="text-rose-500">*</span>:</span>
-                  </label>
-                  <span class="text-[10px] text-teal-600 font-semibold italic">Tự động tăng</span>
-                </div>
-                <div class="relative">
-                  <input type="number" 
-                         id="dispatch-input-daily-seq"
-                         min="1" 
-                         step="1"
-                         value="1"
-                         oninput="if(this.value && this.value < 1) this.value = 1;"
-                         class="w-full text-center px-2 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-black text-sm bg-teal-50/40 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-600 shadow-2xs"
-                         placeholder="1" 
-                         title="Số thứ tự chuyến xe phát trong ngày của người phát này (chạy tự động 1, 2, 3... không trùng nhau)">
-                </div>
-                <p class="text-[10px] text-slate-400 mt-1 italic truncate">
-                  Xe số mấy trong ngày của người này
-                </p>
+              <!-- Ô 4: STT Xe (Ngày) -->
+              <div class="w-full sm:w-auto sm:w-20 lg:w-20 min-w-[75px] shrink-0">
+                <label class="block font-bold text-teal-900 uppercase text-[10.5px] mb-1 text-center truncate" title="Số thứ tự xe trong ngày của người phát">STT Xe <span class="text-rose-500">*</span>:</label>
+                <input type="number" 
+                       id="dispatch-input-daily-seq"
+                       min="1" 
+                       step="1"
+                       value="1"
+                       oninput="if(this.value && this.value < 1) this.value = 1;"
+                       class="w-full text-center px-1.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-black text-sm bg-teal-50/40 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-600 shadow-2xs"
+                       placeholder="1" 
+                       title="Số thứ tự chuyến xe phát trong ngày của người này">
               </div>
 
-              <!-- Cột 2 - Hàng 2: Số xe / Mã xe lấy hàng -->
-              <div class="col-span-1 md:col-span-1 lg:col-span-1">
+              <!-- Ô 5: Số xe / Mã xe lấy hàng (Đã bỏ nút +) -->
+              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-44 min-w-[165px] relative">
                 <div class="flex items-center justify-between mb-1">
-                  <label class="font-bold text-teal-900 uppercase text-[11px] flex items-center space-x-1">
-                    <i class="bi bi-truck text-teal-600"></i>
-                    <span>Số xe / Mã xe lấy hàng <span class="text-rose-500">*</span>:</span>
-                  </label>
-                  <button type="button" onclick="openVehiclesManagerModal()" class="text-[10px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1 cursor-pointer" title="Quản lý danh mục xe">
-                    <i class="bi bi-collection"></i>
-                    <span>Danh mục xe</span>
+                  <label class="font-bold text-teal-900 uppercase text-[10.5px] truncate" title="Số xe / Mã xe lấy hàng">Số xe nhận <span class="text-rose-500">*</span>:</label>
+                  <button type="button" onclick="openVehiclesManagerModal()" class="text-[10px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-0.5 cursor-pointer" title="Quản lý danh mục xe">
+                    <i class="bi bi-truck text-[10px]"></i>
+                    <span>DS xe</span>
                   </button>
                 </div>
-                <div class="flex gap-1.5 relative">
-                  <div class="relative flex-1">
-                    <input type="text" id="dispatch-input-vehicle"
-                           autocomplete="off"
-                           autocorrect="off"
-                           autocapitalize="off"
-                           spellcheck="false"
-                           data-lpignore="true"
-                           data-form-type="other"
-                           oninput="handleDispatchVehicleAutocomplete(this.value)"
-                           onfocus="handleDispatchVehicleAutocomplete(this.value)"
-                           onblur="onDispatchVehicleBlur(this.value)"
-                           onkeydown="handleDispatchVehicleKeydown(event)"
-                           onchange="onDispatchVehicleChange(this.value)"
-                           placeholder="Nhập biển số hoặc mã xe..." 
-                           class="w-full px-2.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-bold uppercase focus:ring-2 focus:ring-teal-600 bg-white text-teal-950 text-xs shadow-2xs">
-                    <datalist id="dispatch-vehicle-suggestions"></datalist>
-                    <!-- DROPDOWN GỢI Ý MÃ XE & SỐ XE TƯƠI SÁNG, HIỆN ĐẠI -->
-                    <div id="dispatch-vehicle-dropdown" 
-                         class="hidden absolute left-0 top-full mt-1.5 w-full min-w-[340px] max-w-lg bg-white border-2 border-teal-500 rounded-xl shadow-2xl z-[9999] max-h-72 overflow-y-auto custom-scroll divide-y divide-slate-100" 
-                         style="display: none;"></div>
-                  </div>
-                  <button type="button" onclick="quickAddVehiclePrompt()" class="px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer" title="Tạo mã xe mới">
-                    <i class="bi bi-plus-lg"></i>
-                  </button>
+                <div class="relative w-full">
+                  <input type="text" id="dispatch-input-vehicle"
+                         autocomplete="off"
+                         autocorrect="off"
+                         autocapitalize="off"
+                         spellcheck="false"
+                         data-lpignore="true"
+                         data-form-type="other"
+                         oninput="handleDispatchVehicleAutocomplete(this.value)"
+                         onfocus="handleDispatchVehicleAutocomplete(this.value)"
+                         onblur="onDispatchVehicleBlur(this.value)"
+                         onkeydown="handleDispatchVehicleKeydown(event)"
+                         onchange="onDispatchVehicleChange(this.value)"
+                         placeholder="Biển số / mã xe..." 
+                         class="w-full px-2.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-bold uppercase focus:ring-2 focus:ring-teal-600 bg-white text-teal-950 text-xs shadow-2xs">
+                  <datalist id="dispatch-vehicle-suggestions"></datalist>
+                  <div id="dispatch-vehicle-dropdown" 
+                       class="hidden absolute left-0 top-full mt-1.5 w-full min-w-[320px] max-w-md bg-white border-2 border-teal-500 rounded-xl shadow-2xl z-[9999] max-h-72 overflow-y-auto custom-scroll divide-y divide-slate-100" 
+                       style="display: none;"></div>
                 </div>
-                <p class="text-[10px] text-slate-500 mt-1 italic flex items-center gap-1">
-                  <i class="bi bi-lightning-charge-fill text-amber-500"></i> Số xe mới sẽ tự động lưu vào danh mục
-                </p>
               </div>
 
-              <!-- Cột 3 - Hàng 2: Lái xe (RÚT GỌN) & SĐT Lái xe -->
-              <div class="col-span-1 md:col-span-2 lg:col-span-1 grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block font-bold text-slate-700 uppercase text-[11px] mb-1 truncate" title="Lái xe / Người vận chuyển">Lái xe / Người nhận:</label>
-                  <div class="relative flex items-center">
-                    <i class="bi bi-person absolute left-2 text-slate-400 text-xs"></i>
-                    <input type="text" id="dispatch-input-driver" 
-                           name="wh_driver_noname"
-                           autocomplete="off"
-                           autocorrect="off"
-                           autocapitalize="off"
-                           spellcheck="false"
-                           data-lpignore="true"
-                           data-form-type="other"
-                           placeholder="Tên lái xe..." 
-                           class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500">
-                  </div>
+              <!-- Ô 6: Lái xe / Người nhận -->
+              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-36 min-w-[125px]">
+                <label class="block font-bold text-slate-700 uppercase text-[10.5px] mb-1 truncate" title="Lái xe / Người nhận hàng">Lái xe / Nhận:</label>
+                <div class="relative flex items-center">
+                  <i class="bi bi-person absolute left-2 text-slate-400 text-xs"></i>
+                  <input type="text" id="dispatch-input-driver" 
+                         name="wh_driver_noname"
+                         autocomplete="off"
+                         autocorrect="off"
+                         autocapitalize="off"
+                         spellcheck="false"
+                         data-lpignore="true"
+                         data-form-type="other"
+                         placeholder="Tên lái xe..." 
+                         class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500 shadow-2xs">
                 </div>
-                <div>
-                  <label class="block font-bold text-teal-800 uppercase text-[11px] mb-1 truncate" title="SĐT lái xe (tự động hiện theo xe)">SĐT Lái xe:</label>
-                  <div class="relative flex items-center">
-                    <i class="bi bi-telephone-fill absolute left-2 text-teal-600 text-xs"></i>
-                    <input type="text" id="dispatch-input-driver-phone" 
-                           name="wh_phone_notel"
-                           autocomplete="off"
-                           autocorrect="off"
-                           autocapitalize="off"
-                           spellcheck="false"
-                           data-lpignore="true"
-                           data-form-type="other"
-                           placeholder="SĐT..." 
-                           class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500">
-                  </div>
+              </div>
+
+              <!-- Ô 7: SĐT Lái xe -->
+              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-32 min-w-[115px]">
+                <label class="block font-bold text-teal-800 uppercase text-[10.5px] mb-1 truncate" title="Số điện thoại lái xe">SĐT Lái xe:</label>
+                <div class="relative flex items-center">
+                  <i class="bi bi-telephone-fill absolute left-2 text-teal-600 text-xs"></i>
+                  <input type="text" id="dispatch-input-driver-phone" 
+                         name="wh_phone_notel"
+                         autocomplete="off"
+                         autocorrect="off"
+                         autocapitalize="off"
+                         spellcheck="false"
+                         data-lpignore="true"
+                         data-form-type="other"
+                         placeholder="SĐT..." 
+                         class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500 shadow-2xs">
                 </div>
               </div>
             </div>
@@ -15618,8 +15593,8 @@ window.google.script = {
       if (!seqEl) return;
 
       const isEditing = editingDispatchContext && editingDispatchContext.isEdit;
-      if (isEditing && editingDispatchContext.daily_seq) {
-        seqEl.value = editingDispatchContext.daily_seq;
+      if (isEditing && (editingDispatchContext.originalDailySeq || editingDispatchContext.daily_seq)) {
+        seqEl.value = editingDispatchContext.originalDailySeq || editingDispatchContext.daily_seq;
         return;
       }
 
@@ -15746,6 +15721,9 @@ window.google.script = {
         voucher_no: targetItem.voucher_no || '',
         originalIds: relatedRecords.map(r => r.id),
         license_plate: targetItem.license_plate || '',
+        dispatch_date: targetItem.dispatch_date || '',
+        dispatch_time: targetItem.dispatch_time || '',
+        staff_name: targetItem.staff_name || '',
         targetId: targetId
       };
 
@@ -15797,6 +15775,7 @@ window.google.script = {
       const curSeq = resolveDailyVehicleSeq(targetItem, dispatchListCached);
       if (dSeqEl) dSeqEl.value = curSeq;
       editingDispatchContext.daily_seq = curSeq;
+      editingDispatchContext.originalDailySeq = curSeq;
 
       const dVehEl = document.getElementById('dispatch-input-vehicle');
       if (dVehEl) dVehEl.value = targetItem.license_plate || '';
@@ -16257,19 +16236,36 @@ window.google.script = {
       if (isNaN(dailySeq) || dailySeq < 1) dailySeq = 1;
 
       // Kiểm tra trùng lặp số thứ tự xe trong ngày của người phát hàng này
-      const currentEditingVoucher = isEditing ? editingDispatchContext?.voucher_no : null;
-      const editingOriginalIds = (isEditing && Array.isArray(editingDispatchContext?.originalIds)) ? new Set(editingDispatchContext.originalIds.map(String)) : new Set();
-      const isDuplicateSeq = (dispatchListCached || []).some(r => {
-        const rStaff = String(r.staff_name || '').trim().toLowerCase();
-        const rDate = String(r.dispatch_date || '').substring(0, 10);
-        if (rStaff === staff.toLowerCase() && rDate === date) {
-          if (currentEditingVoucher && currentEditingVoucher !== '-' && r.voucher_no === currentEditingVoucher) return false;
-          if (editingOriginalIds.has(String(r.id))) return false;
-          const rSeq = resolveDailyVehicleSeq(r, dispatchListCached);
-          return rSeq === dailySeq;
-        }
-        return false;
-      });
+      let isDuplicateSeq = false;
+      const origSeq = editingDispatchContext ? (editingDispatchContext.originalDailySeq || editingDispatchContext.daily_seq) : null;
+      const isEditingSameSeq = isEditing && origSeq && dailySeq === origSeq;
+
+      if (isEditingSameSeq) {
+        // Cập nhật phiếu và giữ nguyên số thứ tự xe của phiếu đó -> Hoàn toàn hợp lệ, không báo trùng
+        isDuplicateSeq = false;
+      } else {
+        const currentEditingVoucher = isEditing ? editingDispatchContext?.voucher_no : null;
+        const editingOriginalIds = (isEditing && Array.isArray(editingDispatchContext?.originalIds)) ? new Set(editingDispatchContext.originalIds.map(String)) : new Set();
+        isDuplicateSeq = (dispatchListCached || []).some(r => {
+          if (isEditing) {
+            if (editingOriginalIds.has(String(r.id))) return false;
+            if (currentEditingVoucher && currentEditingVoucher !== '-' && r.voucher_no === currentEditingVoucher) return false;
+            if (editingDispatchContext?.license_plate && 
+                r.license_plate === editingDispatchContext.license_plate && 
+                r.dispatch_date === editingDispatchContext.dispatch_date && 
+                r.dispatch_time === editingDispatchContext.dispatch_time) {
+              return false;
+            }
+          }
+          const rStaff = String(r.staff_name || '').trim().toLowerCase();
+          const rDate = String(r.dispatch_date || '').substring(0, 10);
+          if (rStaff === staff.toLowerCase() && rDate === date) {
+            const rSeq = resolveDailyVehicleSeq(r, dispatchListCached);
+            return rSeq === dailySeq;
+          }
+          return false;
+        });
+      }
 
       const btnSave = document.getElementById('btn-submit-dispatch');
       const btnNew = document.getElementById('btn-submit-dispatch-new');
