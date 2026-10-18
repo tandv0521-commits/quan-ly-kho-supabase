@@ -607,16 +607,14 @@
           </div>
         </div>
         <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0 overflow-x-auto custom-scroll max-w-full">
-          <button onclick="openQuickSearchModal()" class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 rounded-lg transition border border-slate-200/80 shadow-2xs group whitespace-nowrap shrink-0 cursor-pointer" title="Tìm kiếm nhanh (Ctrl + K)">
+          <button onclick="openQuickSearchModal()" class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 rounded-lg transition border border-slate-200/80 shadow-2xs group whitespace-nowrap shrink-0 cursor-pointer" title="Tìm kiếm nhanh sản phẩm (Ctrl + K)">
             <i class="bi bi-search text-slate-400 group-hover:text-blue-600 transition"></i>
             <span class="hidden md:inline font-semibold">Tìm nhanh</span>
-            <kbd class="hidden xl:inline-block px-1 py-0.2 text-[10px] font-bold font-mono bg-white text-slate-500 rounded border border-slate-300">Ctrl K</kbd>
           </button>
           
-          <button onclick="refreshCurrentTab()" class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 rounded-lg transition border border-slate-200/80 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" title="Làm mới dữ liệu tab hiện tại (F5)">
+          <button onclick="refreshCurrentTab()" class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 rounded-lg transition border border-slate-200/80 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" title="Làm mới dữ liệu (F5)">
             <i class="bi bi-arrow-clockwise text-blue-600"></i>
             <span class="hidden md:inline font-semibold">Làm mới</span>
-            <kbd class="hidden xl:inline-block px-1 py-0.2 text-[10px] font-bold font-mono bg-white text-slate-500 rounded border border-slate-300">F5</kbd>
           </button>
 
           <button onclick="printCurrentTabTable()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer whitespace-nowrap shrink-0" title="In dữ liệu bảng (Ctrl + P)">
@@ -633,11 +631,6 @@
             <i class="bi bi-arrows-fullscreen"></i>
           </button>
 
-          <button onclick="openShortcutsModal()" class="p-1.5 sm:px-2 sm:py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/90 rounded-lg text-xs font-bold transition flex items-center justify-center whitespace-nowrap shrink-0 cursor-pointer" title="Hướng dẫn phím tắt (F1)">
-            <i class="bi bi-question-circle"></i>
-            <span class="hidden xl:inline font-mono text-[10.5px]">F1</span>
-          </button>
-
           <button onclick="openDatabaseSettingsModal()" id="btn-db-status" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" title="Cơ sở dữ liệu: Độc lập trên máy tính">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
             <span id="db-mode-label" class="whitespace-nowrap">Độc Lập (Máy tính)</span>
@@ -647,9 +640,8 @@
           <!-- WAREHOUSE SWITCHER / BADGE WIDGET -->
           <div id="header-warehouse-widget" class="flex items-center space-x-1.5 px-2.5 py-1 bg-amber-50/90 hover:bg-amber-100/90 text-amber-900 border border-amber-200/90 rounded-lg text-xs font-bold transition shadow-2xs shrink-0">
             <i class="bi bi-buildings-fill text-amber-700 text-sm shrink-0"></i>
-            <span class="text-[11px] text-amber-800 font-semibold hidden md:inline shrink-0">Kho:</span>
             <!-- Dành cho Admin chọn kho xem -->
-            <select id="select-active-warehouse" onchange="handleChangeWarehouseScope(this.value)" class="bg-transparent font-bold text-xs text-amber-950 outline-none cursor-pointer border-none py-0.5 max-w-[170px] truncate">
+            <select id="select-active-warehouse" onchange="handleChangeWarehouseScope(this.value)" class="bg-transparent font-bold text-xs text-amber-950 outline-none cursor-pointer border-none py-0.5 max-w-[170px] truncate" title="Phạm vi kho đang xem">
               <option value="all">🌐 Tổng hợp (Tất cả kho)</option>
               <option value="admin">🏢 Kho Tổng (Chính)</option>
               <option value="tuan">📦 Kho Tuấn (Nguyễn Văn Tuấn)</option>
@@ -658,17 +650,17 @@
               <option value="dung">📦 Kho Dũng (Phạm Quốc Dũng)</option>
             </select>
             <!-- Dành cho Nhân viên kho cố định kho của mình -->
-            <span id="label-staff-warehouse" class="hidden font-bold text-amber-950 text-xs truncate max-w-[160px]"></span>
+            <span id="label-staff-warehouse" class="hidden font-bold text-amber-950 text-xs truncate max-w-[200px]"></span>
           </div>
 
-          <!-- USER PROFILE & LOGOUT IN HEADER -->
-          <div class="flex items-center space-x-1 pl-2 border-l border-slate-200 shrink-0" id="header-user-section">
-            <div class="hidden sm:flex items-center space-x-1.5 px-2 py-1 bg-slate-100/90 rounded-lg border border-slate-200/80 text-xs cursor-pointer" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Xem thông tin tài khoản">
-              <span id="header-user-avatar" class="w-5 h-5 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-[10px] shadow-2xs">AD</span>
-              <span id="header-user-name" class="font-bold text-slate-800 truncate max-w-[120px]">Quản Trị Viên</span>
-              <span id="header-user-role-badge" class="px-1.5 py-0.2 text-[9.5px] font-bold rounded bg-rose-50 text-rose-700 border border-rose-200">Admin</span>
+          <!-- USER PROFILE & LOGOUT IN HEADER (HIỂN THỊ ĐẦY ĐỦ RÕ RÀNG, KHÔNG BỊ CHE KHUẤT) -->
+          <div class="flex items-center space-x-1.5 pl-2 border-l border-slate-200 shrink-0" id="header-user-section">
+            <div class="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-100/90 hover:bg-slate-200/80 rounded-xl border border-slate-200/90 text-xs cursor-pointer shadow-2xs transition shrink-0" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Xem thông tin tài khoản">
+              <span id="header-user-avatar" class="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center font-black text-[10px] shadow-2xs shrink-0">AD</span>
+              <span id="header-user-name" class="font-bold text-slate-800 whitespace-nowrap max-w-[170px] sm:max-w-[220px] truncate">Quản Trị Viên</span>
+              <span id="header-user-role-badge" class="px-1.5 py-0.2 text-[9.5px] font-bold rounded bg-rose-50 text-rose-700 border border-rose-200 shrink-0">Admin</span>
             </div>
-            <button onclick="openChangePasswordModal()" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition border border-slate-200/80 shrink-0 cursor-pointer" title="Đổi mật khẩu">
+            <button onclick="openChangePasswordModal()" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition border border-slate-200/80 shrink-0 cursor-pointer" title="Đổi mật khẩu tài khoản">
               <i class="bi bi-key-fill text-xs"></i>
             </button>
             <button onclick="handleAppLogout()" class="px-2 py-1 text-slate-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition border border-slate-200/80 text-xs font-bold flex items-center space-x-1 shrink-0 cursor-pointer" title="Đăng xuất khỏi phần mềm">
@@ -2174,20 +2166,6 @@
           <span class="hidden sm:inline-flex items-center space-x-1 text-slate-500 shrink-0 whitespace-nowrap" id="sb-record-count">Dữ liệu: <b class="font-mono text-slate-700 font-bold">Đang đọc...</b></span>
         </div>
 
-        <div class="hidden 2xl:flex items-center space-x-2 text-slate-500 text-[10.5px] whitespace-nowrap overflow-hidden">
-          <span class="cursor-pointer hover:text-blue-600 transition" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {key: 'F2'}))" title="Thêm dòng / Lập phiếu mới"><kbd class="px-1 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px]">F2</kbd> Thêm mới</span>
-          <span>•</span>
-          <span class="cursor-pointer hover:text-blue-600 transition" onclick="refreshCurrentTab()" title="Nạp lại dữ liệu tab hiện tại"><kbd class="px-1 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px]">F5</kbd> Nạp lại</span>
-          <span>•</span>
-          <span class="cursor-pointer hover:text-blue-600 transition" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {key: 's', ctrlKey: true}))" title="Lưu phiếu đang lập"><kbd class="px-1 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px]">Ctrl+S</kbd> Lưu</span>
-          <span>•</span>
-          <span class="cursor-pointer hover:text-blue-600 transition" onclick="openQuickSearchModal()" title="Tìm nhanh sản phẩm"><kbd class="px-1 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px]">Ctrl+K</kbd> Tìm</span>
-          <span>•</span>
-          <span class="cursor-pointer hover:text-blue-600 transition" onclick="printCurrentTabTable()" title="In bảng dữ liệu"><kbd class="px-1 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px]">Ctrl+P</kbd> In</span>
-          <span>•</span>
-          <span class="cursor-pointer hover:text-blue-600 transition" onclick="openShortcutsModal()" title="Xem tất cả phím tắt phần mềm"><kbd class="px-1 py-0.5 bg-white border border-slate-300 rounded font-mono text-[10px]">F1</kbd> Phím tắt</span>
-        </div>
-
         <div class="flex items-center space-x-2 shrink-0 whitespace-nowrap ml-auto">
           <span class="font-mono text-slate-700 font-bold text-xs" id="sb-live-clock">--:--:--</span>
           <span class="text-slate-300 hidden sm:inline">|</span>
@@ -3021,9 +2999,9 @@
           <div>
             <h3 class="font-extrabold text-sm sm:text-base text-white tracking-wide flex items-center gap-2">
               <span>Cài đặt nhóm sản phẩm & Tên gọi quy ước</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-teal-400 text-slate-950 font-black font-mono">TÙY CHỈNH THEO QUY ƯỚC</span>
+              <span id="cust-modal-scope-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-teal-400 text-slate-950 font-black font-mono">TÙY CHỈNH THEO QUY ƯỚC</span>
             </h3>
-            <p class="text-[11px] text-teal-200/80 mt-0.5">Tạo nhóm, xem danh sách tên nhóm, gán sản phẩm vào nhóm và đặt tên quy ước.</p>
+            <p id="cust-modal-scope-desc" class="text-[11px] text-teal-200/80 mt-0.5">Tạo nhóm, xem danh sách tên nhóm, gán sản phẩm vào nhóm và đặt tên quy ước riêng cho từng kho.</p>
           </div>
         </div>
         <button type="button" onclick="closeFastItemsCustomizerModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition cursor-pointer" title="Đóng (Esc)">
@@ -6448,31 +6426,66 @@ window.google.script = {
     }
 
     function isDispatchInCurrentWarehouse(dp) {
-      const scope = getActiveWarehouseScope();
+      if (!dp) return false;
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
       if (scope === 'all') return true;
 
       const note = String((dp && dp.note) || '');
-      const staff = String((dp && dp.staff_name) || '').toLowerCase();
-      const wh = String((dp && dp.warehouse) || '').toLowerCase();
+      const staff = String((dp && dp.staff_name) || '').trim().toLowerCase();
+      const wh = String((dp && dp.warehouse) || '').trim().toLowerCase();
 
+      // Kiểm tra nhãn kho [Kho: ...] trong ghi chú phiếu
+      const tagMatch = note.match(/\[Kho:\s*([^\]]+)\]/i);
+      const tagWh = tagMatch ? tagMatch[1].trim().toLowerCase() : '';
+
+      // 1. TRƯỜNG HỢP KHO TỔNG / ADMIN:
       if (scope === 'admin') {
-        return !note.includes('[Kho:') || note.includes('[Kho: admin]') || wh === 'admin' || wh === 'main';
+        // Nếu có tag kho chi nhánh khác hoặc cột warehouse của kho khác -> Loại bỏ
+        if (tagWh && tagWh !== 'admin' && tagWh !== 'main') return false;
+        if (wh && wh !== 'admin' && wh !== 'main' && wh !== '') return false;
+        return true;
       }
 
+      // 2. TRƯỜNG HỢP KHO CHI NHÁNH CỤ THỂ (ví dụ: 'trang', 'tuan', 'trong', 'hung', 'dung'...)
+      const normScope = scope.toLowerCase();
+
+      // NGUYÊN TẮC LOẠI TRỪ 1: Phiếu có tag kho khác rõ ràng -> Loại bỏ tuyệt đối
+      if (tagWh && tagWh !== normScope) return false;
+
+      // NGUYÊN TẮC LOẠI TRỪ 2: Phiếu có cột warehouse của kho khác -> Loại bỏ tuyệt đối
+      if (wh && wh !== normScope) return false;
+
+      // Danh sách thành viên phát hàng thuộc kho hiện tại
       let isStaffInCurrentWh = false;
       try {
         if (typeof getStaffListForCurrentWarehouse === 'function') {
           const sList = getStaffListForCurrentWarehouse();
-          isStaffInCurrentWh = sList.some(s => s.name && s.name.trim().toLowerCase() === staff.trim());
+          isStaffInCurrentWh = sList.some(s => s.name && s.name.trim().toLowerCase() === staff);
         }
       } catch(e) {}
 
-      return note.includes(`[Kho: ${scope}]`) || wh === scope.toLowerCase() || staff.includes(scope.toLowerCase()) || isStaffInCurrentWh;
+      // Tên hoặc username tài khoản kho hiện tại
+      const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username.trim().toLowerCase() : '';
+      const curFullName = (currentAppUser && currentAppUser.full_name) ? currentAppUser.full_name.trim().toLowerCase() : '';
+      const isCurAccount = (staff && (staff === curFullName || staff === curUser));
+
+      // CHẤP NHẬN NẾU:
+      // a. Tag ghi chú khớp kho mình
+      if (tagWh === normScope) return true;
+      // b. Cột warehouse khớp kho mình
+      if (wh === normScope) return true;
+      // c. Người phát hàng là thành viên thuộc kho mình hoặc chính tài khoản kho
+      if ((isStaffInCurrentWh || isCurAccount) && (!tagWh || tagWh === normScope) && (!wh || wh === normScope)) {
+        return true;
+      }
+
+      return false;
     }
 
     function getWarehouseScopeLabel(scope) {
       if (scope === 'all') return '🌐 Tổng hợp (Tất cả kho)';
       if (scope === 'admin') return '🏢 Kho Tổng (Chính)';
+      if (scope === 'trang') return '📦 Kho Trang (Trần Thị Huyền Trang)';
       if (scope === 'tuan') return '📦 Kho Tuấn (Nguyễn Văn Tuấn)';
       if (scope === 'trong') return '📦 Kho Trọng (Trần Đình Trọng)';
       if (scope === 'hung') return '📦 Kho Hùng (Lê Văn Hùng)';
@@ -6589,6 +6602,9 @@ window.google.script = {
       if (typeof populateDispatchFilterDropdowns === 'function') {
         populateDispatchFilterDropdowns();
       }
+      if (typeof reloadWarehouseFastItems === 'function') {
+        reloadWarehouseFastItems();
+      }
     }
 
     function isUserAdmin() {
@@ -6686,10 +6702,13 @@ window.google.script = {
         }
       }
 
-      // Tự động chọn tên nhân viên kho đang đăng nhập vào ô người phát hàng
-      if (currentAppUser && currentAppUser.full_name) {
-        const staffSelect = document.getElementById('dispatch-input-staff');
-        if (staffSelect) {
+      // Tự động chọn tên nhân viên kho đang đăng nhập vào ô người phát hàng nếu chưa có lưu trước đó
+      const lastStaff = localStorage.getItem('last_dispatch_staff');
+      const staffSelect = document.getElementById('dispatch-input-staff');
+      if (staffSelect) {
+        if (lastStaff) {
+          staffSelect.value = lastStaff;
+        } else if (currentAppUser && currentAppUser.full_name) {
           for (let i = 0; i < staffSelect.options.length; i++) {
             if (staffSelect.options[i].value.trim().toLowerCase() === currentAppUser.full_name.trim().toLowerCase()) {
               staffSelect.selectedIndex = i;
@@ -6697,6 +6716,10 @@ window.google.script = {
             }
           }
         }
+      }
+
+      if (typeof reloadWarehouseFastItems === 'function') {
+        reloadWarehouseFastItems();
       }
     }
 
@@ -7306,6 +7329,9 @@ window.google.script = {
       generateNhapTraVoucherNo();
 
       updateDatabaseBadge_();
+      if (typeof ensureWarehouseStaffLoaded === 'function') {
+        ensureWarehouseStaffLoaded();
+      }
 
       loadInventory(() => {
         addRowToVoucher();
@@ -11852,6 +11878,29 @@ window.google.script = {
       }
     }
 
+    async function ensureWarehouseStaffLoaded() {
+      if (warehouseStaffListCached && warehouseStaffListCached.length > 0) {
+        return warehouseStaffListCached;
+      }
+      try {
+        const staffRes = await callSupabaseSingle_('warehouse_staff?order=name.asc', 'GET').catch(() => []);
+        if (Array.isArray(staffRes) && staffRes.length > 0) {
+          warehouseStaffListCached = staffRes;
+          populateWarehouseStaffUI();
+          if (typeof populateDispatchFilterDropdowns === 'function') populateDispatchFilterDropdowns();
+          return warehouseStaffListCached;
+        }
+      } catch (e) {}
+
+      if (typeof LocalDB !== 'undefined' && LocalDB.cache && Array.isArray(LocalDB.cache['warehouse_staff'])) {
+        warehouseStaffListCached = LocalDB.cache['warehouse_staff'];
+        populateWarehouseStaffUI();
+        if (typeof populateDispatchFilterDropdowns === 'function') populateDispatchFilterDropdowns();
+        return warehouseStaffListCached;
+      }
+      return [];
+    }
+
     function getStaffListForCurrentWarehouse() {
       if (!currentAppUser) return warehouseStaffListCached;
       const isAdmin = (currentAppUser.role === 'admin');
@@ -11861,33 +11910,37 @@ window.google.script = {
         return warehouseStaffListCached;
       }
 
+      const normScope = scope.toLowerCase();
+
       // Lọc danh sách nhân viên phát hàng theo phạm vi kho hiện tại
       return warehouseStaffListCached.filter(st => {
-        const stWh = String(st.warehouse || '').toLowerCase();
+        const stWh = String(st.warehouse || '').trim().toLowerCase();
         const stName = String(st.name || '').trim().toLowerCase();
         const curName = String(currentAppUser.full_name || '').trim().toLowerCase();
         const curUser = String(currentAppUser.username || '').trim().toLowerCase();
 
         // Nếu là tài khoản nhân viên kho: CHỈ hiển thị nhân viên của kho mình (hoặc chính mình)
         if (!isAdmin) {
-          if (stWh && stWh === scope.toLowerCase()) return true;
+          if (stWh && stWh === normScope) return true;
           if (curName && stName === curName) return true;
-          if (curUser && stName.includes(curUser)) return true;
+          if (curUser && stName === curUser) return true;
           if (st.id && currentAppUser.staff_id && st.id === currentAppUser.staff_id) return true;
           return false;
         }
 
         // Nếu là Admin đang lọc theo kho cụ thể
-        if (scope === 'admin') {
+        if (normScope === 'admin') {
           return !stWh || stWh === 'admin' || stWh === 'main';
         }
-        if (stWh && stWh === scope.toLowerCase()) return true;
-        if (stName.includes(scope.toLowerCase())) return true;
+        if (stWh && stWh === normScope) return true;
         return false;
       });
     }
 
     function populateWarehouseStaffUI() {
+      if (!warehouseStaffListCached || warehouseStaffListCached.length === 0) {
+        ensureWarehouseStaffLoaded();
+      }
       const activeStaffList = getStaffListForCurrentWarehouse();
 
       // 1. Cập nhật dropdown chọn người phát hàng ở form tạo phiếu
@@ -11895,19 +11948,9 @@ window.google.script = {
       if (staffSelect) {
         const currentSelected = staffSelect.value;
         const lastSelected = localStorage.getItem('last_dispatch_staff') || '';
-        let targetVal = currentSelected;
+        let targetVal = currentSelected || lastSelected;
 
-        // Nếu là nhân viên kho, mặc định luôn là tên của nhân viên kho đang đăng nhập
-        if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name) {
-          targetVal = currentAppUser.full_name;
-        } else if (!targetVal) {
-          targetVal = lastSelected;
-        }
-
-        let optionsHtml = '';
-        if (isUserAdmin()) {
-          optionsHtml = '<option value="">-- Chọn thành viên kho --</option>';
-        }
+        let optionsHtml = '<option value="">-- Chọn thành viên phát hàng --</option>';
 
         let hasMatchedTarget = false;
         activeStaffList.forEach(st => {
@@ -11916,6 +11959,17 @@ window.google.script = {
           if (isSel) hasMatchedTarget = true;
           optionsHtml += `<option value="${escapeHtml(st.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(st.name)}${roleText}</option>`;
         });
+
+        // Bổ sung tên chủ kho đang đăng nhập nếu chưa có trong danh sách
+        if (currentAppUser && currentAppUser.full_name) {
+          const curFullName = currentAppUser.full_name.trim();
+          const alreadyInList = activeStaffList.some(s => s.name && s.name.trim().toLowerCase() === curFullName.toLowerCase());
+          if (!alreadyInList) {
+            const isSel = (curFullName === targetVal);
+            if (isSel) hasMatchedTarget = true;
+            optionsHtml += `<option value="${escapeHtml(curFullName)}" ${isSel ? 'selected' : ''}>${escapeHtml(curFullName)} (Chủ kho)</option>`;
+          }
+        }
 
         if (targetVal && !hasMatchedTarget) {
           optionsHtml += `<option value="${escapeHtml(targetVal)}" selected>${escapeHtml(targetVal)}</option>`;
@@ -12337,11 +12391,13 @@ window.google.script = {
 
       const staffSelect = document.getElementById('dispatch-filter-staff');
       if (staffSelect) {
-        const currentVal = staffSelect.value;
-        const isAdmin = isUserAdmin();
-        const placeholder = isAdmin ? 'Tất cả thành viên' : 'Thành viên kho';
-        staffSelect.innerHTML = (isAdmin ? `<option value="">${placeholder}</option>` : '') + 
+        const currentVal = staffSelect.value || '';
+        const placeholder = 'Tất cả người phát hàng';
+        staffSelect.innerHTML = `<option value="">${placeholder}</option>` + 
           Array.from(staffSet).sort().map(s => `<option value="${escapeHtml(s)}" ${s === currentVal ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+        if (!staffSet.has(currentVal)) {
+          staffSelect.value = '';
+        }
       }
 
       const vehicleSelect = document.getElementById('dispatch-filter-vehicle');
@@ -13397,6 +13453,15 @@ window.google.script = {
       const containerSummary = document.getElementById('dispatch-summary-container');
       const containerStaff = document.getElementById('dispatch-staff-container');
       const hintText = document.getElementById('dispatch-view-hint-text');
+
+      // Tự động hiển thị tổng hợp sản phẩm của tất cả người phát hàng trong kho khi xem bảng tổng hợp
+      if (mode === 'summary') {
+        const staffSelect = document.getElementById('dispatch-filter-staff');
+        if (staffSelect && staffSelect.value) {
+          staffSelect.value = '';
+          filterDailyDispatchTable();
+        }
+      }
 
       const activeBase = "px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs font-bold cursor-pointer shadow-xs";
       const inactiveBase = "px-3 py-1.5 rounded-lg transition-all duration-150 flex items-center space-x-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-white/60 cursor-pointer";
@@ -15107,6 +15172,7 @@ window.google.script = {
       });
 
       const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
+      const currentWh = (activeScope && activeScope !== 'all') ? activeScope : 'admin';
       const payload = allValidItems.map(r => {
         const itemNoteParts = [];
         if (r.note) itemNoteParts.push(r.note);
@@ -15128,6 +15194,7 @@ window.google.script = {
           unit: r.unit || 'Cái',
           quantity: parseSmartNumber(r.quantity),
           status: 'pending',
+          warehouse: currentWh,
           note: itemNote,
           created_at: new Date().toISOString()
         };
@@ -15239,16 +15306,14 @@ window.google.script = {
       const noteInput = document.getElementById('dispatch-input-general-note');
       if (noteInput) noteInput.value = '';
 
-      // Tự động giữ và lưu tên thủ kho cho các phiên làm việc tiếp theo
+      // Tự động giữ và lưu tên người phát hàng cho các chuyến xe tiếp theo
       const staffInput = document.getElementById('dispatch-input-staff');
       const savedStaff = localStorage.getItem('last_dispatch_staff') || '';
       if (staffInput) {
-        if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name) {
-          staffInput.value = currentAppUser.full_name;
-        } else if (!staffInput.value && savedStaff) {
-          staffInput.value = savedStaff;
-        } else if (staffInput.value) {
+        if (staffInput.value) {
           localStorage.setItem('last_dispatch_staff', staffInput.value);
+        } else if (savedStaff) {
+          staffInput.value = savedStaff;
         }
       }
 
@@ -18001,12 +18066,96 @@ window.google.script = {
       });
     }
 
+    // ========================================================
+    // QUẢN LÝ QUY TẮC, QUY ƯỚC & NHÓM ĐIỀN NHANH RIÊNG BIỆT TỪNG KHO
+    // ========================================================
+
+    function getFastItemsStorageScope() {
+      try {
+        if (typeof getActiveWarehouseScope === 'function') {
+          const scope = getActiveWarehouseScope();
+          if (scope && scope !== 'all') return String(scope).trim().toLowerCase();
+        }
+      } catch (e) {}
+      return 'admin';
+    }
+
+    function getFastItemsStorageKey(prefix) {
+      const scope = getFastItemsStorageScope();
+      return `${prefix}_${scope}`;
+    }
+
+    async function syncWarehouseFastConfigToCloud() {
+      try {
+        const scope = getFastItemsStorageScope();
+        if (!scope || scope === 'all') return;
+        const payload = {
+          warehouse: scope,
+          groups_json: JSON.stringify(customFastGroupsList || []),
+          items_json: JSON.stringify(customFastItemsList || []),
+          updated_at: new Date().toISOString()
+        };
+        await callSupabaseSingle_('warehouse_configs?on_conflict=warehouse', 'POST', payload).catch(() => {});
+      } catch (e) {}
+    }
+
+    async function loadWarehouseFastConfigFromCloud() {
+      try {
+        const scope = getFastItemsStorageScope();
+        if (!scope || scope === 'all') return;
+        const res = await callSupabaseSingle_(`warehouse_configs?warehouse=eq.${encodeURIComponent(scope)}&select=*`, 'GET').catch(() => []);
+        if (Array.isArray(res) && res.length > 0 && res[0]) {
+          const cfg = res[0];
+          let updated = false;
+          if (cfg.groups_json) {
+            try {
+              const g = JSON.parse(cfg.groups_json);
+              if (Array.isArray(g) && g.length > 0) {
+                localStorage.setItem(`custom_fast_dispatch_groups_${scope}`, cfg.groups_json);
+                customFastGroupsList = g;
+                updated = true;
+              }
+            } catch (err) {}
+          }
+          if (cfg.items_json) {
+            try {
+              const it = JSON.parse(cfg.items_json);
+              if (Array.isArray(it) && it.length > 0) {
+                localStorage.setItem(`custom_fast_dispatch_items_${scope}`, cfg.items_json);
+                customFastItemsList = it;
+                updated = true;
+              }
+            } catch (err) {}
+          }
+          if (updated) {
+            if (typeof renderFastGroupCheckboxes === 'function') renderFastGroupCheckboxes();
+            if (typeof renderFastItemsTable === 'function') renderFastItemsTable('');
+          }
+        }
+      } catch (e) {}
+    }
+
+    function reloadWarehouseFastItems() {
+      customFastItemsList = null;
+      customFastGroupsList = null;
+      checkedFastGroupsList = null;
+      fastDispatchItemsState = {};
+      if (typeof renderFastGroupCheckboxes === 'function') {
+        renderFastGroupCheckboxes();
+      }
+      if (typeof renderFastItemsTable === 'function') {
+        renderFastItemsTable('');
+      }
+      loadWarehouseFastConfigFromCloud();
+    }
+
     function getCustomFastItems() {
       if (customFastItemsList && Array.isArray(customFastItemsList) && customFastItemsList.length > 0) {
         return customFastItemsList;
       }
+      const storageKey = getFastItemsStorageKey('custom_fast_dispatch_items');
       try {
-        const stored = localStorage.getItem('custom_fast_dispatch_items');
+        const stored = localStorage.getItem(storageKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -18015,31 +18164,35 @@ window.google.script = {
           }
         }
       } catch (e) {
-        console.warn('Lỗi đọc custom_fast_dispatch_items:', e);
+        console.warn('Lỗi đọc ' + storageKey + ':', e);
       }
+
+      // Khởi tạo mặc định ban đầu riêng cho kho nếu kho chưa có
       customFastItemsList = JSON.parse(JSON.stringify(DEFAULT_FAST_DISPATCH_ITEMS));
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(customFastItemsList));
+      } catch (e) {}
       return customFastItemsList;
     }
 
     function saveCustomFastItems(items) {
       customFastItemsList = items || [];
+      const storageKey = getFastItemsStorageKey('custom_fast_dispatch_items');
       try {
-        localStorage.setItem('custom_fast_dispatch_items', JSON.stringify(customFastItemsList));
+        localStorage.setItem(storageKey, JSON.stringify(customFastItemsList));
       } catch (e) {
-        console.error('Lỗi ghi custom_fast_dispatch_items:', e);
+        console.error('Lỗi ghi ' + storageKey + ':', e);
       }
+      syncWarehouseFastConfigToCloud();
     }
-
-    // ========================================================
-    // QUẢN LÝ NHÓM SẢN PHẨM PHÁT NHANH (TỰ TẠO & PHÂN LOẠI)
-    // ========================================================
 
     function getCustomFastGroups() {
       if (customFastGroupsList && Array.isArray(customFastGroupsList) && customFastGroupsList.length > 0) {
         return customFastGroupsList;
       }
+      const storageKey = getFastItemsStorageKey('custom_fast_dispatch_groups');
       try {
-        const stored = localStorage.getItem('custom_fast_dispatch_groups');
+        const stored = localStorage.getItem(storageKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -18048,10 +18201,10 @@ window.google.script = {
           }
         }
       } catch (e) {
-        console.warn('Lỗi đọc custom_fast_dispatch_groups:', e);
+        console.warn('Lỗi đọc ' + storageKey + ':', e);
       }
 
-      // Khởi tạo từ nhóm mặc định + các group hiện có trong items
+      // Khởi tạo từ nhóm mặc định + các group hiện có trong items của kho
       const groupsSet = new Set(DEFAULT_FAST_DISPATCH_GROUPS);
       const items = getCustomFastItems();
       items.forEach(it => {
@@ -18060,24 +18213,28 @@ window.google.script = {
         }
       });
       customFastGroupsList = Array.from(groupsSet);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(customFastGroupsList));
+      } catch (e) {}
       return customFastGroupsList;
     }
 
     function saveCustomFastGroups(groups) {
       customFastGroupsList = groups || [];
+      const storageKey = getFastItemsStorageKey('custom_fast_dispatch_groups');
       try {
-        localStorage.setItem('custom_fast_dispatch_groups', JSON.stringify(customFastGroupsList));
+        localStorage.setItem(storageKey, JSON.stringify(customFastGroupsList));
       } catch (e) {
-        console.error('Lỗi lưu custom_fast_dispatch_groups:', e);
+        console.error('Lỗi lưu ' + storageKey + ':', e);
       }
+      syncWarehouseFastConfigToCloud();
     }
 
-    // MẶC ĐỊNH CHƯƠNG TRÌNH LÀ KHÔNG TÍCH CHỌN
-    // SỬ DỤNG MẢNG (ARRAY) ĐỂ LƯU THỨ TỰ TÍCH CHỌN: NHÓM TÍCH CHỌN SAU ĐƯỢC ĐƯA LÊN ĐẦU TIÊN (LIFO)
     function getCheckedFastGroups() {
       if (Array.isArray(checkedFastGroupsList)) return checkedFastGroupsList;
+      const storageKey = getFastItemsStorageKey('checked_fast_dispatch_groups');
       try {
-        const stored = localStorage.getItem('checked_fast_dispatch_groups');
+        const stored = localStorage.getItem(storageKey);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
@@ -18086,7 +18243,7 @@ window.google.script = {
           }
         }
       } catch (e) {
-        console.warn('Lỗi đọc checked_fast_dispatch_groups:', e);
+        console.warn('Lỗi đọc ' + storageKey + ':', e);
       }
 
       // MẶC ĐỊNH BAN ĐẦU: KHÔNG TÍCH CHỌN NHÓM NÀO
@@ -18096,10 +18253,11 @@ window.google.script = {
 
     function saveCheckedFastGroups() {
       if (!Array.isArray(checkedFastGroupsList)) return;
+      const storageKey = getFastItemsStorageKey('checked_fast_dispatch_groups');
       try {
-        localStorage.setItem('checked_fast_dispatch_groups', JSON.stringify(checkedFastGroupsList));
+        localStorage.setItem(storageKey, JSON.stringify(checkedFastGroupsList));
       } catch (e) {
-        console.error('Lỗi lưu checked_fast_dispatch_groups:', e);
+        console.error('Lỗi lưu ' + storageKey + ':', e);
       }
     }
 
@@ -18732,6 +18890,18 @@ window.google.script = {
       if (newGrpInp) newGrpInp.value = '';
 
       switchCustModalTab('groups');
+
+      // Cập nhật thông tin kho hiện tại lên tiêu đề Modal
+      const scopeBadge = document.getElementById('cust-modal-scope-badge');
+      const scopeDesc = document.getElementById('cust-modal-scope-desc');
+      const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
+      const whLabel = (typeof getWarehouseScopeLabel === 'function') ? getWarehouseScopeLabel(activeScope) : activeScope;
+      if (scopeBadge) {
+        scopeBadge.innerText = (activeScope === 'all') ? 'TẤT CẢ KHO' : `QUY TẮC: ${activeScope.toUpperCase()}`;
+      }
+      if (scopeDesc) {
+        scopeDesc.innerText = `Cấu hình nhóm & quy ước sản phẩm điền nhanh riêng biệt cho: ${whLabel}`;
+      }
 
       const modal = document.getElementById('fast-dispatch-customizer-modal');
       if (modal) {
