@@ -1945,67 +1945,98 @@
               </div>
             </div>
 
-            <!-- THÔNG TIN CHUYẾN XE & THÀNH VIÊN PHÁT (TRÊN CÙNG 1 DÒNG DUY NHẤT, CO GIÃN PHÙ HỢP MỌI MÀN HÌNH) -->
-            <div class="flex flex-wrap lg:flex-nowrap items-end gap-2.5 pb-3.5 text-xs bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+            <!-- THÔNG TIN CHUYẾN XE & THÀNH VIÊN PHÁT (TRÊN CÙNG 1 DÒNG DUY NHẤT, CO GIÃN HÀI HÒA & ĐỀU ĐẶN) -->
+            <div class="w-full flex flex-wrap lg:flex-nowrap items-end gap-2.5 pb-3.5 text-xs bg-slate-50/80 p-3.5 rounded-xl border border-slate-200 shadow-2xs">
               <!-- Ô 1: Số phiếu phát hàng -->
-              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-36 min-w-[125px]">
-                <label class="block font-bold text-slate-700 uppercase text-[10.5px] mb-1 truncate" title="Số phiếu phát hàng">Số phiếu:</label>
-                <div class="relative flex items-center">
-                  <i class="bi bi-hash absolute left-2 text-teal-600 text-xs"></i>
-                  <input type="text" id="dispatch-input-voucherno" readonly class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg bg-slate-100/90 font-mono font-bold text-teal-900 text-xs select-all cursor-default shadow-2xs">
+              <div class="w-full sm:w-auto shrink-0" style="flex: 1 1 135px; max-width: 155px;">
+                <div class="flex items-center justify-between h-5 mb-1.5">
+                  <label class="font-bold text-slate-700 uppercase text-[11px] truncate tracking-wide" title="Số phiếu phát hàng">Số phiếu:</label>
+                </div>
+                <div class="relative flex items-center w-full">
+                  <i class="bi bi-hash absolute left-2.5 text-teal-600 text-sm pointer-events-none"></i>
+                  <input type="text" id="dispatch-input-voucherno" readonly 
+                         class="w-full h-[38px] pl-7 pr-2.5 border border-slate-300 rounded-lg bg-slate-100/90 font-mono font-bold text-teal-900 text-xs select-all cursor-default shadow-2xs focus:outline-none" 
+                         title="Số phiếu phát hàng tự động">
                 </div>
               </div>
 
-              <!-- Ô 2: Ngày phát hàng (Đã bỏ ô nhập giờ, lưu ngầm không ảnh hưởng hệ thống) -->
-              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-32 min-w-[120px]">
-                <label class="block font-bold text-slate-700 uppercase text-[10.5px] mb-1 truncate" title="Ngày phát hàng">Ngày phát <span class="text-rose-500">*</span>:</label>
-                <input type="date" id="dispatch-input-date" onchange="if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500 shadow-2xs">
-                <input type="hidden" id="dispatch-input-time">
+              <!-- Ô 2: Ngày phát hàng -->
+              <div class="w-full sm:w-auto shrink-0" style="flex: 1 1 135px; max-width: 155px;">
+                <div class="flex items-center justify-between h-5 mb-1.5">
+                  <label class="font-bold text-slate-700 uppercase text-[11px] truncate tracking-wide" title="Ngày phát hàng">
+                    Ngày phát <span class="text-rose-500 font-bold">*</span>:
+                  </label>
+                </div>
+                <div class="relative flex items-center w-full">
+                  <input type="date" id="dispatch-input-date" 
+                         onchange="if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" 
+                         class="w-full h-[38px] px-2.5 border border-slate-300 rounded-lg font-semibold font-mono bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition shadow-2xs">
+                  <input type="hidden" id="dispatch-input-time">
+                </div>
               </div>
 
-              <!-- Ô 3: Thành viên phát hàng (Kho) -->
-              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-44 min-w-[160px]">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="font-bold text-slate-700 uppercase text-[10.5px] truncate" title="Thành viên phát hàng (Kho)">Người phát <span class="text-rose-500">*</span>:</label>
-                  <button type="button" onclick="openWarehouseStaffModal()" class="text-[10px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-0.5 cursor-pointer" title="Quản lý thành viên kho">
-                    <i class="bi bi-people-fill text-[10px]"></i>
+              <!-- Ô 3: Thành viên phát hàng (Kho) - Rộng rãi, không bị che khuất họ tên -->
+              <div class="w-full sm:w-auto" style="flex: 2.2 1 220px; min-width: 210px;">
+                <div class="flex items-center justify-between h-5 mb-1.5">
+                  <label class="font-bold text-slate-700 uppercase text-[11px] truncate tracking-wide" title="Thành viên phát hàng (Kho)">
+                    Người phát <span class="text-rose-500 font-bold">*</span>:
+                  </label>
+                  <button type="button" onclick="openWarehouseStaffModal()" 
+                          class="text-[10.5px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1 cursor-pointer transition" 
+                          title="Quản lý danh sách thành viên kho">
+                    <i class="bi bi-people-fill text-[11px]"></i>
                     <span>QL</span>
                   </button>
                 </div>
-                <div class="flex gap-1">
-                  <select id="dispatch-input-staff" onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500 bg-white text-slate-800 text-xs truncate shadow-2xs">
-                    <option value="">-- Chọn NV kho --</option>
-                  </select>
-                  <button type="button" onclick="quickAddStaffPrompt()" class="px-2 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer shadow-2xs" title="Thêm nhanh thành viên mới">
-                    <i class="bi bi-plus-lg"></i>
+                <div class="flex items-center gap-1.5 w-full">
+                  <div class="relative flex-1 min-w-0">
+                    <select id="dispatch-input-staff" 
+                            onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" 
+                            class="w-full h-[38px] px-2.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white text-slate-800 text-xs transition shadow-2xs">
+                      <option value="">-- Chọn NV kho --</option>
+                    </select>
+                  </div>
+                  <button type="button" onclick="quickAddStaffPrompt()" 
+                          class="h-[38px] w-9 flex items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer shadow-2xs" 
+                          title="Thêm nhanh thành viên mới">
+                    <i class="bi bi-person-plus-fill text-xs"></i>
                   </button>
                 </div>
               </div>
 
               <!-- Ô 4: STT Xe (Ngày) -->
-              <div class="w-full sm:w-auto sm:w-20 lg:w-20 min-w-[75px] shrink-0">
-                <label class="block font-bold text-teal-900 uppercase text-[10.5px] mb-1 text-center truncate" title="Số thứ tự xe trong ngày của người phát">STT Xe <span class="text-rose-500">*</span>:</label>
+              <div class="shrink-0" style="width: 78px;">
+                <div class="flex items-center justify-center h-5 mb-1.5">
+                  <label class="font-bold text-teal-900 uppercase text-[11px] text-center truncate tracking-wide" title="Số thứ tự xe trong ngày của người phát">
+                    STT Xe <span class="text-rose-500 font-bold">*</span>:
+                  </label>
+                </div>
                 <input type="number" 
                        id="dispatch-input-daily-seq"
                        min="1" 
                        step="1"
                        value="1"
                        oninput="if(this.value && this.value < 1) this.value = 1;"
-                       class="w-full text-center px-1.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-black text-sm bg-teal-50/40 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-600 shadow-2xs"
+                       class="w-full h-[38px] text-center px-1 border-2 border-teal-500 rounded-lg font-mono font-black text-sm bg-teal-50/50 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition shadow-2xs"
                        placeholder="1" 
                        title="Số thứ tự chuyến xe phát trong ngày của người này">
               </div>
 
-              <!-- Ô 5: Số xe / Mã xe lấy hàng (Đã bỏ nút +) -->
-              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-44 min-w-[165px] relative">
-                <div class="flex items-center justify-between mb-1">
-                  <label class="font-bold text-teal-900 uppercase text-[10.5px] truncate" title="Số xe / Mã xe lấy hàng">Số xe nhận <span class="text-rose-500">*</span>:</label>
-                  <button type="button" onclick="openVehiclesManagerModal()" class="text-[10px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-0.5 cursor-pointer" title="Quản lý danh mục xe">
-                    <i class="bi bi-truck text-[10px]"></i>
+              <!-- Ô 5: Số xe / Mã xe lấy hàng -->
+              <div class="w-full sm:w-auto relative" style="flex: 1.6 1 170px; min-width: 165px;">
+                <div class="flex items-center justify-between h-5 mb-1.5">
+                  <label class="font-bold text-teal-900 uppercase text-[11px] truncate tracking-wide" title="Số xe / Mã xe lấy hàng">
+                    Số xe nhận <span class="text-rose-500 font-bold">*</span>:
+                  </label>
+                  <button type="button" onclick="openVehiclesManagerModal()" 
+                          class="text-[10.5px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1 cursor-pointer transition" 
+                          title="Quản lý danh mục xe">
+                    <i class="bi bi-truck text-[11px]"></i>
                     <span>DS xe</span>
                   </button>
                 </div>
                 <div class="relative w-full">
+                  <i class="bi bi-truck absolute left-2.5 top-1/2 -translate-y-1/2 text-teal-700 text-xs pointer-events-none"></i>
                   <input type="text" id="dispatch-input-vehicle"
                          autocomplete="off"
                          autocorrect="off"
@@ -2019,7 +2050,7 @@
                          onkeydown="handleDispatchVehicleKeydown(event)"
                          onchange="onDispatchVehicleChange(this.value)"
                          placeholder="Biển số / mã xe..." 
-                         class="w-full px-2.5 py-1.5 border-2 border-teal-500 rounded-lg font-mono font-bold uppercase focus:ring-2 focus:ring-teal-600 bg-white text-teal-950 text-xs shadow-2xs">
+                         class="w-full h-[38px] pl-8 pr-2.5 border-2 border-teal-500/90 rounded-lg font-mono font-bold uppercase focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 bg-white text-teal-950 text-xs transition shadow-2xs">
                   <datalist id="dispatch-vehicle-suggestions"></datalist>
                   <div id="dispatch-vehicle-dropdown" 
                        class="hidden absolute left-0 top-full mt-1.5 w-full min-w-[320px] max-w-md bg-white border-2 border-teal-500 rounded-xl shadow-2xl z-[9999] max-h-72 overflow-y-auto custom-scroll divide-y divide-slate-100" 
@@ -2028,10 +2059,12 @@
               </div>
 
               <!-- Ô 6: Lái xe / Người nhận -->
-              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-36 min-w-[125px]">
-                <label class="block font-bold text-slate-700 uppercase text-[10.5px] mb-1 truncate" title="Lái xe / Người nhận hàng">Lái xe / Nhận:</label>
-                <div class="relative flex items-center">
-                  <i class="bi bi-person absolute left-2 text-slate-400 text-xs"></i>
+              <div class="w-full sm:w-auto" style="flex: 1.4 1 150px; min-width: 145px;">
+                <div class="flex items-center justify-between h-5 mb-1.5">
+                  <label class="font-bold text-slate-700 uppercase text-[11px] truncate tracking-wide" title="Lái xe / Người nhận hàng">Lái xe / Nhận:</label>
+                </div>
+                <div class="relative flex items-center w-full">
+                  <i class="bi bi-person absolute left-2.5 text-slate-400 text-xs pointer-events-none"></i>
                   <input type="text" id="dispatch-input-driver" 
                          name="wh_driver_noname"
                          autocomplete="off"
@@ -2041,15 +2074,17 @@
                          data-lpignore="true"
                          data-form-type="other"
                          placeholder="Tên lái xe..." 
-                         class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500 shadow-2xs">
+                         class="w-full h-[38px] pl-8 pr-2.5 border border-slate-300 rounded-lg bg-white text-slate-800 text-xs focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition shadow-2xs">
                 </div>
               </div>
 
               <!-- Ô 7: SĐT Lái xe -->
-              <div class="w-full sm:w-auto sm:flex-1 lg:flex-initial lg:w-32 min-w-[115px]">
-                <label class="block font-bold text-teal-800 uppercase text-[10.5px] mb-1 truncate" title="Số điện thoại lái xe">SĐT Lái xe:</label>
-                <div class="relative flex items-center">
-                  <i class="bi bi-telephone-fill absolute left-2 text-teal-600 text-xs"></i>
+              <div class="w-full sm:w-auto" style="flex: 1.2 1 130px; min-width: 125px; max-width: 175px;">
+                <div class="flex items-center justify-between h-5 mb-1.5">
+                  <label class="font-bold text-teal-800 uppercase text-[11px] truncate tracking-wide" title="Số điện thoại lái xe">SĐT Lái xe:</label>
+                </div>
+                <div class="relative flex items-center w-full">
+                  <i class="bi bi-telephone-fill absolute left-2.5 text-teal-600 text-xs pointer-events-none"></i>
                   <input type="text" id="dispatch-input-driver-phone" 
                          name="wh_phone_notel"
                          autocomplete="off"
@@ -2059,7 +2094,7 @@
                          data-lpignore="true"
                          data-form-type="other"
                          placeholder="SĐT..." 
-                         class="w-full pl-6 pr-2 py-1.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500 shadow-2xs">
+                         class="w-full h-[38px] pl-8 pr-2.5 border border-slate-300 rounded-lg font-mono text-xs bg-white text-slate-800 focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition shadow-2xs">
                 </div>
               </div>
             </div>
