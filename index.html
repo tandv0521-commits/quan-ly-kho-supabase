@@ -579,6 +579,31 @@
       background: linear-gradient(90deg, #0284c7, #38bdf8) !important;
     }
 
+    /* Nút đóng X của Toast */
+    .swal2-popup.swal2-toast .swal2-close {
+      position: absolute !important;
+      top: 6px !important;
+      right: 8px !important;
+      width: 22px !important;
+      height: 22px !important;
+      font-size: 16px !important;
+      line-height: 22px !important;
+      color: #94a3b8 !important;
+      background: transparent !important;
+      border: none !important;
+      outline: none !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 6px !important;
+      transition: all 0.15s ease !important;
+    }
+    .swal2-popup.swal2-toast .swal2-close:hover {
+      color: #0f172a !important;
+      background: rgba(241, 245, 249, 0.9) !important;
+    }
+
     /* 2. HỘP THOẠI MODAL THAO TÁC (ENTERPRISE CONFIRM & ALERT MODALS) */
     .swal2-popup:not(.swal2-toast) {
       border-radius: 24px !important;
@@ -728,27 +753,47 @@
           </button>
         </div>
 
-        <div id="sidebar-user-widget" class="mt-2 pt-2.5 border-t border-slate-100 no-print">
-          <div id="sidebar-user-card" class="p-2 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/80 rounded-xl flex items-center justify-between transition">
-            <div class="flex items-center space-x-2 min-w-0 overflow-hidden cursor-pointer" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Thông tin tài khoản đang đăng nhập">
-              <div id="sidebar-user-avatar" class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-black shrink-0 uppercase shadow-2xs">
-                AD
+        <div id="sidebar-user-widget" class="mt-2.5 pt-2.5 border-t border-slate-100 no-print">
+          <div id="sidebar-user-card" class="p-2.5 bg-gradient-to-b from-white to-slate-50/90 hover:from-white hover:to-slate-100/90 border border-slate-200/90 hover:border-teal-300 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200">
+            <!-- User Profile Header -->
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <!-- Avatar with online indicator -->
+              <div class="relative shrink-0 cursor-pointer" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Xem thông tin tài khoản">
+                <div id="sidebar-user-avatar" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-teal-600 flex items-center justify-center text-white text-xs font-black uppercase shadow-xs">
+                  HT
+                </div>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white absolute -bottom-0.5 -right-0.5" title="Đang trực tuyến"></span>
               </div>
-              <div class="sidebar-user-details min-w-0 overflow-hidden">
-                <div id="sidebar-user-name" class="text-xs font-bold text-slate-800 truncate leading-tight">Quản Trị Viên</div>
-                <div class="flex items-center space-x-1 mt-0.5">
-                  <span id="sidebar-user-role-badge" class="px-1.5 py-0.2 text-[9px] font-bold rounded bg-rose-100 text-rose-700 border border-rose-200">Admin</span>
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Đang trực tuyến"></span>
-                  <span id="sidebar-user-warehouse" class="text-[9.5px] font-bold text-blue-600 truncate ml-0.5"></span>
+
+              <!-- Name & Role / Warehouse Info -->
+              <div class="sidebar-user-details min-w-0 flex-1 overflow-hidden cursor-pointer" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Bấm để xem thông tin tài khoản">
+                <div id="sidebar-user-name" class="text-xs font-bold text-slate-800 truncate leading-tight hover:text-teal-700 transition">
+                  Trần Thị Huyền Trang
+                </div>
+                <div class="flex items-center space-x-1.5 mt-1 overflow-hidden">
+                  <span id="sidebar-user-role-badge" class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-teal-50 text-teal-800 border border-teal-200 shrink-0">
+                    Kho
+                  </span>
+                  <span id="sidebar-user-warehouse" class="text-[10px] font-medium text-slate-500 truncate" title="Kho phụ trách">
+                    Kho Trần Thị Huyền Trang
+                  </span>
                 </div>
               </div>
             </div>
-            <div class="sidebar-user-details flex items-center space-x-0.5 shrink-0">
-              <button type="button" onclick="openChangePasswordModal()" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-white rounded transition cursor-pointer" title="Đổi mật khẩu">
-                <i class="bi bi-key-fill text-xs"></i>
+
+            <!-- Action Buttons (Đổi mật khẩu & Đăng xuất chuyên nghiệp, tinh tế) -->
+            <div class="sidebar-user-details flex items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-100/80">
+              <button type="button" onclick="openChangePasswordModal()" 
+                      class="flex-1 py-1 px-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-700 border border-slate-200 rounded-lg text-[10.5px] font-semibold transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer group" 
+                      title="Đổi mật khẩu tài khoản">
+                <i class="bi bi-key-fill text-slate-400 group-hover:text-blue-600 text-xs"></i>
+                <span>Đổi MK</span>
               </button>
-              <button type="button" onclick="handleAppLogout()" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-white rounded transition cursor-pointer" title="Đăng xuất khỏi phần mềm">
+              <button type="button" onclick="handleAppLogout()" 
+                      class="py-1 px-2.5 bg-rose-50/60 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200/70 rounded-lg text-[10.5px] font-bold transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer shrink-0" 
+                      title="Đăng xuất khỏi phần mềm">
                 <i class="bi bi-box-arrow-right text-xs"></i>
+                <span>Đăng xuất</span>
               </button>
             </div>
           </div>
@@ -816,8 +861,8 @@
             <span id="label-staff-warehouse" class="hidden font-bold text-amber-950 text-xs truncate max-w-[200px]"></span>
           </div>
 
-          <!-- USER PROFILE & LOGOUT IN HEADER (HIỂN THỊ ĐẦY ĐỦ RÕ RÀNG, KHÔNG BỊ CHE KHUẤT) -->
-          <div class="flex items-center space-x-1.5 pl-2 border-l border-slate-200 shrink-0" id="header-user-section">
+          <!-- USER PROFILE & LOGOUT IN HEADER (ĐÃ ẨN THEO YÊU CẦU NGƯỜI DÙNG) -->
+          <div class="hidden items-center space-x-1.5 pl-2 border-l border-slate-200 shrink-0" id="header-user-section">
             <div class="flex items-center space-x-1.5 px-2.5 py-1 bg-slate-100/90 hover:bg-slate-200/80 rounded-xl border border-slate-200/90 text-xs cursor-pointer shadow-2xs transition shrink-0" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Xem thông tin tài khoản">
               <span id="header-user-avatar" class="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center font-black text-[10px] shadow-2xs shrink-0">AD</span>
               <span id="header-user-name" class="font-bold text-slate-800 whitespace-nowrap max-w-[170px] sm:max-w-[220px] truncate">Quản Trị Viên</span>
@@ -3257,18 +3302,20 @@
                 </p>
               </div>
 
-              <!-- Form thêm nhóm -->
-              <div class="flex items-center gap-2 w-full md:w-auto md:min-w-[420px]">
+              <!-- Form thêm nhóm (Trình bày lại giao diện hiện đại, nút thêm nhóm nổi bật, chuẩn đẹp) -->
+              <div class="flex items-center gap-2 w-full md:w-auto md:min-w-[430px]">
                 <div class="relative flex-1">
-                  <i class="bi bi-tag absolute left-2.5 top-2.5 text-teal-600 text-xs"></i>
+                  <i class="bi bi-tag-fill absolute left-3 top-1/2 -translate-y-1/2 text-teal-600 text-xs pointer-events-none"></i>
                   <input type="text" id="cust-new-group-name" 
                          placeholder="Nhập tên nhóm mới (VD: Van / Khóa, Khớp nối, Ống D90...)" 
                          onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addNewCustomGroupFromModal(); }"
-                         class="w-full pl-8 pr-3 py-1.5 border-2 border-teal-400 rounded-lg font-bold text-xs bg-teal-50/30 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-500 shadow-2xs">
+                         class="w-full pl-8 pr-3 py-2 border-2 border-teal-300 focus:border-teal-500 rounded-xl font-semibold text-xs bg-teal-50/20 text-teal-950 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-400/30 shadow-2xs transition">
                 </div>
-                <button type="button" onclick="addNewCustomGroupFromModal()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer shrink-0">
-                  <i class="bi bi-plus-lg font-black"></i>
-                  <span>+ Thêm nhóm</span>
+                <button type="button" onclick="addNewCustomGroupFromModal()" 
+                        class="px-4 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs transition-all duration-150 flex items-center gap-1.5 shadow-sm hover:shadow cursor-pointer shrink-0" 
+                        title="Thêm nhóm mới vào danh sách">
+                  <i class="bi bi-plus-circle-fill text-sm"></i>
+                  <span>Thêm nhóm</span>
                 </button>
               </div>
             </div>
@@ -6624,6 +6671,9 @@ window.google.script = {
     let currentWarehouseScope = 'all';
 
     function getActiveWarehouseScope() {
+      if (currentWarehouseScope && currentWarehouseScope !== 'all') {
+        return currentWarehouseScope;
+      }
       if (!currentAppUser) return 'all';
       if (currentAppUser.role !== 'admin') {
         return String(currentAppUser.username || 'staff').toLowerCase();
@@ -6660,7 +6710,6 @@ window.google.script = {
 
       // 1. TRƯỜNG HỢP KHO TỔNG / ADMIN:
       if (scope === 'admin') {
-        // Nếu có tag kho chi nhánh khác hoặc cột warehouse của kho khác -> Loại bỏ
         if (tagWh && tagWh !== 'admin' && tagWh !== 'main') return false;
         if (wh && wh !== 'admin' && wh !== 'main' && wh !== '') return false;
         return true;
@@ -6668,12 +6717,18 @@ window.google.script = {
 
       // 2. TRƯỜNG HỢP KHO CHI NHÁNH CỤ THỂ (ví dụ: 'trang', 'tuan', 'trong', 'hung', 'dung'...)
       const normScope = scope.toLowerCase();
+      const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username.trim().toLowerCase() : '';
+      const curFullName = (currentAppUser && currentAppUser.full_name) ? currentAppUser.full_name.trim().toLowerCase() : '';
 
-      // NGUYÊN TẮC LOẠI TRỪ 1: Phiếu có tag kho khác rõ ràng -> Loại bỏ tuyệt đối
-      if (tagWh && tagWh !== normScope) return false;
+      // Tập các định danh hợp lệ của kho hiện tại
+      const validWhIdentifiers = [normScope, curUser, curFullName].filter(Boolean);
+      const isTagMatch = tagWh && validWhIdentifiers.some(id => tagWh === id || tagWh.includes(id) || id.includes(tagWh));
+      const isWhMatch = wh && validWhIdentifiers.some(id => wh === id || wh.includes(id) || id.includes(wh));
 
-      // NGUYÊN TẮC LOẠI TRỪ 2: Phiếu có cột warehouse của kho khác -> Loại bỏ tuyệt đối
-      if (wh && wh !== normScope) return false;
+      // NGUYÊN TẮC LOẠI TRỪ: Phiếu có tag hoặc cột warehouse của một kho chi nhánh KHÁC rõ ràng -> Loại bỏ tuyệt đối
+      const isOtherBranchTag = tagWh && !isTagMatch && tagWh !== 'admin' && tagWh !== 'main';
+      const isOtherBranchWh = wh && !isWhMatch && wh !== 'admin' && wh !== 'main';
+      if (isOtherBranchTag || isOtherBranchWh) return false;
 
       // Danh sách thành viên phát hàng thuộc kho hiện tại
       let isStaffInCurrentWh = false;
@@ -6684,18 +6739,15 @@ window.google.script = {
         }
       } catch(e) {}
 
-      // Tên hoặc username tài khoản kho hiện tại
-      const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username.trim().toLowerCase() : '';
-      const curFullName = (currentAppUser && currentAppUser.full_name) ? currentAppUser.full_name.trim().toLowerCase() : '';
       const isCurAccount = (staff && (staff === curFullName || staff === curUser));
 
       // CHẤP NHẬN NẾU:
-      // a. Tag ghi chú khớp kho mình
-      if (tagWh === normScope) return true;
-      // b. Cột warehouse khớp kho mình
-      if (wh === normScope) return true;
-      // c. Người phát hàng là thành viên thuộc kho mình hoặc chính tài khoản kho
-      if ((isStaffInCurrentWh || isCurAccount) && (!tagWh || tagWh === normScope) && (!wh || wh === normScope)) {
+      // a. Người phát hàng là thành viên thuộc kho mình hoặc chính tài khoản kho
+      if (isStaffInCurrentWh || isCurAccount) {
+        return true;
+      }
+      // b. Tag ghi chú hoặc cột warehouse khớp kho mình
+      if (isTagMatch || isWhMatch) {
         return true;
       }
 
@@ -6788,15 +6840,7 @@ window.google.script = {
       }
       updateWarehouseScopeUI();
 
-      Swal.fire({
-        icon: 'info',
-        title: 'Đang xem phạm vi kho:',
-        text: getWarehouseScopeLabel(val),
-        timer: 1200,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
+      showAppToast('Phạm vi kho:', getWarehouseScopeLabel(val), 'info', 1400);
 
       try { localStorage.removeItem('CACHED_INVENTORY'); } catch(e) {}
 
@@ -6824,6 +6868,9 @@ window.google.script = {
       }
       if (typeof reloadWarehouseFastItems === 'function') {
         reloadWarehouseFastItems();
+      }
+      if (typeof loadDailyDispatchTab === 'function') {
+        try { loadDailyDispatchTab(); } catch(e) {}
       }
     }
 
@@ -6864,15 +6911,15 @@ window.google.script = {
 
       const roleText = isAdmin ? 'Quản Trị Viên' : 'Nhân Viên Kho';
       const roleBadgeClass = isAdmin 
-        ? 'px-1.5 py-0.2 text-[9px] font-bold rounded bg-rose-100 text-rose-700 border border-rose-200' 
-        : 'px-1.5 py-0.2 text-[9px] font-bold rounded bg-teal-100 text-teal-800 border border-teal-200';
+        ? 'px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-rose-50 text-rose-700 border border-rose-200 shrink-0' 
+        : 'px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-teal-50 text-teal-800 border border-teal-200 shrink-0';
       const avatarBgClass = isAdmin 
         ? 'bg-gradient-to-tr from-rose-600 to-red-700' 
         : 'bg-gradient-to-tr from-blue-600 to-teal-600';
 
       if (sideAvatar) {
         sideAvatar.innerText = initials;
-        sideAvatar.className = `w-7 h-7 rounded-lg ${avatarBgClass} flex items-center justify-center text-white text-xs font-black shrink-0 uppercase shadow-2xs`;
+        sideAvatar.className = `w-9 h-9 rounded-xl ${avatarBgClass} flex items-center justify-center text-white text-xs font-black uppercase shadow-xs`;
       }
       if (sideName) sideName.innerText = user.full_name || user.username;
       if (sideRole) {
@@ -6959,19 +7006,60 @@ window.google.script = {
       }
     }
 
-    // HÀM TIỆN ÍCH THÔNG BÁO GÓC ĐẲNG CẤP CHUYÊN NGHIỆP CHO MỌI THAO TÁC
-    function showAppToast(title, html = '', icon = 'success', timer = 2200) {
+    // HÀM TIỆN ÍCH THÔNG BÁO GÓC ĐẲNG CẤP CHUYÊN NGHIỆP - TỰ BIẾN MẤT 100%, CHỐNG TREO TUYỆT ĐỐI
+    let appToastSafetyTimer = null;
+    function showAppToast(title, html = '', icon = 'success', timer = 2000) {
       if (typeof Swal === 'undefined') return;
-      return Swal.fire({
+
+      if (appToastSafetyTimer) {
+        clearTimeout(appToastSafetyTimer);
+        appToastSafetyTimer = null;
+      }
+
+      // Đóng ngay lập tức toast cũ nếu đang hiển thị
+      try {
+        if (Swal.isVisible() && Swal.getPopup() && Swal.getPopup().classList.contains('swal2-toast')) {
+          Swal.close();
+        }
+      } catch (e) {}
+
+      const duration = Math.max(1200, parseInt(timer, 10) || 2000);
+
+      const toastInstance = Swal.fire({
         toast: true,
         position: 'top-end',
         icon: icon,
         title: title,
         html: html,
         showConfirmButton: false,
-        timer: timer,
-        timerProgressBar: true
+        showCloseButton: true,
+        timer: duration,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          // VÔ HIỆU HÓA HOÀN TOÀN TÍNH NĂNG DỪNG TIMER KHI RÊ CHUỘT (NGUYÊN NHÂN GÂY TREO THÔNG BÁO)
+          toast.onmouseenter = null;
+          toast.onmouseleave = null;
+
+          // CLICK CHUỘT VÀO THÔNG BÁO ĐỂ TẮT NGAY TỨC THÌ
+          toast.style.cursor = 'pointer';
+          toast.title = 'Bấm vào để đóng thông báo này';
+          toast.addEventListener('click', () => {
+            try { Swal.close(); } catch(err) {}
+          });
+        }
       });
+
+      // BẢO HIỂM 2 LỚP: TỰ ĐỘNG CƯỠNG CHẾ ĐÓNG TOAST ĐÚNG THỜI GIAN ĐỂ CHỐNG TREO 100%
+      appToastSafetyTimer = setTimeout(() => {
+        try {
+          const currentPopup = Swal.getPopup();
+          if (currentPopup && currentPopup.classList.contains('swal2-toast')) {
+            Swal.close();
+          }
+        } catch (err) {}
+      }, duration + 300);
+
+      return toastInstance;
     }
 
     async function checkAuthSession() {
@@ -7232,15 +7320,12 @@ window.google.script = {
           try { loadReportData(); } catch(e) {}
         }
 
-        Swal.fire({
-          icon: 'success',
-          title: `Xin chào, ${sessionUser.full_name}!`,
-          text: `Đăng nhập thành công với vai trò: ${sessionUser.role === 'admin' ? 'Quản Trị Viên' : 'Nhân Viên Kho'}`,
-          timer: 1600,
-          showConfirmButton: false,
-          toast: true,
-          position: 'top-end'
-        });
+        showAppToast(
+          `Xin chào, ${sessionUser.full_name}!`,
+          `Đăng nhập thành công (${sessionUser.role === 'admin' ? 'Quản Trị Viên' : 'Nhân Viên Kho'})`,
+          'success',
+          1800
+        );
 
       } catch (err) {
         console.error("Lỗi đăng nhập:", err);
@@ -7277,15 +7362,7 @@ window.google.script = {
 
       showLoginOverlay();
 
-      Swal.fire({
-        icon: 'info',
-        title: 'Đã đăng xuất',
-        text: 'Hẹn gặp lại bạn!',
-        timer: 1200,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
+      showAppToast('Đã đăng xuất', 'Hẹn gặp lại bạn!', 'info', 1400);
     }
 
     // ==========================================
@@ -8041,18 +8118,8 @@ window.google.script = {
           }
         }, 300);
 
-        if (typeof Swal !== 'undefined') {
-          const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 1400,
-            timerProgressBar: true
-          });
-          Toast.fire({
-            icon: 'success',
-            title: 'Đã nạp lại dữ liệu thành công'
-          });
+        if (typeof showAppToast === 'function') {
+          showAppToast('Đã nạp lại dữ liệu thành công', '', 'success', 1400);
         }
       };
 
@@ -9253,14 +9320,7 @@ window.google.script = {
             item.pack_qty = packQty;
             item.pack_unit = packUnit;
             delete modifiedPackMap[code];
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'success',
-              title: res.message,
-              showConfirmButton: false,
-              timer: 2000
-            });
+            showAppToast('Thành công', res.message, 'success', 1800);
             filterPackagingTable();
           } else {
             Swal.fire('Lỗi', res.message, 'error');
@@ -12077,14 +12137,7 @@ window.google.script = {
             submitBtnText.innerText = `LƯU PHIẾU NHẬP (CHUYỂN TỪ ${voucherNo})`;
           }
 
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'info',
-            title: `Đã nạp dữ liệu từ ${voucherNo}. Vui lòng kiểm tra và bấm Lưu phiếu.`,
-            showConfirmButton: false,
-            timer: 3000
-          });
+          showAppToast(`Đã nạp dữ liệu từ ${voucherNo}`, 'Vui lòng kiểm tra và bấm Lưu phiếu.', 'info', 2200);
         }
       });
     }
@@ -12224,10 +12277,10 @@ window.google.script = {
           callSupabaseSingle_('vehicles?order=plate.asc', 'GET')
         ]);
 
-        const rawDispatches = (phatHangRes.status === 'fulfilled' && Array.isArray(phatHangRes.value)) ? phatHangRes.value : [];
-        dispatchListCached = rawDispatches.filter(it => isDispatchInCurrentWarehouse(it));
         warehouseStaffListCached = (staffRes.status === 'fulfilled' && Array.isArray(staffRes.value)) ? staffRes.value : [];
         vehiclesListCached = (vehiclesRes.status === 'fulfilled' && Array.isArray(vehiclesRes.value)) ? vehiclesRes.value : [];
+        const rawDispatches = (phatHangRes.status === 'fulfilled' && Array.isArray(phatHangRes.value)) ? phatHangRes.value : [];
+        dispatchListCached = rawDispatches.filter(it => isDispatchInCurrentWarehouse(it));
 
         populateWarehouseStaffUI();
         populateVehiclesUI();
@@ -12274,28 +12327,28 @@ window.google.script = {
       }
 
       const normScope = scope.toLowerCase();
+      const curName = String(currentAppUser.full_name || '').trim().toLowerCase();
+      const curUser = String(currentAppUser.username || '').trim().toLowerCase();
 
       // Lọc danh sách nhân viên phát hàng theo phạm vi kho hiện tại
       return warehouseStaffListCached.filter(st => {
         const stWh = String(st.warehouse || '').trim().toLowerCase();
         const stName = String(st.name || '').trim().toLowerCase();
-        const curName = String(currentAppUser.full_name || '').trim().toLowerCase();
-        const curUser = String(currentAppUser.username || '').trim().toLowerCase();
 
-        // Nếu là tài khoản nhân viên kho: CHỈ hiển thị nhân viên của kho mình (hoặc chính mình)
+        // 1. Nếu là tài khoản nhân viên / thành viên kho: CHỈ hiển thị nhân viên của kho mình (hoặc chính mình)
         if (!isAdmin) {
-          if (stWh && stWh === normScope) return true;
-          if (curName && stName === curName) return true;
-          if (curUser && stName === curUser) return true;
+          if (stWh && (stWh === normScope || stWh === curName || stWh === curUser || stWh.includes(curName) || curName.includes(stWh))) return true;
+          if (curName && (stName === curName || stName.includes(curName))) return true;
+          if (curUser && (stName === curUser || stName.includes(curUser))) return true;
           if (st.id && currentAppUser.staff_id && st.id === currentAppUser.staff_id) return true;
           return false;
         }
 
-        // Nếu là Admin đang lọc theo kho cụ thể
+        // 2. Nếu là Admin đang lọc theo kho cụ thể
         if (normScope === 'admin') {
           return !stWh || stWh === 'admin' || stWh === 'main';
         }
-        if (stWh && stWh === normScope) return true;
+        if (stWh && (stWh === normScope || stWh.includes(normScope) || normScope.includes(stWh))) return true;
         return false;
       });
     }
@@ -15605,30 +15658,20 @@ window.google.script = {
             .catch(e => console.warn('Lỗi tự động lưu xe:', e));
         }
 
+        try { Swal.close(); } catch(e) {}
+        const successTitle = isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu phiếu xe ${vehicle}!`;
+        const successMsg = `${allValidItems.length} mã hàng • Tổng SL: ${formatNumber(totalQty)}`;
+
         if (andAddNew) {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu phiếu xe ${vehicle}!`,
-            html: `<div class="text-xs text-slate-600 font-normal mt-0.5">${allValidItems.length} mã hàng • Tổng SL: <b class="text-teal-700">${formatNumber(totalQty)}</b></div>`,
-            timer: 1800,
-            timerProgressBar: true,
-            showConfirmButton: false
-          });
+          if (typeof showAppToast === 'function') {
+            showAppToast(successTitle, successMsg, 'success', 2200);
+          }
           resetCreateDispatchFormKeepScreen();
           loadDailyDispatchTab();
         } else {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu phiếu xe ${vehicle}!`,
-            html: `<div class="text-xs text-slate-600 font-normal mt-0.5">${allValidItems.length} mã hàng • Tổng SL: <b class="text-teal-700">${formatNumber(totalQty)}</b></div>`,
-            timer: 1800,
-            timerProgressBar: true,
-            showConfirmButton: false
-          });
+          if (typeof showAppToast === 'function') {
+            showAppToast(successTitle, successMsg, 'success', 2200);
+          }
           closeCreateDispatchForm();
           loadDailyDispatchTab();
         }
@@ -18437,13 +18480,15 @@ window.google.script = {
       try {
         if (typeof getActiveWarehouseScope === 'function') {
           const scope = getActiveWarehouseScope();
-          if (scope && scope !== 'all') return String(scope).trim().toLowerCase();
+          if (scope && scope !== 'all') {
+            return String(scope).trim().toLowerCase().replace(/[\s\/\\]+/g, '_');
+          }
         }
       } catch (e) {}
       return 'admin';
     }
 
-    function getFastItemsStorageKey(prefix) {
+    function getFastItemsStorageKey(prefix = 'custom_fast_dispatch_items') {
       const scope = getFastItemsStorageScope();
       return `${prefix}_${scope}`;
     }
@@ -18635,9 +18680,14 @@ window.google.script = {
       reader.readAsText(file);
     }
 
+    let customFastItemsListScope = null;
+    let customFastGroupsListScope = null;
+
     function reloadWarehouseFastItems() {
       customFastItemsList = null;
       customFastGroupsList = null;
+      customFastItemsListScope = null;
+      customFastGroupsListScope = null;
       checkedFastGroupsList = null;
       fastDispatchItemsState = {};
       if (typeof renderFastGroupCheckboxes === 'function') {
@@ -18650,9 +18700,11 @@ window.google.script = {
     }
 
     function getCustomFastItems() {
-      if (customFastItemsList && Array.isArray(customFastItemsList) && customFastItemsList.length > 0) {
+      const currentScope = getFastItemsStorageScope();
+      if (customFastItemsList && Array.isArray(customFastItemsList) && customFastItemsList.length > 0 && customFastItemsListScope === currentScope) {
         return customFastItemsList;
       }
+      customFastItemsListScope = currentScope;
       const storageKey = getFastItemsStorageKey('custom_fast_dispatch_items');
       try {
         const stored = localStorage.getItem(storageKey);
@@ -18677,6 +18729,7 @@ window.google.script = {
 
     function saveCustomFastItems(items) {
       customFastItemsList = items || [];
+      customFastItemsListScope = getFastItemsStorageScope();
       const storageKey = getFastItemsStorageKey('custom_fast_dispatch_items');
       try {
         localStorage.setItem(storageKey, JSON.stringify(customFastItemsList));
@@ -18687,9 +18740,11 @@ window.google.script = {
     }
 
     function getCustomFastGroups() {
-      if (customFastGroupsList && Array.isArray(customFastGroupsList) && customFastGroupsList.length > 0) {
+      const currentScope = getFastItemsStorageScope();
+      if (customFastGroupsList && Array.isArray(customFastGroupsList) && customFastGroupsList.length > 0 && customFastGroupsListScope === currentScope) {
         return customFastGroupsList;
       }
+      customFastGroupsListScope = currentScope;
       const storageKey = getFastItemsStorageKey('custom_fast_dispatch_groups');
       try {
         const stored = localStorage.getItem(storageKey);
@@ -18721,13 +18776,13 @@ window.google.script = {
 
     function saveCustomFastGroups(groups) {
       customFastGroupsList = groups || [];
+      customFastGroupsListScope = getFastItemsStorageScope();
       const storageKey = getFastItemsStorageKey('custom_fast_dispatch_groups');
       try {
         localStorage.setItem(storageKey, JSON.stringify(customFastGroupsList));
       } catch (e) {
-        console.error('Lỗi lưu ' + storageKey + ':', e);
+        console.error('Lỗi ghi ' + storageKey + ':', e);
       }
-      syncWarehouseFastConfigToCloud();
     }
 
     function getCheckedFastGroups() {
@@ -19449,7 +19504,7 @@ window.google.script = {
       if (!container) return;
 
       if (tempCustomizerGroups.length === 0) {
-        container.innerHTML = '<span class="text-slate-400 italic text-[11px] py-1">Chưa có nhóm nào. Vui lòng nhập tên nhóm và bấm "+ Thêm nhóm".</span>';
+        container.innerHTML = '<span class="text-slate-400 italic text-[11px] py-1">Chưa có nhóm nào. Vui lòng nhập tên nhóm và bấm "Thêm nhóm".</span>';
         return;
       }
 
@@ -19490,7 +19545,7 @@ window.google.script = {
         tbody.innerHTML = `
           <tr>
             <td colspan="4" class="px-4 py-8 text-center text-slate-400 italic">
-              Chưa có nhóm nào. Vui lòng nhập tên nhóm ở trên và bấm "+ Thêm nhóm".
+              Chưa có nhóm nào. Vui lòng nhập tên nhóm ở trên và bấm "Thêm nhóm".
             </td>
           </tr>
         `;
@@ -20040,18 +20095,8 @@ window.google.script = {
       renderFastItemsTable();
       calculateDispatchFormSummary();
 
-      if (showNotification) {
-        const Toast = Swal.mixin({
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 1600,
-          timerProgressBar: true
-        });
-        Toast.fire({
-          icon: 'success',
-          title: notificationTitle
-        });
+      if (showNotification && typeof showAppToast === 'function') {
+        showAppToast(notificationTitle, '', 'success', 1500);
       }
     }
 
@@ -20330,16 +20375,9 @@ window.google.script = {
       // TỰ ĐỘNG LƯU NGẦM
       autoSaveFastCustomizer(false);
 
-      const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 1500
-      });
-      Toast.fire({
-        icon: 'success',
-        title: `Đã tạo nhóm "${val}"`
-      });
+      if (typeof showAppToast === 'function') {
+        showAppToast(`Đã tạo nhóm "${val}"`, '', 'success', 1500);
+      }
     }
 
     function deleteCustomGroupFromModal(groupName) {
