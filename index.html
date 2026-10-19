@@ -7869,10 +7869,15 @@ window.google.script = {
       customFastGroupsList = null;
       customFastItemsList = null;
       checkedFastGroupsList = null;
+      kiemKeVouchersList = [];
+      currentKiemKeItems = [];
+      currentEditingKiemKeId = null;
 
-      // Xóa trắng bảng dữ liệu phát hàng trên DOM để không còn lưu vết kho cũ
+      // Xóa trắng bảng dữ liệu phát hàng và kiểm kê trên DOM để không còn lưu vết tài khoản cũ
       const dispatchTbody = document.getElementById('dispatch-tbody');
       if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu phát hàng của kho</td></tr>';
+      const kiemKeTbody = document.getElementById('kiemke-vouchers-tbody');
+      if (kiemKeTbody) kiemKeTbody.innerHTML = '<tr><td colspan="12" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu kiểm kê của kho</td></tr>';
       const dispatchSummary = document.getElementById('dispatch-summary-container');
       if (dispatchSummary) dispatchSummary.innerHTML = '';
       const dispatchStaffSummary = document.getElementById('dispatch-staff-summary-container');
@@ -22975,13 +22980,19 @@ window.google.script = {
     }
 
     async function syncProductPricesFromCloud_() {
-      if (typeof callSupabaseSingle_ !== 'function') return;
       try {
-        const rows = await callSupabaseSingle_('warehouse_configs?config_key=eq.product_prices', 'GET');
-        if (Array.isArray(rows) && rows.length > 0 && rows[0].config_value) {
-          const cloudMap = (typeof rows[0].config_value === 'string') 
-            ? JSON.parse(rows[0].config_value) 
-            : rows[0].config_value;
+        if (!SUPABASE_CLOUD_URL || !SUPABASE_KEY) return;
+        const url = `${SUPABASE_CLOUD_URL}/rest/v1/warehouse_configs?warehouse=eq.PRODUCT_PRICES_CONFIG&select=*`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        }).then(r => r.ok ? r.json() : []).catch(() => []);
+
+        if (Array.isArray(res) && res.length > 0 && res[0].items_json) {
+          const cloudMap = JSON.parse(res[0].items_json);
           if (cloudMap && typeof cloudMap === 'object') {
             productPricesMap = Object.assign({}, productPricesMap, cloudMap);
             try {
@@ -22990,14 +23001,13 @@ window.google.script = {
             if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
               LocalDB.cache['product_prices'] = productPricesMap;
             }
-            // Nếu đang ở tab inventory hoặc kiemke, cập nhật hiển thị ngay
             if (currentActiveTabId === 'inventory' && typeof renderInventoryCurrentPage === 'function') {
               renderInventoryCurrentPage();
             }
           }
         }
       } catch (err) {
-        // Yên lặng bỏ qua nếu bảng hoặc key chưa tạo
+        // Yên lặng bỏ qua nếu chưa có cấu hình
       }
     }
 
@@ -23019,20 +23029,28 @@ window.google.script = {
         }
       }
 
-      // 3. Đồng bộ lên Supabase Cloud
-      if (typeof callSupabaseSingle_ === 'function') {
-        try {
+      // 3. Đồng bộ lên Supabase Cloud (bảng warehouse_configs chuẩn schema)
+      try {
+        if (SUPABASE_CLOUD_URL && SUPABASE_KEY) {
           const payload = {
-            config_key: 'product_prices',
-            config_value: productPricesMap,
+            warehouse: 'PRODUCT_PRICES_CONFIG',
+            items_json: JSON.stringify(productPricesMap || {}),
             updated_at: new Date().toISOString()
           };
-          await callSupabaseSingle_('warehouse_configs', 'POST', payload, {
-            'Prefer': 'resolution=merge-duplicates'
-          });
-        } catch (err) {
-          console.warn('Lỗi đồng bộ bảng giá lên Supabase warehouse_configs:', err);
+          const url = `${SUPABASE_CLOUD_URL}/rest/v1/warehouse_configs?on_conflict=warehouse`;
+          await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify(payload)
+          }).catch(err => console.warn('Lỗi ghi bảng giá lên Supabase Cloud:', err));
         }
+      } catch (err) {
+        console.warn('Lỗi đồng bộ bảng giá lên Supabase:', err);
       }
 
       // Cập nhật lại giao diện bảng tồn kho nếu đang xem
@@ -23351,13 +23369,73 @@ window.google.script = {
       filterKiemKeTable();
     }
 
+    function getKiemKeStorageScope() {
+      if (currentAppUser && currentAppUser.role !== 'admin') {
+        return String(currentAppUser.username || currentAppUser.full_name || 'staff').trim().toLowerCase();
+      }
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+      if (scope && scope !== 'all') return scope.trim().toLowerCase();
+      return 'admin';
+    }
+
+    function isKiemKeInCurrentWarehouse(v) {
+      if (!v) return false;
+      const isAdmin = (typeof isUserAdmin === 'function' && isUserAdmin());
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+
+      // 1. Nếu là Admin và đang chọn "Tất cả kho": Xem được toàn bộ
+      if (isAdmin && scope === 'all') {
+        return true;
+      }
+
+      const curUser = (currentAppUser && currentAppUser.username) ? String(currentAppUser.username).trim().toLowerCase() : '';
+      const curFullName = (currentAppUser && currentAppUser.full_name) ? String(currentAppUser.full_name).trim().toLowerCase() : '';
+      const normScope = String(scope || '').trim().toLowerCase();
+
+      // 2. Nếu là Admin đang chọn 1 kho cụ thể
+      if (isAdmin) {
+        if (normScope === 'admin') {
+          const vWh = String(v.warehouse_id || v.warehouse || '').toLowerCase();
+          return !vWh || vWh === 'admin' || vWh === 'main' || vWh === 'kho_chinh';
+        }
+        const vWhId = String(v.warehouse_id || '').toLowerCase();
+        const vWhName = String(v.warehouse_name || '').toLowerCase();
+        const vWh = String(v.warehouse || '').toLowerCase();
+        const vScope = String(v.warehouse_scope || '').toLowerCase();
+        return vWhId === normScope || vWhName.includes(normScope) || vWh === normScope || vScope === normScope;
+      }
+
+      // 3. NẾU LÀ TÀI KHOẢN THÀNH VIÊN KHO (không phải Admin):
+      // CHỈ hiển thị thông tin riêng biệt của tài khoản này! TUYỆT ĐỐI không hiện thông tin của tài khoản khác!
+      const validIdentifiers = [normScope, curUser, curFullName].filter(Boolean);
+
+      const vCreatedBy = String(v.created_by || '').trim().toLowerCase();
+      const vCreator = String(v.creator_name || '').trim().toLowerCase();
+      const vWhScope = String(v.warehouse_scope || '').trim().toLowerCase();
+
+      // Loại trừ tuyệt đối nếu phiếu có scope hoặc người tạo của tài khoản khác
+      if (vWhScope && !validIdentifiers.includes(vWhScope) && vWhScope !== 'all' && vWhScope !== 'admin') {
+        return false;
+      }
+      if (vCreatedBy && curUser && vCreatedBy !== curUser && vCreatedBy !== curFullName) {
+        return false;
+      }
+
+      // Khớp theo tài khoản tạo hoặc người kiểm kê hoặc warehouse_scope
+      if (curUser && (vCreatedBy === curUser || vCreator === curUser)) return true;
+      if (curFullName && (vCreator === curFullName || vCreatedBy === curFullName)) return true;
+      if (vWhScope && validIdentifiers.includes(vWhScope)) return true;
+
+      return false;
+    }
+
     function populateKiemKeWarehouseDropdowns() {
       const filterSelect = document.getElementById('kiemke-filter-warehouse');
       const inputSelect = document.getElementById('kiemke-input-warehouse');
       if (!filterSelect || !inputSelect) return;
 
-      const currentFilterVal = filterSelect.value;
-      const currentInputVal = inputSelect.value;
+      const isAdmin = (typeof isUserAdmin === 'function' && isUserAdmin());
+      const currentScope = getKiemKeStorageScope();
 
       let optionsHtml = '<option value="all">Tất cả kho hàng</option>';
       let inputOptionsHtml = '';
@@ -23376,67 +23454,124 @@ window.google.script = {
       filterSelect.innerHTML = optionsHtml;
       inputSelect.innerHTML = inputOptionsHtml;
 
-      if (currentFilterVal) filterSelect.value = currentFilterVal;
-      if (currentInputVal) inputSelect.value = currentInputVal;
-      else if (typeof currentWarehouseId !== 'undefined' && currentWarehouseId) {
-        inputSelect.value = currentWarehouseId;
+      if (!isAdmin) {
+        // Tài khoản thành viên kho: Khóa bộ lọc kho ở danh sách và cố định kho ở form lập phiếu
+        if (filterSelect.parentElement) filterSelect.parentElement.classList.add('hidden');
+        if (inputSelect.options.length > 0) {
+          for (let i = 0; i < inputSelect.options.length; i++) {
+            const optVal = inputSelect.options[i].value.toLowerCase();
+            const optText = inputSelect.options[i].text.toLowerCase();
+            if (optVal === currentScope || optText.includes(currentScope)) {
+              inputSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      } else {
+        if (filterSelect.parentElement) filterSelect.parentElement.classList.remove('hidden');
       }
     }
 
     async function fetchKiemKeVouchersFromCloud_() {
-      // 1. Đọc từ localStorage trước để hiển thị tức thì
+      const scope = getKiemKeStorageScope();
+      const isAdmin = (typeof isUserAdmin === 'function' && isUserAdmin());
+      const localKey = 'wh_kiemke_vouchers_' + scope;
+
+      // 1. Đọc từ localStorage theo đúng phạm vi tài khoản hiện tại
       try {
-        const cachedStr = localStorage.getItem('wh_kiemke_vouchers');
+        let cachedStr = localStorage.getItem(localKey);
+        if (!cachedStr && isAdmin) {
+          cachedStr = localStorage.getItem('wh_kiemke_vouchers');
+        }
         if (cachedStr) {
           const cached = JSON.parse(cachedStr);
-          if (Array.isArray(cached)) kiemKeVouchersList = cached;
+          if (Array.isArray(cached)) {
+            kiemKeVouchersList = isAdmin ? cached : cached.filter(v => isKiemKeInCurrentWarehouse(v));
+          }
+        } else {
+          kiemKeVouchersList = [];
         }
-      } catch (e) {}
-
-      // 2. Đọc từ LocalDB
-      if (typeof LocalDB !== 'undefined' && LocalDB.cache && LocalDB.cache['warehouse_kiemke']) {
-        kiemKeVouchersList = LocalDB.cache['warehouse_kiemke'];
+      } catch (e) {
+        kiemKeVouchersList = [];
       }
 
-      // 3. Đọc từ Supabase Cloud
-      if (typeof callSupabaseSingle_ === 'function') {
-        try {
-          // Thử lấy từ bảng warehouse_kiemke
-          const cloudData = await callSupabaseSingle_('warehouse_kiemke?select=*&order=kiemke_date.desc,created_at.desc', 'GET');
-          if (Array.isArray(cloudData)) {
-            kiemKeVouchersList = cloudData.map(v => {
-              if (typeof v.items === 'string') {
-                try { v.items = JSON.parse(v.items); } catch (e) { v.items = []; }
-              }
-              return v;
-            });
-            saveKiemKeCacheLocally_();
-            return;
-          }
-        } catch (err) {
-          // Fallback: nếu bảng warehouse_kiemke chưa có, đọc từ warehouse_configs key=kiemke_vouchers
-          try {
-            const configRows = await callSupabaseSingle_('warehouse_configs?config_key=eq.kiemke_vouchers', 'GET');
-            if (Array.isArray(configRows) && configRows.length > 0 && configRows[0].config_value) {
-              const val = (typeof configRows[0].config_value === 'string')
-                ? JSON.parse(configRows[0].config_value)
-                : configRows[0].config_value;
-              if (Array.isArray(val)) {
-                kiemKeVouchersList = val;
-                saveKiemKeCacheLocally_();
-              }
-            }
-          } catch (e2) {}
+      // 2. Đọc từ LocalDB
+      if (typeof LocalDB !== 'undefined' && LocalDB.cache && LocalDB.cache['warehouse_kiemke_' + scope]) {
+        const cachedLdb = LocalDB.cache['warehouse_kiemke_' + scope];
+        if (Array.isArray(cachedLdb)) {
+          kiemKeVouchersList = isAdmin ? cachedLdb : cachedLdb.filter(v => isKiemKeInCurrentWarehouse(v));
         }
+      }
+
+      // 3. Đọc từ Supabase Cloud cấu hình warehouse_configs chuẩn
+      if (!SUPABASE_CLOUD_URL || !SUPABASE_KEY) return;
+
+      try {
+        let queryUrl = '';
+        if (isAdmin && (typeof getActiveWarehouseScope === 'function' ? getActiveWarehouseScope() : 'all') === 'all') {
+          // Admin xem tất cả kho: Tải tất cả các bản ghi kiểm kê (bắt đầu bằng KK_)
+          queryUrl = `${SUPABASE_CLOUD_URL}/rest/v1/warehouse_configs?warehouse=like.KK_*&select=*`;
+        } else {
+          // Thành viên kho: CHỈ tải bản ghi của chính tài khoản mình
+          queryUrl = `${SUPABASE_CLOUD_URL}/rest/v1/warehouse_configs?warehouse=eq.KK_${encodeURIComponent(scope.toUpperCase())}&select=*`;
+        }
+
+        const res = await fetch(queryUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        }).then(r => r.ok ? r.json() : []).catch(() => []);
+
+        if (Array.isArray(res) && res.length > 0) {
+          let allCloudVouchers = [];
+          res.forEach(row => {
+            if (row && row.items_json) {
+              try {
+                const list = JSON.parse(row.items_json);
+                if (Array.isArray(list)) allCloudVouchers.push(...list);
+              } catch(e) {}
+            }
+          });
+
+          if (!isAdmin) {
+            // Thành viên kho: Chỉ nhận các phiếu của chính mình
+            kiemKeVouchersList = allCloudVouchers.filter(v => isKiemKeInCurrentWarehouse(v));
+          } else {
+            // Admin: Hợp nhất danh sách
+            const vMap = new Map();
+            allCloudVouchers.forEach(v => {
+              if (v && v.id) vMap.set(v.id, v);
+            });
+            kiemKeVouchersList.forEach(v => {
+              if (v && v.id && !vMap.has(v.id)) vMap.set(v.id, v);
+            });
+            kiemKeVouchersList = Array.from(vMap.values());
+          }
+
+          saveKiemKeCacheLocally_();
+        }
+      } catch (err) {
+        console.warn('Lỗi tải phiếu kiểm kê từ Supabase Cloud:', err);
       }
     }
 
     function saveKiemKeCacheLocally_() {
+      const scope = getKiemKeStorageScope();
+      const isAdmin = (typeof isUserAdmin === 'function' && isUserAdmin());
+      const accountVouchers = isAdmin ? kiemKeVouchersList : kiemKeVouchersList.filter(v => isKiemKeInCurrentWarehouse(v));
       try {
-        localStorage.setItem('wh_kiemke_vouchers', JSON.stringify(kiemKeVouchersList));
+        localStorage.setItem('wh_kiemke_vouchers_' + scope, JSON.stringify(accountVouchers));
+        if (isAdmin) {
+          localStorage.setItem('wh_kiemke_vouchers', JSON.stringify(kiemKeVouchersList));
+        }
       } catch (e) {}
       if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
-        LocalDB.cache['warehouse_kiemke'] = kiemKeVouchersList;
+        LocalDB.cache['warehouse_kiemke_' + scope] = accountVouchers;
+        if (isAdmin) {
+          LocalDB.cache['warehouse_kiemke'] = kiemKeVouchersList;
+        }
       }
     }
 
@@ -23447,7 +23582,8 @@ window.google.script = {
       const statusVal = document.getElementById('kiemke-filter-status')?.value || 'all';
       const searchVal = (document.getElementById('kiemke-filter-search')?.value || '').trim().toLowerCase();
 
-      let list = kiemKeVouchersList || [];
+      // Lọc thông tin riêng biệt cho từng tài khoản thành viên kho (tương tự như phần ghi phát hàng)
+      let list = (kiemKeVouchersList || []).filter(v => isKiemKeInCurrentWarehouse(v));
 
       if (fromVal) {
         list = list.filter(v => (v.kiemke_date || '').substring(0, 10) >= fromVal);
@@ -23596,13 +23732,22 @@ window.google.script = {
 
       populateKiemKeWarehouseDropdowns();
 
+      const isAdmin = (typeof isUserAdmin === 'function' && isUserAdmin());
+      const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username : '';
+      const curFullName = (currentAppUser && (currentAppUser.full_name || currentAppUser.name)) 
+        || curUser 
+        || (typeof currentAuthSession !== 'undefined' && currentAuthSession?.user ? (currentAuthSession.user.name || currentAuthSession.user.username) : '');
+
+      const creatorInp = document.getElementById('kiemke-input-creator');
+      const whInp = document.getElementById('kiemke-input-warehouse');
+
       if (voucherToEdit) {
         currentEditingKiemKeId = voucherToEdit.id;
         document.getElementById('kiemke-form-title').innerText = 'Hiệu Chỉnh Phiếu Đối Chiếu Kiểm Kê Hàng Hóa';
         document.getElementById('kiemke-input-code').value = voucherToEdit.voucher_code || generateKiemKeCode();
         document.getElementById('kiemke-input-date').value = voucherToEdit.kiemke_date ? voucherToEdit.kiemke_date.substring(0, 10) : getLocalTodayISO();
-        document.getElementById('kiemke-input-warehouse').value = voucherToEdit.warehouse_id || (availableWarehouses[0]?.id || 'KHO_CHINH');
-        document.getElementById('kiemke-input-creator').value = voucherToEdit.creator_name || '';
+        if (whInp) whInp.value = voucherToEdit.warehouse_id || (availableWarehouses[0]?.id || 'KHO_CHINH');
+        if (creatorInp) creatorInp.value = voucherToEdit.creator_name || curFullName || '';
         document.getElementById('kiemke-input-notes').value = voucherToEdit.notes || '';
         
         currentKiemKeItems = Array.isArray(voucherToEdit.items) ? JSON.parse(JSON.stringify(voucherToEdit.items)) : [];
@@ -23611,16 +23756,33 @@ window.google.script = {
         document.getElementById('kiemke-form-title').innerText = 'Lập Phiếu Đối Chiếu Kiểm Kê Hàng Hóa';
         document.getElementById('kiemke-input-code').value = generateKiemKeCode();
         document.getElementById('kiemke-input-date').value = getLocalTodayISO();
-        if (typeof currentWarehouseId !== 'undefined' && currentWarehouseId) {
-          document.getElementById('kiemke-input-warehouse').value = currentWarehouseId;
+        if (typeof currentWarehouseId !== 'undefined' && currentWarehouseId && whInp) {
+          whInp.value = currentWarehouseId;
         }
-        
-        const loggedUser = (typeof currentAuthSession !== 'undefined' && currentAuthSession?.user) 
-          ? (currentAuthSession.user.name || currentAuthSession.user.username) 
-          : '';
-        document.getElementById('kiemke-input-creator').value = loggedUser;
+        if (creatorInp) creatorInp.value = curFullName || '';
         document.getElementById('kiemke-input-notes').value = '';
         currentKiemKeItems = [{ code: '', name: '', unit: '', book_qty: 0, actual_qty: '', price: 0, note: '' }];
+      }
+
+      if (!isAdmin) {
+        // Thành viên kho: cố định tên người lập phiếu và kho, không sửa tên của tài khoản khác
+        if (creatorInp) {
+          creatorInp.setAttribute('readonly', 'true');
+          creatorInp.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        }
+        if (whInp) {
+          whInp.setAttribute('disabled', 'true');
+          whInp.classList.add('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        }
+      } else {
+        if (creatorInp) {
+          creatorInp.removeAttribute('readonly');
+          creatorInp.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        }
+        if (whInp) {
+          whInp.removeAttribute('disabled');
+          whInp.classList.remove('bg-slate-100', 'cursor-not-allowed', 'text-slate-600');
+        }
       }
 
       renderKiemKeFormItems();
@@ -24293,8 +24455,14 @@ window.google.script = {
         return;
       }
 
+      const scope = getKiemKeStorageScope();
+      const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username : (typeof currentAuthSession !== 'undefined' && currentAuthSession?.user?.username) || '';
+      const curFullName = (currentAppUser && (currentAppUser.full_name || currentAppUser.name)) || curUser;
+
       const voucherId = currentEditingKiemKeId || ('kk_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
       const nowIso = new Date().toISOString();
+
+      const existingVoucher = currentEditingKiemKeId ? kiemKeVouchersList.find(x => x.id === currentEditingKiemKeId) : null;
 
       const voucherObj = {
         id: voucherId,
@@ -24303,6 +24471,8 @@ window.google.script = {
         warehouse_id: warehouseId,
         warehouse_name: warehouseName,
         creator_name: creatorName,
+        created_by: existingVoucher ? (existingVoucher.created_by || curUser || creatorName) : (curUser || creatorName),
+        warehouse_scope: existingVoucher ? (existingVoucher.warehouse_scope || scope) : scope,
         notes: notes,
         items: items,
         total_skus: items.length,
@@ -24310,15 +24480,9 @@ window.google.script = {
         total_actual_qty: totalActualQty,
         total_diff_qty: totalDiffQty,
         total_diff_amount: totalDiffAmount,
+        created_at: existingVoucher ? (existingVoucher.created_at || nowIso) : nowIso,
         updated_at: nowIso
       };
-
-      if (!currentEditingKiemKeId) {
-        voucherObj.created_at = nowIso;
-        voucherObj.created_by = (typeof currentAuthSession !== 'undefined' && currentAuthSession?.user) 
-          ? (currentAuthSession.user.username || creatorName) 
-          : creatorName;
-      }
 
       Swal.fire({
         title: 'Đang lưu phiếu kiểm kê...',
@@ -24327,27 +24491,37 @@ window.google.script = {
       });
 
       try {
-        // 1. Lưu Supabase Cloud
-        if (typeof callSupabaseSingle_ === 'function') {
-          try {
-            await callSupabaseSingle_('warehouse_kiemke', 'POST', voucherObj, {
-              'Prefer': 'resolution=merge-duplicates'
-            });
-          } catch (cloudErr) {
-            // Fallback lưu vào warehouse_configs
-            console.warn('Lưu Supabase warehouse_kiemke không thành công, lưu fallback configs:', cloudErr);
-            updateVoucherInLocalList_(voucherObj);
-            await callSupabaseSingle_('warehouse_configs', 'POST', {
-              config_key: 'kiemke_vouchers',
-              config_value: kiemKeVouchersList,
-              updated_at: nowIso
-            }, { 'Prefer': 'resolution=merge-duplicates' });
-          }
-        }
-
-        // 2. Cập nhật danh sách cục bộ
+        // 1. Cập nhật danh sách cục bộ và lưu cache an toàn trước
         updateVoucherInLocalList_(voucherObj);
         saveKiemKeCacheLocally_();
+
+        // 2. Đồng bộ lên Supabase Cloud theo đúng schema warehouse_configs (tránh lỗi 400 config_key)
+        try {
+          if (SUPABASE_CLOUD_URL && SUPABASE_KEY) {
+            const targetScope = voucherObj.warehouse_scope || scope;
+            const targetKey = 'KK_' + targetScope.toUpperCase();
+            const targetVouchers = kiemKeVouchersList.filter(v => (v.warehouse_scope || '').toLowerCase() === targetScope.toLowerCase() || isKiemKeInCurrentWarehouse(v));
+
+            const payload = {
+              warehouse: targetKey,
+              items_json: JSON.stringify(targetVouchers),
+              updated_at: nowIso
+            };
+            const url = `${SUPABASE_CLOUD_URL}/rest/v1/warehouse_configs?on_conflict=warehouse`;
+            await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Prefer': 'resolution=merge-duplicates'
+              },
+              body: JSON.stringify(payload)
+            }).catch(err => console.warn('Lỗi đồng bộ phiếu kiểm kê lên cloud:', err));
+          }
+        } catch (cloudErr) {
+          console.warn('Lỗi kết nối Supabase Cloud khi lưu phiếu kiểm kê:', cloudErr);
+        }
 
         // 3. Ghi log lịch sử thao tác
         if (typeof logUserAction === 'function') {
@@ -24416,22 +24590,31 @@ window.google.script = {
       Swal.fire({ title: 'Đang xóa phiếu...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
-        if (typeof callSupabaseSingle_ === 'function') {
-          try {
-            await callSupabaseSingle_(`warehouse_kiemke?id=eq.${encodeURIComponent(voucherId)}`, 'DELETE');
-          } catch (e) {
-            // Nếu dùng fallback config
-            kiemKeVouchersList = kiemKeVouchersList.filter(x => x.id !== voucherId);
-            await callSupabaseSingle_('warehouse_configs', 'POST', {
-              config_key: 'kiemke_vouchers',
-              config_value: kiemKeVouchersList,
-              updated_at: new Date().toISOString()
-            }, { 'Prefer': 'resolution=merge-duplicates' });
-          }
-        }
+        const targetScope = v.warehouse_scope || getKiemKeStorageScope();
+        const targetKey = 'KK_' + targetScope.toUpperCase();
 
         kiemKeVouchersList = kiemKeVouchersList.filter(x => x.id !== voucherId);
         saveKiemKeCacheLocally_();
+
+        if (SUPABASE_CLOUD_URL && SUPABASE_KEY) {
+          const remainingScopeVouchers = kiemKeVouchersList.filter(it => (it.warehouse_scope || '').toLowerCase() === targetScope.toLowerCase());
+          const payload = {
+            warehouse: targetKey,
+            items_json: JSON.stringify(remainingScopeVouchers),
+            updated_at: new Date().toISOString()
+          };
+          const url = `${SUPABASE_CLOUD_URL}/rest/v1/warehouse_configs?on_conflict=warehouse`;
+          await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify(payload)
+          }).catch(err => console.warn('Lỗi đồng bộ xóa phiếu kiểm kê lên cloud:', err));
+        }
 
         if (typeof logUserAction === 'function') {
           logUserAction('XÓA_PHIẾU_KIỂM_KÊ', `Đã xóa phiếu kiểm kê ${v.voucher_code}`);
