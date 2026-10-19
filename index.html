@@ -20462,12 +20462,8 @@ window.google.script = {
       const currentRecords = window._currentProductDetailRecords || [];
       const targetCode = currentItem.code || '';
 
-      Swal.fire({
-        title: 'Đang đọc và đối chiếu file phần mềm...',
-        html: `Đang quét bảng kê chứng từ xe từ file <b class="font-mono text-indigo-700">${escapeHtml(file.name)}</b>`,
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-      });
+      // Tự động kích hoạt tab so sánh
+      window._currentProductDetailActiveTab = 'compare';
 
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -20492,14 +20488,14 @@ window.google.script = {
         compareData.dateText = parsedExcel.dateText;
         window._currentVehicleComparisonData = compareData;
 
-        Swal.close();
-
-        // Mở lại modal nếu đang đóng, hoặc chuyển tab sang compare
-        if (!Swal.isVisible()) {
-          showProductDispatchDetailModal(targetCode);
+        // Nếu modal chi tiết đang mở thì chuyển tab và render bảng so sánh đối chiếu ngay lập tức
+        if (document.getElementById('pdetail-view-compare')) {
+          switchProductDetailTab('compare');
+          renderVehicleComparisonView(compareData);
+        } else {
+          // Nếu modal chưa mở thì mở modal ở tab compare
+          showProductDispatchDetailModal(targetCode, 'compare');
         }
-        switchProductDetailTab('compare');
-        renderVehicleComparisonView(compareData);
 
         const s = compareData.summary;
         if (typeof showAppToast === 'function') {
@@ -20533,20 +20529,24 @@ window.google.script = {
       const viewCompare = document.getElementById('pdetail-view-compare');
       const footerJournal = document.getElementById('pdetail-footer-journal-actions');
       const footerCompare = document.getElementById('pdetail-footer-compare-actions');
-      const headerHint = document.getElementById('pdetail-header-compare-hint');
 
       if (tab === 'compare') {
         if (btnJournal) {
-          btnJournal.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-indigo-950 hover:bg-white/60 cursor-pointer';
+          btnJournal.className = 'px-3 py-1 rounded-md text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-indigo-950 hover:bg-white/60 cursor-pointer';
         }
         if (btnCompare) {
-          btnCompare.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-950 shadow-xs cursor-pointer';
+          btnCompare.className = 'px-3 py-1 rounded-md text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-950 shadow-xs cursor-pointer';
         }
         if (viewJournal) viewJournal.classList.add('hidden');
         if (viewCompare) viewCompare.classList.remove('hidden');
-        if (footerJournal) footerJournal.classList.add('hidden');
-        if (footerCompare) footerCompare.classList.remove('hidden');
-        if (headerHint) headerHint.classList.remove('hidden');
+        if (footerJournal) {
+          footerJournal.classList.add('hidden');
+          footerJournal.classList.remove('flex');
+        }
+        if (footerCompare) {
+          footerCompare.classList.remove('hidden');
+          footerCompare.classList.add('flex');
+        }
 
         // Render dữ liệu nếu đã có
         const currentItem = window._currentProductDetailItem || {};
@@ -20565,16 +20565,21 @@ window.google.script = {
         }
       } else {
         if (btnJournal) {
-          btnJournal.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-950 shadow-xs cursor-pointer';
+          btnJournal.className = 'px-3 py-1 rounded-md text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-950 shadow-xs cursor-pointer';
         }
         if (btnCompare) {
-          btnCompare.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-indigo-950 hover:bg-white/60 cursor-pointer';
+          btnCompare.className = 'px-3 py-1 rounded-md text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-indigo-950 hover:bg-white/60 cursor-pointer';
         }
         if (viewJournal) viewJournal.classList.remove('hidden');
         if (viewCompare) viewCompare.classList.add('hidden');
-        if (footerJournal) footerJournal.classList.remove('hidden');
-        if (footerCompare) footerCompare.classList.add('hidden');
-        if (headerHint) headerHint.classList.add('hidden');
+        if (footerJournal) {
+          footerJournal.classList.remove('hidden');
+          footerJournal.classList.add('flex');
+        }
+        if (footerCompare) {
+          footerCompare.classList.add('hidden');
+          footerCompare.classList.remove('flex');
+        }
       }
     }
 
@@ -20598,7 +20603,7 @@ window.google.script = {
       if (cardSub) cardSub.innerHTML = `App: <b class="text-slate-800 font-mono">${formatNumber(s.totalAppQty)}</b> | PM: <b class="text-indigo-700 font-mono">${formatNumber(s.totalExcelQty)}</b>`;
       if (cardMatched) cardMatched.innerText = `${s.matchedCount} xe`;
       if (cardDiff) cardDiff.innerText = `${s.diffQtyCount} xe`;
-      if (cardDiffSub) cardDiffSub.innerHTML = `Chênh lệch: <b class="font-mono">${s.diffQtySum > 0 ? '+' : ''}${formatNumber(s.diffQtySum)}</b>`;
+      if (cardDiffSub) cardDiffSub.innerHTML = `Lệch: <b class="font-mono">${s.diffQtySum > 0 ? '+' : ''}${formatNumber(s.diffQtySum)}</b>`;
       if (cardSingle) cardSingle.innerText = `${s.onlyAppCount + s.onlyExcelCount} xe`;
       if (cardSingleSub) cardSingleSub.innerText = `App: ${s.onlyAppCount} | PM: ${s.onlyExcelCount}`;
 
@@ -20632,9 +20637,9 @@ window.google.script = {
       filterBtns.forEach(btn => {
         const val = btn.getAttribute('data-filter');
         if (val === fType) {
-          btn.className = 'vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-indigo-600 bg-indigo-600 text-white shadow-2xs cursor-pointer';
+          btn.className = 'vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-indigo-600 bg-indigo-600 text-white shadow-2xs cursor-pointer';
         } else {
-          btn.className = 'vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-slate-700 hover:bg-indigo-50/60 hover:border-indigo-300 shadow-2xs cursor-pointer';
+          btn.className = 'vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-slate-200 bg-white text-slate-700 hover:bg-indigo-50/60 hover:border-indigo-300 shadow-2xs cursor-pointer';
         }
       });
 
@@ -21118,10 +21123,15 @@ window.google.script = {
     }
 
     // Modal hiển thị chi tiết sản phẩm đã phát: xe nào lấy, ai phát, số lượng, số phiếu (Giao diện chuyên nghiệp)
-    function showProductDispatchDetailModal(code) {
+    function showProductDispatchDetailModal(code, initialTab = null) {
       if (!currentReconciliationState || !currentReconciliationState.items) return;
       const item = currentReconciliationState.items.find(x => x.code.toUpperCase() === String(code || '').toUpperCase());
       if (!item) return;
+
+      if (initialTab) {
+        window._currentProductDetailActiveTab = initialTab;
+      }
+      const isCompareActive = window._currentProductDetailActiveTab === 'compare';
 
       const records = item.records || [];
       if (records.length === 0) {
@@ -21283,12 +21293,8 @@ window.google.script = {
                 </div>
               </div>
 
-              <!-- NÚT THAO TÁC Ở GÓC TRÊN: SO SÁNH PM, IN BẢNG & ĐÓNG -->
+              <!-- NÚT THAO TÁC Ở GÓC TRÊN: IN BẢNG & ĐÓNG -->
               <div class="flex items-center space-x-2 shrink-0">
-                <button type="button" onclick="triggerVehicleCompareExcel('${escapeHtml(item.code)}')" class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 border border-indigo-500 shadow-2xs hover:shadow-xs cursor-pointer" title="Nạp file Excel Bảng kê chứng từ nhập xuất từ phần mềm để đối chiếu từng mã xe & số lượng">
-                  <i class="bi bi-file-earmark-diff-fill text-xs text-amber-300"></i>
-                  <span>So sánh với PM</span>
-                </button>
                 <button type="button" onclick="printProductDispatchDetail('${escapeHtml(item.code)}')" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-indigo-700 hover:text-indigo-800 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 border border-indigo-200 shadow-2xs cursor-pointer" title="In bảng kê chi tiết phát hàng sản phẩm này">
                   <i class="bi bi-printer text-xs"></i>
                   <span>In bảng</span>
@@ -21303,26 +21309,22 @@ window.google.script = {
             <div class="p-3.5 sm:p-4 bg-slate-50/70 overflow-y-auto flex-1 min-h-0 custom-scroll flex flex-col">
               
               <!-- THANH TAB CHUYỂN ĐỔI CHẾ ĐỘ XEM -->
-              <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-200 shrink-0">
-                <div class="inline-flex p-1 bg-slate-200/80 rounded-xl border border-slate-300 shadow-2xs space-x-1">
-                  <button type="button" id="btn-pdetail-tab-journal" onclick="switchProductDetailTab('journal')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-white text-indigo-950 shadow-xs cursor-pointer">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200 shrink-0">
+                <div class="inline-flex p-0.5 bg-slate-200/80 rounded-lg border border-slate-300 shadow-2xs space-x-0.5">
+                  <button type="button" id="btn-pdetail-tab-journal" onclick="switchProductDetailTab('journal')" class="px-3 py-1 rounded-md text-xs font-bold transition flex items-center space-x-1.5 ${isCompareActive ? 'text-slate-600 hover:text-indigo-950 hover:bg-white/60' : 'bg-white text-indigo-950 shadow-xs'} cursor-pointer">
                     <i class="bi bi-clock-history text-indigo-600"></i>
                     <span>Nhật ký thực tế (${records.length})</span>
                   </button>
-                  <button type="button" id="btn-pdetail-tab-compare" onclick="switchProductDetailTab('compare')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-600 hover:text-indigo-950 hover:bg-white/60 cursor-pointer">
+                  <button type="button" id="btn-pdetail-tab-compare" onclick="switchProductDetailTab('compare')" class="px-3 py-1 rounded-md text-xs font-bold transition flex items-center space-x-1.5 ${isCompareActive ? 'bg-white text-indigo-950 shadow-xs' : 'text-slate-600 hover:text-indigo-950 hover:bg-white/60'} cursor-pointer">
                     <i class="bi bi-arrow-left-right text-indigo-600"></i>
                     <span>Bảng so sánh với phần mềm (Excel)</span>
                     <span id="pdetail-compare-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-100 text-indigo-800 font-extrabold hidden"></span>
                   </button>
                 </div>
-                <div id="pdetail-header-compare-hint" class="text-xs text-slate-500 hidden sm:flex items-center space-x-1.5">
-                  <i class="bi bi-info-circle text-indigo-600"></i>
-                  <span>Đối chiếu mã xe tắt: <b class="font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">01794</b> ⟷ <b class="font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">15E01794</b></span>
-                </div>
               </div>
 
               <!-- VIEW 1: NHẬT KÝ PHÁT HÀNG THỰC TẾ TRÊN APP -->
-              <div id="pdetail-view-journal" class="flex-1 flex flex-col min-h-0">
+              <div id="pdetail-view-journal" class="${isCompareActive ? 'hidden' : ''} flex-1 flex flex-col min-h-0">
                 <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs flex-1 flex flex-col min-h-0">
                   <!-- Thanh công cụ: đếm số lượng, chọn lọc/sắp xếp & tìm kiếm nhanh -->
                   <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
@@ -21390,94 +21392,114 @@ window.google.script = {
               </div>
 
               <!-- VIEW 2: BẢNG SO SÁNH ĐỐI CHIẾU SỐ XE & SỐ LƯỢNG VỚI PHẦN MỀM -->
-              <div id="pdetail-view-compare" class="hidden flex-1 flex flex-col min-h-0 space-y-3">
+              <div id="pdetail-view-compare" class="${isCompareActive ? '' : 'hidden'} flex-1 flex flex-col min-h-0 space-y-2">
                 <!-- 1. EMPTY STATE: NẾU CHƯA CÓ FILE EXCEL -->
-                <div id="vehicle-compare-empty-state" class="p-8 text-center bg-white rounded-xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center space-y-4 my-auto shadow-2xs">
-                  <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-3xl shadow-inner border border-indigo-100">
+                <div id="vehicle-compare-empty-state" class="p-6 text-center bg-white rounded-xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center space-y-3 my-auto shadow-2xs">
+                  <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl shadow-inner border border-indigo-100">
                     <i class="bi bi-file-earmark-diff-fill text-indigo-600"></i>
                   </div>
                   <div class="max-w-md">
-                    <h4 class="font-black text-slate-900 text-base mb-1.5">Chưa có file Excel kết xuất từ phần mềm</h4>
+                    <h4 class="font-black text-slate-900 text-sm mb-1">Chưa có file Excel kết xuất từ phần mềm</h4>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                      Vui lòng chọn file Excel <b>"BẢNG KÊ CHỨNG TỪ NHẬP XUẤT HÓA ĐƠN"</b> từ phần mềm để hệ thống tự động nhận diện và so sánh các mã xe nhập tắt (ví dụ: <span class="font-mono font-bold text-indigo-800 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">01794</span> ⟷ <span class="font-mono font-bold text-indigo-800 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">15E01794</span>) và đối chiếu số lượng phát!
+                      Vui lòng chọn file Excel <b>"BẢNG KÊ CHỨNG TỪ NHẬP XUẤT HÓA ĐƠN"</b> từ phần mềm để hệ thống tự động đối chiếu số lượng phát theo từng xe!
                     </p>
                   </div>
-                  <button type="button" onclick="triggerVehicleCompareFileInput()" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold rounded-xl text-xs transition shadow-md hover:shadow-lg flex items-center space-x-2 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]">
-                    <i class="bi bi-upload text-sm"></i>
+                  <button type="button" onclick="triggerVehicleCompareFileInput()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold rounded-xl text-xs transition shadow-xs hover:shadow-md flex items-center space-x-1.5 cursor-pointer">
+                    <i class="bi bi-upload text-xs"></i>
                     <span>Chọn file Excel phần mềm để so sánh ngay</span>
                   </button>
                 </div>
 
                 <!-- 2. NỘI DUNG SO SÁNH (KHI ĐÃ NẠP FILE) -->
-                <div id="vehicle-compare-table-container" class="hidden flex-1 flex flex-col min-h-0 space-y-2.5">
-                  <!-- 4 Card chỉ số tóm tắt -->
-                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
-                    <div class="bg-white p-3 rounded-xl border border-indigo-200 shadow-2xs">
-                      <div class="flex items-center justify-between text-indigo-900 mb-1">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Tổng xe đối chiếu</span>
-                        <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs"><i class="bi bi-truck-front-fill"></i></span>
+                <div id="vehicle-compare-table-container" class="hidden flex-1 flex flex-col min-h-0 space-y-2">
+                  <!-- 4 Card chỉ số tóm tắt (Giao diện ngang hiện đại, tinh gọn, tiết kiệm không gian) -->
+                  <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
+                    <!-- Thẻ 1: Tổng xe -->
+                    <div class="bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
+                      <div class="min-w-0 pr-1.5">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">Tổng xe đối chiếu</div>
+                        <div class="flex items-baseline space-x-1.5 mt-0.5">
+                          <span id="cmp-stat-total-vehicles" class="font-mono font-black text-sm text-slate-900 leading-none">0 xe</span>
+                          <span id="cmp-stat-sub-qty" class="text-[10px] text-slate-500 font-medium truncate leading-none">App: 0 | PM: 0</span>
+                        </div>
                       </div>
-                      <div id="cmp-stat-total-vehicles" class="font-mono font-black text-lg text-indigo-950">0 xe</div>
-                      <div id="cmp-stat-sub-qty" class="text-[11px] text-slate-500 mt-0.5">App: 0 | PM: 0</div>
+                      <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0 border border-indigo-100">
+                        <i class="bi bi-truck-front-fill"></i>
+                      </div>
                     </div>
 
-                    <div class="bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs cursor-pointer hover:border-emerald-400 transition" onclick="filterVehicleComparisonRows('matched')">
-                      <div class="flex items-center justify-between text-emerald-900 mb-1">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Khớp chuẩn (100%)</span>
-                        <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs"><i class="bi bi-check-circle-fill"></i></span>
+                    <!-- Thẻ 2: Khớp chuẩn -->
+                    <div class="bg-white px-3 py-1.5 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/20 transition group" onclick="filterVehicleComparisonRows('matched')" title="Lọc các xe khớp hoàn toàn cả mã xe và số lượng">
+                      <div class="min-w-0 pr-1.5">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 truncate">Khớp chuẩn (100%)</div>
+                        <div class="flex items-baseline space-x-1.5 mt-0.5">
+                          <span id="cmp-stat-matched-count" class="font-mono font-black text-sm text-emerald-700 leading-none">0 xe</span>
+                          <span class="text-[10px] text-emerald-600 font-medium truncate leading-none hidden sm:inline">Khớp tuyệt đối</span>
+                        </div>
                       </div>
-                      <div id="cmp-stat-matched-count" class="font-mono font-black text-lg text-emerald-700">0 xe</div>
-                      <div class="text-[11px] text-emerald-600 font-semibold mt-0.5">Mã xe & SL khớp hoàn toàn</div>
+                      <div class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 flex items-center justify-center text-xs shrink-0 border border-emerald-200 transition">
+                        <i class="bi bi-check-circle-fill"></i>
+                      </div>
                     </div>
 
-                    <div class="bg-white p-3 rounded-xl border border-amber-200 shadow-2xs cursor-pointer hover:border-amber-400 transition" onclick="filterVehicleComparisonRows('diff_qty')">
-                      <div class="flex items-center justify-between text-amber-900 mb-1">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lệch số lượng</span>
-                        <span class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                    <!-- Thẻ 3: Lệch số lượng -->
+                    <div class="bg-white px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-amber-400 hover:bg-amber-50/20 transition group" onclick="filterVehicleComparisonRows('diff_qty')" title="Lọc các xe bị lệch số lượng">
+                      <div class="min-w-0 pr-1.5">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 truncate">Lệch số lượng</div>
+                        <div class="flex items-baseline space-x-1.5 mt-0.5">
+                          <span id="cmp-stat-diff-count" class="font-mono font-black text-sm text-amber-800 leading-none">0 xe</span>
+                          <span id="cmp-stat-diff-sub" class="text-[10px] text-amber-700 font-medium truncate leading-none">Lệch: 0</span>
+                        </div>
                       </div>
-                      <div id="cmp-stat-diff-count" class="font-mono font-black text-lg text-amber-800">0 xe</div>
-                      <div id="cmp-stat-diff-sub" class="text-[11px] text-amber-700 mt-0.5 font-medium">Chênh lệch: 0</div>
+                      <div class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-100 flex items-center justify-center text-xs shrink-0 border border-amber-200 transition">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                      </div>
                     </div>
 
-                    <div class="bg-white p-3 rounded-xl border border-rose-200 shadow-2xs cursor-pointer hover:border-rose-400 transition" onclick="filterVehicleComparisonRows('single_side')">
-                      <div class="flex items-center justify-between text-rose-900 mb-1">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Lệch danh sách xe</span>
-                        <span class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs"><i class="bi bi-shuffle"></i></span>
+                    <!-- Thẻ 4: Lệch danh sách xe -->
+                    <div class="bg-white px-3 py-1.5 rounded-xl border border-rose-200 shadow-2xs flex items-center justify-between cursor-pointer hover:border-rose-400 hover:bg-rose-50/20 transition group" onclick="filterVehicleComparisonRows('single_side')" title="Lọc các xe chỉ có ở 1 bên (App hoặc PM)">
+                      <div class="min-w-0 pr-1.5">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-rose-700 truncate">Lệch danh sách xe</div>
+                        <div class="flex items-baseline space-x-1.5 mt-0.5">
+                          <span id="cmp-stat-single-count" class="font-mono font-black text-sm text-rose-700 leading-none">0 xe</span>
+                          <span id="cmp-stat-single-sub" class="text-[10px] text-rose-600 font-medium truncate leading-none">App: 0 | PM: 0</span>
+                        </div>
                       </div>
-                      <div id="cmp-stat-single-count" class="font-mono font-black text-lg text-rose-700">0 xe</div>
-                      <div id="cmp-stat-single-sub" class="text-[11px] text-rose-600 mt-0.5">App: 0 | PM: 0</div>
+                      <div class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100 flex items-center justify-center text-xs shrink-0 border border-rose-200 transition">
+                        <i class="bi bi-shuffle"></i>
+                      </div>
                     </div>
                   </div>
 
                   <!-- Khung bảng so sánh chi tiết -->
                   <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs flex-1 flex flex-col min-h-0">
-                    <!-- Thanh công cụ lọc & tìm kiếm -->
-                    <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
-                      <div class="flex items-center flex-wrap gap-1.5">
-                        <button type="button" class="vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-indigo-600 bg-indigo-600 text-white shadow-2xs cursor-pointer" data-filter="all" onclick="filterVehicleComparisonRows('all')">
+                    <!-- Thanh công cụ lọc & tìm kiếm (Tối ưu độ cao gọn gàng) -->
+                    <div class="px-3 py-1.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-1.5 shrink-0">
+                      <div class="flex items-center flex-wrap gap-1">
+                        <button type="button" class="vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-indigo-600 bg-indigo-600 text-white shadow-2xs cursor-pointer" data-filter="all" onclick="filterVehicleComparisonRows('all')">
                           Tất cả
                         </button>
-                        <button type="button" class="vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-emerald-800 hover:bg-emerald-50 hover:border-emerald-300 shadow-2xs cursor-pointer" data-filter="matched" onclick="filterVehicleComparisonRows('matched')">
+                        <button type="button" class="vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-slate-200 bg-white text-emerald-800 hover:bg-emerald-50 hover:border-emerald-300 shadow-2xs cursor-pointer" data-filter="matched" onclick="filterVehicleComparisonRows('matched')">
                           Khớp
                         </button>
-                        <button type="button" class="vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-amber-800 hover:bg-amber-50 hover:border-amber-300 shadow-2xs cursor-pointer" data-filter="diff_qty" onclick="filterVehicleComparisonRows('diff_qty')">
+                        <button type="button" class="vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-slate-200 bg-white text-amber-800 hover:bg-amber-50 hover:border-amber-300 shadow-2xs cursor-pointer" data-filter="diff_qty" onclick="filterVehicleComparisonRows('diff_qty')">
                           Lệch SL
                         </button>
-                        <button type="button" class="vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-rose-800 hover:bg-rose-50 hover:border-rose-300 shadow-2xs cursor-pointer" data-filter="only_app" onclick="filterVehicleComparisonRows('only_app')">
+                        <button type="button" class="vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-slate-200 bg-white text-rose-800 hover:bg-rose-50 hover:border-rose-300 shadow-2xs cursor-pointer" data-filter="only_app" onclick="filterVehicleComparisonRows('only_app')">
                           Chỉ có App
                         </button>
-                        <button type="button" class="vehicle-cmp-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold transition border border-slate-200 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-300 shadow-2xs cursor-pointer" data-filter="only_excel" onclick="filterVehicleComparisonRows('only_excel')">
+                        <button type="button" class="vehicle-cmp-filter-btn px-2 py-0.5 rounded-md text-xs font-bold transition border border-slate-200 bg-white text-sky-800 hover:bg-sky-50 hover:border-sky-300 shadow-2xs cursor-pointer" data-filter="only_excel" onclick="filterVehicleComparisonRows('only_excel')">
                           Chỉ có PM
                         </button>
                       </div>
 
-                      <div class="flex items-center space-x-2">
-                        <span id="cmp-file-badge" class="hidden md:inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] text-slate-600 font-medium"></span>
-                        <div class="relative w-48 sm:w-60">
-                          <i class="bi bi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
-                          <input type="text" id="vehicle-compare-search-input" oninput="filterVehicleComparisonRows(null, this.value)" placeholder="Lọc xe (01794, 15E...)" class="w-full pl-8 pr-2.5 py-1 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs">
+                      <div class="flex items-center space-x-1.5">
+                        <span id="cmp-file-badge" class="hidden md:inline-flex items-center px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] text-slate-600 font-medium"></span>
+                        <div class="relative w-44 sm:w-56">
+                          <i class="bi bi-search absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                          <input type="text" id="vehicle-compare-search-input" oninput="filterVehicleComparisonRows(null, this.value)" placeholder="Lọc xe (01794, 15E...)" class="w-full pl-7 pr-2 py-0.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs">
                         </div>
-                        <button type="button" onclick="triggerVehicleCompareFileInput()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer flex items-center space-x-1" title="Nạp file Excel Bảng kê chứng từ khác">
+                        <button type="button" onclick="triggerVehicleCompareFileInput()" class="px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer flex items-center space-x-1" title="Nạp file Excel Bảng kê chứng từ khác">
                           <i class="bi bi-arrow-repeat text-indigo-600"></i>
                           <span class="hidden sm:inline">Đổi file</span>
                         </button>
@@ -21485,18 +21507,18 @@ window.google.script = {
                     </div>
 
                     <!-- Bảng so sánh có thead/tfoot sticky -->
-                    <div class="max-h-[50vh] sm:max-h-[460px] overflow-y-auto custom-scroll overflow-x-auto flex-1">
+                    <div class="max-h-[60vh] sm:max-h-[520px] overflow-y-auto custom-scroll overflow-x-auto flex-1">
                       <table class="min-w-full divide-y divide-slate-200 text-xs">
                         <thead class="bg-slate-100/95 backdrop-blur-xs text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider shadow-2xs border-b border-slate-200 select-none">
                           <tr>
-                            <th class="px-3 py-2.5 text-center w-12 text-slate-500 font-bold">STT</th>
-                            <th class="px-3 py-2.5 text-center w-40">Mã xe (App thực tế)</th>
-                            <th class="px-3 py-2.5 text-center w-44">Mã xe phần mềm (Excel)</th>
-                            <th class="px-3 py-2.5 text-right w-32 bg-slate-50/80 font-mono text-slate-900 border-l border-slate-200">SL thực tế</th>
-                            <th class="px-3 py-2.5 text-right w-32 bg-indigo-50/70 font-mono text-indigo-950 border-l border-indigo-200">SL phần mềm</th>
-                            <th class="px-3 py-2.5 text-right w-28 font-mono border-l border-slate-200">Chênh lệch</th>
-                            <th class="px-3 py-2.5 text-center w-40">Trạng thái đối chiếu</th>
-                            <th class="px-3 py-2.5 text-left min-w-[200px]">Chi tiết chứng từ</th>
+                            <th class="px-3 py-2 text-center w-12 text-slate-500 font-bold">STT</th>
+                            <th class="px-3 py-2 text-center w-40">Mã xe (App thực tế)</th>
+                            <th class="px-3 py-2 text-center w-44">Mã xe phần mềm (Excel)</th>
+                            <th class="px-3 py-2 text-right w-32 bg-slate-50/80 font-mono text-slate-900 border-l border-slate-200">SL thực tế</th>
+                            <th class="px-3 py-2 text-right w-32 bg-indigo-50/70 font-mono text-indigo-950 border-l border-indigo-200">SL phần mềm</th>
+                            <th class="px-3 py-2 text-right w-28 font-mono border-l border-slate-200">Chênh lệch</th>
+                            <th class="px-3 py-2 text-center w-40">Trạng thái đối chiếu</th>
+                            <th class="px-3 py-2 text-left min-w-[200px]">Chi tiết chứng từ</th>
                           </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white" id="vehicle-compare-tbody">
@@ -21516,11 +21538,11 @@ window.google.script = {
             <div class="px-6 py-2.5 bg-white border-t border-slate-200 flex items-center justify-between gap-3 shrink-0 z-20 shadow-xs">
               <div class="text-xs text-slate-500 flex items-center space-x-1.5">
                 <i class="bi bi-shield-check text-emerald-600 text-sm"></i>
-                <span>Đối chiếu tự động khớp mã xe rút gọn và số lượng thực phát</span>
+                <span>Tự động khớp mã xe rút gọn và đối chiếu số lượng thực tế với phần mềm</span>
               </div>
 
               <!-- Nút khi đang ở Tab Nhật ký -->
-              <div id="pdetail-footer-journal-actions" class="flex items-center space-x-2">
+              <div id="pdetail-footer-journal-actions" class="${isCompareActive ? 'hidden' : 'flex'} items-center space-x-2">
                 <button type="button" onclick="exportProductDispatchDetailExcel('${escapeHtml(item.code)}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-xs cursor-pointer flex items-center space-x-1.5" title="Xuất toàn bộ các lượt phát của sản phẩm này ra file Excel">
                   <i class="bi bi-file-earmark-excel-fill text-xs"></i>
                   <span>Xuất Excel chi tiết</span>
@@ -21536,7 +21558,7 @@ window.google.script = {
               </div>
 
               <!-- Nút khi đang ở Tab So sánh phần mềm -->
-              <div id="pdetail-footer-compare-actions" class="hidden flex items-center space-x-2">
+              <div id="pdetail-footer-compare-actions" class="${isCompareActive ? 'flex' : 'hidden'} items-center space-x-2">
                 <button type="button" onclick="exportVehicleComparisonExcel('${escapeHtml(item.code)}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-xs cursor-pointer flex items-center space-x-1.5" title="Xuất kết quả đối chiếu số xe và số lượng ra file Excel">
                   <i class="bi bi-file-earmark-excel-fill text-xs"></i>
                   <span>Xuất Excel so sánh</span>
@@ -21571,7 +21593,7 @@ window.google.script = {
           badge.innerText = `Khớp ${currentCmp.summary.matchedCount}/${currentCmp.summary.totalVehicles}`;
           badge.classList.remove('hidden');
         }
-        if (window._currentProductDetailActiveTab === 'compare') {
+        if (isCompareActive) {
           switchProductDetailTab('compare');
         }
       }
