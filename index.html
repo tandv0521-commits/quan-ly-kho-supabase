@@ -5229,6 +5229,28 @@ const ClientBackend = {
         const baseEp = "products?select=code,name,unit,pack_qty,pack_unit,stock_tp,stock_pp,total_stock&order=code.asc";
         const products = (await callSupabase_(baseEp, "GET").catch(() => [])) || [];
 
+        // Lưu toàn bộ danh mục sản phẩm của hệ thống để hỗ trợ gợi ý khi lập phiếu nhập mới
+        window.masterProductList = products.map(p => {
+          const c = String(p.code || "").trim();
+          const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
+            ? Number(p.pack_qty) 
+            : null;
+          return {
+            code: c,
+            name: p.name || c,
+            unit: p.unit || "-",
+            pack_qty: parsedPackQty,
+            pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
+            stockTP: Number(p.stock_tp) || 0,
+            stockPP: Number(p.stock_pp) || 0,
+            stock: (p.total_stock !== null && p.total_stock !== undefined && p.total_stock !== "") ? Number(p.total_stock) : 0
+          };
+        });
+        window.masterProductMap = {};
+        window.masterProductList.forEach(item => {
+          if (item && item.code) window.masterProductMap[item.code.toLowerCase()] = item;
+        });
+
         const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
 
         let whStockMap = {};
@@ -5239,24 +5261,30 @@ const ClientBackend = {
             if (Array.isArray(whStockList) && whStockList.length > 0) {
               whStockList.forEach(ws => {
                 if (ws && ws.code) {
-                  whStockMap[ws.code.toLowerCase()] = {
+                  const ck = String(ws.code).trim().toLowerCase();
+                  whStockMap[ck] = {
                     tp: Number(ws.stock_tp) || 0,
                     pp: Number(ws.stock_pp) || 0,
-                    total: Number(ws.total_stock) || 0
+                    total: Number(ws.total_stock) || 0,
+                    fromTable: true
                   };
                 }
               });
             }
           } catch(e) {}
 
-          // 2. Dự phòng: Tính trực tiếp từ các giao dịch của kho này
-          if (Object.keys(whStockMap).length === 0) {
-            try {
-              const myTxs = (await callSupabase_(`inventory_transactions?note=ilike.*%5BKho:%20${encodeURIComponent(activeScope)}%5D*&select=code,quantity,type,quality`, "GET").catch(() => [])) || [];
-              if (Array.isArray(myTxs) && myTxs.length > 0) {
-                myTxs.forEach(t => {
-                  const ck = String(t.code || '').trim().toLowerCase();
-                  if (!whStockMap[ck]) whStockMap[ck] = { tp: 0, pp: 0, total: 0 };
+          // 2. Dự phòng & bổ sung: Kiểm tra toàn bộ giao dịch thuộc về kho này
+          try {
+            const myTxs = (await callSupabase_(`inventory_transactions?or=(warehouse.eq.${encodeURIComponent(activeScope)},note.ilike.*%5BKho:%20${encodeURIComponent(activeScope)}%5D*)&select=code,quantity,type,quality,note,warehouse`, "GET").catch(() => [])) || [];
+            if (Array.isArray(myTxs) && myTxs.length > 0) {
+              myTxs.forEach(t => {
+                if (!isTransactionInCurrentWarehouse(t)) return;
+                const ck = String(t.code || '').trim().toLowerCase();
+                if (!ck) return;
+                if (!whStockMap[ck]) {
+                  whStockMap[ck] = { tp: 0, pp: 0, total: 0, fromTxs: true };
+                }
+                if (whStockMap[ck].fromTxs) {
                   const q = Number(t.quantity) || 0;
                   const isAdd = (t.type === 'NHAP' || t.type === 'NHAPTRA');
                   if (t.quality === 'PP') {
@@ -5265,47 +5293,62 @@ const ClientBackend = {
                     whStockMap[ck].tp += isAdd ? q : -q;
                   }
                   whStockMap[ck].total = whStockMap[ck].tp + whStockMap[ck].pp;
-                });
-              }
-            } catch(e) {}
-          }
+                }
+              });
+            }
+          } catch(e) {}
         }
 
-        const list = products.map(p => {
-          const c = String(p.code || "").trim();
-          const ck = c.toLowerCase();
-          const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
-            ? Number(p.pack_qty) 
-            : null;
-
-          let tp = 0;
-          let pp = 0;
-          let total = 0;
-
-          if (activeScope === 'all' || activeScope === 'admin') {
-            tp = Number(p.stock_tp) || 0;
-            pp = Number(p.stock_pp) || 0;
-            total = (p.total_stock !== null && p.total_stock !== undefined && p.total_stock !== "") 
+        let list = [];
+        if (activeScope === 'all' || activeScope === 'admin') {
+          list = products.map(p => {
+            const c = String(p.code || "").trim();
+            const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
+              ? Number(p.pack_qty) 
+              : null;
+            const tp = Number(p.stock_tp) || 0;
+            const pp = Number(p.stock_pp) || 0;
+            const total = (p.total_stock !== null && p.total_stock !== undefined && p.total_stock !== "") 
               ? Number(p.total_stock) 
               : (tp + pp);
-          } else {
-            const ws = whStockMap[ck];
-            tp = ws ? Math.max(0, ws.tp) : 0;
-            pp = ws ? Math.max(0, ws.pp) : 0;
-            total = ws ? Math.max(0, ws.total) : 0;
-          }
 
-          return {
-            code: c,
-            name: p.name || c,
-            unit: p.unit || "-",
-            pack_qty: parsedPackQty,
-            pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
-            stockTP: tp,
-            stockPP: pp,
-            stock: total
-          };
-        });
+            return {
+              code: c,
+              name: p.name || c,
+              unit: p.unit || "-",
+              pack_qty: parsedPackQty,
+              pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
+              stockTP: tp,
+              stockPP: pp,
+              stock: total
+            };
+          });
+        } else {
+          // VỚI TÀI KHOẢN KHO: Chỉ hiển thị các sản phẩm mà kho này đã từng tạo phiếu nhập (hoặc phát sinh giao dịch)
+          // Khi sản phẩm đó về không (hoặc âm), vẫn tiếp tục hiển thị trong kho của tài khoản đó
+          list = products.filter(p => {
+            const ck = String(p.code || "").trim().toLowerCase();
+            return !!whStockMap[ck];
+          }).map(p => {
+            const c = String(p.code || "").trim();
+            const ck = c.toLowerCase();
+            const ws = whStockMap[ck] || { tp: 0, pp: 0, total: 0 };
+            const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) 
+              ? Number(p.pack_qty) 
+              : null;
+
+            return {
+              code: c,
+              name: p.name || c,
+              unit: p.unit || "-",
+              pack_qty: parsedPackQty,
+              pack_unit: parsedPackQty ? (p.pack_unit ? String(p.pack_unit).trim() : "Bao") : "",
+              stockTP: ws.tp,
+              stockPP: ws.pp,
+              stock: ws.total
+            };
+          });
+        }
 
         try {
           const cacheKey = 'CACHED_INVENTORY_' + activeScope;
@@ -5324,12 +5367,25 @@ const ClientBackend = {
         callSupabase_(baseEp, "GET").catch(() => []),
         callSupabase_(`inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality,note,warehouse`, "GET").catch(() => [])
       ]);
+
+      const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+      const isWarehouseAccount = (activeScope !== 'all' && activeScope !== 'admin');
+      const touchedCodesInScope = new Set();
+
+      (txs || []).forEach(t => {
+        if (!isTransactionInCurrentWarehouse(t)) return;
+        if (t.code) touchedCodesInScope.add(String(t.code).trim().toLowerCase());
+      });
+
       const itemMap = {};
       const items = [];
 
       products.forEach(p => {
         const c = String(p.code || "").trim();
         if (!c) return;
+        const ck = c.toLowerCase();
+        if (isWarehouseAccount && !touchedCodesInScope.has(ck)) return;
+
         const parsedPackQty = (p.pack_qty !== null && p.pack_qty !== undefined && p.pack_qty !== "" && Number(p.pack_qty) > 1) ? Number(p.pack_qty) : null;
         const obj = {
           code: c,
@@ -5341,7 +5397,7 @@ const ClientBackend = {
           stockPP: 0,
           stock: 0
         };
-        itemMap[c.toLowerCase()] = obj;
+        itemMap[ck] = obj;
         items.push(obj);
       });
 
@@ -10705,7 +10761,10 @@ window.google.script = {
       if (!dropdown || !inputEl) return;
 
       activeQuery = q;
-      activeSuggestions = rankProductMatches(inventoryList, q, 30);
+      const prodSource = (currentVoucherType === 'NHAP' && window.masterProductList && window.masterProductList.length > 0)
+        ? window.masterProductList
+        : (inventoryList || []);
+      activeSuggestions = rankProductMatches(prodSource, q, 30);
 
       activeDropdownRowId = rowId;
       activeDropdownType = 'voucher';
@@ -10763,11 +10822,14 @@ window.google.script = {
         e.preventDefault();
         const inputVal = document.getElementById(`input_code_${rowId}`).value.trim();
         let selectedCode = '';
+        const prodSource = (currentVoucherType === 'NHAP' && window.masterProductList && window.masterProductList.length > 0)
+          ? window.masterProductList
+          : (inventoryList || []);
         if (isDropdownOpen && activeSuggestions.length > 0) {
           const item = activeSuggestions[highlightedIndex] || activeSuggestions[0];
           selectedCode = item.code;
         } else if (inputVal) {
-          const matches = rankProductMatches(inventoryList, inputVal, 1);
+          const matches = rankProductMatches(prodSource, inputVal, 1);
           if (matches.length > 0) {
             selectedCode = matches[0].code;
           } else {
@@ -11965,7 +12027,7 @@ window.google.script = {
 
     function onRowCodeSelect(rowId, code, shouldValidate = true) {
       const cleanCode = String(code || "").trim();
-      const item = inventoryMap[cleanCode.toLowerCase()];
+      const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
       const isNhap = (currentVoucherType === 'NHAP');
 
       const finalCode = item ? item.code : cleanCode.toUpperCase();
@@ -24673,7 +24735,8 @@ window.google.script = {
       if (!dropdown || !inputEl) return;
 
       activeQuery = q;
-      activeSuggestions = rankProductMatches(inventoryList || [], q, 30);
+      const prodSource = (window.masterProductList && window.masterProductList.length > 0) ? window.masterProductList : (inventoryList || []);
+      activeSuggestions = rankProductMatches(prodSource, q, 30);
 
       activeDropdownRowId = rowId;
       activeDropdownType = 'kiemke';
@@ -24731,13 +24794,15 @@ window.google.script = {
         e.preventDefault();
         const inputVal = (document.getElementById(`input_kk_code_${rowId}`)?.value || '').trim();
         let selectedCode = '';
+        const prodSource = (window.masterProductList && window.masterProductList.length > 0) ? window.masterProductList : (inventoryList || []);
         if (isDropdownOpen && activeSuggestions.length > 0) {
           const item = activeSuggestions[highlightedIndex] || activeSuggestions[0];
           selectedCode = item.code;
         } else if (inputVal) {
-          const matches = rankProductMatches(inventoryList, inputVal, 1);
+          const matches = rankProductMatches(prodSource, inputVal, 1);
           if (matches.length > 0) selectedCode = matches[0].code;
           else if (inventoryMap[inputVal.toLowerCase()]) selectedCode = inputVal;
+          else if (window.masterProductMap && window.masterProductMap[inputVal.toLowerCase()]) selectedCode = inputVal;
           else selectedCode = inputVal;
         }
         if (selectedCode) {
@@ -24754,7 +24819,7 @@ window.google.script = {
 
     function onKiemKeRowCodeSelect(rowId, code) {
       const cleanCode = String(code || '').trim();
-      const item = inventoryMap[cleanCode.toLowerCase()];
+      const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
       const finalCode = item ? item.code : cleanCode.toUpperCase();
 
       const codeInp = document.getElementById(`input_kk_code_${rowId}`);
