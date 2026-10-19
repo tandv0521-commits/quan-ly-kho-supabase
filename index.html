@@ -822,10 +822,25 @@
             <span class="hidden md:inline font-semibold">Tìm nhanh</span>
           </button>
           
-          <button onclick="refreshCurrentTab()" class="flex items-center space-x-1.5 px-2.5 py-1.5 text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 rounded-lg transition border border-slate-200/80 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" title="Làm mới dữ liệu (F5)">
-            <i class="bi bi-arrow-clockwise text-blue-600"></i>
-            <span class="hidden md:inline font-semibold">Làm mới</span>
-          </button>
+          <!-- KHỐI NÚT ĐỐI CHIẾU XUẤT KHO & GHI PHÁT HÀNG (CỐ ĐỊNH TRÊN HEADER KHI MỞ TAB KIỂM TRA PHÁT HÀNG) -->
+          <div id="header-dispatch-actions" class="hidden items-center space-x-1.5 sm:space-x-2 shrink-0">
+            <button type="button" 
+                    onclick="openOrTriggerDispatchReconciliation()" 
+                    class="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" 
+                    title="Bấm để mở bảng đối chiếu phát hàng thực tế với file tổng hợp xuất (Tự động lưu file trong phiên)">
+              <i class="bi bi-file-earmark-diff-fill text-indigo-100 text-sm"></i>
+              <span>Đối Chiếu Xuất Kho</span>
+            </button>
+            <input type="file" id="dispatch-reconcile-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleDispatchReconciliationFile(event)">
+
+            <button type="button" 
+                    onclick="openCreateDispatchForm()" 
+                    class="px-2.5 sm:px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" 
+                    title="Bấm để ghi nhận phiếu phát hàng mới cho xe (F2)">
+              <i class="bi bi-plus-circle-fill text-teal-100 text-sm"></i>
+              <span>Ghi Phát Hàng</span>
+            </button>
+          </div>
 
           <button onclick="printCurrentTabTable()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-black text-white rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer whitespace-nowrap shrink-0" title="In dữ liệu bảng (Ctrl + P)">
             <i class="bi bi-printer"></i>
@@ -850,14 +865,10 @@
           <!-- WAREHOUSE SWITCHER / BADGE WIDGET -->
           <div id="header-warehouse-widget" class="flex items-center space-x-1.5 px-2.5 py-1 bg-amber-50/90 hover:bg-amber-100/90 text-amber-900 border border-amber-200/90 rounded-lg text-xs font-bold transition shadow-2xs shrink-0">
             <i class="bi bi-buildings-fill text-amber-700 text-sm shrink-0"></i>
-            <!-- Dành cho Admin chọn kho xem -->
+            <!-- Dành cho Admin chọn kho xem (tự động nạp động từ danh sách tài khoản) -->
             <select id="select-active-warehouse" onchange="handleChangeWarehouseScope(this.value)" class="bg-transparent font-bold text-xs text-amber-950 outline-none cursor-pointer border-none py-0.5 max-w-[170px] truncate" title="Phạm vi kho đang xem">
               <option value="all">🌐 Tổng hợp (Tất cả kho)</option>
               <option value="admin">🏢 Kho Tổng (Chính)</option>
-              <option value="tuan">📦 Kho Tuấn (Nguyễn Văn Tuấn)</option>
-              <option value="trong">📦 Kho Trọng (Trần Đình Trọng)</option>
-              <option value="hung">📦 Kho Hùng (Lê Văn Hùng)</option>
-              <option value="dung">📦 Kho Dũng (Phạm Quốc Dũng)</option>
             </select>
             <!-- Dành cho Nhân viên kho cố định kho của mình -->
             <span id="label-staff-warehouse" class="hidden font-bold text-amber-950 text-xs truncate max-w-[200px]"></span>
@@ -1747,20 +1758,6 @@
                   </div>
                 </div>
 
-                <!-- NÚT ĐỐI CHIẾU VỚI FILE TỔNG HỢP XUẤT KHO (TỰ ĐỘNG LƯU FILE SUỐT PHIÊN LÀM VIỆC) -->
-                <button type="button" 
-                        onclick="openOrTriggerDispatchReconciliation()" 
-                        class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" 
-                        title="Bấm để mở bảng đối chiếu phát hàng thực tế với file tổng hợp xuất (Tự động lưu file trong phiên)">
-                  <i class="bi bi-file-earmark-diff-fill text-indigo-100 text-sm"></i>
-                  <span>Đối Chiếu Xuất Kho</span>
-                </button>
-                <input type="file" id="dispatch-reconcile-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleDispatchReconciliationFile(event)">
-
-                <button type="button" onclick="openCreateDispatchForm()" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Bấm để ghi nhận phiếu phát hàng mới cho xe (F2)">
-                  <i class="bi bi-plus-circle-fill text-teal-100 text-sm"></i>
-                  <span>Ghi Phát Hàng</span>
-                </button>
               </div>
             </div>
 
@@ -3928,46 +3925,6 @@ const DEFAULT_APP_USERS = [
     password_hash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
     full_name: "Quản Trị Viên",
     role: "admin",
-    active: true,
-    created_at: "2026-10-18T08:00:00.000Z"
-  },
-  {
-    id: 2,
-    username: "tuan",
-    password_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-    full_name: "Nguyễn Văn Tuấn",
-    role: "staff",
-    staff_id: 1,
-    active: true,
-    created_at: "2026-10-18T08:00:00.000Z"
-  },
-  {
-    id: 3,
-    username: "trong",
-    password_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-    full_name: "Trần Đình Trọng",
-    role: "staff",
-    staff_id: 2,
-    active: true,
-    created_at: "2026-10-18T08:00:00.000Z"
-  },
-  {
-    id: 4,
-    username: "hung",
-    password_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-    full_name: "Lê Văn Hùng",
-    role: "staff",
-    staff_id: 3,
-    active: true,
-    created_at: "2026-10-18T08:00:00.000Z"
-  },
-  {
-    id: 5,
-    username: "dung",
-    password_hash: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
-    full_name: "Phạm Quốc Dũng",
-    role: "staff",
-    staff_id: 4,
     active: true,
     created_at: "2026-10-18T08:00:00.000Z"
   }
@@ -6766,13 +6723,16 @@ window.google.script = {
     }
 
     function getWarehouseScopeLabel(scope) {
-      if (scope === 'all') return '🌐 Tổng hợp (Tất cả kho)';
+      if (!scope || scope === 'all') return '🌐 Tổng hợp (Tất cả kho)';
       if (scope === 'admin') return '🏢 Kho Tổng (Chính)';
-      if (scope === 'trang') return '📦 Kho Trang (Trần Thị Huyền Trang)';
-      if (scope === 'tuan') return '📦 Kho Tuấn (Nguyễn Văn Tuấn)';
-      if (scope === 'trong') return '📦 Kho Trọng (Trần Đình Trọng)';
-      if (scope === 'hung') return '📦 Kho Hùng (Lê Văn Hùng)';
-      if (scope === 'dung') return '📦 Kho Dũng (Phạm Quốc Dũng)';
+
+      const foundUser = (appUsersCachedList || []).find(u => String(u.username || '').toLowerCase() === String(scope).toLowerCase())
+        || (LocalDB?.cache?.['app_users'] || []).find(u => String(u.username || '').toLowerCase() === String(scope).toLowerCase());
+
+      if (foundUser) {
+        const name = (foundUser.full_name || foundUser.username || '').trim();
+        return name.toLowerCase().startsWith('kho ') ? `📦 ${name}` : `📦 Kho ${name}`;
+      }
       return `📦 Kho ${scope}`;
     }
 
@@ -6815,33 +6775,49 @@ window.google.script = {
       const select = document.getElementById('select-active-warehouse');
       if (!select || !isUserAdmin()) return;
 
-      const defaultOptions = [
+      const options = [
         { value: 'all', label: '🌐 Tổng hợp (Tất cả kho)' },
-        { value: 'admin', label: '🏢 Kho Tổng (Chính)' },
-        { value: 'tuan', label: '📦 Kho Tuấn (Nguyễn Văn Tuấn)' },
-        { value: 'trong', label: '📦 Kho Trọng (Trần Đình Trọng)' },
-        { value: 'hung', label: '📦 Kho Hùng (Lê Văn Hùng)' },
-        { value: 'dung', label: '📦 Kho Dũng (Phạm Quốc Dũng)' }
+        { value: 'admin', label: '🏢 Kho Tổng (Chính)' }
       ];
 
       try {
-        const users = await callSupabaseSingle_('app_users?order=id.asc', 'GET').catch(() => []);
+        let users = await callSupabaseSingle_('app_users?order=id.asc', 'GET').catch(() => []);
+        if (!Array.isArray(users) || users.length === 0) {
+          users = (LocalDB && LocalDB.cache && LocalDB.cache['app_users']) ? LocalDB.cache['app_users'] : [];
+        }
+
         if (Array.isArray(users) && users.length > 0) {
+          appUsersCachedList = users;
           users.forEach(u => {
-            const uName = String(u.username || '').toLowerCase();
-            if (u.role !== 'admin' && !defaultOptions.some(o => o.value === uName)) {
-              defaultOptions.push({
+            const uName = String(u.username || '').toLowerCase().trim();
+            if (uName && u.role !== 'admin' && u.active !== false && !options.some(o => o.value === uName)) {
+              let labelText = (u.full_name || u.username || '').trim();
+              if (!labelText.toLowerCase().startsWith('kho ')) {
+                labelText = `Kho ${labelText}`;
+              }
+              options.push({
                 value: uName,
-                label: `📦 Kho ${u.full_name || u.username}`
+                label: `📦 ${labelText}`
               });
             }
           });
         }
-      } catch(e) {}
+      } catch(e) {
+        console.warn('Lỗi nạp danh sách tài khoản kho cho selector:', e);
+      }
 
-      select.innerHTML = defaultOptions.map(o => 
-        `<option value="${o.value}" ${o.value === currentWarehouseScope ? 'selected' : ''}>${o.label}</option>`
+      // Kiểm tra nếu kho đang chọn không còn tồn tại trong danh sách thì tự động chuyển về 'all'
+      const isValidScope = options.some(o => o.value === currentWarehouseScope);
+      if (!isValidScope) {
+        currentWarehouseScope = 'all';
+        try { localStorage.setItem('wh_admin_selected_warehouse', 'all'); } catch(e) {}
+      }
+
+      select.innerHTML = options.map(o => 
+        `<option value="${o.value}" ${o.value === currentWarehouseScope ? 'selected' : ''}>${escapeHtml(o.label)}</option>`
       ).join('');
+
+      updateWarehouseScopeUI();
     }
 
     async function handleChangeWarehouseScope(val) {
@@ -7625,7 +7601,10 @@ window.google.script = {
           showConfirmButton: false
         });
 
-        loadAppUsersList();
+        await loadAppUsersList();
+        if (typeof populateWarehouseSelectorOptions === 'function') {
+          await populateWarehouseSelectorOptions();
+        }
 
       } catch (err) {
         Swal.fire('Lỗi', 'Không thể tạo tài khoản: ' + err.message, 'error');
@@ -7766,6 +7745,9 @@ window.google.script = {
         }
 
         await loadAppUsersList();
+        if (typeof populateWarehouseSelectorOptions === 'function') {
+          await populateWarehouseSelectorOptions();
+        }
 
         Swal.fire({
           icon: 'success',
@@ -7830,7 +7812,10 @@ window.google.script = {
           timer: 1400,
           showConfirmButton: false
         });
-        loadAppUsersList();
+        await loadAppUsersList();
+        if (typeof populateWarehouseSelectorOptions === 'function') {
+          await populateWarehouseSelectorOptions();
+        }
 
       } catch (err) {
         Swal.fire('Lỗi', err.message, 'error');
@@ -7860,7 +7845,10 @@ window.google.script = {
       try {
         await callSupabaseSingle_(`app_users?id=eq.${userId}`, 'DELETE');
         Swal.fire({ icon: 'success', title: 'Đã xóa tài khoản!', timer: 1400, showConfirmButton: false });
-        loadAppUsersList();
+        await loadAppUsersList();
+        if (typeof populateWarehouseSelectorOptions === 'function') {
+          await populateWarehouseSelectorOptions();
+        }
       } catch (err) {
         Swal.fire('Lỗi', err.message, 'error');
       }
@@ -8319,6 +8307,17 @@ window.google.script = {
           }
         } else {
           stickyDispatchBar.classList.add('hidden');
+        }
+      }
+
+      const headerDispatchActions = document.getElementById('header-dispatch-actions');
+      if (headerDispatchActions) {
+        if (tabId === 'dispatch') {
+          headerDispatchActions.classList.remove('hidden');
+          headerDispatchActions.classList.add('flex');
+        } else {
+          headerDispatchActions.classList.add('hidden');
+          headerDispatchActions.classList.remove('flex');
         }
       }
 
