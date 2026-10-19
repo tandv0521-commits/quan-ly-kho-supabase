@@ -4017,8 +4017,9 @@
 
 
   <!-- MODAL: QUẢN LÝ BẢNG GIÁ SẢN PHẨM (DÀNH CHO ADMIN) -->
-  <div id="product-price-manager-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" style="display: none;" onclick="if(event.target === this) closeProductPriceManagerModal();">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-4xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+  <!-- MODAL: CÀI ĐẶT BẢNG GIÁ SẢN PHẨM THEO MÃ (ADMIN) -->
+  <div id="product-price-manager-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4" style="display: none;" onclick="if(event.target === this) closeProductPriceManagerModal();">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full max-w-6xl xl:max-w-7xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[92vh]">
       <!-- Header -->
       <div class="p-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
         <div class="flex items-center space-x-2.5">
@@ -4033,7 +4034,7 @@
             <p class="text-[11px] text-slate-400">Đơn giá này được tự động liên kết khi thủ kho lập phiếu đối chiếu kiểm kê để tính chênh lệch tiền hàng</p>
           </div>
         </div>
-        <button type="button" onclick="closeProductPriceManagerModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition"><i class="bi bi-x-lg text-sm"></i></button>
+        <button type="button" onclick="closeProductPriceManagerModal()" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition cursor-pointer"><i class="bi bi-x-lg text-sm"></i></button>
       </div>
 
       <!-- Toolbar -->
@@ -4043,7 +4044,7 @@
           <input type="text" id="price-manager-search" oninput="renderProductPriceManagerList(this.value)" placeholder="Tìm mã hoặc tên sản phẩm để cài giá..." 
                  class="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 bg-slate-50/50">
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 flex-wrap gap-y-1">
           <input type="file" id="price-excel-file" accept=".xlsx,.xls,.csv" class="hidden" onchange="handleProductPriceExcelUpload(event)">
           <button type="button" onclick="downloadProductPriceTemplate()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition flex items-center space-x-1 cursor-pointer" title="Tải file mẫu Excel 2 cột: Mã SP, Đơn Giá">
             <i class="bi bi-download"></i>
@@ -4057,20 +4058,24 @@
             <i class="bi bi-file-earmark-excel"></i>
             <span>Xuất Excel</span>
           </button>
+          <button type="button" onclick="confirmResetAllProductPrices()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-2xs" title="Đặt lại toàn bộ đơn giá của tất cả mã sản phẩm về 0 đ để nạp bảng giá mới">
+            <i class="bi bi-arrow-counterclockwise text-rose-600"></i>
+            <span>Xóa Bảng Giá Về 0</span>
+          </button>
         </div>
       </div>
 
       <!-- Table Container -->
-      <div class="flex-1 overflow-y-auto custom-scroll p-3">
+      <div class="flex-1 overflow-x-auto overflow-y-auto custom-scroll p-3">
         <table class="min-w-full divide-y divide-slate-200 text-xs">
-          <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider">
+          <thead class="bg-slate-100/95 sticky top-0 z-10 text-slate-700 font-bold uppercase tracking-wider shadow-2xs">
             <tr>
-              <th class="px-2 py-2 text-center w-12 font-mono">STT</th>
-              <th class="px-3 py-2 text-center w-32 font-mono">Mã Sản Phẩm</th>
-              <th class="px-3 py-2 text-left">Tên Mặt Hàng / Quy Cách</th>
-              <th class="px-2 py-2 text-center w-16">ĐVT</th>
-              <th class="px-3 py-2 text-right w-28 font-mono">Tồn Kho Hiện Tại</th>
-              <th class="px-4 py-2 text-right w-48 font-mono text-indigo-800">Đơn Giá Cài Đặt (VNĐ) (*)</th>
+              <th class="px-2.5 py-2.5 text-center w-12 font-mono whitespace-nowrap">STT</th>
+              <th class="px-3 py-2.5 text-center w-32 font-mono whitespace-nowrap">Mã Sản Phẩm</th>
+              <th class="px-3 py-2.5 text-left min-w-[240px]">Tên Mặt Hàng / Quy Cách</th>
+              <th class="px-2.5 py-2.5 text-center w-16 whitespace-nowrap">ĐVT</th>
+              <th class="px-3 py-2.5 text-right w-28 font-mono whitespace-nowrap">Tồn Kho</th>
+              <th class="px-4 py-2.5 text-right w-48 font-mono text-indigo-900 whitespace-nowrap">Đơn Giá Cài Đặt (VNĐ) (*)</th>
             </tr>
           </thead>
           <tbody id="price-manager-tbody" class="divide-y divide-slate-100 bg-white">
@@ -4080,8 +4085,14 @@
       </div>
 
       <!-- Footer -->
-      <div class="p-3 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs">
-        <div id="price-manager-status-text" class="text-slate-500 font-medium">Đang hiển thị...</div>
+      <div class="p-3 bg-slate-50 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        <div class="flex items-center space-x-3">
+          <div id="price-manager-status-text" class="text-slate-500 font-medium">Đang hiển thị...</div>
+          <button type="button" onclick="confirmResetAllProductPrices()" class="text-rose-600 hover:text-rose-800 font-bold flex items-center space-x-1 underline cursor-pointer text-[11px]" title="Xóa toàn bộ giá về 0 đ">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Đặt toàn bộ giá về 0 đ</span>
+          </button>
+        </div>
         <div class="flex items-center space-x-2">
           <button type="button" onclick="closeProductPriceManagerModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition cursor-pointer">
             Đóng
@@ -23696,16 +23707,16 @@ window.google.script = {
         const curPriceVal = curPrice > 0 ? curPrice : '';
         return `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-            <td class="px-2 py-2 text-center font-mono text-slate-400">${idx + 1}</td>
-            <td class="px-3 py-2 text-center font-mono font-bold text-blue-700">${escapeHtml(item.code)}</td>
-            <td class="px-3 py-2 text-slate-900 font-medium">${escapeHtml(item.name)}</td>
-            <td class="px-2 py-2 text-center text-slate-500">${escapeHtml(item.unit || '-')}</td>
-            <td class="px-3 py-2 text-right font-mono font-bold text-slate-700">${formatNumber(item.stock)}</td>
-            <td class="px-4 py-1.5 text-right">
-              <div class="flex items-center justify-end space-x-1">
+            <td class="px-2.5 py-2 text-center font-mono text-slate-400 whitespace-nowrap">${idx + 1}</td>
+            <td class="px-3 py-2 text-center font-mono font-bold text-blue-700 whitespace-nowrap">${escapeHtml(item.code)}</td>
+            <td class="px-3 py-2 text-slate-900 font-medium text-left">${escapeHtml(item.name)}</td>
+            <td class="px-2.5 py-2 text-center text-slate-500 whitespace-nowrap">${escapeHtml(item.unit || '-')}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold text-slate-700 whitespace-nowrap">${formatNumber(item.stock)}</td>
+            <td class="px-4 py-1.5 text-right whitespace-nowrap">
+              <div class="inline-flex items-center justify-end space-x-1">
                 <input type="number" min="0" step="100" data-code="${escapeHtml(item.code)}" value="${curPriceVal}" 
                        placeholder="Chưa có giá" 
-                       class="price-input w-36 px-2.5 py-1 text-right border border-slate-300 rounded-lg font-mono font-bold text-indigo-800 text-xs focus:ring-2 focus:ring-indigo-500 bg-white">
+                       class="price-input w-28 sm:w-32 px-2.5 py-1 text-right border border-slate-300 rounded-lg font-mono font-bold text-indigo-800 text-xs focus:ring-2 focus:ring-indigo-500 bg-white shadow-2xs">
                 <span class="text-slate-400 font-semibold text-[11px]">đ</span>
               </div>
             </td>
@@ -23734,6 +23745,59 @@ window.google.script = {
         title: 'Đã lưu bảng giá thành công!',
         text: `Đã cập nhật đơn giá cho các sản phẩm trong hệ thống.`,
         timer: 1600,
+        showConfirmButton: false
+      });
+    }
+
+    async function confirmResetAllProductPrices() {
+      if (!isUserAdmin()) {
+        Swal.fire('Quyền hạn bị hạn chế', 'Chỉ Quản trị viên (Admin) mới có quyền xóa bảng giá!', 'warning');
+        return;
+      }
+
+      const totalP = (inventoryList || []).length;
+      const countWithPrice = Object.keys(productPricesMap || {}).filter(k => Number(productPricesMap[k]) > 0).length;
+
+      const result = await Swal.fire({
+        title: '<span class="text-rose-600 font-black uppercase text-sm">XÁC NHẬN XÓA BẢNG GIÁ VỀ 0?</span>',
+        html: `
+          <div class="text-left text-xs text-slate-700 space-y-2.5 leading-relaxed">
+            <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-900">
+              <div class="font-bold flex items-center text-rose-700 mb-1">
+                <i class="bi bi-exclamation-triangle-fill mr-1.5 text-sm"></i> Thao tác đặt lại bảng giá:
+              </div>
+              <ul class="list-disc pl-4 space-y-1 text-[11.5px] text-rose-950 font-medium">
+                <li>Đặt lại đơn giá của <b>toàn bộ ${totalP.toLocaleString('vi-VN')} sản phẩm về 0 đ</b>.</li>
+                <li>Xóa toàn bộ ${countWithPrice.toLocaleString('vi-VN')} mã đang có đơn giá cũ.</li>
+                <li>Sau khi xóa, bạn có thể <b>Import Excel bảng giá mới</b> mà hoàn toàn không bị ảnh hưởng hay lẫn lộn với đơn giá cũ.</li>
+              </ul>
+            </div>
+            <p class="font-semibold text-slate-600">Bạn có chắc chắn muốn xóa sạch đơn giá về 0 không?</p>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="bi bi-trash3-fill mr-1"></i> Xác nhận xóa về 0',
+        cancelButtonText: 'Hủy bỏ'
+      });
+
+      if (!result.isConfirmed) return;
+
+      // Đặt lại toàn bộ bảng giá về rỗng / 0
+      productPricesMap = {};
+      saveProductPrices(productPricesMap);
+
+      // Render lại danh sách trên modal ngay lập tức
+      const searchVal = document.getElementById('price-manager-search')?.value || '';
+      renderProductPriceManagerList(searchVal);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã xóa toàn bộ bảng giá về 0!',
+        text: 'Bảng giá đã được làm trống thành công. Bây giờ bạn có thể nạp bảng giá mới.',
+        timer: 2000,
         showConfirmButton: false
       });
     }
