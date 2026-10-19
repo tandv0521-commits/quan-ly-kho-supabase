@@ -18153,7 +18153,7 @@ window.google.script = {
       if (!tbody) return;
 
       if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-slate-400 italic bg-white">Không có lượt phát hàng nào phù hợp với bộ lọc tìm kiếm.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-400 italic bg-white">Không có lượt phát hàng nào phù hợp với bộ lọc tìm kiếm.</td></tr>';
       } else {
         tbody.innerHTML = list.map((r, idx) => {
           const q = parseSmartNumber(r.qty || 0);
@@ -18173,45 +18173,41 @@ window.google.script = {
               isGroupStart = (r.voucherNo || '').trim() !== (prev.voucherNo || '').trim();
             }
           }
-          const groupBorderClass = isGroupStart ? 'border-t-2 border-indigo-300' : 'border-b border-slate-100';
-          const noteText = (r.note || '').trim() || '-';
+          const groupBorderClass = isGroupStart ? 'border-t-2 border-indigo-200' : 'border-b border-slate-100';
 
           // Khi sắp xếp theo số lượng, làm nổi bật ô số lượng với badge màu dịu mắt
           const qtyCellClass = (sort === 'qty')
-            ? 'px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/90 whitespace-nowrap border-l border-indigo-200'
-            : 'px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/50 whitespace-nowrap border-l border-indigo-100';
+            ? 'px-4 py-2.5 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/90 whitespace-nowrap border-l border-indigo-200'
+            : 'px-4 py-2.5 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/50 whitespace-nowrap border-l border-indigo-100';
 
           return `
             <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
-              <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
-              <td class="px-3 py-2 text-center whitespace-nowrap">
-                <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+              <td class="px-3 py-2.5 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
+              <td class="px-3 py-2.5 text-center whitespace-nowrap">
+                <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
                   <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[10px] font-sans font-black mr-1.5 shrink-0">
                     Xe ${r.dailySeq || 1}
                   </span>
                   <span>${escapeHtml(r.plate || '-')}</span>
                 </span>
               </td>
-              <td class="px-3 py-2 text-left font-bold text-slate-800 whitespace-nowrap">
-                <span class="inline-flex items-center space-x-1">
-                  <i class="bi bi-person-fill text-emerald-600"></i>
+              <td class="px-4 py-2.5 text-left font-bold text-slate-800 whitespace-nowrap">
+                <span class="inline-flex items-center space-x-1.5">
+                  <i class="bi bi-person-fill text-emerald-600 text-xs"></i>
                   <span>${escapeHtml(r.staff || '-')}</span>
                 </span>
               </td>
-              <td class="px-3 py-2 text-left text-slate-700 whitespace-nowrap">
-                ${escapeHtml(r.driver || '-')} ${r.phone ? `<span class="text-slate-400 font-mono text-[10px] block">(${escapeHtml(r.phone)})</span>` : ''}
+              <td class="px-4 py-2.5 text-left text-slate-700 whitespace-nowrap">
+                ${escapeHtml(r.driver || '-')} ${r.phone ? `<span class="text-slate-400 font-mono text-[10px] ml-1">(${escapeHtml(r.phone)})</span>` : ''}
               </td>
               <td class="${qtyCellClass}">
                 ${formatNumber(q)} <span class="text-[10px] font-normal text-slate-500">${escapeHtml(unit)}</span>
               </td>
-              <td class="px-3 py-2 text-center font-mono text-slate-600 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-[11px]">${escapeHtml(r.voucherNo || '-')}</span>
+              <td class="px-3 py-2.5 text-center font-mono text-slate-600 whitespace-nowrap">
+                <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-[11px] font-mono">${escapeHtml(r.voucherNo || '-')}</span>
               </td>
-              <td class="px-3 py-2 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
-                ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1">${escapeHtml(r.time)}</span>` : ''}
-              </td>
-              <td class="px-3 py-2 text-left text-slate-500 text-[11px] whitespace-nowrap max-w-[180px] truncate" title="${escapeHtml(noteText)}">
-                ${escapeHtml(noteText)}
+              <td class="px-3 py-2.5 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1 font-mono">${escapeHtml(r.time)}</span>` : ''}
               </td>
             </tr>
           `;
@@ -18662,39 +18658,42 @@ window.google.script = {
         const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''} ${q}`.toLowerCase();
         const dblClickAction = r.id ? `ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
         const badgeDblClick = r.id ? `ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
-        const noteText = (r.note || '').trim() || '-';
+
+        let isGroupStart = false;
+        if (idx > 0) {
+          const prev = records[idx - 1];
+          isGroupStart = (r.staff || '').trim() !== (prev.staff || '').trim();
+        }
+        const groupBorderClass = isGroupStart ? 'border-t-2 border-indigo-200' : 'border-b border-slate-100';
 
         return `
-          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs border-b border-slate-100 select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
-            <td class="px-3 py-2 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
-            <td class="px-3 py-2 text-center whitespace-nowrap">
-              <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
+            <td class="px-3 py-2.5 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
+            <td class="px-3 py-2.5 text-center whitespace-nowrap">
+              <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
                 <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[10px] font-sans font-black mr-1.5 shrink-0">
                   Xe ${r.dailySeq || 1}
                 </span>
                 <span>${escapeHtml(r.plate || '-')}</span>
               </span>
             </td>
-            <td class="px-3 py-2 text-left font-bold text-slate-800 whitespace-nowrap">
-              <span class="inline-flex items-center space-x-1">
-                <i class="bi bi-person-fill text-emerald-600"></i>
+            <td class="px-4 py-2.5 text-left font-bold text-slate-800 whitespace-nowrap">
+              <span class="inline-flex items-center space-x-1.5">
+                <i class="bi bi-person-fill text-emerald-600 text-xs"></i>
                 <span>${escapeHtml(r.staff || '-')}</span>
               </span>
             </td>
-            <td class="px-3 py-2 text-left text-slate-700 whitespace-nowrap">
-              ${escapeHtml(r.driver || '-')} ${r.phone ? `<span class="text-slate-400 font-mono text-[10px] block">(${escapeHtml(r.phone)})</span>` : ''}
+            <td class="px-4 py-2.5 text-left text-slate-700 whitespace-nowrap">
+              ${escapeHtml(r.driver || '-')} ${r.phone ? `<span class="text-slate-400 font-mono text-[10px] ml-1">(${escapeHtml(r.phone)})</span>` : ''}
             </td>
-            <td class="px-3 py-2 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/90 whitespace-nowrap border-l border-indigo-200">
+            <td class="px-4 py-2.5 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/80 whitespace-nowrap border-l border-indigo-200">
               ${formatNumber(q)} <span class="text-[10px] font-normal text-slate-500">${escapeHtml(item.unit || '')}</span>
             </td>
-            <td class="px-3 py-2 text-center font-mono text-slate-600 whitespace-nowrap">
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-[11px]">${escapeHtml(r.voucherNo || '-')}</span>
+            <td class="px-3 py-2.5 text-center font-mono text-slate-600 whitespace-nowrap">
+              <span class="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200 text-[11px] font-mono">${escapeHtml(r.voucherNo || '-')}</span>
             </td>
-            <td class="px-3 py-2 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
-              ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1">${escapeHtml(r.time)}</span>` : ''}
-            </td>
-            <td class="px-3 py-2 text-left text-slate-500 text-[11px] whitespace-nowrap max-w-[180px] truncate" title="${escapeHtml(noteText)}">
-              ${escapeHtml(noteText)}
+            <td class="px-3 py-2.5 text-center text-slate-500 font-mono text-[11px] whitespace-nowrap">
+              ${r.date ? formatDateVN(r.date) : ''} ${r.time ? `<span class="text-slate-400 ml-1 font-mono">${escapeHtml(r.time)}</span>` : ''}
             </td>
           </tr>
         `;
@@ -18760,17 +18759,14 @@ window.google.script = {
                   </div>
 
                   <div class="flex items-center space-x-2.5 shrink-0">
-                    <!-- BỘ CHỌN LỌC & SẮP XẾP: NGƯỜI PHÁT & STT XE (MẶC ĐỊNH), SỐ LƯỢNG, SỐ XE, SỐ PHIẾU -->
-                    <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-indigo-200 shadow-2xs">
-                      <span class="text-[11px] font-bold text-indigo-900 flex items-center gap-1 shrink-0">
-                        <i class="bi bi-arrow-down-up text-indigo-600"></i>
-                        <span>Xếp theo:</span>
-                      </span>
-                      <select id="product-detail-sort-select" onchange="applyProductDetailSorting(this.value)" class="text-xs bg-transparent border-0 font-bold text-indigo-950 focus:ring-0 focus:outline-none cursor-pointer py-0 pl-1 pr-6" title="Chọn tiêu chí lọc và sắp xếp nhật ký">
-                        <option value="staff_seq" selected>👤 Người phát & STT Xe (Mặc định)</option>
-                        <option value="qty">⚡ Số lượng lấy hàng</option>
-                        <option value="plate">🚚 Số xe nhận hàng</option>
-                        <option value="voucher">📄 Số phiếu phát</option>
+                    <!-- BỘ CHỌN LỌC & SẮP XẾP (Không icon) -->
+                    <div class="flex items-center space-x-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs hover:border-slate-300 transition">
+                      <span class="text-xs font-semibold text-slate-500 shrink-0">Xếp theo:</span>
+                      <select id="product-detail-sort-select" onchange="applyProductDetailSorting(this.value)" class="text-xs bg-transparent border-0 font-bold text-slate-800 focus:ring-0 focus:outline-none cursor-pointer py-0 pl-1 pr-6" title="Chọn tiêu chí sắp xếp nhật ký">
+                        <option value="staff_seq" selected>Người phát & STT Xe (Mặc định)</option>
+                        <option value="qty">Số lượng lấy hàng</option>
+                        <option value="plate">Số xe nhận hàng</option>
+                        <option value="voucher">Số phiếu phát</option>
                       </select>
                     </div>
 
@@ -18785,16 +18781,15 @@ window.google.script = {
                 <!-- Bảng dữ liệu có scroll mượt và thead/tfoot sticky (Mở rộng chiều cao thoải mái quan sát) -->
                 <div class="max-h-[62vh] sm:max-h-[540px] overflow-y-auto custom-scroll overflow-x-auto flex-1">
                   <table class="min-w-full divide-y divide-slate-200 text-xs">
-                    <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider shadow-2xs">
+                    <thead class="bg-slate-100/90 backdrop-blur-xs text-slate-700 font-bold uppercase text-[11px] sticky top-0 z-10 tracking-wider shadow-2xs border-b border-slate-200 select-none">
                       <tr>
-                        <th class="px-3 py-2 text-center w-10">STT</th>
-                        <th class="px-3 py-2 text-center w-28 font-mono">Xe nhận hàng</th>
-                        <th class="px-3 py-2 text-left w-32">Thủ kho</th>
-                        <th class="px-3 py-2 text-left w-36">Lái xe / Nhận</th>
-                        <th class="px-3 py-2 text-right w-28 bg-indigo-50/80 font-mono text-indigo-950 border-l border-indigo-100">Số lượng</th>
-                        <th class="px-3 py-2 text-center w-28 font-mono">Số phiếu</th>
-                        <th class="px-3 py-2 text-center w-36 font-mono">Thời gian</th>
-                        <th class="px-3 py-2 text-left w-32">Ghi chú</th>
+                        <th class="px-3 py-2.5 text-center w-12 text-slate-500 font-bold">STT</th>
+                        <th class="px-3 py-2.5 text-center w-40">Xe nhận hàng</th>
+                        <th class="px-4 py-2.5 text-left">Thủ kho</th>
+                        <th class="px-4 py-2.5 text-left">Lái xe / Nhận</th>
+                        <th class="px-4 py-2.5 text-right w-36 bg-indigo-50/80 font-mono text-indigo-950 border-l border-indigo-100">Số lượng</th>
+                        <th class="px-3 py-2.5 text-center w-36 font-mono">Số phiếu</th>
+                        <th class="px-3 py-2.5 text-center w-40 font-mono">Thời gian</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white" id="product-detail-tbody">
@@ -18802,13 +18797,13 @@ window.google.script = {
                     </tbody>
                     <tfoot class="bg-slate-100 font-bold text-slate-900 text-xs border-t-2 border-slate-300 sticky bottom-0 z-10 shadow-2xs">
                       <tr>
-                        <td colspan="4" class="px-3 py-2 text-right uppercase tracking-wider text-slate-600" id="product-detail-foot-label">
+                        <td colspan="4" class="px-4 py-2.5 text-right uppercase tracking-wider text-slate-600 font-bold" id="product-detail-foot-label">
                           Tổng cộng (${records.length} lượt phát):
                         </td>
-                        <td class="px-3 py-2 text-right font-black font-mono text-sm text-indigo-950 bg-indigo-100/70 border-l border-indigo-200" id="product-detail-foot-qty">
+                        <td class="px-4 py-2.5 text-right font-black font-mono text-sm text-indigo-950 bg-indigo-100/70 border-l border-indigo-200" id="product-detail-foot-qty">
                           ${formatNumber(totalQty)} <span class="text-[11px] font-normal text-slate-500">${escapeHtml(item.unit || '')}</span>
                         </td>
-                        <td colspan="3" class="px-3 py-2 text-slate-400 font-normal italic text-[11px]">
+                        <td colspan="2" class="px-4 py-2.5 text-slate-400 font-normal italic text-[11px] text-left">
                           Chứng từ hợp lệ trên hệ thống
                         </td>
                       </tr>
