@@ -1809,21 +1809,14 @@
                 </div>
               </div>
 
-              <!-- Thanh tìm kiếm nhanh & Phím chọn nhanh ngày -->
-              <div class="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-1">
-                <div class="flex items-center space-x-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-                  <span class="text-[11px] font-bold text-slate-400 uppercase shrink-0 mr-1">Xem nhanh:</span>
-                  <button type="button" onclick="setDispatchQuickDate('today')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Hôm nay</button>
-                  <button type="button" onclick="setDispatchQuickDate('yesterday')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Hôm qua</button>
-                  <button type="button" onclick="setDispatchQuickDate('7days')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">7 ngày</button>
-                  <button type="button" onclick="setDispatchQuickDate('thismonth')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Tháng này</button>
-                  <button type="button" onclick="setDispatchQuickDate('all')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Tất cả</button>
-                </div>
-
-                <div class="relative w-full sm:w-72">
-                  <i class="bi bi-search absolute left-3 top-2 text-slate-400 text-xs"></i>
-                  <input type="text" id="dispatch-search-query" oninput="filterDailyDispatchTable()" placeholder="Tìm biển số, mã hàng, người phát..." class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-teal-500">
-                </div>
+              <!-- Phím chọn nhanh ngày -->
+              <div class="flex items-center space-x-1.5 overflow-x-auto w-full pb-1 sm:pb-0 pt-1">
+                <span class="text-[11px] font-bold text-slate-400 uppercase shrink-0 mr-1">Xem nhanh:</span>
+                <button type="button" onclick="setDispatchQuickDate('today')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Hôm nay</button>
+                <button type="button" onclick="setDispatchQuickDate('yesterday')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Hôm qua</button>
+                <button type="button" onclick="setDispatchQuickDate('7days')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">7 ngày</button>
+                <button type="button" onclick="setDispatchQuickDate('thismonth')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Tháng này</button>
+                <button type="button" onclick="setDispatchQuickDate('all')" class="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg shadow-2xs">Tất cả</button>
               </div>
             </div>
 
@@ -12536,10 +12529,22 @@ window.google.script = {
         const rawDispatches = (phatHangRes.status === 'fulfilled' && Array.isArray(phatHangRes.value)) ? phatHangRes.value : [];
         dispatchListCached = rawDispatches.filter(it => isDispatchInCurrentWarehouse(it));
 
+        if (typeof normalizeDispatchDailySeqs === 'function') {
+          normalizeDispatchDailySeqs(dispatchListCached);
+        }
+
         populateWarehouseStaffUI();
         populateVehiclesUI();
         populateDispatchFilterDropdowns();
         filterDailyDispatchTable();
+
+        const createViewEl = document.getElementById('dispatch-create-view');
+        if (createViewEl && !createViewEl.classList.contains('hidden')) {
+          const isEditMode = !!(editingDispatchContext && editingDispatchContext.isEdit);
+          if (!isEditMode && typeof updateDailyVehicleSeqInput === 'function') {
+            updateDailyVehicleSeqInput();
+          }
+        }
       } catch (err) {
         console.error('Lỗi nạp dữ liệu phát hàng:', err);
         if (tbody) {
@@ -15168,8 +15173,16 @@ window.google.script = {
           const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
           if (staffCmp !== 0) return staffCmp;
 
-          const timeA = `${a.date || ''} ${a.time || ''}`;
-          const timeB = `${b.date || ''} ${b.time || ''}`;
+          const dateA = String(a.date || '').substring(0, 10);
+          const dateB = String(b.date || '').substring(0, 10);
+          if (dateA !== dateB) return dateB.localeCompare(dateA);
+
+          const seqA = a.dailySeq || 1;
+          const seqB = b.dailySeq || 1;
+          if (seqA !== seqB) return seqA - seqB;
+
+          const timeA = `${a.time || ''}`;
+          const timeB = `${b.time || ''}`;
           if (timeA !== timeB) return timeA.localeCompare(timeB);
 
           return (a.id || 0) - (b.id || 0);
@@ -15510,7 +15523,8 @@ window.google.script = {
 
     // ========================================================
     // QUẢN LÝ SỐ THỨ TỰ XE PHÁT HÀNG TRONG NGÀY CỦA TỪNG NGƯỜI
-    // (Chạy tự động từ 1 đến khi dừng, số nguyên dương, không trùng lặp)
+    // (Chạy tự động từ 1 đến khi dừng, số nguyên dương, không trùng lặp.
+    //  Khi xóa 1 xe thì các xe khác giữ nguyên số thứ tự; khi tạo mới sẽ tự động lấp vào số thứ tự xe đã xóa)
     // ========================================================
     function getRecordDailyVehicleSeq(it) {
       if (!it) return null;
@@ -15523,9 +15537,9 @@ window.google.script = {
         if (!isNaN(n) && n > 0) return n;
       }
       const note = String(it.note || '');
-      const m = note.match(/\[(?:STT\s+)?Xe\s*[:#]\s*#?(\d+)\]/i);
-      if (m && m[1]) {
-        const n = parseInt(m[1], 10);
+      const m = note.match(/\[(?:STT\s+)?Xe\s*[:#]?\s*#?(\d+)\]|(?:\bXe\s*#\s*(\d+)\b)/i);
+      if (m) {
+        const n = parseInt(m[1] || m[2], 10);
         if (!isNaN(n) && n > 0) return n;
       }
       // Kiểm tra trong items nếu it là trip hoặc phiếu phát nhóm nhiều dòng
@@ -15538,10 +15552,99 @@ window.google.script = {
       return null;
     }
 
+    // Chuẩn hóa và cố định STT xe cho từng chuyến theo từng người và từng ngày
+    // Đảm bảo khi xóa 1 xe bất kỳ, các xe khác không bao giờ bị nhảy số!
+    function normalizeDispatchDailySeqs(list) {
+      if (!Array.isArray(list) || list.length === 0) return;
+
+      const groups = new Map();
+      list.forEach(r => {
+        const staff = String(r.staff_name || r.staff || '').trim().toLowerCase();
+        const date = String(r.dispatch_date || r.date || '').substring(0, 10);
+        if (!staff || !date) return;
+
+        const groupKey = `${staff}__${date}`;
+        if (!groups.has(groupKey)) {
+          groups.set(groupKey, []);
+        }
+        groups.get(groupKey).push(r);
+      });
+
+      groups.forEach(records => {
+        const tripsMap = new Map();
+        records.forEach(r => {
+          const vClean = (r.voucher_no && String(r.voucher_no).trim() !== '-' && String(r.voucher_no).trim() !== '') 
+            ? String(r.voucher_no).trim() 
+            : ((r.voucherNo && String(r.voucherNo).trim() !== '-' && String(r.voucherNo).trim() !== '') ? String(r.voucherNo).trim() : '');
+          const plate = String(r.license_plate || r.plate || '').trim().toUpperCase();
+          const time = String(r.dispatch_time || r.time || '').trim();
+          const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
+          const vKey = vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time}`;
+
+          const rSeq = getRecordDailyVehicleSeq(r);
+          if (!tripsMap.has(vKey)) {
+            tripsMap.set(vKey, {
+              key: vKey,
+              plate: plate,
+              time: time,
+              id: Number(r.id) || 0,
+              directSeq: rSeq,
+              records: [r]
+            });
+          } else {
+            const tripObj = tripsMap.get(vKey);
+            tripObj.records.push(r);
+            if (rSeq && !tripObj.directSeq) {
+              tripObj.directSeq = rSeq;
+            }
+          }
+        });
+
+        // Tập hợp các số thứ tự xe đã được chỉ định rõ ràng
+        const usedSeqs = new Set();
+        tripsMap.forEach(t => {
+          if (t.directSeq && Number.isInteger(t.directSeq) && t.directSeq > 0) {
+            usedSeqs.add(t.directSeq);
+          }
+        });
+
+        // Sắp xếp các chuyến xe chưa có STT theo thứ tự thời gian/ID để gán STT cố định
+        const tripsList = Array.from(tripsMap.values()).sort((a, b) => {
+          if (a.directSeq && b.directSeq && a.directSeq !== b.directSeq) {
+            return a.directSeq - b.directSeq;
+          }
+          if (a.time && b.time && a.time !== b.time) {
+            return a.time.localeCompare(b.time);
+          }
+          return a.id - b.id;
+        });
+
+        let nextAvailable = 1;
+        tripsList.forEach(t => {
+          if (!t.directSeq) {
+            while (usedSeqs.has(nextAvailable)) {
+              nextAvailable++;
+            }
+            t.directSeq = nextAvailable;
+            usedSeqs.add(nextAvailable);
+          }
+
+          // Gán cố định vào từng bản ghi của chuyến xe
+          t.records.forEach(r => {
+            r.daily_seq = t.directSeq;
+            r.dailySeq = t.directSeq;
+          });
+        });
+      });
+    }
+
     function resolveDailyVehicleSeq(it, allRecordsList = null) {
       if (!it) return 1;
       const direct = getRecordDailyVehicleSeq(it);
-      if (direct) return direct;
+      if (direct) {
+        if (!it.daily_seq) it.daily_seq = direct;
+        return direct;
+      }
 
       // Ưu tiên dùng dispatchListCached toàn diện để STT xe luôn cố định theo ngày của nhân viên,
       // không bị thay đổi / nhảy số khi người dùng lọc theo mã hàng hoặc từ khóa.
@@ -15578,10 +15681,15 @@ window.google.script = {
             plate: plate,
             time: time,
             id: Number(r.id) || 0,
-            directSeq: rSeq
+            directSeq: rSeq,
+            records: [r]
           });
-        } else if (rSeq && !tripsMap.get(vKey).directSeq) {
-          tripsMap.get(vKey).directSeq = rSeq;
+        } else {
+          const tripObj = tripsMap.get(vKey);
+          tripObj.records.push(r);
+          if (rSeq && !tripObj.directSeq) {
+            tripObj.directSeq = rSeq;
+          }
         }
       });
 
@@ -15595,7 +15703,7 @@ window.google.script = {
         return a.id - b.id;
       });
 
-      // Gán số thứ tự duy nhất không trùng lặp (1, 2, 3...)
+      // Gán số thứ tự duy nhất không trùng lặp
       const assignedSeqs = new Set();
       sortedTrips.forEach(t => {
         if (t.directSeq && !assignedSeqs.has(t.directSeq)) {
@@ -15612,6 +15720,13 @@ window.google.script = {
           t.assignedSeq = nextAvailableSeq;
           assignedSeqs.add(nextAvailableSeq);
         }
+        // Gán cố định vào từng bản ghi để không bị nhảy số khi xóa chuyến xe khác
+        if (Array.isArray(t.records)) {
+          t.records.forEach(rec => {
+            if (!rec.daily_seq) rec.daily_seq = t.assignedSeq;
+            if (!rec.dailySeq) rec.dailySeq = t.assignedSeq;
+          });
+        }
       });
 
       // Xác định chuyến xe cần tra cứu
@@ -15624,6 +15739,7 @@ window.google.script = {
 
       const matchedTrip = sortedTrips.find(t => t.key === targetKey);
       if (matchedTrip && matchedTrip.assignedSeq) {
+        it.daily_seq = matchedTrip.assignedSeq;
         return matchedTrip.assignedSeq;
       }
 
@@ -15631,6 +15747,7 @@ window.google.script = {
       if (itPlate) {
         const matchedByPlate = sortedTrips.find(t => t.plate === itPlate);
         if (matchedByPlate && matchedByPlate.assignedSeq) {
+          it.daily_seq = matchedByPlate.assignedSeq;
           return matchedByPlate.assignedSeq;
         }
       }
@@ -15644,21 +15761,28 @@ window.google.script = {
       if (!cleanStaff || !cleanDate) return 1;
 
       const list = dispatchListCached || [];
-      let maxSeq = 0;
+      const usedSeqs = new Set();
 
       list.forEach(r => {
         const rStaff = String(r.staff_name || r.staff || '').trim().toLowerCase();
         const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
         if (rStaff === cleanStaff && rDate === cleanDate) {
-          if (excludeVoucherNo && r.voucher_no === excludeVoucherNo) {
+          if (excludeVoucherNo && r.voucher_no && String(r.voucher_no).trim().toLowerCase() === String(excludeVoucherNo).trim().toLowerCase()) {
             return;
           }
           const s = resolveDailyVehicleSeq(r, list);
-          if (s && s > maxSeq) maxSeq = s;
+          if (s && Number.isInteger(s) && s > 0) {
+            usedSeqs.add(s);
+          }
         }
       });
 
-      return maxSeq + 1;
+      // Tự động lấp vào số thứ tự của xe đã xóa (số nguyên dương nhỏ nhất chưa được dùng >= 1)
+      let nextSeq = 1;
+      while (usedSeqs.has(nextSeq)) {
+        nextSeq++;
+      }
+      return nextSeq;
     }
 
     function updateDailyVehicleSeqInput() {
@@ -16465,7 +16589,12 @@ window.google.script = {
       const payload = allValidItems.map(r => {
         const itemNoteParts = [];
         itemNoteParts.push(`[Xe #${dailySeq}]`);
-        if (r.note) itemNoteParts.push(r.note);
+        // Làm sạch tag Xe cũ trong note dòng hàng để tránh lặp [Xe #...] khi sửa phiếu
+        const cleanedRowNote = String(r.note || '')
+          .replace(/\[(?:STT\s+)?Xe\s*[:#]?\s*#?\d+\]/gi, '')
+          .replace(/\bXe\s*#\s*\d+\b/gi, '')
+          .trim();
+        if (cleanedRowNote) itemNoteParts.push(cleanedRowNote);
         if (generalNote) itemNoteParts.push(`(Ghi chung: ${generalNote})`);
         if (activeScope && activeScope !== 'all') itemNoteParts.push(`[Kho: ${activeScope}]`);
         const itemNote = itemNoteParts.join(' ');
@@ -16495,15 +16624,34 @@ window.google.script = {
           // Xóa các bản ghi cũ của phiếu phát này
           if (editingDispatchContext.voucher_no) {
             await callSupabaseSingle_('phat_hang?voucher_no=eq.' + encodeURIComponent(editingDispatchContext.voucher_no), 'DELETE').catch(() => {});
+            dispatchListCached = dispatchListCached.filter(x => x.voucher_no !== editingDispatchContext.voucher_no);
           }
           if (editingDispatchContext.originalIds && editingDispatchContext.originalIds.length > 0) {
+            const oIdSet = new Set(editingDispatchContext.originalIds.map(Number));
             for (const oId of editingDispatchContext.originalIds) {
               await callSupabaseSingle_('phat_hang?id=eq.' + oId, 'DELETE').catch(() => {});
             }
+            dispatchListCached = dispatchListCached.filter(x => !oIdSet.has(Number(x.id)));
           }
         }
 
         await callSupabaseSingle_('phat_hang', 'POST', payload);
+
+        // Cập nhật ngay vào cache cục bộ để STT xe tiếp theo tính toán chính xác tức thì
+        if (Array.isArray(payload) && payload.length > 0) {
+          payload.forEach((p, pIdx) => {
+            dispatchListCached.unshift({
+              id: Date.now() + pIdx,
+              ...p,
+              daily_seq: dailySeq,
+              dailySeq: dailySeq
+            });
+          });
+        }
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
+          LocalDB.cache['phat_hang'] = dispatchListCached;
+        }
+
         editingDispatchContext = null;
 
         // TỰ ĐỘNG LƯU SỐ XE MỚI VÀO DANH MỤC XE NẾU CHƯA TỪNG CÓ
@@ -16788,6 +16936,9 @@ window.google.script = {
       try {
         await callSupabaseSingle_(`phat_hang?id=eq.${id}`, 'DELETE');
         dispatchListCached = dispatchListCached.filter(x => x.id !== id);
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
+          LocalDB.cache['phat_hang'] = dispatchListCached;
+        }
         Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false });
         filterDailyDispatchTable();
         if (typeof autoRefreshReconciliationIfActive_ === 'function') {
