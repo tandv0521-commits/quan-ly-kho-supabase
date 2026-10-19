@@ -15260,13 +15260,17 @@ window.google.script = {
             <td class="px-3 py-2.5 text-slate-800 whitespace-nowrap font-medium">
               ${escapeHtml(driverDisplay)}
             </td>
-            <td class="px-3 py-2.5 text-center font-mono col-center whitespace-nowrap">
+            <td class="px-3 py-2.5 text-center col-center whitespace-nowrap">
               <span ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"
                     onmousedown="event.detail > 1 && event.preventDefault()"
-                    class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-950 text-slate-800 border border-slate-200/80 font-bold text-xs shadow-2xs cursor-pointer transition select-none"
-                    title="Chuyến xe #${r.dailySeq || 1} trong ngày của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
-                <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black bg-amber-100 text-amber-950 border border-amber-300 mr-1.5">#${r.dailySeq || 1}</span>
-                <i class="bi bi-truck mr-1 text-teal-600"></i> ${escapeHtml(r.plate || '-')}
+                    class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-teal-400 hover:bg-teal-50/20 text-slate-900 cursor-pointer shadow-2xs transition select-none group"
+                    title="Chuyến xe thứ #${r.dailySeq || 1} • Biển số: ${escapeHtml(r.plate || '-')} (Nhấp đúp chuột để sửa phiếu)">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-black bg-teal-50 text-teal-800 border border-teal-300 group-hover:border-teal-400 transition">
+                  Xe ${r.dailySeq || 1}
+                </span>
+                <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                  ${escapeHtml(r.plate || '-')}
+                </span>
               </span>
             </td>
             <td class="px-3 py-2.5 whitespace-nowrap">
