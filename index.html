@@ -24809,9 +24809,8 @@ window.google.script = {
               <span class="truncate font-semibold ${isSelected ? 'text-amber-50' : 'text-slate-800'}">- ${item.name}</span>
               <span class="text-[11px] ${isSelected ? 'text-amber-200' : 'text-slate-400'}">(${item.unit || '-'})</span>
             </div>
-            <div class="flex items-center space-x-3 font-mono text-[11px] shrink-0">
+            <div class="flex items-center font-mono text-[11px] shrink-0">
               <span class="${isSelected ? 'text-amber-100 font-bold' : 'text-indigo-700 font-bold'}">${priceText}</span>
-              <span class="${isSelected ? 'text-amber-200' : 'text-slate-500'} font-medium">Tồn: ${formatNumber(item.stock)}</span>
             </div>
           </div>
         `;
