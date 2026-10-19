@@ -2280,7 +2280,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                   <div class="flex items-center space-x-1.5 text-xs font-bold text-slate-700 mr-1">
                     <i class="bi bi-clipboard2-check text-amber-600 text-base"></i>
-                    <span class="uppercase tracking-wide">Đối Chiếu Kiểm Kê Kho</span>
+                    <span class="uppercase tracking-wide">Kiểm Kê Kho Hàng Hóa</span>
                   </div>
                   <div class="flex items-center space-x-1 text-xs">
                     <span class="text-slate-500 font-medium">Từ:</span>
@@ -2293,13 +2293,7 @@
                       <option value="all">Tất cả kho</option>
                     </select>
                   </div>
-                  <div class="w-36">
-                    <select id="kiemke-filter-status" onchange="filterKiemKeTable()" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg font-bold text-slate-700 focus:ring-2 focus:ring-amber-500 bg-white">
-                      <option value="all">Tất cả trạng thái</option>
-                      <option value="diff">Có chênh lệch</option>
-                      <option value="balanced">Khớp hoàn toàn (0 lệch)</option>
-                    </select>
-                  </div>
+                  <input type="hidden" id="kiemke-filter-status" value="all">
                 </div>
 
                 <div class="flex items-center space-x-2">
@@ -2348,22 +2342,22 @@
               </div>
 
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg font-bold shrink-0">
-                  <i class="bi bi-arrow-left-right"></i>
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold shrink-0">
+                  <i class="bi bi-box-seam"></i>
                 </div>
                 <div class="min-w-0">
-                  <div class="text-[11px] font-bold text-slate-400 uppercase">Chênh lệch số lượng</div>
-                  <div id="kiemke-kpi-total-diff-qty" class="text-base sm:text-lg font-black text-slate-800 font-mono">0</div>
+                  <div class="text-[11px] font-bold text-slate-400 uppercase">Tổng SL thực tế</div>
+                  <div id="kiemke-kpi-total-actual-qty" class="text-base sm:text-lg font-black text-indigo-700 font-mono">0</div>
                 </div>
               </div>
 
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg font-bold shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold shrink-0">
                   <i class="bi bi-cash-stack"></i>
                 </div>
                 <div class="min-w-0">
-                  <div class="text-[11px] font-bold text-slate-400 uppercase">Chênh lệch tiền hàng</div>
-                  <div id="kiemke-kpi-total-diff-amount" class="text-base sm:text-lg font-black text-rose-600 font-mono">0 đ</div>
+                  <div class="text-[11px] font-bold text-slate-400 uppercase">Tổng tiền kiểm kê</div>
+                  <div id="kiemke-kpi-total-amount" class="text-base sm:text-lg font-black text-emerald-700 font-mono">0 đ</div>
                 </div>
               </div>
             </div>
@@ -2380,16 +2374,14 @@
                       <th class="px-3 py-2.5 text-left w-32">Kho Hàng</th>
                       <th class="px-3 py-2.5 text-left w-36">Người Kiểm Kê</th>
                       <th class="px-2.5 py-2.5 text-center w-24">Số SKU</th>
-                      <th class="px-3 py-2.5 text-right w-28 font-mono">Tồn Sổ Sách</th>
-                      <th class="px-3 py-2.5 text-right w-28 font-mono text-blue-700">Kiểm Thực Tế</th>
-                      <th class="px-3 py-2.5 text-right w-28 font-mono">Chênh Lệch SL</th>
-                      <th class="px-3.5 py-2.5 text-right w-36 font-mono font-bold">Chênh Lệch Tiền</th>
-                      <th class="px-3 py-2.5 text-center w-32">Tình Trạng</th>
+                      <th class="px-3 py-2.5 text-right w-32 font-mono font-bold text-blue-700">Tổng SL Thực Tế</th>
+                      <th class="px-3.5 py-2.5 text-right w-40 font-mono font-bold text-emerald-800">Tổng Tiền Kiểm Kê</th>
+                      <th class="px-3 py-2.5 text-left min-w-[140px]">Ghi Chú</th>
                       <th class="px-3 py-2.5 text-center w-36 no-print">Thao Tác</th>
                     </tr>
                   </thead>
                   <tbody id="kiemke-vouchers-tbody" class="divide-y divide-slate-100 bg-white">
-                    <tr><td colspan="12" class="text-center py-8 text-slate-400">Đang nạp danh sách phiếu kiểm kê...</td></tr>
+                    <tr><td colspan="10" class="text-center py-8 text-slate-400">Đang nạp danh sách phiếu kiểm kê...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2410,8 +2402,8 @@
                     <i class="bi bi-clipboard2-check-fill text-sm"></i>
                   </div>
                   <div>
-                    <h2 id="kiemke-form-title" class="font-extrabold text-sm text-slate-800 uppercase tracking-wide">Lập Phiếu Đối Chiếu Kiểm Kê Hàng Hóa</h2>
-                    <p class="text-[11px] text-slate-500">Đối chiếu giữa Tồn sổ sách và Thực tế kiểm kê, tính toán chênh lệch thành tiền theo giá mã SP</p>
+                    <h2 id="kiemke-form-title" class="font-extrabold text-sm text-slate-800 uppercase tracking-wide">Lập Phiếu Kiểm Kê Hàng Hóa</h2>
+                    <p class="text-[11px] text-slate-500">Ghi nhận số lượng kiểm kê thực tế và tính toán thành tiền theo đơn giá mặt hàng</p>
                   </div>
                 </div>
 
@@ -2486,7 +2478,7 @@
                       <th class="px-2 py-2 text-center w-16">ĐVT</th>
                       <th class="px-3 py-2 text-right w-36 bg-amber-50/80 font-mono text-amber-900 border-x border-amber-200">Kiểm Kê Thực Tế (*)</th>
                       <th class="px-3 py-2 text-right w-32 font-mono text-indigo-800 bg-indigo-50/40">Đơn Giá</th>
-                      <th class="px-3 py-2 text-right w-36 font-mono font-bold">Chênh Lệch Tiền</th>
+                      <th class="px-3 py-2 text-right w-36 font-mono font-bold text-emerald-800">Thành Tiền</th>
                       <th class="px-2.5 py-2 text-left min-w-[140px]">Ghi Chú</th>
                       <th class="px-2 py-2 text-center w-12 no-print">Xóa</th>
                     </tr>
@@ -2512,8 +2504,8 @@
                   <div>Tổng Thực Tế: <b id="kiemke-footer-actual-qty" class="text-sm text-blue-700 font-black font-mono">0</b></div>
                   <div class="h-3.5 w-px bg-slate-300"></div>
                   <div class="flex items-center space-x-1.5">
-                    <span class="font-bold text-slate-700">TỔNG CHÊNH LỆCH TIỀN:</span>
-                    <span id="kiemke-footer-diff-amount" class="text-base sm:text-lg font-black font-mono text-slate-800">0 đ</span>
+                    <span class="font-bold text-slate-700">TỔNG TIỀN KIỂM KÊ:</span>
+                    <span id="kiemke-footer-diff-amount" class="text-base sm:text-lg font-black font-mono text-emerald-700">0 đ</span>
                   </div>
                 </div>
 
@@ -7892,7 +7884,7 @@ window.google.script = {
       const dispatchTbody = document.getElementById('dispatch-tbody');
       if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu phát hàng của kho</td></tr>';
       const kiemKeTbody = document.getElementById('kiemke-vouchers-tbody');
-      if (kiemKeTbody) kiemKeTbody.innerHTML = '<tr><td colspan="12" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu kiểm kê của kho</td></tr>';
+      if (kiemKeTbody) kiemKeTbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu kiểm kê của kho</td></tr>';
       const dispatchSummary = document.getElementById('dispatch-summary-container');
       if (dispatchSummary) dispatchSummary.innerHTML = '';
       const dispatchStaffSummary = document.getElementById('dispatch-staff-summary-container');
@@ -13611,8 +13603,25 @@ window.google.script = {
     let currentDispatchVehicleFilterSuggestions = [];
     let currentDispatchVehicleFilterHighlightedIndex = -1;
 
+    function getDispatchFilterDateRangeLabel() {
+      const fromDate = document.getElementById('dispatch-filter-from')?.value || '';
+      const toDate = document.getElementById('dispatch-filter-to')?.value || '';
+      if (fromDate && toDate && fromDate === toDate) {
+        return `ngày ${formatDateVN(fromDate)}`;
+      } else if (fromDate && toDate) {
+        return `từ ${formatDateVN(fromDate)} đến ${formatDateVN(toDate)}`;
+      } else if (fromDate) {
+        return `từ ngày ${formatDateVN(fromDate)}`;
+      } else if (toDate) {
+        return `đến ngày ${formatDateVN(toDate)}`;
+      }
+      return 'tất cả các ngày';
+    }
+
     function getDispatchFilterVehicleList() {
       const map = new Map();
+      const fromDate = document.getElementById('dispatch-filter-from')?.value || '';
+      const toDate = document.getElementById('dispatch-filter-to')?.value || '';
 
       // 1. Lấy danh mục xe đã đăng ký
       (vehiclesListCached || []).forEach(v => {
@@ -13623,7 +13632,12 @@ window.google.script = {
             driver: v.driver || '',
             phone: v.phone || '',
             note: v.note || '',
-            count: 0
+            count: 0,
+            allTimeCount: 0,
+            vouchersInFilter: new Set(),
+            vouchersAllTime: new Set(),
+            datesWithVouchers: new Set(),
+            otherDatesWithVouchers: new Set()
           });
         }
       });
@@ -13639,19 +13653,67 @@ window.google.script = {
                 driver: it.driver_name || '',
                 phone: it.driver_phone || '',
                 note: '',
-                count: 1
+                count: 0,
+                allTimeCount: 0,
+                vouchersInFilter: new Set(),
+                vouchersAllTime: new Set(),
+                datesWithVouchers: new Set(),
+                otherDatesWithVouchers: new Set()
               });
-            } else {
-              const item = map.get(plate);
-              item.count = (item.count || 0) + 1;
-              if (!item.driver && it.driver_name) item.driver = it.driver_name;
-              if (!item.phone && it.driver_phone) item.phone = it.driver_phone;
+            }
+
+            const item = map.get(plate);
+            if (!item.driver && it.driver_name) item.driver = it.driver_name;
+            if (!item.phone && it.driver_phone) item.phone = it.driver_phone;
+
+            const itDate = (it.dispatch_date || '').substring(0, 10);
+            if (itDate) {
+              item.datesWithVouchers.add(itDate);
+            }
+
+            // Định danh duy nhất cho 1 phiếu (hoặc 1 chuyến phát hàng)
+            const vNoClean = (it.voucher_no && String(it.voucher_no).trim() !== '-' && String(it.voucher_no).trim() !== '') 
+              ? String(it.voucher_no).trim().toUpperCase() 
+              : '';
+            const tripDate = String(it.dispatch_date || '').substring(0, 10);
+            const tripTime = String(it.dispatch_time || '').trim();
+            const tripKey = vNoClean ? `v_${vNoClean}` : `t_${plate}_${tripDate}_${tripTime || it.id || ''}`;
+
+            item.vouchersAllTime.add(tripKey);
+
+            // Kiểm tra xem phiếu có nằm trong khoảng ngày lọc hay không
+            const inFilterDate = (!fromDate || itDate >= fromDate) && (!toDate || itDate <= toDate);
+            if (inFilterDate) {
+              item.vouchersInFilter.add(tripKey);
+            } else if (itDate) {
+              item.otherDatesWithVouchers.add(itDate);
             }
           }
         }
       });
 
-      return Array.from(map.values()).sort((a, b) => a.plate.localeCompare(b.plate, 'vi', { numeric: true }));
+      // Chuẩn hóa danh sách kết quả
+      const result = Array.from(map.values()).map(item => {
+        item.count = item.vouchersInFilter.size;
+        item.allTimeCount = item.vouchersAllTime.size;
+        item.datesList = Array.from(item.datesWithVouchers).sort();
+        item.otherDatesList = Array.from(item.otherDatesWithVouchers).sort();
+        return item;
+      });
+
+      // Sắp xếp ưu tiên:
+      // 1. Xe có phiếu trong ngày lọc lên đầu (count giảm dần: 3 phiếu, 2 phiếu, 1 phiếu...)
+      // 2. Xe không có phiếu trong ngày lọc nhưng có phiếu lịch sử (allTimeCount giảm dần)
+      // 3. Xe chưa từng có phiếu phát hàng
+      return result.sort((a, b) => {
+        if (a.count !== b.count) {
+          return b.count - a.count;
+        }
+        if (a.count === 0 && b.count === 0 && a.allTimeCount !== b.allTimeCount) {
+          return b.allTimeCount - a.allTimeCount;
+        }
+        return a.plate.localeCompare(b.plate, 'vi', { numeric: true });
+      });
     }
 
     function openDispatchVehicleFilterDropdown() {
@@ -13708,6 +13770,9 @@ window.google.script = {
         return;
       }
 
+      const inDateVehiclesCount = allVehicles.filter(v => v.count > 0).length;
+      const dateRangeLabel = getDispatchFilterDateRangeLabel();
+
       let html = '';
       // Tùy chọn xem tất cả ở trên cùng
       html += `
@@ -13717,7 +13782,9 @@ window.google.script = {
             <i class="bi bi-truck text-blue-600"></i>
             <span>-- Xem tất cả số xe lấy hàng --</span>
           </div>
-          <span class="text-[10px] text-blue-800 bg-white px-2 py-0.5 rounded-full border border-blue-200 font-semibold shadow-2xs">Tất cả (${allVehicles.length})</span>
+          <span class="text-[10px] text-blue-800 bg-white px-2 py-0.5 rounded-full border border-blue-200 font-semibold shadow-2xs">
+            ${inDateVehiclesCount > 0 ? `${inDateVehiclesCount} xe có phiếu (${dateRangeLabel})` : `Tất cả (${allVehicles.length} xe)`}
+          </span>
         </div>
       `;
 
@@ -13737,6 +13804,18 @@ window.google.script = {
           }
         }
 
+        // Tạo badge thông báo số phiếu chuẩn theo ngày lọc
+        let badgeHtml = '';
+        if (item.count > 0) {
+          badgeHtml = `<span class="px-2 py-0.5 rounded text-[10px] font-bold ${isHighlighted ? 'bg-white text-blue-900' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">${item.count} phiếu</span>`;
+        } else if (item.allTimeCount > 0) {
+          const otherDatesStr = (item.otherDatesList && item.otherDatesList.length > 0 ? item.otherDatesList : item.datesList).slice(-3).map(formatDateVN).join(', ');
+          const titleText = `Xe không có phiếu trong ngày lọc (${dateRangeLabel}). Xe có ${item.allTimeCount} phiếu ở ngày khác: ${otherDatesStr}`;
+          badgeHtml = `<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${isHighlighted ? 'bg-amber-300 text-amber-950 font-bold' : 'bg-amber-50 text-amber-800 border border-amber-200'}" title="${escapeHtml(titleText)}">0 phiếu (${item.allTimeCount} phiếu ngày khác)</span>`;
+        } else {
+          badgeHtml = `<span class="${isHighlighted ? 'text-blue-200' : 'text-slate-400'} text-[10px]">Chưa phát</span>`;
+        }
+
         return `
           <div class="px-3.5 py-2 text-xs flex items-center justify-between gap-3 cursor-pointer transition border-b border-slate-100 last:border-b-0 ${isHighlighted ? 'bg-blue-600 text-white font-bold' : 'hover:bg-blue-50 text-slate-800'}"
                onmousedown="selectDispatchVehicleFilter('${escapeHtml(item.plate)}')">
@@ -13746,10 +13825,7 @@ window.google.script = {
               ${item.phone ? `<span class="text-[10px] font-mono shrink-0 ${isHighlighted ? 'text-blue-200' : 'text-slate-400'}">(${escapeHtml(item.phone)})</span>` : ''}
             </div>
             <div class="flex items-center space-x-1 font-mono text-[11px] shrink-0">
-              ${item.count > 0 
-                ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isHighlighted ? 'bg-white text-blue-900' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">${item.count} phiếu</span>`
-                : `<span class="${isHighlighted ? 'text-blue-200' : 'text-slate-400'} text-[10px]">Chưa phát</span>`
-              }
+              ${badgeHtml}
             </div>
           </div>
         `;
@@ -13832,7 +13908,7 @@ window.google.script = {
       }, 250);
     }
 
-    function selectDispatchVehicleFilter(plate) {
+    function selectDispatchVehicleFilter(plate, skipNotice = false) {
       const inputEl = document.getElementById('dispatch-filter-vehicle-input');
       const hiddenEl = document.getElementById('dispatch-filter-vehicle');
       const clearBtn = document.getElementById('dispatch-filter-vehicle-clear');
@@ -13851,6 +13927,61 @@ window.google.script = {
 
       closeDispatchVehicleFilterDropdown();
       filterDailyDispatchTable();
+
+      // Thông báo hỗ trợ tra cứu nếu xe không có phiếu trong ngày lọc nhưng có phiếu ở ngày khác
+      if (cleanPlate && !skipNotice) {
+        const fromDateVal = document.getElementById('dispatch-filter-from')?.value || '';
+        const toDateVal = document.getElementById('dispatch-filter-to')?.value || '';
+        const allVehicles = getDispatchFilterVehicleList();
+        const vInfo = allVehicles.find(v => v.plate.toUpperCase() === cleanPlate);
+
+        if (vInfo && vInfo.count === 0 && vInfo.allTimeCount > 0) {
+          const dateRangeText = (fromDateVal && toDateVal && fromDateVal === toDateVal)
+            ? `ngày ${formatDateVN(fromDateVal)}`
+            : (fromDateVal || toDateVal ? `khoảng ngày ${formatDateVN(fromDateVal) || '...'} đến ${formatDateVN(toDateVal) || '...'}` : 'ngày lọc');
+          const latestDate = vInfo.datesList && vInfo.datesList.length > 0 ? vInfo.datesList[vInfo.datesList.length - 1] : '';
+          const otherDatesStr = (vInfo.otherDatesList && vInfo.otherDatesList.length > 0 ? vInfo.otherDatesList : vInfo.datesList).slice(-5).map(formatDateVN).join(', ');
+
+          Swal.fire({
+            icon: 'info',
+            title: `Xe ${cleanPlate} không có phiếu trong ${dateRangeText}!`,
+            html: `
+              <div class="text-left text-xs space-y-2.5 text-slate-700 pt-1">
+                <p>Xe này có tổng cộng <b class="text-teal-700">${vInfo.allTimeCount} phiếu phát hàng</b> ở các ngày khác:</p>
+                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-800 text-xs">
+                  ${otherDatesStr}
+                </div>
+                <p class="text-[11px] text-slate-500 italic">Bấm "Xem tất cả phiếu" để mở rộng khoảng ngày tra cứu, hoặc xem ngày gần nhất (${formatDateVN(latestDate)}).</p>
+              </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Xem tất cả phiếu xe này',
+            cancelButtonText: 'Ở lại ngày lọc',
+            confirmButtonColor: '#0d9488',
+            cancelButtonColor: '#64748b'
+          }).then(res => {
+            if (res.isConfirmed) {
+              quickViewVehicleAllDates(cleanPlate);
+            }
+          });
+        }
+      }
+    }
+
+    function quickViewVehicleAllDates(plate) {
+      const fromEl = document.getElementById('dispatch-filter-from');
+      const toEl = document.getElementById('dispatch-filter-to');
+      if (fromEl) fromEl.value = '';
+      if (toEl) toEl.value = '';
+      selectDispatchVehicleFilter(plate, true);
+    }
+
+    function quickJumpVehicleLatestDate(plate, targetDate) {
+      const fromEl = document.getElementById('dispatch-filter-from');
+      const toEl = document.getElementById('dispatch-filter-to');
+      if (fromEl) fromEl.value = targetDate;
+      if (toEl) toEl.value = targetDate;
+      selectDispatchVehicleFilter(plate, true);
     }
 
     function clearDispatchVehicleFilter() {
@@ -16231,12 +16362,55 @@ window.google.script = {
       if (badge) badge.innerText = `${productsAggregated.length} SKU`;
 
       if (list.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 bg-white rounded-xl border border-slate-200">
-            <i class="bi bi-box-seam text-3xl text-slate-300 mb-2 block"></i>
-            <p class="text-slate-400 text-xs">Không có dữ liệu phát hàng nào phù hợp với bộ lọc để tổng hợp.</p>
-          </div>
-        `;
+        const vehicleVal = (document.getElementById('dispatch-filter-vehicle')?.value || '').trim().toUpperCase();
+        const fromDateVal = document.getElementById('dispatch-filter-from')?.value || '';
+        const toDateVal = document.getElementById('dispatch-filter-to')?.value || '';
+        const allVehicles = getDispatchFilterVehicleList();
+        const vInfo = vehicleVal ? allVehicles.find(v => v.plate.toUpperCase() === vehicleVal) : null;
+
+        if (vInfo && vInfo.allTimeCount > 0) {
+          const dateRangeText = (fromDateVal && toDateVal && fromDateVal === toDateVal)
+            ? `ngày ${formatDateVN(fromDateVal)}`
+            : (fromDateVal || toDateVal ? `khoảng ngày ${formatDateVN(fromDateVal) || '...'} đến ${formatDateVN(toDateVal) || '...'}` : 'ngày lọc');
+          const latestDate = vInfo.datesList && vInfo.datesList.length > 0 ? vInfo.datesList[vInfo.datesList.length - 1] : '';
+          const otherDatesStr = (vInfo.otherDatesList && vInfo.otherDatesList.length > 0 ? vInfo.otherDatesList : vInfo.datesList).slice(-5).map(formatDateVN).join(', ');
+
+          container.innerHTML = `
+            <div class="text-center py-8 bg-amber-50/50 rounded-2xl border border-amber-200/80 p-4">
+              <div class="max-w-lg mx-auto p-4 bg-white rounded-2xl border border-amber-200 shadow-sm text-center space-y-2.5">
+                <div class="flex items-center justify-center space-x-2 text-amber-900 font-black text-sm">
+                  <i class="bi bi-info-circle-fill text-amber-600 text-base"></i>
+                  <span>Xe ${escapeHtml(vehicleVal)} không có phiếu phát hàng trong ${dateRangeText}</span>
+                </div>
+                <p class="text-xs text-slate-600">
+                  Xe này có tổng cộng <b>${vInfo.allTimeCount} phiếu phát hàng</b> ở các ngày khác: 
+                  <span class="font-mono font-bold text-teal-800">${otherDatesStr}</span>
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-2 pt-1.5">
+                  <button type="button" onclick="quickViewVehicleAllDates('${escapeHtml(vehicleVal)}')" 
+                          class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer">
+                    <i class="bi bi-calendar3-range"></i>
+                    <span>Xem tất cả phiếu của xe ${escapeHtml(vehicleVal)}</span>
+                  </button>
+                  ${latestDate ? `
+                    <button type="button" onclick="quickJumpVehicleLatestDate('${escapeHtml(vehicleVal)}', '${latestDate}')" 
+                            class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer">
+                      <i class="bi bi-clock-history"></i>
+                      <span>Xem ngày gần nhất (${formatDateVN(latestDate)})</span>
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="text-center py-12 bg-white rounded-xl border border-slate-200">
+              <i class="bi bi-box-seam text-3xl text-slate-300 mb-2 block"></i>
+              <p class="text-slate-400 text-xs">Không có dữ liệu phát hàng nào phù hợp với bộ lọc để tổng hợp.</p>
+            </div>
+          `;
+        }
         return;
       }
 
@@ -16645,7 +16819,53 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
+        const vehicleVal = (document.getElementById('dispatch-filter-vehicle')?.value || '').trim().toUpperCase();
+        const fromDateVal = document.getElementById('dispatch-filter-from')?.value || '';
+        const toDateVal = document.getElementById('dispatch-filter-to')?.value || '';
+        const allVehicles = getDispatchFilterVehicleList();
+        const vInfo = vehicleVal ? allVehicles.find(v => v.plate.toUpperCase() === vehicleVal) : null;
+
+        if (vInfo && vInfo.allTimeCount > 0) {
+          const dateRangeText = (fromDateVal && toDateVal && fromDateVal === toDateVal)
+            ? `ngày ${formatDateVN(fromDateVal)}`
+            : (fromDateVal || toDateVal ? `khoảng ngày ${formatDateVN(fromDateVal) || '...'} đến ${formatDateVN(toDateVal) || '...'}` : 'ngày lọc');
+          const latestDate = vInfo.datesList && vInfo.datesList.length > 0 ? vInfo.datesList[vInfo.datesList.length - 1] : '';
+          const otherDatesStr = (vInfo.otherDatesList && vInfo.otherDatesList.length > 0 ? vInfo.otherDatesList : vInfo.datesList).slice(-5).map(formatDateVN).join(', ');
+
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="9" class="p-6 text-center bg-amber-50/40">
+                <div class="max-w-xl mx-auto p-4 bg-white rounded-2xl border border-amber-200 shadow-sm text-center space-y-2.5">
+                  <div class="flex items-center justify-center space-x-2 text-amber-900 font-black text-sm">
+                    <i class="bi bi-info-circle-fill text-amber-600 text-base"></i>
+                    <span>Xe ${escapeHtml(vehicleVal)} không có phiếu phát hàng trong ${dateRangeText}</span>
+                  </div>
+                  <p class="text-xs text-slate-600">
+                    Xe này có tổng cộng <b>${vInfo.allTimeCount} phiếu phát hàng</b> ở các ngày khác: 
+                    <span class="font-mono font-bold text-teal-800">${otherDatesStr}</span>
+                  </p>
+                  <div class="flex flex-wrap items-center justify-center gap-2 pt-1.5">
+                    <button type="button" onclick="quickViewVehicleAllDates('${escapeHtml(vehicleVal)}')" 
+                            class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer">
+                      <i class="bi bi-calendar3-range"></i>
+                      <span>Xem tất cả phiếu của xe ${escapeHtml(vehicleVal)}</span>
+                    </button>
+                    ${latestDate ? `
+                      <button type="button" onclick="quickJumpVehicleLatestDate('${escapeHtml(vehicleVal)}', '${latestDate}')" 
+                              class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Xem ngày gần nhất (${formatDateVN(latestDate)})</span>
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          `;
+        } else {
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
+        }
+
         const footQ = document.getElementById('dispatch-footer-total-qty');
         const footN = document.getElementById('dispatch-footer-summary-note');
         if (footQ) footQ.innerText = '0';
@@ -23660,7 +23880,7 @@ window.google.script = {
       // Nạp dữ liệu phiếu kiểm kê từ Supabase / LocalDB
       const tbody = document.getElementById('kiemke-vouchers-tbody');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="12" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
       }
 
       await fetchKiemKeVouchersFromCloud_();
@@ -23916,36 +24136,27 @@ window.google.script = {
     function updateKiemKeKpis(filteredList) {
       const totalVouchers = filteredList.length;
       let totalSkus = 0;
-      let totalDiffQty = 0;
-      let totalDiffAmount = 0;
+      let totalActualQty = 0;
+      let totalAmount = 0;
 
       filteredList.forEach(v => {
         totalSkus += (v.items ? v.items.length : (Number(v.total_skus) || 0));
-        totalDiffQty += (Number(v.total_diff_qty) || 0);
-        totalDiffAmount += (Number(v.total_diff_amount) || 0);
+        totalActualQty += (Number(v.total_actual_qty) || 0);
+        const amt = (v.total_amount !== undefined && v.total_amount !== null) 
+          ? Number(v.total_amount) 
+          : (Number(v.total_diff_amount) || 0);
+        totalAmount += amt;
       });
 
       const totalVouchersEl = document.getElementById('kiemke-kpi-total-vouchers');
       const totalSkusEl = document.getElementById('kiemke-kpi-total-skus');
-      const totalDiffQtyEl = document.getElementById('kiemke-kpi-total-diff-qty');
-      const totalDiffAmountEl = document.getElementById('kiemke-kpi-total-diff-amount');
+      const totalActualQtyEl = document.getElementById('kiemke-kpi-total-actual-qty');
+      const totalAmountEl = document.getElementById('kiemke-kpi-total-amount');
 
       if (totalVouchersEl) totalVouchersEl.innerText = totalVouchers.toLocaleString('vi-VN');
       if (totalSkusEl) totalSkusEl.innerText = totalSkus.toLocaleString('vi-VN');
-
-      if (totalDiffQtyEl) {
-        const sign = totalDiffQty > 0 ? '+' : '';
-        const color = totalDiffQty === 0 ? 'text-slate-800' : (totalDiffQty > 0 ? 'text-emerald-700' : 'text-rose-600');
-        totalDiffQtyEl.className = `text-base sm:text-lg font-black font-mono ${color}`;
-        totalDiffQtyEl.innerText = `${sign}${formatNumber(totalDiffQty)}`;
-      }
-
-      if (totalDiffAmountEl) {
-        const sign = totalDiffAmount > 0 ? '+' : '';
-        const color = totalDiffAmount === 0 ? 'text-slate-800' : (totalDiffAmount > 0 ? 'text-emerald-700' : 'text-rose-600');
-        totalDiffAmountEl.className = `text-base sm:text-lg font-black font-mono ${color}`;
-        totalDiffAmountEl.innerText = `${sign}${formatCurrency(totalDiffAmount)}`;
-      }
+      if (totalActualQtyEl) totalActualQtyEl.innerText = formatNumber(totalActualQty);
+      if (totalAmountEl) totalAmountEl.innerText = formatCurrency(totalAmount);
     }
 
     function renderKiemKeVouchersTable(list) {
@@ -23953,29 +24164,19 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="text-center py-10 text-slate-400">Không có phiếu đối chiếu kiểm kê nào phù hợp với bộ lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">Không có phiếu kiểm kê nào phù hợp với bộ lọc</td></tr>';
         return;
       }
 
       tbody.innerHTML = list.map((v, idx) => {
-        const diffQty = Number(v.total_diff_qty) || 0;
-        const diffAmount = Number(v.total_diff_amount) || 0;
-
-        let statusBadge = '';
-        if (diffQty === 0 && diffAmount === 0) {
-          statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Khớp 100% (0 lệch)</span>';
-        } else {
-          statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Có chênh lệch</span>`;
-        }
-
-        const diffQtySign = diffQty > 0 ? '+' : '';
-        const diffQtyColor = diffQty === 0 ? 'text-slate-700' : (diffQty > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-
-        const diffAmountSign = diffAmount > 0 ? '+' : '';
-        const diffAmountColor = diffAmount === 0 ? 'text-slate-700' : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+        const actualQty = Number(v.total_actual_qty) || 0;
+        const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) 
+          ? Number(v.total_amount) 
+          : (Number(v.total_diff_amount) || 0);
 
         const warehouseName = v.warehouse_name || v.warehouse_id || 'Kho chính';
         const itemCount = v.items ? v.items.length : (v.total_skus || 0);
+        const notesDisplay = v.notes ? escapeHtml(v.notes) : '<span class="text-slate-300 italic">-</span>';
 
         return `
           <tr class="hover:bg-amber-50/40 transition border-b border-slate-100 text-xs">
@@ -23987,11 +24188,9 @@ window.google.script = {
             <td class="px-3 py-2.5 text-left font-medium text-slate-800">${escapeHtml(warehouseName)}</td>
             <td class="px-3 py-2.5 text-left font-semibold text-slate-700">${escapeHtml(v.creator_name || '-')}</td>
             <td class="px-2.5 py-2.5 text-center font-mono font-bold text-blue-700">${formatNumber(itemCount)}</td>
-            <td class="px-3 py-2.5 text-right font-mono text-slate-700">${formatNumber(v.total_book_qty || 0)}</td>
-            <td class="px-3 py-2.5 text-right font-mono font-bold text-blue-700">${formatNumber(v.total_actual_qty || 0)}</td>
-            <td class="px-3 py-2.5 text-right font-mono ${diffQtyColor}">${diffQtySign}${formatNumber(diffQty)}</td>
-            <td class="px-3.5 py-2.5 text-right font-mono ${diffAmountColor}">${diffAmountSign}${formatCurrency(diffAmount)}</td>
-            <td class="px-3 py-2.5 text-center">${statusBadge}</td>
+            <td class="px-3 py-2.5 text-right font-mono font-bold text-blue-700">${formatNumber(actualQty)}</td>
+            <td class="px-3.5 py-2.5 text-right font-mono font-bold text-emerald-800">${formatCurrency(totalAmount)}</td>
+            <td class="px-3 py-2.5 text-left text-slate-600 truncate max-w-[220px]" title="${escapeHtml(v.notes || '')}">${notesDisplay}</td>
             <td class="px-3 py-2.5 text-center no-print space-x-1">
               <button type="button" onclick="viewKiemKeDetail('${escapeHtml(v.id)}')" class="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold transition cursor-pointer" title="Xem chi tiết phiếu">
                 <i class="bi bi-eye"></i>
@@ -24206,26 +24405,19 @@ window.google.script = {
         ? Number(item.price) 
         : getProductPrice(item.code);
 
-      let diffAmount = 0;
-      let diffAmountSign = '';
-      let diffAmountColor = 'text-slate-400';
-      let diffAmountDisplay = '0 đ';
-      let diffAmountTitle = '';
+      let amount = 0;
+      let amountDisplay = '0 đ';
+      let amountColor = 'text-slate-400';
 
       if (actualVal !== '') {
         const actualNum = Number(actualVal) || 0;
-        const diffQty = actualNum - bookQty;
-        diffAmount = diffQty * price;
-        diffAmountSign = diffAmount > 0 ? '+' : '';
-        diffAmountColor = diffAmount === 0 
-          ? 'text-slate-600' 
-          : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-        diffAmountDisplay = `${diffAmountSign}${formatCurrency(diffAmount)}`;
-        diffAmountTitle = `Tồn sổ: ${formatNumber(bookQty)} • Thực tế: ${formatNumber(actualNum)} • Lệch: ${diffQty > 0 ? '+' : ''}${formatNumber(diffQty)}`;
+        amount = actualNum * price;
+        amountColor = (amount > 0) ? 'text-emerald-800 font-bold' : 'text-slate-600 font-bold';
+        amountDisplay = formatCurrency(amount);
       }
 
       return `
-        <tr data-kiemke-row="true" data-row-id="${rowId}" data-book-qty="${bookQty}" class="hover:bg-amber-50/30 transition border-b border-slate-100 text-xs">
+        <tr data-kiemke-row="true" data-row-id="${rowId}" class="hover:bg-amber-50/30 transition border-b border-slate-100 text-xs">
           <td class="px-2 py-2 text-center font-mono text-slate-400 row-stt">${stt}</td>
           <td class="px-2.5 py-1.5 text-center relative">
             <input type="text" id="input_kk_code_${rowId}" value="${escapeHtml(item.code || '')}" 
@@ -24262,8 +24454,8 @@ window.google.script = {
               <span class="text-slate-400 font-semibold text-[11px]">đ</span>
             </div>
           </td>
-          <td class="px-3 py-2 text-right font-mono ${diffAmountColor} row-diff-amount" title="${diffAmountTitle}">
-            ${diffAmountDisplay}
+          <td class="px-3 py-2 text-right font-mono ${amountColor} row-diff-amount">
+            ${amountDisplay}
           </td>
           <td class="px-2.5 py-1.5 text-left">
             <input type="text" value="${escapeHtml(item.note || '')}" 
@@ -24511,33 +24703,25 @@ window.google.script = {
       const bookQty = Number(tr.dataset.bookQty) || 0;
       const actualInp = tr.querySelector('.row-actual-qty');
       const priceInp = tr.querySelector('.row-price');
-      const diffAmountEl = tr.querySelector('.row-diff-amount');
+      const amountEl = tr.querySelector('.row-diff-amount');
 
-      if (!actualInp || !diffAmountEl) return;
+      if (!actualInp || !amountEl) return;
 
       const actualVal = actualInp.value.trim();
       const price = Math.max(0, Number(priceInp?.value) || 0);
 
-      let diffAmount = 0;
-      let diffQty = 0;
-
       if (actualVal === '') {
-        diffAmountEl.className = 'px-3 py-2 text-right font-mono text-slate-400 row-diff-amount';
-        diffAmountEl.innerText = '0 đ';
-        diffAmountEl.title = bookQty > 0 ? `Tồn sổ hiện tại: ${formatNumber(bookQty)}` : '';
+        amountEl.className = 'px-3 py-2 text-right font-mono text-slate-400 row-diff-amount';
+        amountEl.innerText = '0 đ';
+        amountEl.title = '';
       } else {
         const actualNum = Number(actualVal) || 0;
-        diffQty = actualNum - bookQty;
-        diffAmount = diffQty * price;
+        const amount = actualNum * price;
+        const amountColor = (amount > 0) ? 'text-emerald-800 font-bold' : 'text-slate-600 font-bold';
 
-        const diffAmountSign = diffAmount > 0 ? '+' : '';
-        const diffAmountColor = diffAmount === 0 
-          ? 'text-slate-600' 
-          : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-
-        diffAmountEl.className = `px-3 py-2 text-right font-mono ${diffAmountColor} row-diff-amount`;
-        diffAmountEl.innerText = `${diffAmountSign}${formatCurrency(diffAmount)}`;
-        diffAmountEl.title = `Tồn sổ: ${formatNumber(bookQty)} • Thực tế: ${formatNumber(actualNum)} • Chênh lệch: ${diffQty > 0 ? '+' : ''}${formatNumber(diffQty)}`;
+        amountEl.className = `px-3 py-2 text-right font-mono ${amountColor} row-diff-amount`;
+        amountEl.innerText = formatCurrency(amount);
+        amountEl.title = `SL: ${formatNumber(actualNum)} × Giá: ${formatCurrency(price)} = ${formatCurrency(amount)}`;
       }
 
       calculateKiemKeSummary();
@@ -24547,10 +24731,9 @@ window.google.script = {
       const rows = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
       let skuCount = rows.length;
       let totalActual = 0;
-      let totalDiffAmount = 0;
+      let totalAmount = 0;
 
       rows.forEach(tr => {
-        const bookQty = Number(tr.dataset.bookQty) || 0;
         const actualInp = tr.querySelector('.row-actual-qty');
         const priceInp = tr.querySelector('.row-price');
 
@@ -24560,8 +24743,7 @@ window.google.script = {
         if (aVal !== '') {
           const a = Number(aVal) || 0;
           totalActual += a;
-          const dQty = a - bookQty;
-          totalDiffAmount += (dQty * p);
+          totalAmount += (a * p);
         }
       });
 
@@ -24573,10 +24755,8 @@ window.google.script = {
 
       const diffAmtEl = document.getElementById('kiemke-footer-diff-amount');
       if (diffAmtEl) {
-        const sign = totalDiffAmount > 0 ? '+' : '';
-        const color = totalDiffAmount === 0 ? 'text-slate-800' : (totalDiffAmount > 0 ? 'text-emerald-700' : 'text-rose-600');
-        diffAmtEl.className = `text-base sm:text-lg font-black font-mono ${color}`;
-        diffAmtEl.innerText = `${sign}${formatCurrency(totalDiffAmount)}`;
+        diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-emerald-700';
+        diffAmtEl.innerText = formatCurrency(totalAmount);
       }
     }
 
@@ -24711,21 +24891,17 @@ window.google.script = {
       }
 
       const items = [];
-      let totalBookQty = 0;
       let totalActualQty = 0;
-      let totalDiffQty = 0;
-      let totalDiffAmount = 0;
+      let totalAmount = 0;
 
       rows.forEach(tr => {
         const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
         const name = tr.querySelector('.row-name')?.value.trim() || '';
         const unit = tr.querySelector('.row-unit')?.value.trim() || '';
-        const bookQty = Number(tr.dataset.bookQty) || (inventoryMap[code.toLowerCase()]?.stock || 0);
         const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
         const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
         const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
-        const diffQty = actualVal === '' ? 0 : (actualQty - bookQty);
-        const diffAmount = diffQty * price;
+        const amount = actualQty * price;
         const note = tr.querySelector('.row-note')?.value.trim() || '';
 
         if (code) {
@@ -24733,18 +24909,15 @@ window.google.script = {
             code,
             name,
             unit,
-            book_qty: bookQty,
             actual_qty: actualVal === '' ? null : actualQty,
-            diff_qty: diffQty,
             price: price,
-            diff_amount: diffAmount,
+            amount: amount,
+            diff_amount: amount,
             note: note
           });
 
-          totalBookQty += bookQty;
           if (actualVal !== '') totalActualQty += actualQty;
-          totalDiffQty += diffQty;
-          totalDiffAmount += diffAmount;
+          totalAmount += amount;
         }
       });
 
@@ -24774,10 +24947,9 @@ window.google.script = {
         notes: notes,
         items: items,
         total_skus: items.length,
-        total_book_qty: totalBookQty,
         total_actual_qty: totalActualQty,
-        total_diff_qty: totalDiffQty,
-        total_diff_amount: totalDiffAmount,
+        total_amount: totalAmount,
+        total_diff_amount: totalAmount,
         created_at: existingVoucher ? (existingVoucher.created_at || nowIso) : nowIso,
         updated_at: nowIso
       };
@@ -24837,7 +25009,7 @@ window.google.script = {
           Swal.fire({
             icon: 'success',
             title: 'Lưu phiếu kiểm kê thành công!',
-            text: `Số phiếu: ${voucherCode} - Chênh lệch thành tiền: ${formatCurrency(totalDiffAmount)}`,
+            text: `Số phiếu: ${voucherCode} - Tổng tiền kiểm kê: ${formatCurrency(totalAmount)}`,
             timer: 1800,
             showConfirmButton: false
           });
@@ -24936,39 +25108,25 @@ window.google.script = {
       if (!v) return;
 
       const items = v.items || [];
-      const diffQty = Number(v.total_diff_qty) || 0;
-      const diffAmount = Number(v.total_diff_amount) || 0;
-
-      const diffQtySign = diffQty > 0 ? '+' : '';
-      const diffQtyColor = diffQty === 0 ? 'text-slate-800' : (diffQty > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-
-      const diffAmountSign = diffAmount > 0 ? '+' : '';
-      const diffAmountColor = diffAmount === 0 ? 'text-slate-800' : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+      const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) 
+        ? Number(v.total_amount) 
+        : (Number(v.total_diff_amount) || 0);
 
       let rowsHtml = items.map((it, idx) => {
-        const b = Number(it.book_qty) || 0;
         const aVal = (it.actual_qty !== null && it.actual_qty !== undefined) ? formatNumber(it.actual_qty) : '-';
-        const d = Number(it.diff_qty) || 0;
         const p = Number(it.price) || 0;
-        const aAmt = Number(it.diff_amount) || 0;
-
-        const dSign = d > 0 ? '+' : '';
-        const dColor = d === 0 ? 'text-slate-600' : (d > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-
-        const aSign = aAmt > 0 ? '+' : '';
-        const aColor = aAmt === 0 ? 'text-slate-600' : (aAmt > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+        const actualNum = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
+        const aAmt = (it.amount !== undefined && it.amount !== null) ? Number(it.amount) : (actualNum * p);
 
         return `
           <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-xs">
             <td class="px-2 py-1.5 text-center font-mono text-slate-400">${idx + 1}</td>
-            <td class="px-2.5 py-1.5 text-center font-mono font-bold text-blue-700">${escapeHtml(it.code)}</td>
+            <td class="px-2.5 py-1.5 text-center font-mono font-bold text-amber-900">${escapeHtml(it.code)}</td>
             <td class="px-3 py-1.5 text-left text-slate-900 font-medium">${escapeHtml(it.name)}</td>
             <td class="px-2 py-1.5 text-center text-slate-500">${escapeHtml(it.unit || '-')}</td>
-            <td class="px-2.5 py-1.5 text-right font-mono text-slate-700">${formatNumber(b)}</td>
-            <td class="px-2.5 py-1.5 text-right font-mono font-bold text-blue-800 bg-blue-50/30">${aVal}</td>
-            <td class="px-2.5 py-1.5 text-right font-mono ${dColor}">${dSign}${formatNumber(d)}</td>
+            <td class="px-3 py-1.5 text-right font-mono font-bold text-blue-800 bg-blue-50/30">${aVal}</td>
             <td class="px-3 py-1.5 text-right font-mono text-indigo-700">${formatCurrency(p)}</td>
-            <td class="px-3 py-1.5 text-right font-mono ${aColor}">${aSign}${formatCurrency(aAmt)}</td>
+            <td class="px-3.5 py-1.5 text-right font-mono font-bold text-emerald-800">${formatCurrency(aAmt)}</td>
             <td class="px-2.5 py-1.5 text-left text-slate-500 text-[11px]">${escapeHtml(it.note || '-')}</td>
           </tr>
         `;
@@ -24978,11 +25136,11 @@ window.google.script = {
         title: `<div class="flex items-center justify-between text-base font-extrabold uppercase text-slate-800 pb-2 border-b border-slate-200">
           <div class="flex items-center space-x-2">
             <i class="bi bi-clipboard2-check-fill text-amber-600"></i>
-            <span>Phiếu Đối Chiếu Kiểm Kê [${escapeHtml(v.voucher_code)}]</span>
+            <span>Phiếu Kiểm Kê Hàng Hóa [${escapeHtml(v.voucher_code)}]</span>
           </div>
           <button type="button" onclick="Swal.close()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"><i class="bi bi-x-lg text-sm"></i></button>
         </div>`,
-        width: '950px',
+        width: '900px',
         showConfirmButton: false,
         showCloseButton: false,
         html: `
@@ -25005,11 +25163,9 @@ window.google.script = {
                     <th class="px-2.5 py-2 text-center w-28">Mã SP</th>
                     <th class="px-3 py-2 text-left">Tên Mặt Hàng</th>
                     <th class="px-2 py-2 text-center w-14">ĐVT</th>
-                    <th class="px-2.5 py-2 text-right w-24">Tồn Sổ</th>
-                    <th class="px-2.5 py-2 text-right w-24 text-blue-700">Thực Tế</th>
-                    <th class="px-2.5 py-2 text-right w-24">Lệch SL</th>
+                    <th class="px-3 py-2 text-right w-28 text-blue-700">Kiểm Thực Tế</th>
                     <th class="px-3 py-2 text-right w-28 text-indigo-700">Đơn Giá</th>
-                    <th class="px-3 py-2 text-right w-32 font-bold">Lệch Tiền</th>
+                    <th class="px-3.5 py-2 text-right w-32 font-bold text-emerald-800">Thành Tiền</th>
                     <th class="px-2.5 py-2 text-left">Ghi Chú</th>
                   </tr>
                 </thead>
@@ -25024,13 +25180,9 @@ window.google.script = {
               <div class="flex flex-wrap items-center gap-3 font-mono">
                 <div>Tổng SKU: <b>${items.length}</b></div>
                 <div>•</div>
-                <div>Tồn sổ: <b>${formatNumber(v.total_book_qty || 0)}</b></div>
+                <div>Tổng SL thực tế: <b class="text-blue-700">${formatNumber(v.total_actual_qty || 0)}</b></div>
                 <div>•</div>
-                <div>Thực tế: <b class="text-blue-700">${formatNumber(v.total_actual_qty || 0)}</b></div>
-                <div>•</div>
-                <div>Chênh lệch SL: <b class="${diffQtyColor}">${diffQtySign}${formatNumber(diffQty)}</b></div>
-                <div>•</div>
-                <div>Chênh lệch tiền: <b class="${diffAmountColor}">${diffAmountSign}${formatCurrency(diffAmount)}</b></div>
+                <div>Tổng tiền kiểm kê: <b class="text-emerald-700">${formatCurrency(totalAmount)}</b></div>
               </div>
 
               <div class="flex items-center space-x-2">
@@ -25054,48 +25206,25 @@ window.google.script = {
 
       const items = v.items || [];
       const nowStr = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const diffQty = Number(v.total_diff_qty) || 0;
-      const diffAmount = Number(v.total_diff_amount) || 0;
-
-      const diffQtySign = diffQty > 0 ? '+' : '';
-      const diffAmountSign = diffAmount > 0 ? '+' : '';
-
-      let matchedSkus = 0;
-      let surplusSkus = 0;
-      let surplusAmount = 0;
-      let deficitSkus = 0;
-      let deficitAmount = 0;
+      const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) 
+        ? Number(v.total_amount) 
+        : (Number(v.total_diff_amount) || 0);
 
       const rowsHtml = items.map((it, idx) => {
-        const b = Number(it.book_qty) || 0;
         const aVal = (it.actual_qty !== null && it.actual_qty !== undefined) ? formatNumber(it.actual_qty) : '-';
-        const d = Number(it.diff_qty) || 0;
         const p = Number(it.price) || 0;
-        const aAmt = Number(it.diff_amount) || 0;
-
-        if (d === 0) matchedSkus++;
-        else if (d > 0) {
-          surplusSkus++;
-          surplusAmount += aAmt;
-        } else {
-          deficitSkus++;
-          deficitAmount += aAmt;
-        }
-
-        const dSign = d > 0 ? '+' : '';
-        const aSign = aAmt > 0 ? '+' : '';
+        const actualNum = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
+        const aAmt = (it.amount !== undefined && it.amount !== null) ? Number(it.amount) : (actualNum * p);
 
         return `
           <tr style="border-bottom: 1px solid #cbd5e1;">
             <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 34px; border-right: 1px solid #e2e8f0;">${idx + 1}</td>
-            <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11px; width: 90px; color: #1e3a8a; border-right: 1px solid #e2e8f0;">${escapeHtml(it.code)}</td>
+            <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11px; width: 95px; color: #78350f; border-right: 1px solid #e2e8f0;">${escapeHtml(it.code)}</td>
             <td style="text-align: left; padding: 5px 8px; font-size: 11.5px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.name)}</td>
             <td style="text-align: center; padding: 5px 6px; font-size: 11px; width: 50px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.unit || '-')}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-size: 11.5px; width: 75px; border-right: 1px solid #e2e8f0;">${formatNumber(b)}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 75px; color: #1d4ed8; border-right: 1px solid #e2e8f0;">${aVal}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 75px; border-right: 1px solid #e2e8f0;">${dSign}${formatNumber(d)}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 85px; border-right: 1px solid #e2e8f0;">${formatCurrency(p)}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 95px; border-right: 1px solid #e2e8f0;">${aSign}${formatCurrency(aAmt)}</td>
+            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 85px; color: #1d4ed8; border-right: 1px solid #e2e8f0;">${aVal}</td>
+            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 90px; border-right: 1px solid #e2e8f0;">${formatCurrency(p)}</td>
+            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 110px; color: #047857; border-right: 1px solid #e2e8f0;">${formatCurrency(aAmt)}</td>
             <td style="text-align: left; padding: 5px 6px; font-size: 10.5px; color: #475569;">${escapeHtml(it.note || '')}</td>
           </tr>
         `;
@@ -25121,14 +25250,14 @@ window.google.script = {
           <!-- TIÊU ĐỀ CHÍNH -->
           <div style="text-align: center; margin: 12px 0 16px 0;">
             <h1 style="font-size: 19px; font-weight: bold; text-transform: uppercase; margin: 0; color: #0f172a; letter-spacing: 0.5px;">
-              BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA TỒN KHO
+              BIÊN BẢN KIỂM KÊ HÀNG HÓA TỒN KHO
             </h1>
             <div style="font-size: 12.5px; font-style: italic; color: #334155; margin-top: 5px;">
               Ngày kiểm kê: <b>${formatDateVN(v.kiemke_date)}</b> • Địa điểm kho: <b>${escapeHtml(v.warehouse_name || 'Kho chính')}</b> • Người lập: <b>${escapeHtml(v.creator_name || '-')}</b>
             </div>
           </div>
 
-          <!-- BẢNG ĐỐI CHIẾU HÀNG HÓA -->
+          <!-- BẢNG KIỂM KÊ HÀNG HÓA -->
           <div style="margin-bottom: 14px;">
             <table style="width: 100%; border-collapse: collapse; font-size: 11px; border: 1.5px solid #0f172a;">
               <thead>
@@ -25137,11 +25266,9 @@ window.google.script = {
                   <th style="padding: 6px 6px; text-align: center; border-right: 1px solid #cbd5e1;">Mã SP</th>
                   <th style="padding: 6px 8px; text-align: left; border-right: 1px solid #cbd5e1;">Tên Mặt Hàng / Quy Cách</th>
                   <th style="padding: 6px 4px; text-align: center; border-right: 1px solid #cbd5e1;">ĐVT</th>
-                  <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Tồn Sổ</th>
-                  <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Thực Tế</th>
-                  <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Chênh Lệch</th>
+                  <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Kiểm Thực Tế</th>
                   <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Đơn Giá (đ)</th>
-                  <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Lệch Tiền (đ)</th>
+                  <th style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">Thành Tiền (đ)</th>
                   <th style="padding: 6px 6px; text-align: left;">Ghi Chú</th>
                 </tr>
               </thead>
@@ -25151,11 +25278,9 @@ window.google.script = {
               <tfoot>
                 <tr style="background-color: #f8fafc; font-weight: bold; border-top: 1.5px solid #0f172a;">
                   <td colspan="4" style="padding: 6px 8px; text-align: right; border-right: 1px solid #cbd5e1;">TỔNG CỘNG (${items.length} SKU):</td>
-                  <td style="padding: 6px 6px; text-align: right; font-family: monospace; border-right: 1px solid #cbd5e1;">${formatNumber(v.total_book_qty || 0)}</td>
                   <td style="padding: 6px 6px; text-align: right; font-family: monospace; color: #1d4ed8; border-right: 1px solid #cbd5e1;">${formatNumber(v.total_actual_qty || 0)}</td>
-                  <td style="padding: 6px 6px; text-align: right; font-family: monospace; border-right: 1px solid #cbd5e1;">${diffQtySign}${formatNumber(diffQty)}</td>
                   <td style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">-</td>
-                  <td style="padding: 6px 6px; text-align: right; font-family: monospace;">${diffAmountSign}${formatCurrency(diffAmount)}</td>
+                  <td style="padding: 6px 6px; text-align: right; font-family: monospace; color: #047857;">${formatCurrency(totalAmount)}</td>
                   <td style="padding: 6px 6px; text-align: left;">-</td>
                 </tr>
               </tfoot>
@@ -25164,12 +25289,11 @@ window.google.script = {
 
           <!-- TỔNG KẾT KẾT QUẢ KIỂM KÊ -->
           <div style="border: 1px solid #cbd5e1; background-color: #f8fafc; padding: 8px 12px; border-radius: 4px; font-size: 11.5px; margin-bottom: 20px; line-height: 1.5;">
-            <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 3px; color: #1e293b;">KẾT QUẢ ĐỐI CHIẾU KIỂM KÊ:</div>
-            <div>• Số mặt hàng khớp hoàn toàn: <b>${matchedSkus} SKU</b></div>
-            <div>• Số mặt hàng kiểm thừa (+): <b>${surplusSkus} SKU</b> (Thành tiền: <b>+${formatCurrency(surplusAmount)}</b>)</div>
-            <div>• Số mặt hàng kiểm thiếu (-): <b>${deficitSkus} SKU</b> (Thành tiền: <b>${formatCurrency(deficitAmount)}</b>)</div>
+            <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 3px; color: #1e293b;">KẾT QUẢ KIỂM KÊ HÀNG HÓA:</div>
+            <div>• Tổng số mặt hàng kiểm kê: <b>${items.length} SKU</b></div>
+            <div>• Tổng số lượng thực tế kiểm đếm: <b>${formatNumber(v.total_actual_qty || 0)}</b></div>
             <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #cbd5e1; font-weight: bold;">
-              👉 TỔNG CHÊNH LỆCH THÀNH TIỀN: <span style="font-size: 13px; font-family: monospace;">${diffAmountSign}${formatCurrency(diffAmount)}</span>
+              👉 TỔNG TIỀN KIỂM KÊ: <span style="font-size: 13.5px; font-family: monospace; color: #047857;">${formatCurrency(totalAmount)}</span>
             </div>
           </div>
 
@@ -25221,41 +25345,33 @@ window.google.script = {
 
       try {
         const excelRows = [
-          ['STT', 'Mã SP', 'Tên Mặt Hàng / Quy Cách', 'ĐVT', 'Tồn Sổ Sách', 'Kiểm Kê Thực Tế', 'Chênh Lệch SL', 'Đơn Giá (VNĐ)', 'Chênh Lệch Tiền (VNĐ)', 'Ghi Chú']
+          ['STT', 'Mã SP', 'Tên Mặt Hàng / Quy Cách', 'ĐVT', 'Kiểm Kê Thực Tế', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Ghi Chú']
         ];
 
-        let totalBook = 0;
         let totalActual = 0;
-        let totalDiffQty = 0;
-        let totalDiffAmt = 0;
+        let totalAmount = 0;
 
         rows.forEach((tr, i) => {
           const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
           const name = tr.querySelector('.row-name')?.value.trim() || '';
           const unit = tr.querySelector('.row-unit')?.value.trim() || '';
-          const bookQty = Number(tr.dataset.bookQty) || (inventoryMap[code.toLowerCase()]?.stock || 0);
           const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
           const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
           const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
-          const diffQty = actualVal === '' ? 0 : (actualQty - bookQty);
-          const diffAmount = diffQty * price;
+          const amount = actualQty * price;
           const note = tr.querySelector('.row-note')?.value.trim() || '';
 
-          totalBook += bookQty;
           if (actualVal !== '') totalActual += actualQty;
-          totalDiffQty += diffQty;
-          totalDiffAmt += diffAmount;
+          totalAmount += amount;
 
           excelRows.push([
             i + 1,
             code,
             name,
             unit,
-            bookQty,
             actualVal === '' ? '' : actualQty,
-            diffQty,
             price,
-            diffAmount,
+            amount,
             note
           ]);
         });
@@ -25265,19 +25381,17 @@ window.google.script = {
           '',
           'TỔNG CỘNG:',
           '',
-          totalBook,
           totalActual,
-          totalDiffQty,
           '',
-          totalDiffAmt,
+          totalAmount,
           ''
         ]);
 
         const ws = XLSX.utils.aoa_to_sheet(excelRows);
-        ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 38 }, { wch: 10 }, { wch: 15 }, { wch: 18 }, { wch: 15 }, { wch: 16 }, { wch: 22 }, { wch: 25 }];
+        ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 38 }, { wch: 10 }, { wch: 18 }, { wch: 16 }, { wch: 22 }, { wch: 25 }];
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "DoiChieuKiemKe");
-        XLSX.writeFile(wb, `Doi_Chieu_Kiem_Ke_${voucherCode}_${kiemKeDate}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "KiemKeHangHoa");
+        XLSX.writeFile(wb, `Kiem_Ke_Hang_Hoa_${voucherCode}_${kiemKeDate}.xlsx`);
       } catch (err) {
         Swal.fire('Lỗi', 'Không thể xuất file Excel: ' + err.message, 'error');
       }
@@ -25291,13 +25405,12 @@ window.google.script = {
 
       try {
         const rows = [
-          ['STT', 'Số Phiếu', 'Ngày Kiểm Kê', 'Kho Hàng', 'Người Kiểm Kê', 'Số Lượng SKU', 'Tồn Sổ Sách', 'Kiểm Thực Tế', 'Chênh Lệch SL', 'Chênh Lệch Tiền (VNĐ)', 'Tình Trạng', 'Ghi Chú']
+          ['STT', 'Số Phiếu', 'Ngày Kiểm Kê', 'Kho Hàng', 'Người Kiểm Kê', 'Số Lượng SKU', 'Tổng SL Thực Tế', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú']
         ];
 
         kiemKeVouchersList.forEach((v, idx) => {
-          const diffQty = Number(v.total_diff_qty) || 0;
-          const diffAmount = Number(v.total_diff_amount) || 0;
-          const statusText = (diffQty === 0 && diffAmount === 0) ? 'Khớp hoàn toàn' : 'Có chênh lệch';
+          const actualQty = Number(v.total_actual_qty) || 0;
+          const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
           rows.push([
             idx + 1,
             v.voucher_code,
@@ -25305,17 +25418,14 @@ window.google.script = {
             v.warehouse_name || v.warehouse_id || 'Kho chính',
             v.creator_name || '',
             v.items ? v.items.length : (v.total_skus || 0),
-            v.total_book_qty || 0,
-            v.total_actual_qty || 0,
-            diffQty,
-            diffAmount,
-            statusText,
+            actualQty,
+            totalAmount,
             v.notes || ''
           ]);
         });
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 24 }, { wch: 18 }, { wch: 25 }];
+        ws['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 28 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "DanhSachKiemKe");
         XLSX.writeFile(wb, `Danh_Sach_Phieu_Kiem_Ke_${getLocalTodayISO()}.xlsx`);
