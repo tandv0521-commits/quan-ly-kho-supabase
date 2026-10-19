@@ -6702,7 +6702,9 @@ window.google.script = {
 
     function formatNumber(val) {
       if (val === null || val === undefined || isNaN(val) || val === "") return "0";
-      return Number(val).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      let num = Number(val);
+      if (Math.abs(num) < 0.0001) num = 0;
+      return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
     function formatCurrency(val) {
@@ -6770,12 +6772,17 @@ window.google.script = {
 
     function parseSmartNumber(val) {
       if (val === null || val === undefined || val === '') return 0;
-      if (typeof val === 'number') return isNaN(val) ? 0 : Math.abs(val);
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
       let s = String(val).trim();
       if (!s) return 0;
 
+      let isNegative = false;
       if (s.startsWith('(') && s.endsWith(')')) {
+        isNegative = true;
         s = s.substring(1, s.length - 1).trim();
+      } else if (s.startsWith('-')) {
+        isNegative = true;
+        s = s.substring(1).trim();
       }
 
       if (s.includes(',') && s.includes('.')) {
@@ -6802,7 +6809,8 @@ window.google.script = {
       let num = parseFloat(s);
       if (isNaN(num)) return 0;
 
-      return num % 1 === 0 ? Math.round(num) : Math.round(num * 100) / 100;
+      let res = num % 1 === 0 ? Math.round(num) : Math.round(num * 100) / 100;
+      return isNegative ? -res : res;
     }
 
     // ĐÃ SỬA: CHỈ HIỂN THỊ BAO GÓI KHI QUY CÁCH LỚN HƠN 1 (> 1). NẾU BẰNG 1 HOẶC KHÔNG CÀI THÌ KHÔNG HIỆN PILL
@@ -23830,22 +23838,61 @@ window.google.script = {
             priceCol = 1;
           }
 
+          // Tập hợp mã sản phẩm đã có trên hệ thống để đối chiếu
+          const existingCodesSet = new Set();
+          if (Array.isArray(inventoryList)) {
+            inventoryList.forEach(item => {
+              if (item && item.code) existingCodesSet.add(String(item.code).trim().toUpperCase());
+            });
+          }
+          if (inventoryMap && typeof inventoryMap === 'object') {
+            Object.keys(inventoryMap).forEach(k => {
+              const item = inventoryMap[k];
+              if (item && item.code) existingCodesSet.add(String(item.code).trim().toUpperCase());
+              else if (k) existingCodesSet.add(k.trim().toUpperCase());
+            });
+          }
+
           let updatedCount = 0;
+          let skippedNotFoundCount = 0;
+
           for (let r = 1; r < jsonRows.length; r++) {
             const row = jsonRows[r];
             if (!row || !row[codeCol]) continue;
             const code = String(row[codeCol]).trim().toUpperCase();
+            if (!code) continue;
+
+            // CHỈ import đơn giá cho sản phẩm ĐÃ CÓ MÃ TRÊN HỆ THỐNG
+            if (!existingCodesSet.has(code)) {
+              skippedNotFoundCount++;
+              continue;
+            }
+
             const rawPrice = row[priceCol];
             const price = Math.max(0, parseSmartNumber(rawPrice) || 0);
-            if (code) {
-              productPricesMap[code.toLowerCase()] = price;
-              updatedCount++;
-            }
+            productPricesMap[code.toLowerCase()] = price;
+            updatedCount++;
           }
 
           saveProductPrices(productPricesMap);
           renderProductPriceManagerList(document.getElementById('price-manager-search')?.value || '');
-          Swal.fire('Thành công', `Đã cập nhật đơn giá cho ${updatedCount} mã sản phẩm từ Excel!`, 'success');
+
+          if (updatedCount === 0) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Không cập nhật được đơn giá',
+              html: skippedNotFoundCount > 0 
+                ? `Tất cả <b>${skippedNotFoundCount} mã</b> trong file Excel không tồn tại trên hệ thống kho.<br>Hệ thống chỉ cho phép cập nhật đơn giá cho sản phẩm đã có mã trên hệ thống.`
+                : 'Không tìm thấy dòng dữ liệu đơn giá hợp lệ trong file Excel.'
+            });
+          } else {
+            Swal.fire({
+              icon: 'success',
+              title: 'Cập nhật đơn giá thành công!',
+              html: `Đã cập nhật đơn giá cho <b>${updatedCount} mã sản phẩm</b> đã có trên hệ thống.` + 
+                    (skippedNotFoundCount > 0 ? `<br><span class="text-xs text-slate-500 italic mt-1 block">Đã bỏ qua ${skippedNotFoundCount} mã trong file do chưa tồn tại trên hệ thống kho.</span>` : '')
+            });
+          }
         } catch (err) {
           Swal.fire('Lỗi đọc file', err.message, 'error');
         } finally {
@@ -24501,6 +24548,7 @@ window.google.script = {
             </button>
           </td>
         </tr>
+      `;
     }
 
     function addKiemKeRow(data, shouldFocus) {
@@ -25903,7 +25951,26 @@ window.google.script = {
             return;
           }
 
+          // Lấy danh sách toàn bộ mã đã có trên hệ thống để đối chiếu
+          const existingCodesSet = new Set();
+          if (Array.isArray(inventoryList)) {
+            inventoryList.forEach(item => {
+              if (item && item.code) existingCodesSet.add(String(item.code).trim().toUpperCase());
+            });
+          }
+          if (inventoryMap && typeof inventoryMap === 'object') {
+            Object.keys(inventoryMap).forEach(k => {
+              const item = inventoryMap[k];
+              if (item && item.code) existingCodesSet.add(String(item.code).trim().toUpperCase());
+              else if (k) existingCodesSet.add(k.trim().toUpperCase());
+            });
+          }
+
+          const seenInFile = new Set();
           const productsList = [];
+          let skippedExistingCount = 0;
+          let duplicateInFileCount = 0;
+
           jsonRows.forEach(row => {
             const cleanRow = {};
             Object.keys(row).forEach(k => cleanRow[String(k).trim().toLowerCase()] = row[k]);
@@ -25928,6 +25995,18 @@ window.google.script = {
             const stockPP = parseSmartNumber(cleanRow['tồn phế phẩm'] || cleanRow['stock_pp'] || cleanRow['pp'] || 0);
 
             if (code && name) {
+              // 1. Nếu sản phẩm ĐÃ CÓ trên hệ thống thì BỎ QUA
+              if (existingCodesSet.has(code)) {
+                skippedExistingCount++;
+                return;
+              }
+              // 2. Nếu mã bị lặp lại trong chính file Excel thì bỏ qua dòng lặp
+              if (seenInFile.has(code)) {
+                duplicateInFileCount++;
+                return;
+              }
+
+              seenInFile.add(code);
               productsList.push({
                 code: code,
                 name: name,
@@ -25941,16 +26020,34 @@ window.google.script = {
           });
 
           if (productsList.length === 0) {
-            Swal.fire('Lỗi', 'Không tìm thấy dòng sản phẩm hợp lệ trong file Excel.', 'warning');
+            if (skippedExistingCount > 0) {
+              Swal.fire({
+                icon: 'info',
+                title: 'Không có sản phẩm mới',
+                html: `Tất cả <b>${skippedExistingCount} sản phẩm</b> trong file Excel đều đã tồn tại trên hệ thống kho.<br>Hệ thống tự động bỏ qua để giữ nguyên dữ liệu hiện có.`
+              });
+            } else {
+              Swal.fire('Lỗi', 'Không tìm thấy dòng sản phẩm hợp lệ trong file Excel.', 'warning');
+            }
             return;
           }
 
-          Swal.fire({ title: `Đang nạp ${productsList.length} sản phẩm lên máy chủ...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          Swal.fire({ 
+            title: `Đang nạp ${productsList.length} sản phẩm mới...`, 
+            html: skippedExistingCount > 0 ? `<span class="text-xs text-slate-500">(Đã tự động bỏ qua ${skippedExistingCount} sản phẩm đã có sẵn)</span>` : '',
+            allowOutsideClick: false, 
+            didOpen: () => Swal.showLoading() 
+          });
 
           google.script.run
             .withSuccessHandler(function(res) {
               if (res.success) {
-                Swal.fire('Thành công', res.message, 'success');
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Import sản phẩm thành công!',
+                  html: `Đã nạp mới <b>${productsList.length} sản phẩm</b> vào hệ thống.` + 
+                        (skippedExistingCount > 0 ? `<br><span class="text-xs text-slate-500 italic mt-1 block">Đã bỏ qua ${skippedExistingCount} sản phẩm do đã có sẵn trên hệ thống.</span>` : '')
+                });
                 loadInventory();
               } else {
                 Swal.fire('Lỗi', res.message, 'error');
