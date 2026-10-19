@@ -834,6 +834,7 @@
             <input type="file" id="dispatch-reconcile-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleDispatchReconciliationFile(event)">
 
             <button type="button" 
+                    id="btn-header-create-dispatch"
                     onclick="openCreateDispatchForm()" 
                     class="px-2.5 sm:px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer whitespace-nowrap shrink-0" 
                     title="Bấm để ghi nhận phiếu phát hàng mới cho xe (F2)">
@@ -2171,9 +2172,9 @@
                     <i class="bi bi-clipboard-data text-amber-600"></i>
                     <span>Dán nhanh (Mã - SL)</span>
                   </button>
-                  <button type="button" onclick="addDispatchFormRow(null, true)" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-sm cursor-pointer" title="Thêm dòng mặt hàng mới (Phím tắt: F2)">
+                  <button type="button" onclick="addDispatchFormRow(null, true)" class="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg text-xs transition flex items-center space-x-1.5 shadow-sm cursor-pointer" title="Thêm dòng sản phẩm mới (Phím tắt: F2)">
                     <i class="bi bi-plus-circle-fill text-teal-100 text-sm"></i>
-                    <span>Thêm mặt hàng ngoài bảng (F2)</span>
+                    <span>Thêm sản phẩm (F2)</span>
                   </button>
                 </div>
               </div>
@@ -2196,9 +2197,9 @@
                 </table>
               </div>
               <div class="pt-1">
-                <button type="button" onclick="addDispatchFormRow(null, true)" class="w-full py-2 px-3 border border-dashed border-slate-300 hover:border-teal-500 rounded-xl bg-slate-50 hover:bg-teal-50/50 text-slate-700 hover:text-teal-900 font-bold text-xs transition flex items-center justify-center space-x-2 cursor-pointer shadow-2xs">
+                <button type="button" onclick="addDispatchFormRow(null, true)" class="w-full py-2 px-3 border border-dashed border-slate-300 hover:border-teal-500 rounded-xl bg-slate-50 hover:bg-teal-50/50 text-slate-700 hover:text-teal-900 font-bold text-xs transition flex items-center justify-center space-x-2 cursor-pointer shadow-2xs" title="Thêm dòng sản phẩm mới (Phím tắt: F2)">
                   <i class="bi bi-plus-circle-fill text-teal-600 text-sm"></i>
-                  <span>Thêm dòng mặt hàng bổ sung ngoài bảng (F2)</span>
+                  <span>Thêm sản phẩm (F2)</span>
                 </button>
               </div>
             </div>
@@ -8314,6 +8315,9 @@ window.google.script = {
         if (tabId === 'dispatch') {
           headerDispatchActions.classList.remove('hidden');
           headerDispatchActions.classList.add('flex');
+          if (typeof updateHeaderCreateDispatchButtonState === 'function') {
+            updateHeaderCreateDispatchButtonState();
+          }
         } else {
           headerDispatchActions.classList.add('hidden');
           headerDispatchActions.classList.remove('flex');
@@ -15806,6 +15810,9 @@ window.google.script = {
         createView.classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'instant' });
       }
+      if (typeof updateHeaderCreateDispatchButtonState === 'function') {
+        updateHeaderCreateDispatchButtonState();
+      }
 
       const stickyDispatchBar = document.getElementById('sticky-dispatch-bar');
       if (stickyDispatchBar) {
@@ -15948,6 +15955,22 @@ window.google.script = {
       }
     }
 
+    function updateHeaderCreateDispatchButtonState() {
+      const btn = document.getElementById('btn-header-create-dispatch');
+      if (!btn) return;
+      const createView = document.getElementById('dispatch-create-view');
+      const isCreateOpen = createView && !createView.classList.contains('hidden');
+      if (isCreateOpen) {
+        btn.classList.add('opacity-40', 'pointer-events-none', 'cursor-not-allowed', 'filter', 'grayscale-[30%]');
+        btn.setAttribute('disabled', 'true');
+        btn.setAttribute('title', 'Đang trong màn hình nhập phát hàng');
+      } else {
+        btn.classList.remove('opacity-40', 'pointer-events-none', 'cursor-not-allowed', 'filter', 'grayscale-[30%]');
+        btn.removeAttribute('disabled');
+        btn.setAttribute('title', 'Bấm để ghi nhận phiếu phát hàng mới cho xe (F2)');
+      }
+    }
+
     function openCreateDispatchForm() {
       editingDispatchContext = null;
       const titleEl = document.getElementById('dispatch-create-view-title');
@@ -15956,6 +15979,8 @@ window.google.script = {
 
       document.getElementById('dispatch-list-view').classList.add('hidden');
       document.getElementById('dispatch-create-view').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      updateHeaderCreateDispatchButtonState();
 
       const stickyDispatchBar = document.getElementById('sticky-dispatch-bar');
       if (stickyDispatchBar) {
@@ -16036,6 +16061,7 @@ window.google.script = {
       const stickyDispatchBar = document.getElementById('sticky-dispatch-bar');
       if (stickyDispatchBar) stickyDispatchBar.classList.add('hidden');
       closeAllDropdowns();
+      updateHeaderCreateDispatchButtonState();
     }
 
     function generateDispatchVoucherNo() {
