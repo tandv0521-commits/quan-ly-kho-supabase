@@ -1889,8 +1889,7 @@
                   <tr>
                     <th class="px-3 py-2.5 text-center w-12 col-center">STT</th>
                     <th class="px-3 py-2.5 text-center w-36 col-center">Thời gian phát</th>
-                    <th class="px-2 py-2.5 text-center w-20 col-center">STT Xe</th>
-                    <th class="px-3 py-2.5 text-center w-32 col-center">Số xe lấy hàng</th>
+                    <th class="px-3 py-2.5 text-center w-36 col-center">Số xe lấy hàng</th>
                     <th class="px-3 py-2.5 text-left w-36">Thành viên phát</th>
                     <th class="px-3 py-2.5 text-center w-28 col-center font-mono">Mã sản phẩm</th>
                     <th class="px-3 py-2.5 text-left col-item-name">Tên mặt hàng phát</th>
@@ -1900,11 +1899,11 @@
                   </tr>
                 </thead>
                 <tbody id="dispatch-tbody" class="divide-y divide-slate-100 bg-white">
-                  <tr><td colspan="10" class="text-center py-8 text-slate-400">Đang nạp dữ liệu phát hàng...</td></tr>
+                  <tr><td colspan="9" class="text-center py-8 text-slate-400">Đang nạp dữ liệu phát hàng...</td></tr>
                 </tbody>
                 <tfoot class="bg-slate-50 font-bold text-slate-800 text-xs border-t-2 border-slate-200">
                   <tr>
-                    <td colspan="8" class="px-3 py-2 text-right uppercase">Tổng cộng hiển thị:</td>
+                    <td colspan="7" class="px-3 py-2 text-right uppercase">Tổng cộng hiển thị:</td>
                     <td id="dispatch-footer-total-qty" class="px-3 py-2 text-right font-black font-mono text-teal-700">0</td>
                     <td id="dispatch-footer-summary-note" class="px-3 py-2 text-center text-slate-500 font-normal">0 dòng</td>
                   </tr>
@@ -7335,7 +7334,7 @@ window.google.script = {
 
         // Xóa trắng bảng dữ liệu phát hàng và đặt trạng thái đang nạp để người dùng không thấy tàn dư của kho trước
         const dispatchTbody = document.getElementById('dispatch-tbody');
-        if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-slate-400"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Đang nạp dữ liệu phát hàng của kho...</td></tr>';
+        if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Đang nạp dữ liệu phát hàng của kho...</td></tr>';
         const dispatchSummary = document.getElementById('dispatch-summary-container');
         if (dispatchSummary) dispatchSummary.innerHTML = '<div class="text-center py-12 bg-white rounded-xl border border-slate-200"><i class="bi bi-arrow-repeat animate-spin text-2xl text-teal-600 mb-2 block"></i><p class="text-slate-500 text-xs font-semibold">Đang nạp dữ liệu phát hàng của kho...</p></div>';
         const dispatchStaffSummary = document.getElementById('dispatch-staff-summary-container');
@@ -7428,7 +7427,7 @@ window.google.script = {
 
       // Xóa trắng bảng dữ liệu phát hàng trên DOM để không còn lưu vết kho cũ
       const dispatchTbody = document.getElementById('dispatch-tbody');
-      if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu phát hàng của kho</td></tr>';
+      if (dispatchTbody) dispatchTbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400 italic">Vui lòng đăng nhập để xem dữ liệu phát hàng của kho</td></tr>';
       const dispatchSummary = document.getElementById('dispatch-summary-container');
       if (dispatchSummary) dispatchSummary.innerHTML = '';
       const dispatchStaffSummary = document.getElementById('dispatch-staff-summary-container');
@@ -12509,7 +12508,7 @@ window.google.script = {
     async function loadDailyDispatchTab() {
       const tbody = document.getElementById('dispatch-tbody');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-slate-400"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Đang nạp dữ liệu phát hàng...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-400"><i class="bi bi-arrow-repeat animate-spin mr-1"></i> Đang nạp dữ liệu phát hàng...</td></tr>';
       }
 
       // Khởi tạo ngày lọc mặc định: từ ngày hôm nay đến hôm nay
@@ -12540,7 +12539,7 @@ window.google.script = {
       } catch (err) {
         console.error('Lỗi nạp dữ liệu phát hàng:', err);
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-rose-500 font-semibold">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-rose-500 font-semibold">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
         }
       }
     }
@@ -15677,7 +15676,7 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400 italic">Không có dữ liệu phát hàng nào phù hợp với điều kiện lọc</td></tr>';
         const footQ = document.getElementById('dispatch-footer-total-qty');
         const footN = document.getElementById('dispatch-footer-summary-note');
         if (footQ) footQ.innerText = '0';
@@ -15716,18 +15715,17 @@ window.google.script = {
           <tr ondblclick="openEditDispatchVoucher(${it.id})" onmousedown="event.detail > 1 && event.preventDefault()" ${borderStyle} class="hover:bg-amber-50/40 cursor-pointer transition border-b border-slate-100 select-none" title="Nhấp đúp chuột để sửa phiếu phát hàng này${fullNote !== '-' ? ` (${escapeHtml(fullNote)})` : ''}">
             <td class="px-3 py-2 text-center text-slate-400 font-mono col-center">${idx + 1}</td>
             <td class="px-3 py-2 text-center font-mono text-slate-600 col-center whitespace-nowrap text-[11px]">${dateTimeFull}</td>
-            <td class="px-2 py-2 text-center col-center whitespace-nowrap">
-              <span class="inline-flex items-center justify-center min-w-[28px] px-2 py-0.5 rounded-full text-xs font-mono font-black bg-amber-100 text-amber-950 border border-amber-300 shadow-2xs" 
-                    title="Chuyến xe thứ #${dailySeq} trong ngày ${it.dispatch_date || ''} của ${escapeHtml(it.staff_name || '')}">
-                #${dailySeq}
-              </span>
-            </td>
             <td class="px-3 py-2 text-center col-center whitespace-nowrap">
               <span ondblclick="event.stopPropagation(); openEditDispatchVoucher(${it.id})"
                     onmousedown="event.detail > 1 && event.preventDefault()"
-                    class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-mono font-black bg-teal-50 hover:bg-amber-100 hover:border-amber-400 hover:text-amber-950 text-teal-800 border border-teal-200 cursor-pointer shadow-2xs transition select-none"
-                    title="Nhấp đúp chuột để sửa phiếu phát cho xe này">
-                <i class="bi bi-truck mr-1 text-teal-600"></i> ${it.license_plate || '-'}
+                    class="inline-flex items-center space-x-2 px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-teal-400 hover:bg-teal-50/20 text-slate-900 cursor-pointer shadow-2xs transition select-none group"
+                    title="Chuyến xe thứ #${dailySeq} • Biển số: ${escapeHtml(it.license_plate || '-')} (Nhấp đúp chuột để sửa phiếu)">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-black bg-teal-50 text-teal-800 border border-teal-300 group-hover:border-teal-400 transition">
+                  Xe ${dailySeq}
+                </span>
+                <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                  ${escapeHtml(it.license_plate || '-')}
+                </span>
               </span>
             </td>
             <td class="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">${it.staff_name || '-'}</td>
