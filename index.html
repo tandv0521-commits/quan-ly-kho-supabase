@@ -20705,32 +20705,20 @@ window.google.script = {
             diffDisplay = `<span class="font-mono font-black text-rose-800 bg-rose-100 px-2 py-0.5 rounded border border-rose-300">${formatNumber(r.diffQty)}</span>`;
           }
 
-          // Chi tiết chứng từ: hiển thị tên thủ kho phát xe đó
+          // Chi tiết chứng từ: đổi phần "Phiếu: PH-..." thành tên thủ kho phát xe đó
           const appStaffs = Array.from(new Set((r.appRecords || []).map(x => (x.staff || '').trim()).filter(Boolean)));
           const appVouchers = (r.appRecords || []).map(x => x.voucherNo).filter(Boolean);
           const excelInvoices = (r.excelRecords || []).map(x => x.voucherNo).filter(Boolean);
           const excelCreators = Array.from(new Set((r.excelRecords || []).map(x => x.creator).filter(Boolean)));
 
           let detailsHtml = '';
-          if (appStaffs.length > 0) {
-            detailsHtml += `
-              <div class="flex items-center space-x-1.5 text-slate-800 font-bold text-xs truncate">
-                <i class="bi bi-person-fill text-emerald-600 text-xs shrink-0"></i>
-                <span class="truncate" title="Thủ kho phát: ${escapeHtml(appStaffs.join(', '))}">${escapeHtml(appStaffs.join(', '))}</span>
-              </div>
-              ${appVouchers.length > 0 ? `<div class="text-[10px] text-slate-500 font-mono truncate mt-0.5"><span class="text-slate-400 font-sans">Phiếu:</span> ${escapeHtml(appVouchers.join(', '))}</div>` : ''}
-            `;
-          } else if (r.status === 'ONLY_IN_EXCEL') {
-            const pmDoc = excelInvoices.join(', ') || excelCreators.join(', ') || '';
-            detailsHtml += `
-              <div class="flex items-center space-x-1 text-slate-400 italic text-[11px]">
-                <i class="bi bi-dash-circle text-slate-300 shrink-0"></i>
-                <span>Chưa phát kho</span>
-              </div>
-              ${pmDoc ? `<div class="text-[10px] text-slate-400 font-mono truncate mt-0.5" title="Chứng từ PM: ${escapeHtml(pmDoc)}">PM: ${escapeHtml(pmDoc)}</div>` : ''}
-            `;
-          } else {
-            detailsHtml += `<span class="text-slate-400 italic text-[11px]">-</span>`;
+          if (appStaffs.length > 0 || appVouchers.length > 0) {
+            const staffName = appStaffs.length > 0 ? appStaffs.join(', ') : (appVouchers.join(', ') || '-');
+            const tooltipTxt = appVouchers.length > 0 ? `Phiếu phát: ${appVouchers.join(', ')}` : '';
+            detailsHtml += `<div class="truncate text-slate-700 text-[11px]" title="${escapeHtml(tooltipTxt)}"><span class="font-bold text-slate-500">Thủ kho:</span> <span class="font-semibold text-slate-800">${escapeHtml(staffName)}</span></div>`;
+          }
+          if (excelInvoices.length > 0) {
+            detailsHtml += `<div class="truncate text-indigo-900 text-[11px]"><span class="font-bold text-indigo-500">HĐ:</span> ${escapeHtml(excelInvoices.join(', '))}${excelCreators.length > 0 ? ` <span class="text-slate-400">(${escapeHtml(excelCreators.join(', '))})</span>` : ''}</div>`;
           }
 
           const hasMultiDocs = (r.appRecords && r.appRecords.length > 1) || (r.excelRecords && r.excelRecords.length > 1);
@@ -21526,7 +21514,7 @@ window.google.script = {
                             <th class="px-3 py-2 text-right w-32 bg-indigo-50/70 font-mono text-indigo-950 border-l border-indigo-200">SL phần mềm</th>
                             <th class="px-3 py-2 text-right w-28 font-mono border-l border-slate-200">Chênh lệch</th>
                             <th class="px-3 py-2 text-center w-40">Trạng thái đối chiếu</th>
-                            <th class="px-3 py-2 text-left min-w-[200px]">Thủ kho phát & Phiếu</th>
+                            <th class="px-3 py-2 text-left min-w-[200px]">Chi tiết chứng từ</th>
                           </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white" id="vehicle-compare-tbody">
