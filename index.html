@@ -2440,14 +2440,6 @@
               <!-- THANH CÔNG CỤ NẠP NHANH DÒNG HÀNG -->
               <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex flex-wrap items-center gap-1.5">
-                  <button type="button" onclick="populateKiemKeFromInventory('all')" class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold transition flex items-center space-x-1 cursor-pointer" title="Nạp toàn bộ mã sản phẩm vào bảng kiểm kê">
-                    <i class="bi bi-lightning-charge-fill text-amber-500"></i>
-                    <span>Nạp Toàn Bộ Tồn Kho</span>
-                  </button>
-                  <button type="button" onclick="populateKiemKeFromInventory('positive')" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl font-bold transition flex items-center space-x-1 cursor-pointer" title="Chỉ nạp các mã có tồn sổ sách > 0">
-                    <i class="bi bi-boxes text-emerald-600"></i>
-                    <span>Nạp Mã Còn Tồn (&gt;0)</span>
-                  </button>
                   <button type="button" onclick="openPasteKiemKeModal()" class="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl font-bold transition flex items-center space-x-1 cursor-pointer" title="Dán nhanh danh sách Mã và SL thực tế từ Excel hoặc bản kiểm đếm">
                     <i class="bi bi-clipboard-data text-purple-600"></i>
                     <span>Dán Nhanh (Mã - SL)</span>
@@ -2474,13 +2466,11 @@
                   <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider">
                     <tr>
                       <th class="px-2 py-2 text-center w-12 font-mono">STT</th>
-                      <th class="px-2.5 py-2 text-center w-32 font-mono">Mã SP (*)</th>
-                      <th class="px-3 py-2 text-left min-w-[200px]">Tên Mặt Hàng / Quy Cách</th>
+                      <th class="px-2.5 py-2 text-center w-36 font-mono">Mã SP (*)</th>
+                      <th class="px-3 py-2 text-left min-w-[220px]">Tên Mặt Hàng / Quy Cách</th>
                       <th class="px-2 py-2 text-center w-16">ĐVT</th>
-                      <th class="px-2.5 py-2 text-right w-28 bg-slate-100/70 font-mono text-slate-700">Tồn Sổ Sách</th>
                       <th class="px-3 py-2 text-right w-36 bg-amber-50/80 font-mono text-amber-900 border-x border-amber-200">Kiểm Kê Thực Tế (*)</th>
-                      <th class="px-2.5 py-2 text-right w-28 font-mono">Chênh Lệch SL</th>
-                      <th class="px-3 py-2 text-right w-28 font-mono text-indigo-800 bg-indigo-50/40">Đơn Giá</th>
+                      <th class="px-3 py-2 text-right w-32 font-mono text-indigo-800 bg-indigo-50/40">Đơn Giá</th>
                       <th class="px-3 py-2 text-right w-36 font-mono font-bold">Chênh Lệch Tiền</th>
                       <th class="px-2.5 py-2 text-left min-w-[140px]">Ghi Chú</th>
                       <th class="px-2 py-2 text-center w-12 no-print">Xóa</th>
@@ -2488,9 +2478,9 @@
                   </thead>
                   <tbody id="kiemke-items-tbody" class="divide-y divide-slate-100 bg-white">
                     <tr>
-                      <td colspan="11" class="text-center py-12 text-slate-400">
+                      <td colspan="9" class="text-center py-12 text-slate-400">
                         <i class="bi bi-clipboard2-plus text-3xl block mb-2 opacity-50 text-amber-500"></i>
-                        <span>Bảng kiểm kê đang trống. Hãy bấm <b>"Nạp Toàn Bộ Tồn Kho"</b> hoặc <b>"Thêm Sản Phẩm (F2)"</b> để bắt đầu đối chiếu.</span>
+                        <span>Bảng kiểm kê đang trống. Hãy bấm <b>"Thêm Sản Phẩm (F2)"</b> hoặc <b>"Dán Nhanh (Mã - SL)"</b> để bắt đầu kiểm kê.</span>
                       </td>
                     </tr>
                   </tbody>
@@ -2504,11 +2494,7 @@
                 <div class="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-slate-600">
                   <div>SKU: <b id="kiemke-footer-sku-count" class="text-sm text-slate-900 font-black font-mono">0</b></div>
                   <div class="h-3.5 w-px bg-slate-300"></div>
-                  <div>Tồn Sổ: <b id="kiemke-footer-book-qty" class="text-sm text-slate-700 font-bold font-mono">0</b></div>
-                  <div class="h-3.5 w-px bg-slate-300"></div>
-                  <div>Thực Tế: <b id="kiemke-footer-actual-qty" class="text-sm text-blue-700 font-black font-mono">0</b></div>
-                  <div class="h-3.5 w-px bg-slate-300"></div>
-                  <div>Chênh Lệch SL: <b id="kiemke-footer-diff-qty" class="text-sm font-black font-mono text-slate-800">0</b></div>
+                  <div>Tổng Thực Tế: <b id="kiemke-footer-actual-qty" class="text-sm text-blue-700 font-black font-mono">0</b></div>
                   <div class="h-3.5 w-px bg-slate-300"></div>
                   <div class="flex items-center space-x-1.5">
                     <span class="font-bold text-slate-700">TỔNG CHÊNH LỆCH TIỀN:</span>
@@ -10672,6 +10658,8 @@ window.google.script = {
         dropdown.className = "fixed bg-white border-2 border-teal-500 rounded-xl shadow-2xl z-[9999] max-h-60 overflow-y-auto custom-scroll divide-y divide-slate-100";
       } else if (dropdownType === 'nhaptra' || dropdownType === true) {
         dropdown.className = "fixed bg-white border-2 border-purple-500 rounded-xl shadow-2xl z-[9999] max-h-60 overflow-y-auto custom-scroll divide-y divide-slate-100";
+      } else if (dropdownType === 'kiemke') {
+        dropdown.className = "fixed bg-white border-2 border-amber-500 rounded-xl shadow-2xl z-[9999] max-h-60 overflow-y-auto custom-scroll divide-y divide-slate-100";
       } else {
         dropdown.className = "fixed bg-white border-2 border-blue-500 rounded-xl shadow-2xl z-[9999] max-h-60 overflow-y-auto custom-scroll divide-y divide-slate-100";
       }
@@ -23632,11 +23620,19 @@ window.google.script = {
           : '';
         document.getElementById('kiemke-input-creator').value = loggedUser;
         document.getElementById('kiemke-input-notes').value = '';
-        currentKiemKeItems = [];
+        currentKiemKeItems = [{ code: '', name: '', unit: '', book_qty: 0, actual_qty: '', price: 0, note: '' }];
       }
 
       renderKiemKeFormItems();
       calculateKiemKeSummary();
+
+      setTimeout(() => {
+        const firstCodeInp = document.querySelector('#kiemke-items-tbody input.row-code');
+        if (firstCodeInp) {
+          firstCodeInp.focus();
+          firstCodeInp.select();
+        }
+      }, 150);
     }
 
     function closeCreateKiemKeForm() {
@@ -23671,16 +23667,11 @@ window.google.script = {
     function handleKiemKeWarehouseChange(newWarehouseId) {
       const rows = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
       if (rows.length > 0) {
-        Swal.fire({
-          title: 'Đổi kho kiểm kê?',
-          text: 'Bạn vừa chọn kho khác. Bạn có muốn cập nhật lại số tồn sổ sách theo kho mới không?',
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'Cập nhật lại tồn sổ sách',
-          cancelButtonText: 'Giữ nguyên'
-        }).then(res => {
-          if (res.isConfirmed) {
-            populateKiemKeFromInventory('all');
+        rows.forEach(tr => {
+          const code = tr.querySelector('.row-code')?.value.trim();
+          if (code && inventoryMap[code.toLowerCase()]) {
+            tr.dataset.bookQty = inventoryMap[code.toLowerCase()].stock || 0;
+            updateKiemKeRowCalculations(tr);
           }
         });
       }
@@ -23733,9 +23724,9 @@ window.google.script = {
       if (!currentKiemKeItems || currentKiemKeItems.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="11" class="text-center py-12 text-slate-400">
+            <td colspan="9" class="text-center py-12 text-slate-400">
               <i class="bi bi-clipboard2-plus text-3xl block mb-2 opacity-50 text-amber-500"></i>
-              <span>Bảng kiểm kê đang trống. Hãy bấm <b>"Nạp Toàn Bộ Tồn Kho"</b> hoặc <b>"Thêm Sản Phẩm (F2)"</b> để bắt đầu đối chiếu.</span>
+              <span>Bảng kiểm kê đang trống. Hãy bấm <b>"Thêm Sản Phẩm (F2)"</b> hoặc <b>"Dán Nhanh (Mã - SL)"</b> để bắt đầu kiểm kê.</span>
             </td>
           </tr>
         `;
@@ -23748,58 +23739,71 @@ window.google.script = {
     }
 
     function buildKiemKeRowHtml(item, stt) {
+      const rowId = item.rowId || ('kkr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
       const bookQty = Number(item.book_qty) || 0;
       const actualVal = (item.actual_qty !== undefined && item.actual_qty !== null && item.actual_qty !== '') ? item.actual_qty : '';
-      const actualNum = actualVal === '' ? 0 : (Number(actualVal) || 0);
-      const diffQty = actualVal === '' ? -bookQty : (actualNum - bookQty);
-      const price = Number(item.price) || getProductPrice(item.code);
-      const diffAmount = diffQty * price;
+      const price = (item.price !== undefined && item.price !== null && item.price !== '') 
+        ? Number(item.price) 
+        : getProductPrice(item.code);
 
-      const diffQtySign = diffQty > 0 ? '+' : '';
-      const diffQtyColor = diffQty === 0 ? 'text-slate-600' : (diffQty > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+      let diffAmount = 0;
+      let diffAmountSign = '';
+      let diffAmountColor = 'text-slate-400';
+      let diffAmountDisplay = '0 đ';
+      let diffAmountTitle = '';
 
-      const diffAmountSign = diffAmount > 0 ? '+' : '';
-      const diffAmountColor = diffAmount === 0 ? 'text-slate-600' : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+      if (actualVal !== '') {
+        const actualNum = Number(actualVal) || 0;
+        const diffQty = actualNum - bookQty;
+        diffAmount = diffQty * price;
+        diffAmountSign = diffAmount > 0 ? '+' : '';
+        diffAmountColor = diffAmount === 0 
+          ? 'text-slate-600' 
+          : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+        diffAmountDisplay = `${diffAmountSign}${formatCurrency(diffAmount)}`;
+        diffAmountTitle = `Tồn sổ: ${formatNumber(bookQty)} • Thực tế: ${formatNumber(actualNum)} • Lệch: ${diffQty > 0 ? '+' : ''}${formatNumber(diffQty)}`;
+      }
 
       return `
-        <tr data-kiemke-row="true" class="hover:bg-amber-50/30 transition border-b border-slate-100 text-xs">
+        <tr data-kiemke-row="true" data-row-id="${rowId}" data-book-qty="${bookQty}" class="hover:bg-amber-50/30 transition border-b border-slate-100 text-xs">
           <td class="px-2 py-2 text-center font-mono text-slate-400 row-stt">${stt}</td>
-          <td class="px-2.5 py-1.5 text-center">
-            <input type="text" value="${escapeHtml(item.code || '')}" 
-                   onchange="onKiemKeCodeChange(this)"
-                   placeholder="Mã SP..." 
-                   class="row-code w-full px-2 py-1 text-center font-mono font-bold text-blue-700 border border-slate-200 rounded-lg uppercase focus:ring-2 focus:ring-amber-500 bg-white">
+          <td class="px-2.5 py-1.5 text-center relative">
+            <input type="text" id="input_kk_code_${rowId}" value="${escapeHtml(item.code || '')}" 
+                   oninput="handleKiemKeCodeInput('${rowId}', this.value)"
+                   onkeydown="handleKiemKeCodeKeydown(event, '${rowId}')"
+                   onblur="handleKiemKeCodeBlur('${rowId}')"
+                   autocomplete="off"
+                   placeholder="Nhập mã SP..." 
+                   class="row-code w-full px-2 py-1 text-center font-mono font-bold text-amber-900 border border-slate-200 rounded-lg uppercase focus:ring-2 focus:ring-amber-500 bg-white">
           </td>
           <td class="px-3 py-1.5 text-left">
-            <input type="text" value="${escapeHtml(item.name || '')}" 
+            <input type="text" id="input_kk_name_${rowId}" value="${escapeHtml(item.name || '')}" 
                    placeholder="Tên sản phẩm..." 
                    class="row-name w-full px-2 py-1 text-left font-medium text-slate-800 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
           </td>
           <td class="px-2 py-1.5 text-center">
-            <input type="text" value="${escapeHtml(item.unit || '')}" 
+            <input type="text" id="input_kk_unit_${rowId}" value="${escapeHtml(item.unit || '')}" 
                    placeholder="ĐVT" 
                    class="row-unit w-14 px-1.5 py-1 text-center font-medium text-slate-600 border border-slate-200 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white">
           </td>
-          <td class="px-2.5 py-2 text-right font-mono font-bold text-slate-700 bg-slate-50/70 row-book-qty">
-            ${formatNumber(bookQty)}
-          </td>
-          <td class="px-2.5 py-1.5 text-right bg-amber-50/40 border-x border-amber-200">
-            <input type="number" step="any" value="${actualVal}" 
+          <td class="px-3 py-1.5 text-right bg-amber-50/40 border-x border-amber-200">
+            <input type="number" step="any" id="input_kk_qty_${rowId}" value="${actualVal}" 
                    oninput="onKiemKeActualQtyChange(this)" 
+                   onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
                    placeholder="Nhập thực tế..." 
                    class="row-actual-qty w-full px-2.5 py-1 text-right font-mono font-black text-blue-800 text-sm border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white shadow-2xs">
           </td>
-          <td class="px-2.5 py-2 text-right font-mono ${diffQtyColor} row-diff-qty">
-            ${diffQtySign}${formatNumber(diffQty)}
-          </td>
           <td class="px-3 py-1.5 text-right bg-indigo-50/30">
-            <input type="number" min="0" step="100" value="${price || ''}" 
-                   oninput="onKiemKePriceChange(this)" 
-                   placeholder="Giá (VNĐ)" 
-                   class="row-price w-24 px-2 py-1 text-right font-mono font-bold text-indigo-800 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+            <div class="flex items-center justify-end space-x-1">
+              <input type="number" min="0" step="100" id="input_kk_price_${rowId}" value="${price || ''}" 
+                     oninput="onKiemKePriceChange(this)" 
+                     placeholder="Giá (VNĐ)" 
+                     class="row-price w-24 px-2 py-1 text-right font-mono font-bold text-indigo-800 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+              <span class="text-slate-400 font-semibold text-[11px]">đ</span>
+            </div>
           </td>
-          <td class="px-3 py-2 text-right font-mono ${diffAmountColor} row-diff-amount">
-            ${diffAmountSign}${formatCurrency(diffAmount)}
+          <td class="px-3 py-2 text-right font-mono ${diffAmountColor} row-diff-amount" title="${diffAmountTitle}">
+            ${diffAmountDisplay}
           </td>
           <td class="px-2.5 py-1.5 text-left">
             <input type="text" value="${escapeHtml(item.note || '')}" 
@@ -23820,7 +23824,7 @@ window.google.script = {
       if (!tbody) return;
 
       // Xóa thông báo trống nếu có
-      const emptyRow = tbody.querySelector('td[colspan="11"]');
+      const emptyRow = tbody.querySelector('td[colspan="9"], td[colspan="11"]');
       if (emptyRow) tbody.innerHTML = '';
 
       const stt = tbody.querySelectorAll('tr[data-kiemke-row]').length + 1;
@@ -23839,8 +23843,11 @@ window.google.script = {
 
       const addedTr = tbody.lastElementChild;
       if (shouldFocus && addedTr) {
-        const codeInp = addedTr.querySelector('input.row-code');
-        if (codeInp) codeInp.focus();
+        const codeInp = addedTr.querySelector('.row-code');
+        if (codeInp) {
+          codeInp.focus();
+          codeInp.select();
+        }
       }
 
       calculateKiemKeSummary();
@@ -23883,33 +23890,148 @@ window.google.script = {
       });
     }
 
-    function onKiemKeCodeChange(codeInp) {
-      const tr = codeInp.closest('tr');
-      if (!tr) return;
+    // ============================================================================
+    // GỢI Ý MÃ HÀNG TỰ ĐỘNG KHI GÕ MÃ Ở BẢNG ĐỐI CHIẾU KIỂM KÊ (CHUẨN QUY LUẬT HỆ THỐNG)
+    // ============================================================================
 
-      const codeVal = codeInp.value.trim().toUpperCase();
-      codeInp.value = codeVal;
+    function handleKiemKeCodeInput(rowId, query) {
+      const q = (query || '').trim();
+      const dropdown = document.getElementById('global-autocomplete-dropdown');
+      const inputEl = document.getElementById(`input_kk_code_${rowId}`);
+      if (!dropdown || !inputEl) return;
 
-      if (!codeVal) return;
+      activeQuery = q;
+      activeSuggestions = rankProductMatches(inventoryList || [], q, 30);
 
-      const invItem = inventoryMap[codeVal.toLowerCase()];
-      if (invItem) {
-        const nameInp = tr.querySelector('input.row-name');
-        const unitInp = tr.querySelector('input.row-unit');
-        const bookQtyEl = tr.querySelector('.row-book-qty');
-        const priceInp = tr.querySelector('input.row-price');
+      activeDropdownRowId = rowId;
+      activeDropdownType = 'kiemke';
+      highlightedIndex = 0;
 
-        if (nameInp) nameInp.value = invItem.name || '';
-        if (unitInp) unitInp.value = invItem.unit || 'Cái';
-        if (bookQtyEl) bookQtyEl.innerText = formatNumber(invItem.stock || 0);
+      if (activeSuggestions.length === 0) {
+        dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center italic">Không tìm thấy mã sản phẩm phù hợp</div>';
+        positionGlobalDropdown(inputEl, 'kiemke');
+        return;
+      }
+      renderKiemKeDropdownItems(rowId);
+      positionGlobalDropdown(inputEl, 'kiemke');
+    }
+
+    function renderKiemKeDropdownItems(rowId) {
+      const dropdown = document.getElementById('global-autocomplete-dropdown');
+      if (!dropdown) return;
+      dropdown.innerHTML = activeSuggestions.map((item, idx) => {
+        const isSelected = idx === highlightedIndex;
+        const highlightedCode = highlightCodeMatch(item.code, activeQuery);
+        const price = getProductPrice(item.code);
+        const priceText = price > 0 ? formatCurrency(price) : '<span class="text-slate-400 font-normal">Chưa có giá</span>';
+        return `
+          <div class="px-3 py-2 text-xs flex items-center justify-between gap-4 cursor-pointer whitespace-nowrap transition ${isSelected ? 'bg-amber-600 text-white font-bold' : 'hover:bg-amber-50 text-slate-800'}"
+               onmousedown="onKiemKeRowCodeSelect('${rowId}', '${escapeHtml(item.code)}')">
+            <div class="flex items-center space-x-2 truncate">
+              <span class="font-mono font-black ${isSelected ? 'text-white' : 'text-amber-800'}">${highlightedCode}</span>
+              <span class="truncate font-semibold ${isSelected ? 'text-amber-50' : 'text-slate-800'}">- ${item.name}</span>
+              <span class="text-[11px] ${isSelected ? 'text-amber-200' : 'text-slate-400'}">(${item.unit || '-'})</span>
+            </div>
+            <div class="flex items-center space-x-3 font-mono text-[11px] shrink-0">
+              <span class="${isSelected ? 'text-amber-100 font-bold' : 'text-indigo-700 font-bold'}">${priceText}</span>
+              <span class="${isSelected ? 'text-amber-200' : 'text-slate-500'} font-medium">Tồn: ${formatNumber(item.stock)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleKiemKeCodeKeydown(e, rowId) {
+      const dropdown = document.getElementById('global-autocomplete-dropdown');
+      const isDropdownOpen = dropdown && dropdown.style.display !== 'none' && !dropdown.classList.contains('hidden');
+
+      if (e.key === 'ArrowDown' && isDropdownOpen) {
+        e.preventDefault();
+        highlightedIndex = (highlightedIndex + 1) % activeSuggestions.length;
+        renderKiemKeDropdownItems(rowId);
+        scrollToHighlightedItem(dropdown);
+      } else if (e.key === 'ArrowUp' && isDropdownOpen) {
+        e.preventDefault();
+        highlightedIndex = (highlightedIndex - 1 + activeSuggestions.length) % activeSuggestions.length;
+        renderKiemKeDropdownItems(rowId);
+        scrollToHighlightedItem(dropdown);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const inputVal = (document.getElementById(`input_kk_code_${rowId}`)?.value || '').trim();
+        let selectedCode = '';
+        if (isDropdownOpen && activeSuggestions.length > 0) {
+          const item = activeSuggestions[highlightedIndex] || activeSuggestions[0];
+          selectedCode = item.code;
+        } else if (inputVal) {
+          const matches = rankProductMatches(inventoryList, inputVal, 1);
+          if (matches.length > 0) selectedCode = matches[0].code;
+          else if (inventoryMap[inputVal.toLowerCase()]) selectedCode = inputVal;
+          else selectedCode = inputVal;
+        }
+        if (selectedCode) {
+          onKiemKeRowCodeSelect(rowId, selectedCode);
+        } else {
+          closeAllDropdowns();
+          const qtyInput = document.getElementById(`input_kk_qty_${rowId}`);
+          if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+        }
+      } else if (e.key === 'Escape') {
+        closeAllDropdowns();
+      }
+    }
+
+    function onKiemKeRowCodeSelect(rowId, code) {
+      const cleanCode = String(code || '').trim();
+      const item = inventoryMap[cleanCode.toLowerCase()];
+      const finalCode = item ? item.code : cleanCode.toUpperCase();
+
+      const codeInp = document.getElementById(`input_kk_code_${rowId}`);
+      if (codeInp) codeInp.value = finalCode;
+
+      const nameInp = document.getElementById(`input_kk_name_${rowId}`);
+      const unitInp = document.getElementById(`input_kk_unit_${rowId}`);
+      const priceInp = document.getElementById(`input_kk_price_${rowId}`);
+      const tr = codeInp ? codeInp.closest('tr') : null;
+
+      if (item) {
+        if (nameInp) nameInp.value = item.name || '';
+        if (unitInp) unitInp.value = item.unit || 'Cái';
+        if (tr) tr.dataset.bookQty = item.stock || 0;
         
-        const price = getProductPrice(codeVal);
-        if (priceInp && (!priceInp.value || Number(priceInp.value) === 0)) {
+        const price = getProductPrice(finalCode);
+        if (priceInp) {
           priceInp.value = price > 0 ? price : '';
         }
+      } else {
+        if (tr) tr.dataset.bookQty = 0;
       }
 
-      updateKiemKeRowCalculations(tr);
+      closeAllDropdowns();
+      if (tr) updateKiemKeRowCalculations(tr);
+
+      const qtyInp = document.getElementById(`input_kk_qty_${rowId}`);
+      if (qtyInp) {
+        qtyInp.focus();
+        qtyInp.select();
+      }
+    }
+
+    function handleKiemKeCodeBlur(rowId) {
+      setTimeout(() => {
+        const dropdown = document.getElementById('global-autocomplete-dropdown');
+        const isDropdownOpen = dropdown && dropdown.style.display !== 'none' && !dropdown.classList.contains('hidden');
+        if (activeDropdownType === 'kiemke' && activeDropdownRowId === rowId) {
+          closeAllDropdowns();
+        }
+      }, 250);
+    }
+
+    function handleKiemKeQtyKeydown(e, rowId) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        // Nhấn Enter ở ô số lượng sẽ tự động tạo dòng mới và nhảy con trỏ sang ô mã hàng
+        addKiemKeRow(null, true);
+      }
     }
 
     function onKiemKeActualQtyChange(inputEl) {
@@ -23925,31 +24047,38 @@ window.google.script = {
     }
 
     function updateKiemKeRowCalculations(tr) {
-      const bookQtyEl = tr.querySelector('.row-book-qty');
-      const actualInp = tr.querySelector('input.row-actual-qty');
-      const priceInp = tr.querySelector('input.row-price');
-      const diffQtyEl = tr.querySelector('.row-diff-qty');
+      if (!tr) return;
+      const bookQty = Number(tr.dataset.bookQty) || 0;
+      const actualInp = tr.querySelector('.row-actual-qty');
+      const priceInp = tr.querySelector('.row-price');
       const diffAmountEl = tr.querySelector('.row-diff-amount');
 
-      if (!bookQtyEl || !actualInp || !diffQtyEl || !diffAmountEl) return;
+      if (!actualInp || !diffAmountEl) return;
 
-      const bookQty = parseSmartNumber(bookQtyEl.innerText) || 0;
       const actualVal = actualInp.value.trim();
-      const actualNum = actualVal === '' ? 0 : (Number(actualVal) || 0);
-
-      const diffQty = actualVal === '' ? -bookQty : (actualNum - bookQty);
       const price = Math.max(0, Number(priceInp?.value) || 0);
-      const diffAmount = diffQty * price;
 
-      const diffQtySign = diffQty > 0 ? '+' : '';
-      const diffQtyColor = diffQty === 0 ? 'text-slate-600' : (diffQty > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-      diffQtyEl.className = `px-2.5 py-2 text-right font-mono ${diffQtyColor} row-diff-qty`;
-      diffQtyEl.innerText = `${diffQtySign}${formatNumber(diffQty)}`;
+      let diffAmount = 0;
+      let diffQty = 0;
 
-      const diffAmountSign = diffAmount > 0 ? '+' : '';
-      const diffAmountColor = diffAmount === 0 ? 'text-slate-600' : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
-      diffAmountEl.className = `px-3 py-2 text-right font-mono ${diffAmountColor} row-diff-amount`;
-      diffAmountEl.innerText = `${diffAmountSign}${formatCurrency(diffAmount)}`;
+      if (actualVal === '') {
+        diffAmountEl.className = 'px-3 py-2 text-right font-mono text-slate-400 row-diff-amount';
+        diffAmountEl.innerText = '0 đ';
+        diffAmountEl.title = bookQty > 0 ? `Tồn sổ hiện tại: ${formatNumber(bookQty)}` : '';
+      } else {
+        const actualNum = Number(actualVal) || 0;
+        diffQty = actualNum - bookQty;
+        diffAmount = diffQty * price;
+
+        const diffAmountSign = diffAmount > 0 ? '+' : '';
+        const diffAmountColor = diffAmount === 0 
+          ? 'text-slate-600' 
+          : (diffAmount > 0 ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold');
+
+        diffAmountEl.className = `px-3 py-2 text-right font-mono ${diffAmountColor} row-diff-amount`;
+        diffAmountEl.innerText = `${diffAmountSign}${formatCurrency(diffAmount)}`;
+        diffAmountEl.title = `Tồn sổ: ${formatNumber(bookQty)} • Thực tế: ${formatNumber(actualNum)} • Chênh lệch: ${diffQty > 0 ? '+' : ''}${formatNumber(diffQty)}`;
+      }
 
       calculateKiemKeSummary();
     }
@@ -23957,45 +24086,30 @@ window.google.script = {
     function calculateKiemKeSummary() {
       const rows = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
       let skuCount = rows.length;
-      let totalBook = 0;
       let totalActual = 0;
-      let totalDiffQty = 0;
       let totalDiffAmount = 0;
 
       rows.forEach(tr => {
-        const bookQtyEl = tr.querySelector('.row-book-qty');
-        const actualInp = tr.querySelector('input.row-actual-qty');
-        const priceInp = tr.querySelector('input.row-price');
+        const bookQty = Number(tr.dataset.bookQty) || 0;
+        const actualInp = tr.querySelector('.row-actual-qty');
+        const priceInp = tr.querySelector('.row-price');
 
-        const b = parseSmartNumber(bookQtyEl?.innerText) || 0;
         const aVal = actualInp ? actualInp.value.trim() : '';
-        const a = aVal === '' ? 0 : (Number(aVal) || 0);
         const p = Math.max(0, Number(priceInp?.value) || 0);
 
-        const dQty = aVal === '' ? -b : (a - b);
-        const dAmt = dQty * p;
-
-        totalBook += b;
-        if (aVal !== '') totalActual += a;
-        totalDiffQty += dQty;
-        totalDiffAmount += dAmt;
+        if (aVal !== '') {
+          const a = Number(aVal) || 0;
+          totalActual += a;
+          const dQty = a - bookQty;
+          totalDiffAmount += (dQty * p);
+        }
       });
 
       const skuCountEl = document.getElementById('kiemke-footer-sku-count');
-      const bookQtyEl = document.getElementById('kiemke-footer-book-qty');
       const actualQtyEl = document.getElementById('kiemke-footer-actual-qty');
 
       if (skuCountEl) skuCountEl.innerText = skuCount.toLocaleString('vi-VN');
-      if (bookQtyEl) bookQtyEl.innerText = formatNumber(totalBook);
       if (actualQtyEl) actualQtyEl.innerText = formatNumber(totalActual);
-
-      const diffQtyEl = document.getElementById('kiemke-footer-diff-qty');
-      if (diffQtyEl) {
-        const sign = totalDiffQty > 0 ? '+' : '';
-        const color = totalDiffQty === 0 ? 'text-slate-800' : (totalDiffQty > 0 ? 'text-emerald-700' : 'text-rose-600');
-        diffQtyEl.className = `text-sm font-black font-mono ${color}`;
-        diffQtyEl.innerText = `${sign}${formatNumber(totalDiffQty)}`;
-      }
 
       const diffAmtEl = document.getElementById('kiemke-footer-diff-amount');
       if (diffAmtEl) {
@@ -24143,16 +24257,16 @@ window.google.script = {
       let totalDiffAmount = 0;
 
       rows.forEach(tr => {
-        const code = tr.querySelector('input.row-code')?.value.trim().toUpperCase() || '';
-        const name = tr.querySelector('input.row-name')?.value.trim() || '';
-        const unit = tr.querySelector('input.row-unit')?.value.trim() || '';
-        const bookQty = parseSmartNumber(tr.querySelector('.row-book-qty')?.innerText) || 0;
-        const actualVal = tr.querySelector('input.row-actual-qty')?.value.trim();
+        const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
+        const name = tr.querySelector('.row-name')?.value.trim() || '';
+        const unit = tr.querySelector('.row-unit')?.value.trim() || '';
+        const bookQty = Number(tr.dataset.bookQty) || (inventoryMap[code.toLowerCase()]?.stock || 0);
+        const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
         const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
-        const price = Math.max(0, Number(tr.querySelector('input.row-price')?.value) || 0);
-        const diffQty = actualVal === '' ? -bookQty : (actualQty - bookQty);
+        const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
+        const diffQty = actualVal === '' ? 0 : (actualQty - bookQty);
         const diffAmount = diffQty * price;
-        const note = tr.querySelector('input.row-note')?.value.trim() || '';
+        const note = tr.querySelector('.row-note')?.value.trim() || '';
 
         if (code) {
           items.push({
@@ -24635,16 +24749,16 @@ window.google.script = {
         let totalDiffAmt = 0;
 
         rows.forEach((tr, i) => {
-          const code = tr.querySelector('input.row-code')?.value.trim().toUpperCase() || '';
-          const name = tr.querySelector('input.row-name')?.value.trim() || '';
-          const unit = tr.querySelector('input.row-unit')?.value.trim() || '';
-          const bookQty = parseSmartNumber(tr.querySelector('.row-book-qty')?.innerText) || 0;
-          const actualVal = tr.querySelector('input.row-actual-qty')?.value.trim();
+          const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
+          const name = tr.querySelector('.row-name')?.value.trim() || '';
+          const unit = tr.querySelector('.row-unit')?.value.trim() || '';
+          const bookQty = Number(tr.dataset.bookQty) || (inventoryMap[code.toLowerCase()]?.stock || 0);
+          const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
           const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
-          const price = Math.max(0, Number(tr.querySelector('input.row-price')?.value) || 0);
-          const diffQty = actualVal === '' ? -bookQty : (actualQty - bookQty);
+          const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
+          const diffQty = actualVal === '' ? 0 : (actualQty - bookQty);
           const diffAmount = diffQty * price;
-          const note = tr.querySelector('input.row-note')?.value.trim() || '';
+          const note = tr.querySelector('.row-note')?.value.trim() || '';
 
           totalBook += bookQty;
           if (actualVal !== '') totalActual += actualQty;
