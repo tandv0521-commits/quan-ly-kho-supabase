@@ -1810,9 +1810,24 @@
                 </div>
                 <div>
                   <label class="block font-bold text-slate-700 text-xs mb-1 tracking-normal">Số xe lấy hàng:</label>
-                  <select id="dispatch-filter-vehicle" onchange="filterDailyDispatchTable()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-semibold font-mono">
-                    <option value="">Tất cả số xe</option>
-                  </select>
+                  <div id="dispatch-filter-vehicle-container" class="relative">
+                    <div class="relative flex items-center">
+                      <i class="bi bi-truck absolute left-2.5 text-blue-600 text-xs pointer-events-none"></i>
+                      <input type="text" id="dispatch-filter-vehicle-input" 
+                             autocomplete="off"
+                             placeholder="Gõ số xe để lọc..." 
+                             onfocus="openDispatchVehicleFilterDropdown()"
+                             oninput="handleDispatchVehicleFilterInput(this.value)"
+                             onkeydown="handleDispatchVehicleFilterKeydown(event)"
+                             onblur="handleDispatchVehicleFilterBlur(event)"
+                             class="w-full pl-7 pr-7 py-1.5 border border-slate-300 rounded-lg bg-white font-semibold font-mono text-xs text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none uppercase">
+                      <button type="button" id="dispatch-filter-vehicle-clear" onclick="clearDispatchVehicleFilter()" class="hidden absolute right-2 text-slate-400 hover:text-rose-600 transition p-0.5 cursor-pointer" title="Xóa bộ lọc xe (Xem tất cả xe)">
+                        <i class="bi bi-x-circle-fill text-xs"></i>
+                      </button>
+                    </div>
+                    <input type="hidden" id="dispatch-filter-vehicle" value="">
+                    <div id="dispatch-filter-vehicle-dropdown" class="hidden absolute left-0 top-full mt-1 w-full min-w-[260px] bg-white border-2 border-blue-500 rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto custom-scroll divide-y divide-slate-100"></div>
+                  </div>
                 </div>
                 <div>
                   <label class="block font-bold text-teal-800 text-xs mb-1 tracking-normal">Lọc theo sản phẩm:</label>
@@ -7887,6 +7902,13 @@ window.google.script = {
       const staffBadge = document.getElementById('dispatch-staff-badge');
       if (staffBadge) staffBadge.innerText = '0 NV';
 
+      const vHidden = document.getElementById('dispatch-filter-vehicle');
+      if (vHidden) vHidden.value = '';
+      const vInput = document.getElementById('dispatch-filter-vehicle-input');
+      if (vInput) vInput.value = '';
+      const vClear = document.getElementById('dispatch-filter-vehicle-clear');
+      if (vClear) vClear.classList.add('hidden');
+
       showLoginOverlay();
 
       showAppToast('Đã đăng xuất', 'Hẹn gặp lại bạn!', 'info', 1400);
@@ -8601,6 +8623,7 @@ window.google.script = {
             !e.target.closest('.autocomplete-container') &&
             !e.target.closest('#dispatch-filter-product-container-main') &&
             !e.target.closest('#dispatch-filter-product-container-detail') &&
+            !e.target.closest('#dispatch-filter-vehicle-container') &&
             !e.target.closest('#dispatch-export-menu-container')) {
           closeAllDropdowns();
         }
@@ -10955,6 +10978,9 @@ window.google.script = {
       }
       if (typeof closeDispatchExportDropdown === 'function') {
         closeDispatchExportDropdown();
+      }
+      if (typeof closeDispatchVehicleFilterDropdown === 'function') {
+        closeDispatchVehicleFilterDropdown();
       }
       if (typeof closeAdvancedInventoryDropdown === 'function') {
         closeAdvancedInventoryDropdown();
@@ -13579,6 +13605,267 @@ window.google.script = {
       }
     }
 
+    // ============================================================================
+    // BỘ LỌC TÌM KIẾM SỐ XE LẤY HÀNG (AUTOCOMPLETE GỢI Ý & BÁO XE KHÔNG TỒN TẠI)
+    // ============================================================================
+    let currentDispatchVehicleFilterSuggestions = [];
+    let currentDispatchVehicleFilterHighlightedIndex = -1;
+
+    function getDispatchFilterVehicleList() {
+      const map = new Map();
+
+      // 1. Lấy danh mục xe đã đăng ký
+      (vehiclesListCached || []).forEach(v => {
+        const plate = (v.plate || '').trim().toUpperCase();
+        if (plate) {
+          map.set(plate, {
+            plate: plate,
+            driver: v.driver || '',
+            phone: v.phone || '',
+            note: v.note || '',
+            count: 0
+          });
+        }
+      });
+
+      // 2. Lấy dữ liệu xe từ các phiếu phát hàng thuộc kho hiện tại
+      (dispatchListCached || []).forEach(it => {
+        if (typeof isDispatchInCurrentWarehouse !== 'function' || isDispatchInCurrentWarehouse(it)) {
+          const plate = (it.license_plate || '').trim().toUpperCase();
+          if (plate) {
+            if (!map.has(plate)) {
+              map.set(plate, {
+                plate: plate,
+                driver: it.driver_name || '',
+                phone: it.driver_phone || '',
+                note: '',
+                count: 1
+              });
+            } else {
+              const item = map.get(plate);
+              item.count = (item.count || 0) + 1;
+              if (!item.driver && it.driver_name) item.driver = it.driver_name;
+              if (!item.phone && it.driver_phone) item.phone = it.driver_phone;
+            }
+          }
+        }
+      });
+
+      return Array.from(map.values()).sort((a, b) => a.plate.localeCompare(b.plate, 'vi', { numeric: true }));
+    }
+
+    function openDispatchVehicleFilterDropdown() {
+      const inputEl = document.getElementById('dispatch-filter-vehicle-input');
+      const val = inputEl ? inputEl.value.trim() : '';
+      currentDispatchVehicleFilterHighlightedIndex = -1;
+      renderDispatchVehicleFilterDropdown(val);
+    }
+
+    function closeDispatchVehicleFilterDropdown() {
+      const dropdown = document.getElementById('dispatch-filter-vehicle-dropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    function handleDispatchVehicleFilterInput(query) {
+      currentDispatchVehicleFilterHighlightedIndex = 0;
+      renderDispatchVehicleFilterDropdown(query);
+    }
+
+    function renderDispatchVehicleFilterDropdown(query) {
+      const dropdown = document.getElementById('dispatch-filter-vehicle-dropdown');
+      if (!dropdown) return;
+
+      const allVehicles = getDispatchFilterVehicleList();
+      const rawQ = (query || '').trim();
+      const q = rawQ.toLowerCase();
+
+      let filtered = allVehicles;
+      if (rawQ) {
+        filtered = allVehicles.filter(v => {
+          const p = v.plate.toLowerCase();
+          const d = (v.driver || '').toLowerCase();
+          const ph = (v.phone || '').toLowerCase();
+          return p.includes(q) || d.includes(q) || ph.includes(q);
+        });
+      }
+
+      currentDispatchVehicleFilterSuggestions = filtered;
+      dropdown.classList.remove('hidden');
+
+      // NẾU KHÔNG CÓ TRONG DANH SÁCH: BÁO "XE KHÔNG TỒN TẠI" Ở GỢI Ý!
+      if (filtered.length === 0) {
+        dropdown.innerHTML = `
+          <div class="p-3.5 text-center bg-rose-50 text-rose-700 rounded-xl m-1.5 border border-rose-200 shadow-2xs">
+            <div class="flex items-center justify-center space-x-1.5 text-rose-600 font-black text-xs uppercase mb-1">
+              <i class="bi bi-exclamation-octagon-fill text-sm animate-pulse"></i>
+              <span>Xe không tồn tại!</span>
+            </div>
+            <p class="text-[11px] text-slate-600 leading-tight">
+              Không tìm thấy số xe nào khớp với: <b class="font-mono text-rose-700 bg-white px-1.5 py-0.5 rounded border border-rose-200">${escapeHtml(rawQ)}</b>
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      // Tùy chọn xem tất cả ở trên cùng
+      html += `
+        <div class="px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer transition bg-slate-50/90 hover:bg-blue-100/70 font-bold text-slate-900 border-b border-slate-200"
+             onmousedown="selectDispatchVehicleFilter('')">
+          <div class="flex items-center space-x-2">
+            <i class="bi bi-truck text-blue-600"></i>
+            <span>-- Xem tất cả số xe lấy hàng --</span>
+          </div>
+          <span class="text-[10px] text-blue-800 bg-white px-2 py-0.5 rounded-full border border-blue-200 font-semibold shadow-2xs">Tất cả (${allVehicles.length})</span>
+        </div>
+      `;
+
+      const displayList = filtered.slice(0, 35);
+      html += displayList.map((item, idx) => {
+        const isHighlighted = idx === currentDispatchVehicleFilterHighlightedIndex;
+        
+        // Highlight biển số xe khớp với từ khóa tìm kiếm
+        let plateDisplay = escapeHtml(item.plate);
+        if (rawQ) {
+          const matchIdx = item.plate.toLowerCase().indexOf(q);
+          if (matchIdx !== -1) {
+            const before = item.plate.substring(0, matchIdx);
+            const match = item.plate.substring(matchIdx, matchIdx + rawQ.length);
+            const after = item.plate.substring(matchIdx + rawQ.length);
+            plateDisplay = `${escapeHtml(before)}<span class="underline decoration-blue-500 decoration-2 font-black text-blue-600 bg-blue-50">${escapeHtml(match)}</span>${escapeHtml(after)}`;
+          }
+        }
+
+        return `
+          <div class="px-3.5 py-2 text-xs flex items-center justify-between gap-3 cursor-pointer transition border-b border-slate-100 last:border-b-0 ${isHighlighted ? 'bg-blue-600 text-white font-bold' : 'hover:bg-blue-50 text-slate-800'}"
+               onmousedown="selectDispatchVehicleFilter('${escapeHtml(item.plate)}')">
+            <div class="flex items-center space-x-2 truncate min-w-0">
+              <span class="font-mono font-black px-2 py-0.5 rounded shrink-0 ${isHighlighted ? 'bg-blue-700 text-white' : 'bg-slate-100 text-blue-900 border border-slate-200'}">${plateDisplay}</span>
+              ${item.driver ? `<span class="truncate font-medium text-[11px] ${isHighlighted ? 'text-blue-100' : 'text-slate-600'}">TX: ${escapeHtml(item.driver)}</span>` : ''}
+              ${item.phone ? `<span class="text-[10px] font-mono shrink-0 ${isHighlighted ? 'text-blue-200' : 'text-slate-400'}">(${escapeHtml(item.phone)})</span>` : ''}
+            </div>
+            <div class="flex items-center space-x-1 font-mono text-[11px] shrink-0">
+              ${item.count > 0 
+                ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isHighlighted ? 'bg-white text-blue-900' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">${item.count} phiếu</span>`
+                : `<span class="${isHighlighted ? 'text-blue-200' : 'text-slate-400'} text-[10px]">Chưa phát</span>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      dropdown.innerHTML = html;
+    }
+
+    function handleDispatchVehicleFilterKeydown(e) {
+      const dropdown = document.getElementById('dispatch-filter-vehicle-dropdown');
+      const isOpen = dropdown && !dropdown.classList.contains('hidden');
+
+      if (e.key === 'ArrowDown' && isOpen) {
+        e.preventDefault();
+        if (currentDispatchVehicleFilterSuggestions.length > 0) {
+          currentDispatchVehicleFilterHighlightedIndex = (currentDispatchVehicleFilterHighlightedIndex + 1) % currentDispatchVehicleFilterSuggestions.length;
+          renderDispatchVehicleFilterDropdown(e.target.value);
+        }
+      } else if (e.key === 'ArrowUp' && isOpen) {
+        e.preventDefault();
+        if (currentDispatchVehicleFilterSuggestions.length > 0) {
+          currentDispatchVehicleFilterHighlightedIndex = (currentDispatchVehicleFilterHighlightedIndex - 1 + currentDispatchVehicleFilterSuggestions.length) % currentDispatchVehicleFilterSuggestions.length;
+          renderDispatchVehicleFilterDropdown(e.target.value);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = (e.target.value || '').trim();
+        if (currentDispatchVehicleFilterSuggestions.length > 0) {
+          const item = currentDispatchVehicleFilterSuggestions[currentDispatchVehicleFilterHighlightedIndex >= 0 ? currentDispatchVehicleFilterHighlightedIndex : 0];
+          if (item) {
+            selectDispatchVehicleFilter(item.plate);
+            return;
+          }
+        }
+        // NẾU KHÔNG CÓ TRONG DANH SÁCH: THÔNG BÁO XE KHÔNG TỒN TẠI
+        Swal.fire({
+          icon: 'warning',
+          title: 'Xe không tồn tại!',
+          html: `Số xe "<b class="font-mono text-rose-600">${escapeHtml(val)}</b>" không có trong danh mục xe và nhật ký phát hàng!`,
+          timer: 2300,
+          showConfirmButton: false
+        });
+        clearDispatchVehicleFilter();
+      } else if (e.key === 'Escape') {
+        closeDispatchVehicleFilterDropdown();
+      }
+    }
+
+    function handleDispatchVehicleFilterBlur(e) {
+      setTimeout(() => {
+        const inputEl = document.getElementById('dispatch-filter-vehicle-input');
+        const hiddenEl = document.getElementById('dispatch-filter-vehicle');
+        if (!inputEl) return;
+        const text = inputEl.value.trim().toUpperCase();
+        if (!text) {
+          if (hiddenEl && hiddenEl.value) clearDispatchVehicleFilter();
+          return;
+        }
+
+        const allVehicles = getDispatchFilterVehicleList();
+        const exactMatch = allVehicles.find(v => v.plate.toUpperCase() === text);
+        if (exactMatch) {
+          selectDispatchVehicleFilter(exactMatch.plate);
+        } else {
+          const partialMatches = allVehicles.filter(v => v.plate.toUpperCase().includes(text));
+          if (partialMatches.length === 1) {
+            selectDispatchVehicleFilter(partialMatches[0].plate);
+          } else if (partialMatches.length === 0) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Xe không tồn tại!',
+              html: `Số xe "<b class="font-mono text-rose-600">${escapeHtml(text)}</b>" không có trong danh sách!`,
+              timer: 2300,
+              showConfirmButton: false
+            });
+            clearDispatchVehicleFilter();
+          }
+        }
+        closeDispatchVehicleFilterDropdown();
+      }, 250);
+    }
+
+    function selectDispatchVehicleFilter(plate) {
+      const inputEl = document.getElementById('dispatch-filter-vehicle-input');
+      const hiddenEl = document.getElementById('dispatch-filter-vehicle');
+      const clearBtn = document.getElementById('dispatch-filter-vehicle-clear');
+
+      const cleanPlate = (plate || '').trim().toUpperCase();
+      if (inputEl) inputEl.value = cleanPlate;
+      if (hiddenEl) hiddenEl.value = cleanPlate;
+
+      if (clearBtn) {
+        if (cleanPlate) {
+          clearBtn.classList.remove('hidden');
+        } else {
+          clearBtn.classList.add('hidden');
+        }
+      }
+
+      closeDispatchVehicleFilterDropdown();
+      filterDailyDispatchTable();
+    }
+
+    function clearDispatchVehicleFilter() {
+      const inputEl = document.getElementById('dispatch-filter-vehicle-input');
+      const hiddenEl = document.getElementById('dispatch-filter-vehicle');
+      const clearBtn = document.getElementById('dispatch-filter-vehicle-clear');
+
+      if (inputEl) inputEl.value = '';
+      if (hiddenEl) hiddenEl.value = '';
+      if (clearBtn) clearBtn.classList.add('hidden');
+
+      closeDispatchVehicleFilterDropdown();
+      filterDailyDispatchTable();
+    }
+
     function populateDispatchFilterDropdowns() {
       const activeStaffList = (typeof getStaffListForCurrentWarehouse === 'function') ? getStaffListForCurrentWarehouse() : warehouseStaffListCached;
       const staffSet = new Set();
@@ -13612,10 +13899,21 @@ window.google.script = {
       }
 
       const vehicleSelect = document.getElementById('dispatch-filter-vehicle');
-      if (vehicleSelect) {
+      if (vehicleSelect && vehicleSelect.tagName === 'SELECT') {
         const currentVal = vehicleSelect.value;
         vehicleSelect.innerHTML = '<option value="">Tất cả số xe</option>' + 
           Array.from(vehicleSet).sort().map(v => `<option value="${escapeHtml(v)}" ${v === currentVal ? 'selected' : ''}>${escapeHtml(v)}</option>`).join('');
+      } else if (vehicleSelect && vehicleSelect.type === 'hidden') {
+        const currentVal = vehicleSelect.value;
+        const vehicleInput = document.getElementById('dispatch-filter-vehicle-input');
+        const vehicleClear = document.getElementById('dispatch-filter-vehicle-clear');
+        if (vehicleInput) {
+          vehicleInput.value = currentVal || '';
+        }
+        if (vehicleClear) {
+          if (currentVal) vehicleClear.classList.remove('hidden');
+          else vehicleClear.classList.add('hidden');
+        }
       }
     }
 
