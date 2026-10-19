@@ -2124,49 +2124,76 @@
             </div>
 
             <!-- ======================================================== -->
-            <!-- PHẦN 1: BẢNG SẢN PHẨM PHÁT NHANH (TÍCH CHỌN NHÓM & SẮP XẾP THEO DN - PN) -->
+            <!-- PHẦN 1: BẢNG SẢN PHẨM PHÁT NHANH (THU GỌN - TÍCH CHỌN MỚI HIỆN RA) -->
             <!-- ======================================================== -->
-            <div class="space-y-2.5 pt-1 border-t border-slate-200">
-              <!-- DÒNG TÍCH CHỌN NHÓM SẢN PHẨM (MẶC ĐỊNH KHÔNG TÍCH CHỌN) -->
-              <div class="p-3 bg-white rounded-xl border border-teal-200/90 shadow-2xs space-y-2.5">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                  <div class="flex items-center space-x-2">
-                    <span class="text-xs font-black text-teal-950 uppercase flex items-center gap-1.5">
-                      <i class="bi bi-check2-square text-teal-600 text-sm"></i>
-                      <span>TÍCH CHỌN NHÓM SẢN PHẨM ĐỂ ĐIỀN NHANH:</span>
-                    </span>
-                    <span class="text-[10.5px] text-slate-400 italic hidden md:inline">
-                      (Tích nhóm nào thì sản phẩm nhóm đó hiện lên, xếp theo đường kính DN & PN từ nhỏ đến lớn)
-                    </span>
+            <div class="pt-1 border-t border-slate-200">
+              <div class="bg-white rounded-xl border border-teal-200/90 shadow-2xs overflow-hidden transition-all duration-200">
+                <!-- DÒNG THU GỌN: CHỈ HIỂN THỊ DÒNG CHỮ "TÍCH CHỌN SẢN PHẨM ĐỂ ĐIỀN NHANH" -->
+                <div class="p-3 flex items-center justify-between gap-3 bg-gradient-to-r from-teal-50/70 via-white to-slate-50 cursor-pointer select-none hover:bg-teal-50/90 transition"
+                     onclick="toggleFastDispatchSection()">
+                  <div class="flex items-center space-x-2.5">
+                    <input type="checkbox" id="toggle-fast-dispatch-checkbox" 
+                           onclick="event.stopPropagation()"
+                           onchange="handleFastDispatchSectionToggle(this.checked)"
+                           class="w-4 h-4 text-teal-600 bg-white border-slate-300 rounded focus:ring-teal-500 cursor-pointer">
+                    <label for="toggle-fast-dispatch-checkbox" class="text-xs font-black text-teal-950 uppercase tracking-wide flex items-center gap-1.5 cursor-pointer pointer-events-none">
+                      <i class="bi bi-lightning-charge-fill text-amber-500 text-sm"></i>
+                      <span>Tích chọn sản phẩm để điền nhanh</span>
+                    </label>
                   </div>
 
-                  <div class="flex items-center space-x-1.5 shrink-0">
-                    <button type="button" onclick="selectAllFastGroups(true)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-900 border border-slate-200 transition cursor-pointer" title="Tích chọn toàn bộ nhóm">
-                      <i class="bi bi-check-all"></i> Chọn tất cả
-                    </button>
-                    <button type="button" onclick="selectAllFastGroups(false)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer" title="Bỏ tích toàn bộ nhóm">
-                      Bỏ chọn
-                    </button>
-                    <button type="button" onclick="resetFastItemsQuantities()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 transition cursor-pointer" title="Đặt lại toàn bộ số lượng phát về trống">
-                      <i class="bi bi-arrow-counterclockwise"></i> Xóa trắng SL
-                    </button>
-                    <button type="button" onclick="openFastItemsCustomizerModal()" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-2xs cursor-pointer" title="Cài đặt nhóm sản phẩm, xem danh sách nhóm và thêm SP vào nhóm">
-                      <i class="bi bi-tags-fill"></i>
-                      <span>Quản lý nhóm SP</span>
-                    </button>
+                  <div class="flex items-center space-x-2 shrink-0">
+                    <span id="fast-dispatch-filled-badge" class="hidden px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-mono shadow-2xs">
+                      Đã điền 0 SP
+                    </span>
+                    <div id="fast-dispatch-collapse-arrow" class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-teal-700 transition-transform duration-200">
+                      <i class="bi bi-chevron-down text-xs"></i>
+                    </div>
                   </div>
                 </div>
 
-                <!-- CÁC NÚT TÍCH NHÓM ĐỘNG: [✓] Chếch (6)  [✓] Bịt xả (3)... (MẶC ĐỊNH KHÔNG TÍCH) -->
-                <div id="fast-items-group-checkboxes" class="flex items-center flex-wrap gap-1.5 overflow-x-auto py-0.5 custom-scroll">
-                  <!-- Render dynamic qua renderFastGroupCheckboxes() -->
-                </div>
-              </div>
+                <!-- KHUNG NỘI DUNG CHI TIẾT (MẶC ĐỊNH ẨN / THU GỌN, CHỈ HIỆN KHI TÍCH VÀO CHECKBOX) -->
+                <div id="fast-dispatch-content-panel" class="hidden p-3 pt-2 space-y-2.5 border-t border-teal-100/80 bg-white">
+                  <!-- DÒNG CÁC NHÓM SẢN PHẨM & CÁC NÚT THAO TÁC -->
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs font-black text-teal-950 uppercase flex items-center gap-1.5">
+                        <i class="bi bi-check2-square text-teal-600 text-sm"></i>
+                        <span>CÁC NHÓM SẢN PHẨM:</span>
+                      </span>
+                      <span class="text-[10.5px] text-slate-400 italic hidden md:inline">
+                        (Tích nhóm nào thì sản phẩm nhóm đó hiện lên, xếp theo đường kính DN & PN từ nhỏ đến lớn)
+                      </span>
+                    </div>
 
-              <!-- KHUNG HIỂN THỊ CÁC SẢN PHẨM PHÁT NHANH (CHIA CỘT - HÀNG TƯƠNG THÍCH MỌI ĐỊNH DẠNG) -->
-              <div class="border border-teal-200/90 rounded-xl p-3 bg-slate-50/50 max-h-[620px] overflow-y-auto custom-scroll shadow-inner">
-                <div id="fast-items-grid">
-                  <!-- Dynamic product grid rendered by renderFastItemsTable() -->
+                    <div class="flex items-center space-x-1.5 shrink-0">
+                      <button type="button" onclick="selectAllFastGroups(true)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-900 border border-slate-200 transition cursor-pointer" title="Tích chọn toàn bộ nhóm">
+                        <i class="bi bi-check-all"></i> Chọn tất cả
+                      </button>
+                      <button type="button" onclick="selectAllFastGroups(false)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition cursor-pointer" title="Bỏ tích toàn bộ nhóm">
+                        Bỏ chọn
+                      </button>
+                      <button type="button" onclick="resetFastItemsQuantities()" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-700 border border-slate-200 transition cursor-pointer" title="Đặt lại toàn bộ số lượng phát về trống">
+                        <i class="bi bi-arrow-counterclockwise"></i> Xóa trắng SL
+                      </button>
+                      <button type="button" onclick="openFastItemsCustomizerModal()" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition flex items-center space-x-1 shadow-2xs cursor-pointer" title="Cài đặt nhóm sản phẩm, xem danh sách nhóm và thêm SP vào nhóm">
+                        <i class="bi bi-tags-fill"></i>
+                        <span>Quản lý nhóm SP</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- CÁC NÚT TÍCH NHÓM ĐỘNG -->
+                  <div id="fast-items-group-checkboxes" class="flex items-center flex-wrap gap-1.5 overflow-x-auto py-0.5 custom-scroll">
+                    <!-- Render dynamic qua renderFastGroupCheckboxes() -->
+                  </div>
+
+                  <!-- KHUNG HIỂN THỊ CÁC SẢN PHẨM PHÁT NHANH -->
+                  <div class="border border-teal-200/90 rounded-xl p-3 bg-slate-50/50 max-h-[620px] overflow-y-auto custom-scroll shadow-inner">
+                    <div id="fast-items-grid">
+                      <!-- Dynamic product grid rendered by renderFastItemsTable() -->
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -17254,6 +17281,7 @@ window.google.script = {
       renderFastGroupCheckboxes();
       renderFastItemsTable();
       calculateDispatchFormSummary();
+      setFastDispatchSectionCollapsed(true);
 
       // NHẢY ĐÚNG ĐẾN DÒNG SỬA: CUỘN MƯỢT, HIGHLIGHT NỔI BẬT VÀ TỰ ĐỘNG FOCUS Ô SỐ LƯỢNG
       if (targetRowId) {
@@ -17390,6 +17418,7 @@ window.google.script = {
       tbody.innerHTML = '';
       addDispatchFormRow(null, false);
       calculateDispatchFormSummary();
+      setFastDispatchSectionCollapsed(true);
 
       setTimeout(() => {
         const vInput = document.getElementById('dispatch-input-vehicle');
@@ -17604,6 +17633,7 @@ window.google.script = {
       const qtyEl = document.getElementById('dispatch-form-total-qty');
       if (skuEl) skuEl.innerText = count;
       if (qtyEl) qtyEl.innerText = formatNumber(total);
+      if (typeof updateFastDispatchFilledBadge === 'function') updateFastDispatchFilledBadge();
     }
 
     async function submitDispatchVoucher(andAddNew = false) {
@@ -20781,6 +20811,113 @@ window.google.script = {
     // SẮP XẾP SẢN PHẨM CÙNG ĐƯỜNG KÍNH DN NẰM CẠNH NHAU, THEO PN TỪ BÉ ĐẾN LỚN
     // ========================================================
 
+    // TỰ ĐỘNG PHÁT HIỆN VÀ KHẮC PHỤC LỖI FONT TIẾNG VIỆT (MOJIBAKE / DOUBLE UTF-8)
+    function fixVietnameseMojibake(str) {
+      if (!str || typeof str !== 'string') return str || '';
+      // Kiểm tra chuỗi xem có chứa chuỗi byte UTF-8 bị đọc nhầm theo CP1252 / ISO-8859-1 không (á», áº, Ã, Â, ...)
+      if (!/(?:á»|áº|Ã[¡-¿\u0080-\u00bf]|Â[¡-¿\u0080-\u00bf]|[\u00c2-\u00e1][\u0080-\u00bf])/i.test(str)) {
+        return str;
+      }
+      try {
+        const res = decodeURIComponent(escape(str));
+        if (res && res !== str) return res;
+      } catch (e) {}
+
+      try {
+        const bytes = [];
+        let ok = true;
+        const win1252Map = {
+          0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87,
+          0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A, 0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E,
+          0x2018: 0x91, 0x2019: 0x92, 0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
+          0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C, 0x017E: 0x9E, 0x0178: 0x9F
+        };
+        for (let i = 0; i < str.length; i++) {
+          const c = str.charCodeAt(i);
+          if (c <= 0xFF) {
+            bytes.push(c);
+          } else if (win1252Map[c] !== undefined) {
+            bytes.push(win1252Map[c]);
+          } else {
+            ok = false;
+            break;
+          }
+        }
+        if (ok && bytes.length > 0) {
+          const res = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
+          if (res && res !== str) return res;
+        }
+      } catch (e) {}
+
+      return str;
+    }
+
+    function sanitizeFastGroups(groups) {
+      if (!Array.isArray(groups)) return [];
+      return groups.map(g => fixVietnameseMojibake(g)).filter(Boolean);
+    }
+
+    function sanitizeFastItems(items) {
+      if (!Array.isArray(items)) return [];
+      return items.map(it => {
+        if (!it) return it;
+        return {
+          ...it,
+          group: fixVietnameseMojibake(it.group),
+          customName: fixVietnameseMojibake(it.customName),
+          name: fixVietnameseMojibake(it.name),
+          unit: fixVietnameseMojibake(it.unit)
+        };
+      });
+    }
+
+    // ĐIỀU KHIỂN THU GỌN / MỞ RỘNG BẢNG ĐIỀN NHANH THEO CHECKBOX
+    function setFastDispatchSectionCollapsed(collapsed) {
+      const checkbox = document.getElementById('toggle-fast-dispatch-checkbox');
+      const panel = document.getElementById('fast-dispatch-content-panel');
+      const arrow = document.getElementById('fast-dispatch-collapse-arrow');
+      if (checkbox) checkbox.checked = !collapsed;
+      if (panel) {
+        if (collapsed) {
+          panel.classList.add('hidden');
+        } else {
+          panel.classList.remove('hidden');
+          renderFastGroupCheckboxes();
+          renderFastItemsTable('');
+        }
+      }
+      if (arrow) {
+        if (collapsed) {
+          arrow.classList.remove('rotate-180');
+        } else {
+          arrow.classList.add('rotate-180');
+        }
+      }
+      updateFastDispatchFilledBadge();
+    }
+
+    function toggleFastDispatchSection() {
+      const checkbox = document.getElementById('toggle-fast-dispatch-checkbox');
+      const isCurrentlyChecked = checkbox ? checkbox.checked : false;
+      setFastDispatchSectionCollapsed(isCurrentlyChecked);
+    }
+
+    function handleFastDispatchSectionToggle(isChecked) {
+      setFastDispatchSectionCollapsed(!isChecked);
+    }
+
+    function updateFastDispatchFilledBadge() {
+      const badge = document.getElementById('fast-dispatch-filled-badge');
+      if (!badge) return;
+      const filledCount = Object.values(fastDispatchItemsState || {}).filter(s => s && s.calculatedQty > 0).length;
+      if (filledCount > 0) {
+        badge.innerHTML = `<i class="bi bi-check2-circle mr-1"></i>Đã điền ${filledCount} SP`;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
     const DEFAULT_FAST_DISPATCH_GROUPS = [
       'Chếch', 'Bịt xả', 'Tê đều', 'Ba chạc 45°', 'Bạc', 'Nối thẳng', 'Bích', 'TCB', 'Bịt', 'Thông sàn', 'Góc'
     ];
@@ -21059,8 +21196,9 @@ window.google.script = {
             try {
               const g = JSON.parse(cfg.groups_json);
               if (Array.isArray(g) && g.length > 0) {
-                localStorage.setItem(`custom_fast_dispatch_groups_${scope}`, cfg.groups_json);
-                customFastGroupsList = g;
+                const cleanG = sanitizeFastGroups(g);
+                localStorage.setItem(`custom_fast_dispatch_groups_${scope}`, JSON.stringify(cleanG));
+                customFastGroupsList = cleanG;
                 updated = true;
               }
             } catch (err) {}
@@ -21069,8 +21207,9 @@ window.google.script = {
             try {
               const it = JSON.parse(cfg.items_json);
               if (Array.isArray(it) && it.length > 0) {
-                localStorage.setItem(`custom_fast_dispatch_items_${scope}`, cfg.items_json);
-                customFastItemsList = it;
+                const cleanIt = sanitizeFastItems(it);
+                localStorage.setItem(`custom_fast_dispatch_items_${scope}`, JSON.stringify(cleanIt));
+                customFastItemsList = cleanIt;
                 updated = true;
               }
             } catch (err) {}
@@ -21229,7 +21368,7 @@ window.google.script = {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            customFastItemsList = parsed;
+            customFastItemsList = sanitizeFastItems(parsed);
             return customFastItemsList;
           }
         }
@@ -21238,7 +21377,7 @@ window.google.script = {
       }
 
       // Khởi tạo mặc định ban đầu riêng cho kho nếu kho chưa có
-      customFastItemsList = JSON.parse(JSON.stringify(DEFAULT_FAST_DISPATCH_ITEMS));
+      customFastItemsList = sanitizeFastItems(JSON.parse(JSON.stringify(DEFAULT_FAST_DISPATCH_ITEMS)));
       try {
         localStorage.setItem(storageKey, JSON.stringify(customFastItemsList));
       } catch (e) {}
@@ -21246,7 +21385,7 @@ window.google.script = {
     }
 
     function saveCustomFastItems(items) {
-      customFastItemsList = items || [];
+      customFastItemsList = sanitizeFastItems(items || []);
       customFastItemsListScope = getFastItemsStorageScope();
       const storageKey = getFastItemsStorageKey('custom_fast_dispatch_items');
       try {
@@ -21269,7 +21408,7 @@ window.google.script = {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            customFastGroupsList = parsed;
+            customFastGroupsList = sanitizeFastGroups(parsed);
             return customFastGroupsList;
           }
         }
@@ -21282,10 +21421,10 @@ window.google.script = {
       const items = getCustomFastItems();
       items.forEach(it => {
         if (it.group && String(it.group).trim()) {
-          groupsSet.add(String(it.group).trim());
+          groupsSet.add(fixVietnameseMojibake(String(it.group).trim()));
         }
       });
-      customFastGroupsList = Array.from(groupsSet);
+      customFastGroupsList = sanitizeFastGroups(Array.from(groupsSet));
       try {
         localStorage.setItem(storageKey, JSON.stringify(customFastGroupsList));
       } catch (e) {}
@@ -21293,7 +21432,7 @@ window.google.script = {
     }
 
     function saveCustomFastGroups(groups) {
-      customFastGroupsList = groups || [];
+      customFastGroupsList = sanitizeFastGroups(groups || []);
       customFastGroupsListScope = getFastItemsStorageScope();
       const storageKey = getFastItemsStorageKey('custom_fast_dispatch_groups');
       try {
@@ -21301,6 +21440,7 @@ window.google.script = {
       } catch (e) {
         console.error('Lỗi ghi ' + storageKey + ':', e);
       }
+      syncWarehouseFastConfigToCloud();
     }
 
     function getCheckedFastGroups() {
@@ -21313,7 +21453,7 @@ window.google.script = {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            checkedFastGroupsList = parsed.filter(g => g && g !== 'Chưa phân nhóm');
+            checkedFastGroupsList = sanitizeFastGroups(parsed).filter(g => g && g !== 'Chưa phân nhóm');
             return checkedFastGroupsList;
           }
         }
@@ -21328,7 +21468,7 @@ window.google.script = {
 
     function saveCheckedFastGroups(newList) {
       if (Array.isArray(newList)) {
-        checkedFastGroupsList = newList.filter(g => g && g !== 'Chưa phân nhóm');
+        checkedFastGroupsList = sanitizeFastGroups(newList).filter(g => g && g !== 'Chưa phân nhóm');
       }
       if (!Array.isArray(checkedFastGroupsList)) return;
       const storageKey = getFastItemsStorageKey('checked_fast_dispatch_groups');
@@ -21343,10 +21483,10 @@ window.google.script = {
       if (!Array.isArray(checkedFastGroupsList)) {
         getCheckedFastGroups();
       }
-      const cleanGrp = String(groupName || '').trim();
+      const cleanGrp = fixVietnameseMojibake(String(groupName || '')).trim();
       if (!cleanGrp) return;
 
-      const idx = checkedFastGroupsList.findIndex(g => g.trim().toLowerCase() === cleanGrp.toLowerCase());
+      const idx = checkedFastGroupsList.findIndex(g => fixVietnameseMojibake(g).trim().toLowerCase() === cleanGrp.toLowerCase());
       if (idx >= 0) {
         // Nếu đã có thì bỏ chọn
         checkedFastGroupsList.splice(idx, 1);
@@ -21402,7 +21542,7 @@ window.google.script = {
       });
 
       allItems.forEach(it => {
-        const g = (it.group && String(it.group).trim());
+        const g = fixVietnameseMojibake(it.group && String(it.group).trim());
         if (g && groupFilledCount[g] !== undefined) {
           const state = fastDispatchItemsState[it.id];
           if (state && state.calculatedQty > 0) {
@@ -21416,8 +21556,9 @@ window.google.script = {
 
       let html = '';
       displayGroups.forEach(grp => {
-        const isChecked = checkedList.some(c => c.trim().toLowerCase() === grp.trim().toLowerCase());
-        const filledInGrp = groupFilledCount[grp] || 0;
+        const cleanGrp = fixVietnameseMojibake(grp);
+        const isChecked = checkedList.some(c => fixVietnameseMojibake(c).trim().toLowerCase() === cleanGrp.trim().toLowerCase());
+        const filledInGrp = groupFilledCount[cleanGrp] || groupFilledCount[grp] || 0;
         const hasFilled = filledInGrp > 0;
 
         // BỎ HOÀN TOÀN Ô VUÔNG CHECKBOX; THAY BẰNG HIỆU ỨNG THẺ NÚT HOVER & ACTIVE RỰC RỠ NỔI BẬT
@@ -21428,15 +21569,15 @@ window.google.script = {
         html += `
           <div role="button" 
                tabindex="0"
-               data-group-name="${escapeHtml(grp)}"
-               onclick="handleFastGroupChipClick(event, '${escapeJsString(grp)}')"
-               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleFastGroupChipClick(event, '${escapeJsString(grp)}');}"
+               data-group-name="${escapeHtml(cleanGrp)}"
+               onclick="handleFastGroupChipClick(event, '${escapeJsString(cleanGrp)}')"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();handleFastGroupChipClick(event, '${escapeJsString(cleanGrp)}');}"
                class="${chipClasses}"
-               title="${isChecked ? 'Bấm để tắt hiển thị nhóm ' + escapeHtml(grp) : 'Bấm để hiển thị nhóm ' + escapeHtml(grp) + ' lên đầu bảng'} • Kéo icon grip để đổi thứ tự nhóm">
+               title="${isChecked ? 'Bấm để tắt hiển thị nhóm ' + escapeHtml(cleanGrp) : 'Bấm để hiển thị nhóm ' + escapeHtml(cleanGrp) + ' lên đầu bảng'} • Kéo icon grip để đổi thứ tự nhóm">
             <span class="fast-group-drag-handle text-slate-300 hover:text-teal-600 cursor-grab active:cursor-grabbing p-0.5 rounded transition ${isChecked ? 'text-teal-200 hover:text-white' : 'text-slate-400'}" title="Kéo thả icon này để đổi thứ tự nhóm">
               <i class="bi bi-grip-vertical text-xs pointer-events-none"></i>
             </span>
-            <span class="tracking-tight pointer-events-none">${escapeHtml(grp)}</span>
+            <span class="tracking-tight pointer-events-none">${escapeHtml(cleanGrp)}</span>
             ${hasFilled ? `<span class="fast-group-filled-dot w-2 h-2 rounded-full ${isChecked ? 'bg-amber-300' : 'bg-emerald-500'} inline-block shadow-2xs ml-0.5 pointer-events-none" title="Đã có sản phẩm điền số lượng"></span>` : ''}
           </div>
         `;
@@ -21678,9 +21819,9 @@ window.google.script = {
       let html = '';
 
       displayGroupsOrder.forEach(grpName => {
-        const cleanGrpName = String(grpName || '').trim().toLowerCase();
+        const cleanGrpName = fixVietnameseMojibake(String(grpName || '')).trim().toLowerCase();
         const grpItems = allItems.filter(it => {
-          const itGrp = String((it.group && String(it.group).trim()) || 'Chưa phân nhóm').trim().toLowerCase();
+          const itGrp = fixVietnameseMojibake(String((it.group && String(it.group).trim()) || 'Chưa phân nhóm')).trim().toLowerCase();
           return itGrp === cleanGrpName;
         });
 
@@ -21718,7 +21859,7 @@ window.google.script = {
                 <span class="w-2 h-4 rounded-full bg-teal-600 shrink-0"></span>
                 <h4 class="font-black text-xs sm:text-sm text-teal-950 tracking-tight flex items-center gap-1.5">
                   <i class="bi bi-tag-fill text-teal-600 text-xs"></i>
-                  <span>Nhóm: ${escapeHtml(grpName)}</span>
+                  <span>Nhóm: ${escapeHtml(fixVietnameseMojibake(grpName))}</span>
                 </h4>
               </div>
               <div class="flex items-center space-x-2">
@@ -21745,7 +21886,7 @@ window.google.script = {
             const isMultiTerm = state.tallyExpr && (state.tallyExpr.includes(',') || state.tallyExpr.includes('+') || state.tallyExpr.includes(' '));
             
             // CHỈ HIỂN THỊ DUY NHẤT TÊN SẢN PHẨM QUY TẮC RÚT GỌN
-            const displayName = item.customName || item.code || '';
+            const displayName = fixVietnameseMojibake(item.customName || item.code || '');
             const inv = item.code ? inventoryMap[item.code.toLowerCase()] : null;
             const invName = inv && inv.name ? inv.name : (item.name || '');
             const tooltipDesc = (item.code ? item.code : '') + (invName && invName.toUpperCase() !== displayName.toUpperCase() ? (item.code ? ' • ' : '') + invName : '');
@@ -21961,10 +22102,10 @@ window.google.script = {
       }
 
       const currentItems = getCustomFastItems();
-      tempCustomizerItems = JSON.parse(JSON.stringify(currentItems));
+      tempCustomizerItems = sanitizeFastItems(JSON.parse(JSON.stringify(currentItems)));
 
       const currentGroups = getCustomFastGroups();
-      tempCustomizerGroups = JSON.parse(JSON.stringify(currentGroups));
+      tempCustomizerGroups = sanitizeFastGroups(JSON.parse(JSON.stringify(currentGroups)));
 
       // Reset ô thêm nhóm mới
       const newGrpInp = document.getElementById('cust-new-group-name');
@@ -22089,22 +22230,23 @@ window.google.script = {
       }
 
       const countMap = {};
-      tempCustomizerGroups.forEach(g => { countMap[g] = 0; });
+      tempCustomizerGroups.forEach(g => { countMap[fixVietnameseMojibake(g)] = 0; });
       tempCustomizerItems.forEach(it => {
-        const g = it.group || '';
+        const g = fixVietnameseMojibake(it.group || '');
         if (countMap[g] !== undefined) countMap[g]++;
       });
 
       let html = '';
       tempCustomizerGroups.forEach((grp, idx) => {
-        const count = countMap[grp] || 0;
+        const cleanGrp = fixVietnameseMojibake(grp);
+        const count = countMap[cleanGrp] || countMap[grp] || 0;
         html += `
-          <tr id="cust-group-row-${encodeURIComponent(grp)}" class="hover:bg-teal-50/40 transition border-b border-slate-100">
+          <tr id="cust-group-row-${encodeURIComponent(cleanGrp)}" class="hover:bg-teal-50/40 transition border-b border-slate-100">
             <td class="px-3 py-2 text-center text-slate-400 font-mono text-xs">${idx + 1}</td>
             <td class="px-3 py-2">
               <div class="flex items-center space-x-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                <span class="font-extrabold text-teal-950 text-xs sm:text-[13px]">${escapeHtml(grp)}</span>
+                <span class="font-extrabold text-teal-950 text-xs sm:text-[13px]">${escapeHtml(cleanGrp)}</span>
               </div>
             </td>
             <td class="px-3 py-2 text-center">
@@ -22116,21 +22258,21 @@ window.google.script = {
             </td>
             <td class="px-3 py-2 text-center">
               <div class="inline-flex items-center justify-center space-x-1.5 flex-nowrap whitespace-nowrap">
-                <button type="button" onclick="openGroupDetailModal('${escapeJsString(grp)}')"
+                <button type="button" onclick="openGroupDetailModal('${escapeJsString(cleanGrp)}')"
                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 hover:text-sky-900 border border-sky-200 transition shadow-2xs cursor-pointer whitespace-nowrap"
-                        title="Xem danh sách sản phẩm trong nhóm ${escapeHtml(grp)} và thêm SP vào nhóm">
+                        title="Xem danh sách sản phẩm trong nhóm ${escapeHtml(cleanGrp)} và thêm SP vào nhóm">
                   <i class="bi bi-eye text-xs"></i>
                   <span>Xem thông tin</span>
                 </button>
-                <button type="button" onclick="renameCustomGroupPrompt('${escapeJsString(grp)}')"
+                <button type="button" onclick="renameCustomGroupPrompt('${escapeJsString(cleanGrp)}')"
                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 border border-teal-200 transition shadow-2xs cursor-pointer whitespace-nowrap"
-                        title="Đổi tên nhóm ${escapeHtml(grp)}">
+                        title="Đổi tên nhóm ${escapeHtml(cleanGrp)}">
                   <i class="bi bi-pencil-square text-xs"></i>
                   <span>Sửa tên</span>
                 </button>
-                <button type="button" onclick="deleteCustomGroupFromModal('${escapeJsString(grp)}')"
+                <button type="button" onclick="deleteCustomGroupFromModal('${escapeJsString(cleanGrp)}')"
                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 hover:text-rose-800 border border-rose-200 transition shadow-2xs cursor-pointer whitespace-nowrap"
-                        title="Xóa nhóm ${escapeHtml(grp)}">
+                        title="Xóa nhóm ${escapeHtml(cleanGrp)}">
                   <i class="bi bi-trash text-xs"></i>
                   <span>Xóa</span>
                 </button>
@@ -22625,6 +22767,8 @@ window.google.script = {
     // TỰ ĐỘNG LƯU & CẬP NHẬT TỨC THÌ VÀO HỆ THỐNG
     // ========================================================
     function autoSaveFastCustomizer(showNotification = false, notificationTitle = 'Đã tự động lưu!') {
+      tempCustomizerItems = sanitizeFastItems(tempCustomizerItems);
+      tempCustomizerGroups = sanitizeFastGroups(tempCustomizerGroups);
       saveCustomFastItems(tempCustomizerItems);
       saveCustomFastGroups(tempCustomizerGroups);
       renderFastGroupCheckboxes();
@@ -22829,11 +22973,12 @@ window.google.script = {
     }
 
     function renameCustomGroupPrompt(oldName) {
+      const oldClean = fixVietnameseMojibake(oldName);
       Swal.fire({
         title: 'Đổi tên nhóm sản phẩm',
-        text: `Đổi tên cho nhóm "${oldName}":`,
+        text: `Đổi tên cho nhóm "${oldClean}":`,
         input: 'text',
-        inputValue: oldName,
+        inputValue: oldClean,
         inputPlaceholder: 'Nhập tên nhóm mới...',
         showCancelButton: true,
         confirmButtonText: 'Lưu thay đổi',
@@ -22843,25 +22988,25 @@ window.google.script = {
           if (!value || !value.trim()) {
             return 'Tên nhóm không được để trống!';
           }
-          const trimmed = value.trim();
-          if (trimmed.toLowerCase() !== oldName.toLowerCase() && 
-              tempCustomizerGroups.some(g => g.toLowerCase() === trimmed.toLowerCase())) {
+          const trimmed = fixVietnameseMojibake(value.trim());
+          if (trimmed.toLowerCase() !== oldClean.toLowerCase() && 
+              tempCustomizerGroups.some(g => fixVietnameseMojibake(g).toLowerCase() === trimmed.toLowerCase())) {
             return `Tên nhóm "${trimmed}" đã tồn tại!`;
           }
         }
       }).then(res => {
         if (res.isConfirmed && res.value && res.value.trim()) {
-          const newName = res.value.trim();
-          if (newName === oldName) return;
+          const newName = fixVietnameseMojibake(res.value.trim());
+          if (newName === oldClean) return;
 
-          const idx = tempCustomizerGroups.findIndex(g => g.toLowerCase() === oldName.toLowerCase());
+          const idx = tempCustomizerGroups.findIndex(g => fixVietnameseMojibake(g).toLowerCase() === oldClean.toLowerCase());
           if (idx >= 0) {
             tempCustomizerGroups[idx] = newName;
           }
 
           let updatedItemsCount = 0;
           tempCustomizerItems.forEach(it => {
-            if ((it.group || '').toLowerCase() === oldName.toLowerCase()) {
+            if (fixVietnameseMojibake(it.group || '').toLowerCase() === oldClean.toLowerCase()) {
               it.group = newName;
               updatedItemsCount++;
             }
@@ -22888,13 +23033,13 @@ window.google.script = {
 
     function addNewCustomGroupFromModal() {
       const inp = document.getElementById('cust-new-group-name');
-      const val = (inp ? inp.value : '').trim();
+      const val = fixVietnameseMojibake((inp ? inp.value : '').trim());
       if (!val) {
         Swal.fire('Chú ý', 'Vui lòng nhập tên nhóm cần tạo!', 'warning');
         return;
       }
 
-      const exists = tempCustomizerGroups.some(g => g.toLowerCase() === val.toLowerCase());
+      const exists = tempCustomizerGroups.some(g => fixVietnameseMojibake(g).toLowerCase() === val.toLowerCase());
       if (exists) {
         Swal.fire('Thông báo', `Nhóm "${val}" đã tồn tại trong danh sách!`, 'info');
         return;
@@ -22950,12 +23095,13 @@ window.google.script = {
     }
 
     function deleteCustomGroupFromModal(groupName) {
-      const itemsInGroup = tempCustomizerItems.filter(it => (it.group || '').toLowerCase() === groupName.toLowerCase());
+      const cleanGroup = fixVietnameseMojibake(groupName);
+      const itemsInGroup = tempCustomizerItems.filter(it => fixVietnameseMojibake(it.group || '').toLowerCase() === cleanGroup.toLowerCase());
 
       const doDelete = () => {
-        tempCustomizerGroups = tempCustomizerGroups.filter(g => g.toLowerCase() !== groupName.toLowerCase());
+        tempCustomizerGroups = tempCustomizerGroups.filter(g => fixVietnameseMojibake(g).toLowerCase() !== cleanGroup.toLowerCase());
         tempCustomizerItems.forEach(it => {
-          if ((it.group || '').toLowerCase() === groupName.toLowerCase()) {
+          if (fixVietnameseMojibake(it.group || '').toLowerCase() === cleanGroup.toLowerCase()) {
             it.group = '';
           }
         });
@@ -22970,7 +23116,7 @@ window.google.script = {
 
       if (itemsInGroup.length > 0) {
         Swal.fire({
-          title: `Xóa nhóm "${groupName}"?`,
+          title: `Xóa nhóm "${cleanGroup}"?`,
           text: `Đang có ${itemsInGroup.length} sản phẩm thuộc nhóm này. Nếu xóa, các sản phẩm sẽ được chuyển về "Chưa phân nhóm" (không bị mất).`,
           icon: 'question',
           showCancelButton: true,
