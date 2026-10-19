@@ -5250,6 +5250,9 @@ const ClientBackend = {
         window.masterProductList.forEach(item => {
           if (item && item.code) window.masterProductMap[item.code.toLowerCase()] = item;
         });
+        try {
+          localStorage.setItem('CACHED_MASTER_PRODUCTS', JSON.stringify(window.masterProductList));
+        } catch(e) {}
 
         const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
 
@@ -6561,6 +6564,38 @@ window.google.script = {
 
     let inventoryMap = {};
     let inventoryList = [];
+    window.masterProductList = [];
+    window.masterProductMap = {};
+
+    try {
+      const _cachedM = localStorage.getItem('CACHED_MASTER_PRODUCTS') || localStorage.getItem('CACHED_INVENTORY');
+      if (_cachedM) {
+        const _parsedM = JSON.parse(_cachedM);
+        if (Array.isArray(_parsedM) && _parsedM.length > 0) {
+          window.masterProductList = _parsedM;
+          window.masterProductMap = {};
+          window.masterProductList.forEach(p => {
+            if (p && p.code) window.masterProductMap[String(p.code).trim().toLowerCase()] = p;
+          });
+        }
+      }
+    } catch(e) {}
+
+    // Hàm tiện ích lấy danh mục toàn bộ sản phẩm của hệ thống (dùng cho Phát Hàng, Kiểm Kê, Nhập Kho)
+    function getFullProductCatalogList() {
+      if (window.masterProductList && window.masterProductList.length > 0) {
+        return window.masterProductList;
+      }
+      return inventoryList || [];
+    }
+
+    function getFullProductCatalogItem(code) {
+      if (!code) return null;
+      const k = String(code).trim().toLowerCase();
+      if (window.masterProductMap && window.masterProductMap[k]) return window.masterProductMap[k];
+      if (inventoryMap && inventoryMap[k]) return inventoryMap[k];
+      return null;
+    }
     let voucherRows = [];
     let nhaptraRows = [];
     let nhaptraVouchersCached = [];
@@ -10947,7 +10982,8 @@ window.google.script = {
       if (!dropdown || !inputEl) return;
 
       activeQuery = q;
-      activeSuggestions = rankProductMatches(inventoryList, q, 30);
+      const prodSource = getFullProductCatalogList();
+      activeSuggestions = rankProductMatches(prodSource, q, 30);
 
       activeDropdownRowId = rowId;
       activeDropdownType = 'dispatch';
@@ -10998,13 +11034,17 @@ window.google.script = {
         e.preventDefault();
         const inputVal = document.getElementById(`input_dp_code_${rowId}`).value.trim();
         let selectedCode = '';
+        const prodSource = getFullProductCatalogList();
         if (isDropdownOpen && activeSuggestions.length > 0) {
           const item = activeSuggestions[highlightedIndex] || activeSuggestions[0];
           selectedCode = item.code;
         } else if (inputVal) {
-          const matches = rankProductMatches(inventoryList, inputVal, 1);
+          const matches = rankProductMatches(prodSource, inputVal, 1);
           if (matches.length > 0) selectedCode = matches[0].code;
-          else if (inventoryMap[inputVal.toLowerCase()]) selectedCode = inputVal;
+          else {
+            const ci = getFullProductCatalogItem(inputVal);
+            selectedCode = ci ? ci.code : inputVal;
+          }
         }
         if (selectedCode) {
           onDispatchRowCodeSelect(rowId, selectedCode);
@@ -17483,7 +17523,7 @@ window.google.script = {
 
     function onDispatchRowCodeSelect(rowId, code, shouldValidate = true) {
       const cleanCode = String(code || "").trim();
-      const item = inventoryMap[cleanCode.toLowerCase()];
+      const item = getFullProductCatalogItem(cleanCode);
       const finalCode = item ? item.code : cleanCode.toUpperCase();
 
       const input = document.getElementById(`input_dp_code_${rowId}`);
@@ -17600,7 +17640,7 @@ window.google.script = {
         const state = fastDispatchItemsState[fi.id];
         const qty = state ? (state.calculatedQty || 0) : 0;
         if (qty > 0 && fi.code) {
-          const inv = inventoryMap[fi.code.toLowerCase()];
+          const inv = getFullProductCatalogItem(fi.code);
           validFastList.push({
             code: fi.code.toUpperCase(),
             name: (inv && inv.name) ? inv.name : (fi.name || fi.customName),
@@ -17620,7 +17660,7 @@ window.google.script = {
         if (qInp) r.quantity = parseSmartNumber(qInp.value);
         if (nInp) r.note = nInp.value.trim(); else r.note = r.note || '';
 
-        const inv = inventoryMap[r.code.toLowerCase()];
+        const inv = getFullProductCatalogItem(r.code);
         if (inv) {
           r.name = inv.name;
           r.unit = inv.unit;
@@ -17982,7 +18022,7 @@ window.google.script = {
             return false;
           }
 
-          const inv = inventoryMap[code.toLowerCase()];
+          const inv = getFullProductCatalogItem(code);
           return {
             license_plate: vehicle.toUpperCase(),
             staff_name: staff,
@@ -24484,8 +24524,9 @@ window.google.script = {
       if (rows.length > 0) {
         rows.forEach(tr => {
           const code = tr.querySelector('.row-code')?.value.trim();
-          if (code && inventoryMap[code.toLowerCase()]) {
-            tr.dataset.bookQty = inventoryMap[code.toLowerCase()].stock || 0;
+          const inv = getFullProductCatalogItem(code);
+          if (code && inv) {
+            tr.dataset.bookQty = inv.stock || 0;
             updateKiemKeRowCalculations(tr);
           }
         });
@@ -24493,12 +24534,13 @@ window.google.script = {
     }
 
     function populateKiemKeFromInventory(mode) {
-      if (!inventoryList || inventoryList.length === 0) {
-        Swal.fire('Thông báo', 'Dữ liệu tồn kho hiện đang được tải hoặc trống. Vui lòng thử lại sau giây lát!', 'info');
+      const sourceCatalog = getFullProductCatalogList();
+      if (!sourceCatalog || sourceCatalog.length === 0) {
+        Swal.fire('Thông báo', 'Dữ liệu bảng tồn kho hiện đang được tải hoặc trống. Vui lòng thử lại sau giây lát!', 'info');
         return;
       }
 
-      let sourceItems = inventoryList;
+      let sourceItems = sourceCatalog;
       if (mode === 'positive') {
         sourceItems = sourceItems.filter(it => (Number(it.stock) || 0) > 0);
       }
@@ -24735,7 +24777,7 @@ window.google.script = {
       if (!dropdown || !inputEl) return;
 
       activeQuery = q;
-      const prodSource = (window.masterProductList && window.masterProductList.length > 0) ? window.masterProductList : (inventoryList || []);
+      const prodSource = getFullProductCatalogList();
       activeSuggestions = rankProductMatches(prodSource, q, 30);
 
       activeDropdownRowId = rowId;
@@ -24794,16 +24836,17 @@ window.google.script = {
         e.preventDefault();
         const inputVal = (document.getElementById(`input_kk_code_${rowId}`)?.value || '').trim();
         let selectedCode = '';
-        const prodSource = (window.masterProductList && window.masterProductList.length > 0) ? window.masterProductList : (inventoryList || []);
+        const prodSource = getFullProductCatalogList();
         if (isDropdownOpen && activeSuggestions.length > 0) {
           const item = activeSuggestions[highlightedIndex] || activeSuggestions[0];
           selectedCode = item.code;
         } else if (inputVal) {
           const matches = rankProductMatches(prodSource, inputVal, 1);
           if (matches.length > 0) selectedCode = matches[0].code;
-          else if (inventoryMap[inputVal.toLowerCase()]) selectedCode = inputVal;
-          else if (window.masterProductMap && window.masterProductMap[inputVal.toLowerCase()]) selectedCode = inputVal;
-          else selectedCode = inputVal;
+          else {
+            const ci = getFullProductCatalogItem(inputVal);
+            selectedCode = ci ? ci.code : inputVal;
+          }
         }
         if (selectedCode) {
           onKiemKeRowCodeSelect(rowId, selectedCode);
@@ -24819,7 +24862,7 @@ window.google.script = {
 
     function onKiemKeRowCodeSelect(rowId, code) {
       const cleanCode = String(code || '').trim();
-      const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
+      const item = getFullProductCatalogItem(cleanCode);
       const finalCode = item ? item.code : cleanCode.toUpperCase();
 
       const codeInp = document.getElementById(`input_kk_code_${rowId}`);
@@ -25082,7 +25125,7 @@ window.google.script = {
           }
         } else {
           // Thêm dòng mới vào bảng
-          const invItem = inventoryMap[code.toLowerCase()];
+          const invItem = getFullProductCatalogItem(code);
           const bookQty = invItem ? (Number(invItem.stock) || 0) : 0;
           const price = getProductPrice(code);
           addKiemKeRow({
