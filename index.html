@@ -2473,12 +2473,12 @@
                   <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider text-[11px]">
                     <tr>
                       <th class="px-2 py-2.5 text-center w-12 font-mono">STT</th>
-                      <th class="px-3 py-2.5 text-center w-40 font-mono font-bold text-amber-900 bg-amber-50/70 border-b border-amber-200">Mã SP (*)</th>
+                      <th class="px-3 py-2.5 text-center w-36 font-mono font-bold text-slate-700">Mã SP (*)</th>
                       <th class="px-3.5 py-2.5 text-left min-w-[240px]">Tên Mặt Hàng / Quy Cách</th>
                       <th class="px-2.5 py-2.5 text-center w-20">ĐVT</th>
-                      <th class="px-3.5 py-2.5 text-right w-44 bg-amber-100/70 font-mono font-black text-amber-950 border-x border-amber-300">Kiểm Kê Thực Tế (*)</th>
-                      <th class="px-3 py-2.5 text-right w-32 font-mono text-slate-700">Đơn Giá</th>
-                      <th class="px-3 py-2.5 text-right w-36 font-mono font-bold text-emerald-800">Thành Tiền</th>
+                      <th class="px-3.5 py-2.5 text-right w-36 font-mono font-bold text-slate-700">Kiểm Kê Thực Tế (*)</th>
+                      <th class="px-3 py-2.5 text-right w-28 font-mono text-slate-700">Đơn Giá</th>
+                      <th class="px-3 py-2.5 text-right w-32 font-mono font-bold text-emerald-800">Thành Tiền</th>
                       <th class="px-3 py-2.5 text-left min-w-[160px]">Ghi Chú</th>
                       <th class="px-2 py-2.5 text-center w-12 no-print">Xóa</th>
                     </tr>
@@ -2498,14 +2498,20 @@
             <!-- THANH TỔNG KẾT VÀ NÚT LƯU CỐ ĐỊNH Ở ĐÁY (STICKY FOOTER BAR) -->
             <div id="sticky-kiemke-bar" class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-2.5 sm:px-6 shadow-2xl z-30 transition-all duration-300 no-print">
               <div class="w-full flex flex-col md:flex-row items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-slate-600">
-                  <div>SKU: <b id="kiemke-footer-sku-count" class="text-sm text-slate-900 font-black font-mono">0</b></div>
-                  <div class="h-3.5 w-px bg-slate-300"></div>
-                  <div>Tổng Thực Tế: <b id="kiemke-footer-actual-qty" class="text-sm text-blue-700 font-black font-mono">0</b></div>
-                  <div class="h-3.5 w-px bg-slate-300"></div>
+                <div class="flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-slate-700">
                   <div class="flex items-center space-x-1.5">
-                    <span class="font-bold text-slate-700">TỔNG TIỀN KIỂM KÊ:</span>
-                    <span id="kiemke-footer-diff-amount" class="text-base sm:text-lg font-black font-mono text-emerald-700">0 đ</span>
+                    <span class="font-bold text-slate-600">Tổng Tiền Thừa:</span>
+                    <b id="kiemke-footer-surplus-amount" class="text-sm sm:text-base font-black font-mono text-emerald-600">0 đ</b>
+                  </div>
+                  <div class="h-4 w-px bg-slate-300"></div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-bold text-slate-600">Tổng Tiền Thiếu:</span>
+                    <b id="kiemke-footer-deficit-amount" class="text-sm sm:text-base font-black font-mono text-rose-600">0 đ</b>
+                  </div>
+                  <div class="h-4 w-px bg-slate-300"></div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-bold text-slate-700">Chênh Lệch:</span>
+                    <span id="kiemke-footer-diff-amount" class="text-base sm:text-lg font-black font-mono text-slate-800">0 đ</span>
                   </div>
                 </div>
 
@@ -6701,7 +6707,8 @@ window.google.script = {
 
     function formatCurrency(val) {
       if (val === null || val === undefined || isNaN(val) || val === "") return "0 đ";
-      const num = Number(val);
+      let num = Number(val);
+      if (Math.abs(num) < 0.0001) num = 0;
       return Math.round(num).toLocaleString('vi-VN') + ' đ';
     }
 
@@ -24412,16 +24419,26 @@ window.google.script = {
       if (actualVal !== '') {
         const actualNum = Number(actualVal) || 0;
         amount = actualNum * price;
-        amountColor = (amount > 0) ? 'text-emerald-800 font-black' : 'text-slate-600 font-bold';
-        amountDisplay = formatCurrency(amount);
+        if (Math.abs(amount) < 0.0001) amount = 0;
+
+        if (amount > 0) {
+          amountColor = 'text-emerald-700 font-bold';
+          amountDisplay = '+' + formatCurrency(amount);
+        } else if (amount < 0) {
+          amountColor = 'text-rose-600 font-bold';
+          amountDisplay = '-' + formatCurrency(Math.abs(amount));
+        } else {
+          amountColor = 'text-slate-400 font-medium';
+          amountDisplay = '0 đ';
+        }
       }
 
       return `
-        <tr data-kiemke-row="true" data-row-id="${rowId}" class="hover:bg-amber-50/25 transition-colors border-b border-slate-100 text-xs group">
+        <tr data-kiemke-row="true" data-row-id="${rowId}" class="hover:bg-slate-50 transition-colors border-b border-slate-100 text-xs group">
           <!-- 1. STT -->
           <td class="px-2 py-2.5 text-center font-mono font-bold text-slate-400 row-stt align-middle">${stt}</td>
 
-          <!-- 2. MÃ SP (Ô NHẬP CHÍNH 1) -->
+          <!-- 2. MÃ SP (Ô NHẬP CHÍNH 1 - THANH LỊCH) -->
           <td class="px-2.5 py-1.5 text-center relative align-middle">
             <input type="text" id="input_kk_code_${rowId}" value="${escapeHtml(item.code || '')}" 
                    oninput="handleKiemKeCodeInput('${rowId}', this.value)"
@@ -24429,7 +24446,7 @@ window.google.script = {
                    onblur="handleKiemKeCodeBlur('${rowId}')"
                    autocomplete="off"
                    placeholder="Gõ mã SP..." 
-                   class="row-code w-full px-2.5 py-1.5 text-center font-mono font-black text-amber-950 border border-slate-300 rounded-lg uppercase focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white shadow-2xs tracking-wider transition placeholder:text-slate-300 placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-xs">
+                   class="row-code w-full px-2.5 py-1.5 text-center font-mono font-bold text-slate-800 border border-slate-300 hover:border-slate-400 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-2xs tracking-wider transition placeholder:text-slate-300 placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-xs">
           </td>
 
           <!-- 3. TÊN MẶT HÀNG / QUY CÁCH (HIỂN THỊ CHUYÊN NGHIỆP) -->
@@ -24448,13 +24465,13 @@ window.google.script = {
             <input type="hidden" id="input_kk_unit_${rowId}" class="row-unit" value="${escapeHtml(item.unit || '')}">
           </td>
 
-          <!-- 5. KIỂM KÊ THỰC TẾ (Ô NHẬP CHÍNH 2 - NỔI BẬT) -->
-          <td class="px-3 py-1.5 text-right align-middle bg-amber-50/60 border-x border-amber-200/90">
+          <!-- 5. KIỂM KÊ THỰC TẾ (Ô NHẬP CHÍNH 2 - MÀU THANH LỊCH TIÊU CHUẨN) -->
+          <td class="px-3 py-1.5 text-right align-middle">
             <input type="number" step="any" id="input_kk_qty_${rowId}" value="${actualVal}" 
                    oninput="onKiemKeActualQtyChange(this)" 
                    onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
                    placeholder="Nhập SL..." 
-                   class="row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-black text-blue-900 text-sm border-2 border-amber-400 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/30 rounded-lg bg-white shadow-2xs transition placeholder:text-slate-300 placeholder:font-sans placeholder:font-normal placeholder:text-xs">
+                   class="row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-bold text-slate-900 text-sm border border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg bg-white shadow-2xs transition placeholder:text-slate-300 placeholder:font-sans placeholder:font-normal placeholder:text-xs">
           </td>
 
           <!-- 6. ĐƠN GIÁ (HIỂN THỊ TIỀN TỆ ĐẸP MẮT) -->
@@ -24474,7 +24491,7 @@ window.google.script = {
           <td class="px-2.5 py-1.5 text-left align-middle">
             <input type="text" value="${escapeHtml(item.note || '')}" 
                    placeholder="Ghi chú nếu có..." 
-                   class="row-note w-full px-2.5 py-1 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 rounded-lg bg-white/90 transition placeholder:text-slate-300 placeholder:italic placeholder:text-[11px]">
+                   class="row-note w-full px-2.5 py-1 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 rounded-lg bg-white/90 transition placeholder:text-slate-300 placeholder:italic placeholder:text-[11px]">
           </td>
 
           <!-- 9. XÓA -->
@@ -24484,7 +24501,6 @@ window.google.script = {
             </button>
           </td>
         </tr>
-      `;
     }
 
     function addKiemKeRow(data, shouldFocus) {
@@ -24757,7 +24773,6 @@ window.google.script = {
 
     function updateKiemKeRowCalculations(tr) {
       if (!tr) return;
-      const bookQty = Number(tr.dataset.bookQty) || 0;
       const actualInp = tr.querySelector('.row-actual-qty');
       const priceInp = tr.querySelector('.row-price');
       const amountEl = tr.querySelector('.row-diff-amount');
@@ -24773,12 +24788,22 @@ window.google.script = {
         amountEl.title = '';
       } else {
         const actualNum = Number(actualVal) || 0;
-        const amount = actualNum * price;
-        const amountColor = (amount > 0) ? 'text-emerald-800 font-black' : 'text-slate-600 font-bold';
+        let amount = actualNum * price;
+        if (Math.abs(amount) < 0.0001) amount = 0;
+
+        let amountColor = 'text-slate-600 font-bold';
+        let amountDisplay = '0 đ';
+        if (amount > 0) {
+          amountColor = 'text-emerald-700 font-bold';
+          amountDisplay = '+' + formatCurrency(amount);
+        } else if (amount < 0) {
+          amountColor = 'text-rose-600 font-bold';
+          amountDisplay = '-' + formatCurrency(Math.abs(amount));
+        }
 
         amountEl.className = `px-3 py-2 text-right font-mono ${amountColor} row-diff-amount align-middle`;
-        amountEl.innerText = formatCurrency(amount);
-        amountEl.title = `SL: ${formatNumber(actualNum)} × Giá: ${formatCurrency(price)} = ${formatCurrency(amount)}`;
+        amountEl.innerText = amountDisplay;
+        amountEl.title = `SL: ${formatNumber(actualNum)} × Giá: ${formatCurrency(price)} = ${amountDisplay}`;
       }
 
       calculateKiemKeSummary();
@@ -24786,9 +24811,9 @@ window.google.script = {
 
     function calculateKiemKeSummary() {
       const rows = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
-      let skuCount = rows.length;
-      let totalActual = 0;
       let totalAmount = 0;
+      let totalSurplusAmount = 0;
+      let totalDeficitAmount = 0;
 
       rows.forEach(tr => {
         const actualInp = tr.querySelector('.row-actual-qty');
@@ -24799,21 +24824,39 @@ window.google.script = {
 
         if (aVal !== '') {
           const a = Number(aVal) || 0;
-          totalActual += a;
-          totalAmount += (a * p);
+          let rowAmount = a * p;
+          if (Math.abs(rowAmount) < 0.0001) rowAmount = 0;
+          totalAmount += rowAmount;
+
+          if (rowAmount > 0) {
+            totalSurplusAmount += rowAmount;
+          } else if (rowAmount < 0) {
+            totalDeficitAmount += Math.abs(rowAmount);
+          }
         }
       });
 
-      const skuCountEl = document.getElementById('kiemke-footer-sku-count');
-      const actualQtyEl = document.getElementById('kiemke-footer-actual-qty');
-
-      if (skuCountEl) skuCountEl.innerText = skuCount.toLocaleString('vi-VN');
-      if (actualQtyEl) actualQtyEl.innerText = formatNumber(totalActual);
-
+      const surplusEl = document.getElementById('kiemke-footer-surplus-amount');
+      const deficitEl = document.getElementById('kiemke-footer-deficit-amount');
       const diffAmtEl = document.getElementById('kiemke-footer-diff-amount');
+
+      if (surplusEl) {
+        surplusEl.innerText = formatCurrency(totalSurplusAmount);
+      }
+      if (deficitEl) {
+        deficitEl.innerText = (totalDeficitAmount > 0 ? '-' : '') + formatCurrency(totalDeficitAmount);
+      }
       if (diffAmtEl) {
-        diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-emerald-700';
-        diffAmtEl.innerText = formatCurrency(totalAmount);
+        if (Math.abs(totalAmount) < 0.0001) {
+          diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-slate-800';
+          diffAmtEl.innerText = '0 đ';
+        } else if (totalAmount > 0) {
+          diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-emerald-700';
+          diffAmtEl.innerText = '+' + formatCurrency(totalAmount);
+        } else {
+          diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-rose-600';
+          diffAmtEl.innerText = '-' + formatCurrency(Math.abs(totalAmount));
+        }
       }
     }
 
@@ -24950,6 +24993,8 @@ window.google.script = {
       const items = [];
       let totalActualQty = 0;
       let totalAmount = 0;
+      let totalSurplusAmount = 0;
+      let totalDeficitAmount = 0;
 
       rows.forEach(tr => {
         const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
@@ -24958,7 +25003,8 @@ window.google.script = {
         const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
         const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
         const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
-        const amount = actualQty * price;
+        let amount = actualQty * price;
+        if (Math.abs(amount) < 0.0001) amount = 0;
         const note = tr.querySelector('.row-note')?.value.trim() || '';
 
         if (code) {
@@ -24975,6 +25021,8 @@ window.google.script = {
 
           if (actualVal !== '') totalActualQty += actualQty;
           totalAmount += amount;
+          if (amount > 0) totalSurplusAmount += amount;
+          else if (amount < 0) totalDeficitAmount += Math.abs(amount);
         }
       });
 
@@ -25007,6 +25055,8 @@ window.google.script = {
         total_actual_qty: totalActualQty,
         total_amount: totalAmount,
         total_diff_amount: totalAmount,
+        total_surplus_amount: totalSurplusAmount,
+        total_deficit_amount: totalDeficitAmount,
         created_at: existingVoucher ? (existingVoucher.created_at || nowIso) : nowIso,
         updated_at: nowIso
       };
@@ -25233,13 +25283,13 @@ window.google.script = {
             </div>
 
             <!-- Tổng kết & Nút in -->
-            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
               <div class="flex flex-wrap items-center gap-3 font-mono">
-                <div>Tổng SKU: <b>${items.length}</b></div>
+                <div>Tổng tiền thừa: <b class="text-emerald-700">${formatCurrency(v.total_surplus_amount || 0)}</b></div>
                 <div>•</div>
-                <div>Tổng SL thực tế: <b class="text-blue-700">${formatNumber(v.total_actual_qty || 0)}</b></div>
+                <div>Tổng tiền thiếu: <b class="text-rose-600">${v.total_deficit_amount ? ('-' + formatCurrency(v.total_deficit_amount)) : '0 đ'}</b></div>
                 <div>•</div>
-                <div>Tổng tiền kiểm kê: <b class="text-emerald-700">${formatCurrency(totalAmount)}</b></div>
+                <div>Chênh lệch: <b class="${totalAmount > 0 ? 'text-emerald-700' : (totalAmount < 0 ? 'text-rose-600' : 'text-slate-800')}">${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)}</b></div>
               </div>
 
               <div class="flex items-center space-x-2">
@@ -25345,12 +25395,12 @@ window.google.script = {
           </div>
 
           <!-- TỔNG KẾT KẾT QUẢ KIỂM KÊ -->
-          <div style="border: 1px solid #cbd5e1; background-color: #f8fafc; padding: 8px 12px; border-radius: 4px; font-size: 11.5px; margin-bottom: 20px; line-height: 1.5;">
-            <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 3px; color: #1e293b;">KẾT QUẢ KIỂM KÊ HÀNG HÓA:</div>
-            <div>• Tổng số mặt hàng kiểm kê: <b>${items.length} SKU</b></div>
-            <div>• Tổng số lượng thực tế kiểm đếm: <b>${formatNumber(v.total_actual_qty || 0)}</b></div>
-            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #cbd5e1; font-weight: bold;">
-              👉 TỔNG TIỀN KIỂM KÊ: <span style="font-size: 13.5px; font-family: monospace; color: #047857;">${formatCurrency(totalAmount)}</span>
+          <div style="border: 1px solid #cbd5e1; background-color: #f8fafc; padding: 10px 14px; border-radius: 4px; font-size: 11.5px; margin-bottom: 20px; line-height: 1.6;">
+            <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: #1e293b;">KẾT QUẢ KIỂM KÊ HÀNG HÓA:</div>
+            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+              <div>• Tổng tiền thừa: <b style="color: #047857; font-family: monospace;">${formatCurrency(v.total_surplus_amount || 0)}</b></div>
+              <div>• Tổng tiền thiếu: <b style="color: #dc2626; font-family: monospace;">${v.total_deficit_amount ? ('-' + formatCurrency(v.total_deficit_amount)) : '0 đ'}</b></div>
+              <div>• Chênh lệch: <b style="color: ${totalAmount >= 0 ? '#047857' : '#dc2626'}; font-family: monospace;">${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)}</b></div>
             </div>
           </div>
 
