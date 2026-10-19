@@ -1985,22 +1985,15 @@
                           class="text-[10.5px] font-bold text-teal-700 hover:text-teal-900 hover:underline flex items-center space-x-1 cursor-pointer transition" 
                           title="Quản lý danh sách thành viên kho">
                     <i class="bi bi-people-fill text-[11px]"></i>
-                    <span>QL</span>
+                    <span>DS kho</span>
                   </button>
                 </div>
-                <div class="flex items-center gap-1.5 w-full">
-                  <div class="relative flex-1 min-w-0">
-                    <select id="dispatch-input-staff" 
-                            onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" 
-                            class="w-full h-[38px] px-2.5 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white text-slate-800 text-xs transition shadow-2xs">
-                      <option value="">-- Chọn NV kho --</option>
-                    </select>
-                  </div>
-                  <button type="button" onclick="quickAddStaffPrompt()" 
-                          class="h-[38px] w-9 flex items-center justify-center bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 rounded-lg font-bold text-xs transition shrink-0 cursor-pointer shadow-2xs" 
-                          title="Thêm nhanh thành viên mới">
-                    <i class="bi bi-person-plus-fill text-xs"></i>
-                  </button>
+                <div class="relative w-full">
+                  <select id="dispatch-input-staff" 
+                          onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" 
+                          class="w-full h-[38px] px-3 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white text-slate-800 text-xs transition shadow-2xs">
+                    <option value="">-- Chọn NV kho --</option>
+                  </select>
                 </div>
               </div>
 
@@ -2011,15 +2004,18 @@
                     STT Xe <span class="text-rose-500 font-bold">*</span>:
                   </label>
                 </div>
-                <input type="number" 
-                       id="dispatch-input-daily-seq"
-                       min="1" 
-                       step="1"
-                       value="1"
-                       oninput="if(this.value && this.value < 1) this.value = 1;"
-                       class="w-full h-[38px] text-center px-1 border-2 border-teal-500 rounded-lg font-mono font-black text-sm bg-teal-50/50 text-teal-950 focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition shadow-2xs"
-                       placeholder="1" 
-                       title="Số thứ tự chuyến xe phát trong ngày của người này">
+                <div class="relative flex items-center justify-center w-full">
+                  <input type="number" 
+                         id="dispatch-input-daily-seq"
+                         min="1" 
+                         step="1"
+                         value="1"
+                         oninput="if(this.value && this.value < 1) this.value = 1;"
+                         style="-moz-appearance: textfield; -webkit-appearance: none; appearance: none; margin: 0; text-align: center;"
+                         class="w-full h-[38px] text-center p-0 border-2 border-teal-500 rounded-xl font-sans font-black text-base bg-teal-50/70 text-teal-950 focus:bg-white focus:ring-4 focus:ring-teal-500/15 focus:border-teal-600 transition shadow-2xs [appearance:textfield] [&::-webkit-outer-spin-button]:m-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none select-all"
+                         placeholder="1" 
+                         title="Số thứ tự chuyến xe phát trong ngày của người này">
+                </div>
               </div>
 
               <!-- Ô 5: Số xe / Mã xe lấy hàng -->
