@@ -15761,13 +15761,74 @@ window.google.script = {
 
     let editingDispatchContext = null;
 
+    window._lastBadgeClickTime = 0;
+    window._lastBadgeClickId = null;
+    window.handleBadgeClickOrDblClick = function(event, targetId) {
+      const now = Date.now();
+      if (window._lastBadgeClickId === targetId && (now - window._lastBadgeClickTime) < 500) {
+        if (event) {
+          event.stopPropagation();
+          event.preventDefault();
+        }
+        window._lastBadgeClickTime = 0;
+        window._lastBadgeClickId = null;
+        if (typeof window.jumpToEditDispatchFromModal === 'function') {
+          window.jumpToEditDispatchFromModal(targetId);
+        } else {
+          openEditDispatchVoucher(targetId);
+        }
+      } else {
+        window._lastBadgeClickId = targetId;
+        window._lastBadgeClickTime = now;
+      }
+    };
+
+    window.jumpToEditDispatchFromModal = function(targetId) {
+      if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+      }
+      // 1. Tắt hết tất cả các modal, popup và bảng đang mở
+      if (typeof Swal !== 'undefined') {
+        try { Swal.close(); } catch (e) {}
+      }
+      if (typeof closeDispatchReconciliationModal === 'function') {
+        closeDispatchReconciliationModal();
+      }
+      const recModal = document.getElementById('dispatch-reconciliation-modal');
+      if (recModal) {
+        recModal.classList.add('hidden');
+        recModal.style.display = 'none';
+      }
+      if (typeof closeAllDropdowns === 'function') closeAllDropdowns();
+      if (typeof closeQuickSearchModal === 'function') closeQuickSearchModal();
+      if (typeof closeWarehouseStaffModal === 'function') closeWarehouseStaffModal();
+      if (typeof closeVehiclesManagerModal === 'function') closeVehiclesManagerModal();
+
+      openEditDispatchVoucher(targetId);
+    };
+
     function openEditDispatchVoucher(targetId) {
       if (window.getSelection) {
         window.getSelection().removeAllRanges();
       }
-      if (typeof Swal !== 'undefined' && Swal.isVisible()) {
-        Swal.close();
+
+      // Tắt hết tất cả các modal, popup và bảng đang mở để lộ ra bảng sửa
+      if (typeof Swal !== 'undefined') {
+        try { Swal.close(); } catch (e) {}
       }
+      if (typeof closeDispatchReconciliationModal === 'function') {
+        closeDispatchReconciliationModal();
+      }
+      const recModal = document.getElementById('dispatch-reconciliation-modal');
+      if (recModal) {
+        recModal.classList.add('hidden');
+        recModal.style.display = 'none';
+      }
+      if (typeof closeAllDropdowns === 'function') closeAllDropdowns();
+      if (typeof closeQuickSearchModal === 'function') closeQuickSearchModal();
+      if (typeof closeWarehouseStaffModal === 'function') closeWarehouseStaffModal();
+      if (typeof closeVehiclesManagerModal === 'function') closeVehiclesManagerModal();
+
       if (typeof switchTab === 'function') {
         switchTab('dispatch');
       }
@@ -18186,8 +18247,8 @@ window.google.script = {
           const q = parseSmartNumber(r.qty || 0);
           totalVisibleQty += q;
           const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''} ${q}`.toLowerCase();
-          const dblClickAction = r.id ? `ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
-          const badgeDblClick = r.id ? `ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
+          const dblClickAction = r.id ? `ondblclick="jumpToEditDispatchFromModal(${r.id})"` : '';
+          const badgeDblClick = r.id ? `onclick="handleBadgeClickOrDblClick(event, ${r.id})" ondblclick="event.stopPropagation(); jumpToEditDispatchFromModal(${r.id})"` : '';
 
           let isGroupStart = false;
           if (idx > 0) {
@@ -18208,14 +18269,16 @@ window.google.script = {
             : 'px-4 py-2.5 text-right font-black font-mono text-xs text-indigo-950 bg-indigo-50/50 whitespace-nowrap border-l border-indigo-100';
 
           return `
-            <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
+            <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
               <td class="px-3 py-2.5 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
               <td class="px-3 py-2.5 text-center whitespace-nowrap">
-                <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
-                  <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[10px] font-sans font-black mr-1.5 shrink-0">
+                <span ${badgeDblClick} class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-teal-400 hover:bg-teal-50/20 text-slate-900 cursor-pointer shadow-2xs transition select-none group" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-black bg-teal-50 text-teal-800 border border-teal-300 group-hover:border-teal-400 transition">
                     Xe ${r.dailySeq || 1}
                   </span>
-                  <span>${escapeHtml(r.plate || '-')}</span>
+                  <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                    ${escapeHtml(r.plate || '-')}
+                  </span>
                 </span>
               </td>
               <td class="px-4 py-2.5 text-left font-bold text-slate-800 whitespace-nowrap">
@@ -18683,8 +18746,8 @@ window.google.script = {
       const rowsHtml = records.map((r, idx) => {
         const q = parseSmartNumber(r.qty || 0);
         const searchStr = `${idx + 1} ${r.plate || ''} ${r.staff || ''} ${r.driver || ''} ${r.phone || ''} ${r.voucherNo || ''} ${r.note || ''} ${q}`.toLowerCase();
-        const dblClickAction = r.id ? `ondblclick="Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
-        const badgeDblClick = r.id ? `ondblclick="event.stopPropagation(); Swal.close(); openEditDispatchVoucher(${r.id})"` : '';
+        const dblClickAction = r.id ? `ondblclick="jumpToEditDispatchFromModal(${r.id})"` : '';
+        const badgeDblClick = r.id ? `onclick="handleBadgeClickOrDblClick(event, ${r.id})" ondblclick="event.stopPropagation(); jumpToEditDispatchFromModal(${r.id})"` : '';
 
         let isGroupStart = false;
         if (idx > 0) {
@@ -18694,14 +18757,16 @@ window.google.script = {
         const groupBorderClass = isGroupStart ? 'border-t-2 border-indigo-200' : 'border-b border-slate-100';
 
         return `
-          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" onmousedown="event.detail > 1 && event.preventDefault()" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
+          <tr class="product-detail-row hover:bg-amber-50/50 even:bg-slate-50/40 cursor-pointer transition-colors text-xs ${groupBorderClass} select-none" data-search="${escapeHtml(searchStr)}" data-qty="${q}" ${dblClickAction} title="Nhấp đúp chuột để sửa phiếu phát hàng này">
             <td class="px-3 py-2.5 text-center text-slate-400 font-mono row-idx">${idx + 1}</td>
             <td class="px-3 py-2.5 text-center whitespace-nowrap">
-              <span ${badgeDblClick} onmousedown="event.detail > 1 && event.preventDefault()" class="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:border-amber-400 hover:bg-amber-100 hover:text-amber-950 text-xs cursor-pointer transition select-none" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
-                <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[10px] font-sans font-black mr-1.5 shrink-0">
+              <span ${badgeDblClick} class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-teal-400 hover:bg-teal-50/20 text-slate-900 cursor-pointer shadow-2xs transition select-none group" title="Chuyến xe #${r.dailySeq || 1} của ${escapeHtml(r.staff || '')} - Nhấp đúp chuột để sửa phiếu">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-black bg-teal-50 text-teal-800 border border-teal-300 group-hover:border-teal-400 transition">
                   Xe ${r.dailySeq || 1}
                 </span>
-                <span>${escapeHtml(r.plate || '-')}</span>
+                <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                  ${escapeHtml(r.plate || '-')}
+                </span>
               </span>
             </td>
             <td class="px-4 py-2.5 text-left font-bold text-slate-800 whitespace-nowrap">
