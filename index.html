@@ -5056,15 +5056,11 @@ async function fetchProductsForItems_(rawCodes) {
       if (p && p.code) prodMap[p.code.toLowerCase()] = p;
     });
   } else {
-  const baseEp = "products?select=code,name,unit,stock_tp,stock_pp,total_stock,pack_qty,pack_unit&order=code.asc";
-  const [b1, b2] = await Promise.all([
-    callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
-    callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => [])
-  ]);
-  const prods = (b1 || []).concat(b2 || []);
-  prods.forEach(p => {
-    if (p && p.code) prodMap[p.code.toLowerCase()] = p;
-  });
+    const baseEp = "products?select=code,name,unit,stock_tp,stock_pp,total_stock,pack_qty,pack_unit&order=code.asc";
+    const prods = (await callSupabase_(baseEp, "GET").catch(() => [])) || [];
+    prods.forEach(p => {
+      if (p && p.code) prodMap[p.code.toLowerCase()] = p;
+    });
   }
 
   // TỒN KHO RIÊNG: Nếu đang ở kho riêng của nhân viên, nạp tồn kho từ warehouse_stock
@@ -5226,16 +5222,7 @@ const ClientBackend = {
 
       if (!isHistorical) {
         const baseEp = "products?select=code,name,unit,pack_qty,pack_unit,stock_tp,stock_pp,total_stock&order=code.asc";
-        let products = [];
-        if (STORAGE_MODE !== 'CLOUD') {
-          products = (await callSupabaseSingle_(baseEp, "GET").catch(() => [])) || [];
-        } else {
-          const [batch1, batch2] = await Promise.all([
-            callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
-            callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => [])
-          ]);
-          products = (batch1 || []).concat(batch2 || []);
-        }
+        const products = (await callSupabase_(baseEp, "GET").catch(() => [])) || [];
 
         const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
 
@@ -5243,7 +5230,7 @@ const ClientBackend = {
         if (activeScope !== 'all' && activeScope !== 'admin') {
           // 1. Tải tồn kho riêng từ warehouse_stock
           try {
-            const whStockList = (await callSupabaseSingle_(`warehouse_stock?warehouse=eq.${encodeURIComponent(activeScope)}&select=*`, "GET").catch(() => [])) || [];
+            const whStockList = (await callSupabase_(`warehouse_stock?warehouse=eq.${encodeURIComponent(activeScope)}&select=*`, "GET").catch(() => [])) || [];
             if (Array.isArray(whStockList) && whStockList.length > 0) {
               whStockList.forEach(ws => {
                 if (ws && ws.code) {
@@ -5328,13 +5315,10 @@ const ClientBackend = {
 
       // Tồn quá khứ
       const baseEp = "products?select=code,name,unit,pack_qty,pack_unit&order=code.asc";
-      const [b1, b2, txs] = await Promise.all([
-        callSupabaseSingle_(`${baseEp}&limit=1000&offset=0`, "GET").catch(() => []),
-        callSupabaseSingle_(`${baseEp}&limit=1000&offset=1000`, "GET").catch(() => []),
+      const [products, txs] = await Promise.all([
+        callSupabase_(baseEp, "GET").catch(() => []),
         callSupabase_(`inventory_transactions?voucher_date=lte.${targetDateStr}&select=code,quantity,type,quality,note,warehouse`, "GET").catch(() => [])
       ]);
-
-      const products = (b1 || []).concat(b2 || []);
       const itemMap = {};
       const items = [];
 
@@ -6116,16 +6100,14 @@ const ClientBackend = {
   async getDailyMovement(targetDateStr) {
     try {
       const baseProds = "products?select=code,name,unit,pack_qty,pack_unit&order=code.asc";
-      const [dayTxs, beforeTxs, b1, b2] = await Promise.all([
+      const [dayTxs, beforeTxs, prods] = await Promise.all([
         callSupabaseSingle_(`inventory_transactions?voucher_date=eq.${targetDateStr}&select=id,voucher_no,type,code,name,unit,quantity,quality,note&order=id.asc&limit=1000`, "GET").catch(() => []),
         callSupabase_(`inventory_transactions?voucher_date=lt.${targetDateStr}&select=code,quantity,type`, "GET").catch(() => []),
-        callSupabaseSingle_(`${baseProds}&limit=1000&offset=0`, "GET").catch(() => []),
-        callSupabaseSingle_(`${baseProds}&limit=1000&offset=1000`, "GET").catch(() => [])
+        callSupabase_(baseProds, "GET").catch(() => [])
       ]);
 
-      const prods = (b1 || []).concat(b2 || []);
       const prodMap = {};
-      prods.forEach(p => { prodMap[p.code.toLowerCase()] = p; });
+      (prods || []).forEach(p => { if (p && p.code) prodMap[p.code.toLowerCase()] = p; });
 
       const beforeStockMap = {};
       (beforeTxs || []).forEach(t => {
