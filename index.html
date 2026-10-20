@@ -14314,17 +14314,7 @@ window.google.script = {
         return;
       }
 
-      if (editingStaffId !== null) {
-        if (warehouseStaffListCached.some(st => st.id !== editingStaffId && st.name.toLowerCase() === name.toLowerCase())) {
-          Swal.fire('Chú ý', `Tên thành viên "${name}" đã bị trùng với người khác!`, 'info');
-          return;
-        }
-      } else {
-        if (warehouseStaffListCached.some(st => st.name.toLowerCase() === name.toLowerCase())) {
-          Swal.fire('Chú ý', `Thành viên "${name}" đã có trong danh sách!`, 'info');
-          return;
-        }
-      }
+
 
       Swal.fire({ title: editingStaffId ? 'Đang cập nhật thành viên...' : 'Đang lưu thành viên...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
