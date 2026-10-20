@@ -2430,12 +2430,9 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
-                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">
-                    Hủy bỏ
-                  </button>
-                  <button type="button" onclick="saveKiemKeVoucher(false)" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer">
-                    <i class="bi bi-check2-circle"></i>
-                    <span>Lưu Phiếu (Ctrl+S)</span>
+                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer" title="Hủy bỏ và quay lại danh sách phiếu kiểm kê">
+                    <i class="bi bi-x-lg text-xs"></i>
+                    <span>Hủy bỏ</span>
                   </button>
                 </div>
               </div>
@@ -2467,22 +2464,26 @@
               </div>
 
               <!-- THANH CÔNG CỤ NẠP NHANH DÒNG HÀNG -->
-              <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <button type="button" onclick="openPasteKiemKeModal()" class="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl font-bold transition flex items-center space-x-1 cursor-pointer" title="Dán nhanh danh sách Mã và SL thực tế từ Excel hoặc bản kiểm đếm">
-                    <i class="bi bi-clipboard-data text-purple-600"></i>
-                    <span>Dán Nhanh (Mã - SL)</span>
-                  </button>
-                  <button type="button" onclick="addKiemKeRow(null, true)" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition flex items-center space-x-1 cursor-pointer shadow-2xs">
-                    <i class="bi bi-plus-lg"></i>
-                    <span>Thêm Sản Phẩm (F2)</span>
+              <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="bi bi-card-checklist text-amber-600"></i>
+                    <span>Danh sách mặt hàng kiểm kê</span>
+                  </span>
+                  <button type="button" onclick="clearKiemKeRows()" class="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-500 rounded-lg text-xs font-medium transition flex items-center space-x-1 cursor-pointer" title="Xóa toàn bộ các dòng kiểm kê trong bảng">
+                    <i class="bi bi-trash3 text-xs"></i>
+                    <span>Xóa trắng bảng</span>
                   </button>
                 </div>
 
                 <div class="flex items-center space-x-2">
-                  <button type="button" onclick="clearKiemKeRows()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-500 rounded-xl font-medium transition flex items-center space-x-1 cursor-pointer" title="Xóa trắng bảng kiểm kê hiện tại">
-                    <i class="bi bi-trash3"></i>
-                    <span>Xóa trắng bảng</span>
+                  <button type="button" onclick="openPasteKiemKeModal()" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl font-bold transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Dán nhanh danh sách Mã và SL thực tế từ Excel hoặc bản kiểm đếm">
+                    <i class="bi bi-clipboard-data text-purple-600"></i>
+                    <span>Dán Nhanh (Mã - SL)</span>
+                  </button>
+                  <button type="button" onclick="addKiemKeRow(null, true)" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs">
+                    <i class="bi bi-plus-lg font-bold"></i>
+                    <span>Thêm Sản Phẩm (F2)</span>
                   </button>
                 </div>
               </div>
@@ -2545,13 +2546,9 @@
                     <i class="bi bi-file-earmark-excel text-emerald-600"></i>
                     <span>Xuất Excel Phiếu</span>
                   </button>
-                  <button type="button" onclick="saveKiemKeVoucher(false)" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer">
-                    <i class="bi bi-save"></i>
+                  <button type="button" onclick="saveKiemKeVoucher(false)" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer">
+                    <i class="bi bi-check2-circle text-base"></i>
                     <span>Lưu Phiếu (Ctrl+S)</span>
-                  </button>
-                  <button type="button" onclick="saveKiemKeVoucher(true)" class="px-5 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer" title="Lưu phiếu và mở ngay biên bản đối chiếu kiểm kê A4 để in ấn">
-                    <i class="bi bi-printer-fill"></i>
-                    <span>Lưu &amp; In Biên Bản A4</span>
                   </button>
                 </div>
               </div>
