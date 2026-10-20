@@ -2342,7 +2342,7 @@
             </div>
 
             <!-- THẺ KPI THỐNG KÊ KIỂM KÊ -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 no-print">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 no-print">
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0">
                   <i class="bi bi-receipt"></i>
@@ -2364,22 +2364,32 @@
               </div>
 
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold shrink-0">
-                  <i class="bi bi-box-seam"></i>
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold shrink-0">
+                  <i class="bi bi-arrow-up-circle-fill"></i>
                 </div>
                 <div class="min-w-0">
-                  <div class="text-[11px] font-bold text-slate-400 uppercase">Tổng SL thực tế</div>
-                  <div id="kiemke-kpi-total-actual-qty" class="text-base sm:text-lg font-black text-indigo-700 font-mono">0</div>
+                  <div class="text-[11px] font-bold text-slate-400 uppercase">Tổng tiền thừa</div>
+                  <div id="kiemke-kpi-total-surplus" class="text-base sm:text-lg font-black text-emerald-700 font-mono">0 đ</div>
                 </div>
               </div>
 
               <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-bold shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg font-bold shrink-0">
+                  <i class="bi bi-arrow-down-circle-fill"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[11px] font-bold text-slate-400 uppercase">Tổng tiền thiếu</div>
+                  <div id="kiemke-kpi-total-deficit" class="text-base sm:text-lg font-black text-rose-700 font-mono">0 đ</div>
+                </div>
+              </div>
+
+              <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-50 text-slate-700 flex items-center justify-center text-lg font-bold shrink-0">
                   <i class="bi bi-cash-stack"></i>
                 </div>
                 <div class="min-w-0">
                   <div class="text-[11px] font-bold text-slate-400 uppercase">Tổng tiền kiểm kê</div>
-                  <div id="kiemke-kpi-total-amount" class="text-base sm:text-lg font-black text-emerald-700 font-mono">0 đ</div>
+                  <div id="kiemke-kpi-total-amount" class="text-base sm:text-lg font-black text-slate-800 font-mono">0 đ</div>
                 </div>
               </div>
             </div>
@@ -2388,22 +2398,21 @@
             <div class="bg-white rounded-2xl shadow-xs border border-slate-200/80 overflow-hidden w-full">
               <div class="overflow-x-auto max-h-[600px] custom-scroll w-full">
                 <table id="kiemke-vouchers-table" class="min-w-full divide-y divide-slate-200 text-xs">
-                  <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider">
+                  <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider text-[11px]">
                     <tr>
                       <th class="px-2 py-2.5 text-center w-12 font-mono">STT</th>
-                      <th class="px-3 py-2.5 text-center w-36 font-mono">Số Phiếu</th>
-                      <th class="px-3 py-2.5 text-center w-28">Ngày Kiểm</th>
-                      <th class="px-3 py-2.5 text-left w-32">Kho Hàng</th>
-                      <th class="px-3 py-2.5 text-left w-36">Người Kiểm Kê</th>
+                      <th class="px-3 py-2.5 text-center w-40 font-mono">Số Phiếu</th>
+                      <th class="px-3 py-2.5 text-left min-w-[150px]">Người Kiểm Kê</th>
                       <th class="px-2.5 py-2.5 text-center w-24">Số SKU</th>
-                      <th class="px-3 py-2.5 text-right w-32 font-mono font-bold text-blue-700">Tổng SL Thực Tế</th>
-                      <th class="px-3.5 py-2.5 text-right w-40 font-mono font-bold text-emerald-800">Tổng Tiền Kiểm Kê</th>
+                      <th class="px-3.5 py-2.5 text-right w-36 font-mono font-bold text-emerald-700">Tổng Tiền Thừa</th>
+                      <th class="px-3.5 py-2.5 text-right w-36 font-mono font-bold text-rose-700">Tổng Tiền Thiếu</th>
+                      <th class="px-3.5 py-2.5 text-right w-40 font-mono font-bold text-slate-900">Tổng Tiền Kiểm Kê</th>
                       <th class="px-3 py-2.5 text-left min-w-[140px]">Ghi Chú</th>
                       <th class="px-3 py-2.5 text-center w-36 no-print">Thao Tác</th>
                     </tr>
                   </thead>
                   <tbody id="kiemke-vouchers-tbody" class="divide-y divide-slate-100 bg-white">
-                    <tr><td colspan="10" class="text-center py-8 text-slate-400">Đang nạp danh sách phiếu kiểm kê...</td></tr>
+                    <tr><td colspan="9" class="text-center py-8 text-slate-400">Đang nạp danh sách phiếu kiểm kê...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -25545,7 +25554,7 @@ window.google.script = {
       // Nạp dữ liệu phiếu kiểm kê từ Supabase / LocalDB
       const tbody = document.getElementById('kiemke-vouchers-tbody');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
       }
 
       await fetchKiemKeVouchersFromCloud_();
@@ -25801,12 +25810,25 @@ window.google.script = {
     function updateKiemKeKpis(filteredList) {
       const totalVouchers = filteredList.length;
       let totalSkus = 0;
-      let totalActualQty = 0;
+      let totalSurplus = 0;
+      let totalDeficit = 0;
       let totalAmount = 0;
 
       filteredList.forEach(v => {
         totalSkus += (v.items ? v.items.length : (Number(v.total_skus) || 0));
-        totalActualQty += (Number(v.total_actual_qty) || 0);
+
+        let surplus = Number(v.total_surplus_amount) || 0;
+        let deficit = Number(v.total_deficit_amount) || 0;
+        if (surplus === 0 && deficit === 0 && Array.isArray(v.items) && v.items.length > 0) {
+          v.items.forEach(it => {
+            const amt = Number(it.amount !== undefined ? it.amount : it.diff_amount) || 0;
+            if (amt > 0) surplus += amt;
+            else if (amt < 0) deficit += Math.abs(amt);
+          });
+        }
+        totalSurplus += surplus;
+        totalDeficit += deficit;
+
         const amt = (v.total_amount !== undefined && v.total_amount !== null) 
           ? Number(v.total_amount) 
           : (Number(v.total_diff_amount) || 0);
@@ -25815,12 +25837,14 @@ window.google.script = {
 
       const totalVouchersEl = document.getElementById('kiemke-kpi-total-vouchers');
       const totalSkusEl = document.getElementById('kiemke-kpi-total-skus');
-      const totalActualQtyEl = document.getElementById('kiemke-kpi-total-actual-qty');
+      const totalSurplusEl = document.getElementById('kiemke-kpi-total-surplus');
+      const totalDeficitEl = document.getElementById('kiemke-kpi-total-deficit');
       const totalAmountEl = document.getElementById('kiemke-kpi-total-amount');
 
       if (totalVouchersEl) totalVouchersEl.innerText = totalVouchers.toLocaleString('vi-VN');
       if (totalSkusEl) totalSkusEl.innerText = totalSkus.toLocaleString('vi-VN');
-      if (totalActualQtyEl) totalActualQtyEl.innerText = formatNumber(totalActualQty);
+      if (totalSurplusEl) totalSurplusEl.innerText = formatCurrency(totalSurplus);
+      if (totalDeficitEl) totalDeficitEl.innerText = formatCurrency(totalDeficit);
       if (totalAmountEl) totalAmountEl.innerText = formatCurrency(totalAmount);
     }
 
@@ -25829,17 +25853,25 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">Không có phiếu kiểm kê nào phù hợp với bộ lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400">Không có phiếu kiểm kê nào phù hợp với bộ lọc</td></tr>';
         return;
       }
 
       tbody.innerHTML = list.map((v, idx) => {
-        const actualQty = Number(v.total_actual_qty) || 0;
+        let surplus = Number(v.total_surplus_amount) || 0;
+        let deficit = Number(v.total_deficit_amount) || 0;
+        if (surplus === 0 && deficit === 0 && Array.isArray(v.items) && v.items.length > 0) {
+          v.items.forEach(it => {
+            const amt = Number(it.amount !== undefined ? it.amount : it.diff_amount) || 0;
+            if (amt > 0) surplus += amt;
+            else if (amt < 0) deficit += Math.abs(amt);
+          });
+        }
+
         const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) 
           ? Number(v.total_amount) 
           : (Number(v.total_diff_amount) || 0);
 
-        const warehouseName = v.warehouse_name || v.warehouse_id || 'Kho chính';
         const itemCount = v.items ? v.items.length : (v.total_skus || 0);
         const notesDisplay = v.notes ? escapeHtml(v.notes) : '<span class="text-slate-300 italic">-</span>';
 
@@ -25848,15 +25880,15 @@ window.google.script = {
             <td class="px-2 py-2.5 text-center font-mono text-slate-400">${idx + 1}</td>
             <td class="px-3 py-2.5 text-center font-mono font-bold text-amber-900 bg-amber-50/30">
               <span class="hover:underline cursor-pointer" onclick="viewKiemKeDetail('${escapeHtml(v.id)}')">${escapeHtml(v.voucher_code)}</span>
+              <div class="text-[10px] text-slate-400 font-sans font-normal mt-0.5">${formatDateVN(v.kiemke_date)}</div>
             </td>
-            <td class="px-3 py-2.5 text-center font-mono text-slate-600">${formatDateVN(v.kiemke_date)}</td>
-            <td class="px-3 py-2.5 text-left font-medium text-slate-800">${escapeHtml(warehouseName)}</td>
             <td class="px-3 py-2.5 text-left font-semibold text-slate-700">${escapeHtml(v.creator_name || '-')}</td>
             <td class="px-2.5 py-2.5 text-center font-mono font-bold text-blue-700">${formatNumber(itemCount)}</td>
-            <td class="px-3 py-2.5 text-right font-mono font-bold text-blue-700">${formatNumber(actualQty)}</td>
-            <td class="px-3.5 py-2.5 text-right font-mono font-bold text-emerald-800">${formatCurrency(totalAmount)}</td>
-            <td class="px-3 py-2.5 text-left text-slate-600 truncate max-w-[220px]" title="${escapeHtml(v.notes || '')}">${notesDisplay}</td>
-            <td class="px-3 py-2.5 text-center no-print space-x-1">
+            <td class="px-3.5 py-2.5 text-right font-mono font-bold text-emerald-700">${formatCurrency(surplus)}</td>
+            <td class="px-3.5 py-2.5 text-right font-mono font-bold text-rose-700">${formatCurrency(deficit)}</td>
+            <td class="px-3.5 py-2.5 text-right font-mono font-black text-slate-800">${formatCurrency(totalAmount)}</td>
+            <td class="px-3 py-2.5 text-left text-slate-600 truncate max-w-[200px]" title="${escapeHtml(v.notes || '')}">${notesDisplay}</td>
+            <td class="px-3 py-2.5 text-center no-print space-x-1 whitespace-nowrap">
               <button type="button" onclick="viewKiemKeDetail('${escapeHtml(v.id)}')" class="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold transition cursor-pointer" title="Xem chi tiết phiếu">
                 <i class="bi bi-eye"></i>
               </button>
@@ -27176,27 +27208,35 @@ window.google.script = {
 
       try {
         const rows = [
-          ['STT', 'Số Phiếu', 'Ngày Kiểm Kê', 'Kho Hàng', 'Người Kiểm Kê', 'Số Lượng SKU', 'Tổng SL Thực Tế', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú']
+          ['STT', 'Số Phiếu', 'Ngày Kiểm Kê', 'Người Kiểm Kê', 'Số Lượng SKU', 'Tổng Tiền Thừa (VNĐ)', 'Tổng Tiền Thiếu (VNĐ)', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú']
         ];
 
         kiemKeVouchersList.forEach((v, idx) => {
-          const actualQty = Number(v.total_actual_qty) || 0;
+          let surplus = Number(v.total_surplus_amount) || 0;
+          let deficit = Number(v.total_deficit_amount) || 0;
+          if (surplus === 0 && deficit === 0 && Array.isArray(v.items) && v.items.length > 0) {
+            v.items.forEach(it => {
+              const amt = Number(it.amount !== undefined ? it.amount : it.diff_amount) || 0;
+              if (amt > 0) surplus += amt;
+              else if (amt < 0) deficit += Math.abs(amt);
+            });
+          }
           const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
           rows.push([
             idx + 1,
             v.voucher_code,
             formatDateVN(v.kiemke_date),
-            v.warehouse_name || v.warehouse_id || 'Kho chính',
             v.creator_name || '',
             v.items ? v.items.length : (v.total_skus || 0),
-            actualQty,
+            surplus,
+            deficit,
             totalAmount,
             v.notes || ''
           ]);
         });
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 16 }, { wch: 20 }, { wch: 22 }, { wch: 14 }, { wch: 18 }, { wch: 24 }, { wch: 28 }];
+        ws['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 16 }, { wch: 22 }, { wch: 14 }, { wch: 20 }, { wch: 20 }, { wch: 24 }, { wch: 28 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "DanhSachKiemKe");
         XLSX.writeFile(wb, `Danh_Sach_Phieu_Kiem_Ke_${getLocalTodayISO()}.xlsx`);
