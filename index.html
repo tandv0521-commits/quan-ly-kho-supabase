@@ -8304,6 +8304,10 @@ window.google.script = {
       });
 
       try {
+        const oldUser = (Array.isArray(appUsersCachedList) ? appUsersCachedList : ((typeof LocalDB !== 'undefined' && LocalDB.cache?.['app_users']) || [])).find(x => x.id === userId);
+        const oldFullName = oldUser ? String(oldUser.full_name || '').trim() : '';
+        const oldUsername = oldUser ? String(oldUser.username || '').trim() : '';
+
         const payload = {
           username: cleanUsername,
           full_name: cleanFullName,
@@ -8321,6 +8325,35 @@ window.google.script = {
           const idx = LocalDB.cache['app_users'].findIndex(x => x.id === userId);
           if (idx >= 0) {
             LocalDB.cache['app_users'][idx] = { ...LocalDB.cache['app_users'][idx], ...payload };
+          }
+        }
+
+        // Tự động đồng bộ sang bảng thành viên kho warehouse_staff
+        if (oldFullName && oldFullName.toLowerCase() !== cleanFullName.toLowerCase()) {
+          const matchedStaffList = warehouseStaffListCached.filter(st => {
+            const stName = (st.name || '').trim().toLowerCase();
+            const stWh = (st.warehouse || '').trim().toLowerCase();
+            return stName === oldFullName.toLowerCase() || (oldUsername && stWh === oldUsername.toLowerCase());
+          });
+
+          for (const st of matchedStaffList) {
+            st.name = cleanFullName;
+            st.warehouse = cleanUsername;
+            try {
+              await callSupabaseSingle_(`warehouse_staff?id=eq.${st.id}`, 'PATCH', { name: cleanFullName, warehouse: cleanUsername });
+            } catch (syncErr) {
+              console.warn('Lỗi đồng bộ warehouse_staff khi sửa user:', syncErr);
+            }
+          }
+
+          if (localStorage.getItem('last_dispatch_staff') === oldFullName) {
+            localStorage.setItem('last_dispatch_staff', cleanFullName);
+          }
+          if (typeof populateDispatchFilterDropdowns === 'function') {
+            populateDispatchFilterDropdowns();
+          }
+          if (typeof populateWarehouseStaffUI === 'function') {
+            populateWarehouseStaffUI();
           }
         }
 
@@ -13312,38 +13345,81 @@ window.google.script = {
       }
       const activeStaffList = getStaffListForCurrentWarehouse();
 
-      // 1. Cập nhật dropdown chọn người phát hàng ở form tạo phiếu
+      // Tự động kiểm tra và đồng bộ nếu tài khoản trong app_users đã đổi họ tên mới nhưng warehouse_staff còn tên cũ
+      const usersList = (Array.isArray(appUsersCachedList) && appUsersCachedList.length > 0)
+        ? appUsersCachedList 
+        : ((typeof LocalDB !== 'undefined' && LocalDB.cache?.['app_users']) || []);
+
+      if (Array.isArray(usersList) && usersList.length > 0) {
+        usersList.forEach(u => {
+          if (!u.username || !u.full_name) return;
+          const uWh = String(u.username).trim().toLowerCase();
+          const uFullName = String(u.full_name).trim();
+          warehouseStaffListCached.forEach(st => {
+            const stWh = String(st.warehouse || '').trim().toLowerCase();
+            if (stWh && stWh === uWh && st.name && st.name.trim() !== uFullName) {
+              const oldStName = st.name;
+              st.name = uFullName;
+              callSupabaseSingle_(`warehouse_staff?id=eq.${st.id}`, 'PATCH', { name: uFullName }).catch(() => {});
+              if (localStorage.getItem('last_dispatch_staff') === oldStName) {
+                localStorage.setItem('last_dispatch_staff', uFullName);
+              }
+            }
+          });
+        });
+      }
+
+      // 1. Cập nhật dropdown chọn người phát hàng ở form tạo phiếu (Loại bỏ triệt để tên cũ và chống trùng lặp)
       const staffSelect = document.getElementById('dispatch-input-staff');
       if (staffSelect) {
-        const currentSelected = staffSelect.value;
-        const lastSelected = localStorage.getItem('last_dispatch_staff') || '';
+        const currentSelected = staffSelect.value ? staffSelect.value.trim() : '';
+        const lastSelected = (localStorage.getItem('last_dispatch_staff') || '').trim();
         let targetVal = currentSelected || lastSelected;
 
         let optionsHtml = '<option value="">-- Chọn thành viên phát hàng --</option>';
 
+        const seenNames = new Set();
         let hasMatchedTarget = false;
+
         activeStaffList.forEach(st => {
-          const isSel = (st.name === targetVal);
+          const sName = (st.name || '').trim();
+          if (!sName || seenNames.has(sName.toLowerCase())) return;
+          seenNames.add(sName.toLowerCase());
+          const isSel = (sName === targetVal);
           if (isSel) hasMatchedTarget = true;
-          optionsHtml += `<option value="${escapeHtml(st.name)}" ${isSel ? 'selected' : ''}>${escapeHtml(st.name)}</option>`;
+          optionsHtml += `<option value="${escapeHtml(sName)}" ${isSel ? 'selected' : ''}>${escapeHtml(sName)}</option>`;
         });
 
         // Bổ sung tên chủ kho đang đăng nhập nếu chưa có trong danh sách
         if (currentAppUser && currentAppUser.full_name) {
           const curFullName = currentAppUser.full_name.trim();
-          const alreadyInList = activeStaffList.some(s => s.name && s.name.trim().toLowerCase() === curFullName.toLowerCase());
-          if (!alreadyInList) {
+          if (curFullName && !seenNames.has(curFullName.toLowerCase())) {
+            seenNames.add(curFullName.toLowerCase());
             const isSel = (curFullName === targetVal);
             if (isSel) hasMatchedTarget = true;
             optionsHtml += `<option value="${escapeHtml(curFullName)}" ${isSel ? 'selected' : ''}>${escapeHtml(curFullName)}</option>`;
           }
         }
 
-        if (targetVal && !hasMatchedTarget) {
+        // CHỈ giữ lại targetVal nếu đang chỉnh sửa một phiếu phát hàng cũ có tên người phát cũ đó
+        const isEditingVoucher = !!(typeof editingDispatchContext !== 'undefined' && editingDispatchContext?.isEdit);
+        if (targetVal && !hasMatchedTarget && isEditingVoucher) {
           optionsHtml += `<option value="${escapeHtml(targetVal)}" selected>${escapeHtml(targetVal)}</option>`;
+          hasMatchedTarget = true;
         }
+
         staffSelect.innerHTML = optionsHtml;
-        if (targetVal) staffSelect.value = targetVal;
+        if (targetVal && hasMatchedTarget) {
+          staffSelect.value = targetVal;
+        } else {
+          // Xóa tên cũ khỏi cache localStorage nếu tên đó không còn thuộc kho
+          localStorage.removeItem('last_dispatch_staff');
+          if (currentAppUser && currentAppUser.full_name && seenNames.has(currentAppUser.full_name.trim().toLowerCase())) {
+            staffSelect.value = currentAppUser.full_name.trim();
+          } else if (staffSelect.options.length > 1) {
+            staffSelect.selectedIndex = 1;
+          }
+        }
       }
 
       // 2. Cập nhật modal quản lý thành viên kho
@@ -14304,6 +14380,55 @@ window.google.script = {
       }
     }
 
+    // HÀM LƯU AN TOÀN THÀNH VIÊN KHO (XỬ LÝ TRIỆT ĐỂ LỖI 409 warehouse_staff_name_key DO UNIQUE CONSTRAINT CŨ CỦA SUPABASE)
+    async function safeSaveWarehouseStaffRecord(payload, editingId = null) {
+      if (editingId) {
+        try {
+          await callSupabaseSingle_(`warehouse_staff?id=eq.${editingId}`, 'PATCH', payload);
+          return { ...payload, id: editingId };
+        } catch (err) {
+          const errMsg = String(err.message || err || '');
+          if (errMsg.includes('warehouse_staff_name_key') || errMsg.includes('23505')) {
+            const existList = await callSupabaseSingle_(`warehouse_staff?name=ilike.${encodeURIComponent(payload.name)}&select=id`, 'GET').catch(() => []);
+            if (Array.isArray(existList) && existList.length > 0 && existList[0].id !== editingId) {
+              await callSupabaseSingle_(`warehouse_staff?id=eq.${editingId}`, 'DELETE').catch(() => {});
+              warehouseStaffListCached = warehouseStaffListCached.filter(st => st.id !== editingId);
+              await callSupabaseSingle_(`warehouse_staff?id=eq.${existList[0].id}`, 'PATCH', payload);
+              return { ...payload, id: existList[0].id };
+            }
+          }
+          throw err;
+        }
+      } else {
+        try {
+          const res = await callSupabaseSingle_('warehouse_staff', 'POST', payload);
+          const obj = (Array.isArray(res) && res.length > 0) ? res[0] : (res && res.id ? res : payload);
+          if (!obj.id) obj.id = Date.now();
+          return obj;
+        } catch (err) {
+          const errMsg = String(err.message || err || '');
+          if (errMsg.includes('warehouse_staff_name_key') || errMsg.includes('23505')) {
+            // Tên đã có sẵn trong bảng do unique constraint cũ trên Supabase: tự động cập nhật bản ghi đó sang kho hiện tại
+            const existList = await callSupabaseSingle_(`warehouse_staff?name=ilike.${encodeURIComponent(payload.name)}&select=*`, 'GET').catch(() => []);
+            if (Array.isArray(existList) && existList.length > 0) {
+              const existItem = existList[0];
+              const updatedPayload = {
+                warehouse: payload.warehouse,
+                role: payload.role || existItem.role || 'Nhân viên kho',
+                phone: payload.phone || existItem.phone || ''
+              };
+              await callSupabaseSingle_(`warehouse_staff?id=eq.${existItem.id}`, 'PATCH', updatedPayload);
+              return {
+                ...existItem,
+                ...updatedPayload
+              };
+            }
+          }
+          throw err;
+        }
+      }
+    }
+
     async function saveNewWarehouseStaff() {
       const name = (document.getElementById('staff-modal-input-name')?.value || '').trim();
       const role = (document.getElementById('staff-modal-input-role')?.value || '').trim();
@@ -14314,24 +14439,28 @@ window.google.script = {
         return;
       }
 
-
-
       Swal.fire({ title: editingStaffId ? 'Đang cập nhật thành viên...' : 'Đang lưu thành viên...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
         if (editingStaffId !== null) {
+          const oldStaff = warehouseStaffListCached.find(st => st.id === editingStaffId);
+          const oldName = oldStaff ? (oldStaff.name || '').trim() : '';
+
           const payload = {
             name: name,
             role: role || 'Nhân viên kho',
             phone: phone
           };
-          await callSupabaseSingle_(`warehouse_staff?id=eq.${editingStaffId}`, 'PATCH', payload);
+
+          const savedItem = await safeSaveWarehouseStaffRecord(payload, editingStaffId);
 
           const idx = warehouseStaffListCached.findIndex(st => st.id === editingStaffId);
           if (idx !== -1) {
-            warehouseStaffListCached[idx].name = name;
-            warehouseStaffListCached[idx].role = role || 'Nhân viên kho';
-            warehouseStaffListCached[idx].phone = phone;
+            warehouseStaffListCached[idx] = { ...warehouseStaffListCached[idx], ...savedItem };
+          }
+
+          if (oldName && localStorage.getItem('last_dispatch_staff') === oldName) {
+            localStorage.setItem('last_dispatch_staff', name);
           }
 
           cancelEditWarehouseStaff();
@@ -14353,10 +14482,14 @@ window.google.script = {
             warehouse: activeScope,
             created_at: new Date().toISOString()
           };
-          const res = await callSupabaseSingle_('warehouse_staff', 'POST', payload);
-          const createdObj = (Array.isArray(res) && res.length > 0) ? res[0] : (res && res.id ? res : payload);
-          if (!createdObj.id) createdObj.id = Date.now();
-          warehouseStaffListCached.push(createdObj);
+
+          const createdObj = await safeSaveWarehouseStaffRecord(payload, null);
+          const existIdx = warehouseStaffListCached.findIndex(s => s.id === createdObj.id || (s.name && s.name.trim().toLowerCase() === name.toLowerCase()));
+          if (existIdx !== -1) {
+            warehouseStaffListCached[existIdx] = createdObj;
+          } else {
+            warehouseStaffListCached.push(createdObj);
+          }
 
           populateWarehouseStaffUI();
           populateDispatchFilterDropdowns();
@@ -14441,10 +14574,14 @@ window.google.script = {
           warehouse: activeScope,
           created_at: new Date().toISOString()
         };
-        const res = await callSupabaseSingle_('warehouse_staff', 'POST', payload);
-        const createdObj = (Array.isArray(res) && res.length > 0) ? res[0] : (res && res.id ? res : payload);
-        if (!createdObj.id) createdObj.id = Date.now();
-        warehouseStaffListCached.push(createdObj);
+
+        const createdObj = await safeSaveWarehouseStaffRecord(payload, null);
+        const existIdx = warehouseStaffListCached.findIndex(s => s.id === createdObj.id || (s.name && s.name.trim().toLowerCase() === cleanName.toLowerCase()));
+        if (existIdx !== -1) {
+          warehouseStaffListCached[existIdx] = createdObj;
+        } else {
+          warehouseStaffListCached.push(createdObj);
+        }
 
         populateWarehouseStaffUI();
         populateDispatchFilterDropdowns();
@@ -27049,14 +27186,14 @@ window.google.script = {
 
         return `
           <tr style="border-bottom: 1px solid #cbd5e1; ${rowBg}">
-            <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 34px; border-right: 1px solid #e2e8f0;">${idx + 1}</td>
-            <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11px; width: 95px; color: #78350f; border-right: 1px solid #e2e8f0;">${escapeHtml(it.code)}</td>
-            <td style="text-align: left; padding: 5px 8px; font-size: 11.5px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.name)}</td>
-            <td style="text-align: center; padding: 5px 6px; font-size: 11px; width: 50px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.unit || '-')}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 85px; color: ${qtyColor}; border-right: 1px solid #e2e8f0;">${aVal}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 90px; border-right: 1px solid #e2e8f0;">${formatCurrency(p)}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 110px; color: ${amtColor}; border-right: 1px solid #e2e8f0;">${amtStr}</td>
-            <td style="text-align: left; padding: 5px 6px; font-size: 10.5px; color: #475569;">${escapeHtml(it.note || '')}</td>
+            <td style="text-align: center; padding: 6px 4px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; width: 34px; border-right: 1px solid #e2e8f0; color: #64748b;">${idx + 1}</td>
+            <td style="text-align: center; padding: 6px 6px; font-family: 'Segoe UI', Arial, sans-serif; font-weight: 700; font-size: 11.5px; width: 95px; color: #78350f; border-right: 1px solid #e2e8f0; letter-spacing: 0.3px;">${escapeHtml(it.code)}</td>
+            <td style="text-align: left; padding: 6px 8px; font-size: 12px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.name)}</td>
+            <td style="text-align: center; padding: 6px 4px; font-size: 11px; width: 50px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.unit || '-')}</td>
+            <td style="text-align: right; padding: 6px 8px; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px; width: 85px; color: ${qtyColor}; border-right: 1px solid #e2e8f0;">${aVal}</td>
+            <td style="text-align: right; padding: 6px 8px; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 11.5px; width: 90px; color: #334155; border-right: 1px solid #e2e8f0;">${formatCurrency(p)}</td>
+            <td style="text-align: right; padding: 6px 8px; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px; width: 110px; color: ${amtColor}; border-right: 1px solid #e2e8f0;">${amtStr}</td>
+            <td style="text-align: left; padding: 6px 8px; font-size: 11px; color: #475569;">${escapeHtml(it.note || '')}</td>
           </tr>
         `;
       }).join('');
@@ -27073,8 +27210,8 @@ window.google.script = {
               <div style="font-size: 11px; color: #64748b; font-style: italic;">Hội đồng Kiểm kê Hàng hóa & Bàn giao Tài sản</div>
             </div>
             <div style="text-align: right; font-size: 11px; color: #64748b;">
-              <div>Mã số phiếu: <b style="font-family: monospace; color: #0f172a;">${escapeHtml(v.voucher_code)}</b></div>
-              <div style="font-family: monospace; margin-top: 2px;">In lúc: ${nowStr}</div>
+              <div>Mã số phiếu: <b style="font-family: 'Segoe UI', Arial, sans-serif; font-weight: 700; color: #0f172a; font-size: 11.5px;">${escapeHtml(v.voucher_code)}</b></div>
+              <div style="margin-top: 2px;">In lúc: <span style="font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #334155;">${nowStr}</span></div>
             </div>
           </div>
 
@@ -27108,11 +27245,11 @@ window.google.script = {
               </tbody>
               <tfoot>
                 <tr style="background-color: #f8fafc; font-weight: bold; border-top: 1.5px solid #0f172a;">
-                  <td colspan="4" style="padding: 6px 8px; text-align: right; border-right: 1px solid #cbd5e1;">TỔNG CỘNG (${items.length} SKU):</td>
-                  <td style="padding: 6px 6px; text-align: right; font-family: monospace; color: #1d4ed8; border-right: 1px solid #cbd5e1;">${formatNumber(v.total_actual_qty || 0)}</td>
-                  <td style="padding: 6px 6px; text-align: right; border-right: 1px solid #cbd5e1;">-</td>
-                  <td style="padding: 6px 6px; text-align: right; font-family: monospace; color: #047857;">${formatCurrency(totalAmount)}</td>
-                  <td style="padding: 6px 6px; text-align: left;">-</td>
+                  <td colspan="4" style="padding: 7px 8px; text-align: right; border-right: 1px solid #cbd5e1; font-size: 11.5px;">TỔNG CỘNG (${items.length} SKU):</td>
+                  <td style="padding: 7px 8px; text-align: right; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 12.5px; color: #1d4ed8; border-right: 1px solid #cbd5e1;">${formatNumber(v.total_actual_qty || 0)}</td>
+                  <td style="padding: 7px 8px; text-align: right; border-right: 1px solid #cbd5e1; color: #94a3b8;">-</td>
+                  <td style="padding: 7px 8px; text-align: right; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 12.5px; color: ${totalAmount >= 0 ? '#047857' : '#b91c1c'}; border-right: 1px solid #cbd5e1;">${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)}</td>
+                  <td style="padding: 7px 8px; text-align: left;">-</td>
                 </tr>
               </tfoot>
             </table>
@@ -27122,9 +27259,9 @@ window.google.script = {
           <div style="border: 1px solid #cbd5e1; background-color: #f8fafc; padding: 10px 14px; border-radius: 4px; font-size: 11.5px; margin-bottom: 20px; line-height: 1.6;">
             <div style="font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: #1e293b;">KẾT QUẢ KIỂM KÊ HÀNG HÓA:</div>
             <div style="display: flex; gap: 24px; flex-wrap: wrap;">
-              <div>• Tổng tiền thừa: <b style="color: #047857; font-family: monospace;">${formatCurrency(v.total_surplus_amount || 0)}</b></div>
-              <div>• Tổng tiền thiếu: <b style="color: #dc2626; font-family: monospace;">${v.total_deficit_amount ? ('-' + formatCurrency(v.total_deficit_amount)) : '0 đ'}</b></div>
-              <div>• Chênh lệch: <b style="color: ${totalAmount >= 0 ? '#047857' : '#dc2626'}; font-family: monospace;">${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)}</b></div>
+              <div>• Tổng tiền thừa: <b style="color: #047857; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700;">${formatCurrency(v.total_surplus_amount || 0)}</b></div>
+              <div>• Tổng tiền thiếu: <b style="color: #dc2626; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700;">${v.total_deficit_amount ? ('-' + formatCurrency(v.total_deficit_amount)) : '0 đ'}</b></div>
+              <div>• Chênh lệch: <b style="color: ${totalAmount >= 0 ? '#047857' : '#dc2626'}; font-family: 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700;">${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)}</b></div>
             </div>
           </div>
 
