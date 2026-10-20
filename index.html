@@ -26098,6 +26098,7 @@ window.google.script = {
       let amountDisplay = '0 đ';
       let amountColor = 'text-slate-300';
 
+      let isNegative = false;
       if (actualVal !== '') {
         const actualNum = Number(actualVal) || 0;
         amount = actualNum * price;
@@ -26109,14 +26110,24 @@ window.google.script = {
         } else if (amount < 0) {
           amountColor = 'text-rose-600 font-bold';
           amountDisplay = '-' + formatCurrency(Math.abs(amount));
+          isNegative = true;
         } else {
           amountColor = 'text-slate-400 font-medium';
           amountDisplay = '0 đ';
         }
+        if (actualNum < 0) isNegative = true;
       }
 
+      const rowClass = isNegative 
+        ? 'bg-rose-50/70 hover:bg-rose-100/70 border-b border-rose-200 text-xs group transition-colors' 
+        : 'hover:bg-slate-50 transition-colors border-b border-slate-100 text-xs group bg-white';
+
+      const qtyInputClass = isNegative
+        ? 'row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-bold text-rose-700 text-sm border border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 rounded-lg bg-rose-50/60 shadow-2xs transition placeholder:text-slate-300'
+        : 'row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-bold text-slate-900 text-sm border border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg bg-white shadow-2xs transition placeholder:text-slate-300 placeholder:font-sans placeholder:font-normal placeholder:text-xs';
+
       return `
-        <tr data-kiemke-row="true" data-row-id="${rowId}" class="hover:bg-slate-50 transition-colors border-b border-slate-100 text-xs group">
+        <tr data-kiemke-row="true" data-row-id="${rowId}" class="${rowClass}">
           <!-- 1. STT -->
           <td class="px-2 py-2.5 text-center font-mono font-bold text-slate-400 row-stt align-middle">${stt}</td>
 
@@ -26153,7 +26164,7 @@ window.google.script = {
                    oninput="onKiemKeActualQtyChange(this)" 
                    onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
                    placeholder="Nhập SL..." 
-                   class="row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-bold text-slate-900 text-sm border border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg bg-white shadow-2xs transition placeholder:text-slate-300 placeholder:font-sans placeholder:font-normal placeholder:text-xs">
+                   class="${qtyInputClass}">
           </td>
 
           <!-- 6. ĐƠN GIÁ (HIỂN THỊ TIỀN TỆ ĐẸP MẮT) -->
@@ -26468,6 +26479,7 @@ window.google.script = {
       const actualVal = actualInp.value.trim();
       const price = Math.max(0, Number(priceInp?.value) || 0);
 
+      let isNegative = false;
       if (actualVal === '') {
         amountEl.className = 'px-3 py-2 text-right font-mono text-slate-300 row-diff-amount align-middle';
         amountEl.innerText = '0 đ';
@@ -26485,11 +26497,26 @@ window.google.script = {
         } else if (amount < 0) {
           amountColor = 'text-rose-600 font-bold';
           amountDisplay = '-' + formatCurrency(Math.abs(amount));
+          isNegative = true;
         }
+        if (actualNum < 0) isNegative = true;
 
         amountEl.className = `px-3 py-2 text-right font-mono ${amountColor} row-diff-amount align-middle`;
         amountEl.innerText = amountDisplay;
         amountEl.title = `SL: ${formatNumber(actualNum)} × Giá: ${formatCurrency(price)} = ${amountDisplay}`;
+      }
+
+      // Tô màu nhẹ dòng có số lượng hoặc tiền âm
+      if (isNegative) {
+        tr.classList.add('bg-rose-50/70', 'hover:bg-rose-100/70', 'border-rose-200');
+        tr.classList.remove('bg-white', 'hover:bg-slate-50', 'border-slate-100');
+        actualInp.classList.add('bg-rose-50/60', 'border-rose-300', 'text-rose-700');
+        actualInp.classList.remove('bg-white', 'border-slate-300', 'text-slate-900');
+      } else {
+        tr.classList.remove('bg-rose-50/70', 'hover:bg-rose-100/70', 'border-rose-200');
+        tr.classList.add('bg-white', 'hover:bg-slate-50', 'border-slate-100');
+        actualInp.classList.remove('bg-rose-50/60', 'border-rose-300', 'text-rose-700');
+        actualInp.classList.add('bg-white', 'border-slate-300', 'text-slate-900');
       }
 
       calculateKiemKeSummary();
@@ -26910,16 +26937,22 @@ window.google.script = {
         const p = Number(it.price) || 0;
         const actualNum = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
         const aAmt = (it.amount !== undefined && it.amount !== null) ? Number(it.amount) : (actualNum * p);
+        const isNeg = (actualNum < 0 || aAmt < 0);
+
+        const trClass = isNeg ? 'bg-rose-50/70 hover:bg-rose-100/70 border-b border-rose-200 text-xs transition' : 'hover:bg-slate-50 transition border-b border-slate-100 text-xs bg-white';
+        const qtyClass = isNeg ? 'px-3 py-1.5 text-right font-mono font-bold text-rose-700 bg-rose-50/50' : 'px-3 py-1.5 text-right font-mono font-bold text-blue-800 bg-blue-50/30';
+        const amtClass = aAmt > 0 ? 'text-emerald-700 font-bold' : (aAmt < 0 ? 'text-rose-600 font-bold' : 'text-slate-500 font-medium');
+        const amtStr = aAmt > 0 ? ('+' + formatCurrency(aAmt)) : (aAmt < 0 ? ('-' + formatCurrency(Math.abs(aAmt))) : '0 đ');
 
         return `
-          <tr class="hover:bg-slate-50 transition border-b border-slate-100 text-xs">
+          <tr class="${trClass}">
             <td class="px-2 py-1.5 text-center font-mono text-slate-400">${idx + 1}</td>
             <td class="px-2.5 py-1.5 text-center font-mono font-bold text-amber-900">${escapeHtml(it.code)}</td>
             <td class="px-3 py-1.5 text-left text-slate-900 font-medium">${escapeHtml(it.name)}</td>
             <td class="px-2 py-1.5 text-center text-slate-500">${escapeHtml(it.unit || '-')}</td>
-            <td class="px-3 py-1.5 text-right font-mono font-bold text-blue-800 bg-blue-50/30">${aVal}</td>
+            <td class="${qtyClass}">${aVal}</td>
             <td class="px-3 py-1.5 text-right font-mono text-indigo-700">${formatCurrency(p)}</td>
-            <td class="px-3.5 py-1.5 text-right font-mono font-bold text-emerald-800">${formatCurrency(aAmt)}</td>
+            <td class="px-3.5 py-1.5 text-right font-mono ${amtClass}">${amtStr}</td>
             <td class="px-2.5 py-1.5 text-left text-slate-500 text-[11px]">${escapeHtml(it.note || '-')}</td>
           </tr>
         `;
@@ -27008,16 +27041,21 @@ window.google.script = {
         const p = Number(it.price) || 0;
         const actualNum = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
         const aAmt = (it.amount !== undefined && it.amount !== null) ? Number(it.amount) : (actualNum * p);
+        const isNeg = (actualNum < 0 || aAmt < 0);
+        const rowBg = isNeg ? 'background-color: #fff1f2;' : '';
+        const qtyColor = isNeg ? '#b91c1c' : '#1d4ed8';
+        const amtColor = aAmt > 0 ? '#047857' : (aAmt < 0 ? '#b91c1c' : '#334155');
+        const amtStr = aAmt > 0 ? ('+' + formatCurrency(aAmt)) : (aAmt < 0 ? ('-' + formatCurrency(Math.abs(aAmt))) : '0 đ');
 
         return `
-          <tr style="border-bottom: 1px solid #cbd5e1;">
+          <tr style="border-bottom: 1px solid #cbd5e1; ${rowBg}">
             <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 34px; border-right: 1px solid #e2e8f0;">${idx + 1}</td>
             <td style="text-align: center; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11px; width: 95px; color: #78350f; border-right: 1px solid #e2e8f0;">${escapeHtml(it.code)}</td>
             <td style="text-align: left; padding: 5px 8px; font-size: 11.5px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.name)}</td>
             <td style="text-align: center; padding: 5px 6px; font-size: 11px; width: 50px; border-right: 1px solid #e2e8f0;">${escapeHtml(it.unit || '-')}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 85px; color: #1d4ed8; border-right: 1px solid #e2e8f0;">${aVal}</td>
+            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 85px; color: ${qtyColor}; border-right: 1px solid #e2e8f0;">${aVal}</td>
             <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-size: 11px; width: 90px; border-right: 1px solid #e2e8f0;">${formatCurrency(p)}</td>
-            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 110px; color: #047857; border-right: 1px solid #e2e8f0;">${formatCurrency(aAmt)}</td>
+            <td style="text-align: right; padding: 5px 6px; font-family: monospace; font-weight: bold; font-size: 11.5px; width: 110px; color: ${amtColor}; border-right: 1px solid #e2e8f0;">${amtStr}</td>
             <td style="text-align: left; padding: 5px 6px; font-size: 10.5px; color: #475569;">${escapeHtml(it.note || '')}</td>
           </tr>
         `;
