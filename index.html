@@ -20880,10 +20880,10 @@ window.google.script = {
           <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between shadow-2xs">
             <div>
               <div class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Xe đối chiếu:</div>
-              <div class="font-bold text-sm text-slate-900 mt-1 flex items-center flex-wrap gap-1.5">
-                ${item.appPlate ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-900 font-mono text-xs"><b class="mr-1">Xe ${item.appDailySeq || 1}:</b> ${escapeHtml(item.appPlate)}</span>` : '<span class="text-slate-400 italic text-xs">Chưa có trên App</span>'}
-                <span class="text-slate-300 mx-1">⟷</span>
-                ${item.excelPlate ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-950 font-mono text-xs"><i class="bi bi-truck mr-1 text-indigo-600"></i>[PM] ${escapeHtml(item.excelPlate)}</span>` : '<span class="text-slate-400 italic text-xs">Chưa có trên PM</span>'}
+              <div class="font-bold text-sm text-slate-900 mt-1 flex items-center flex-wrap gap-2">
+                ${item.appPlate ? `<span class="inline-flex items-center px-3 py-1 rounded-lg bg-teal-50 border border-teal-300 text-teal-950 font-mono font-black text-sm tracking-wide shadow-2xs">${escapeHtml(item.appPlate)}</span>` : '<span class="text-slate-400 italic text-xs font-normal">Chưa có trên App</span>'}
+                <span class="text-slate-400 font-light text-sm">⟷</span>
+                ${item.excelPlate ? `<span class="inline-flex items-center px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-300 text-indigo-950 font-mono font-black text-sm tracking-wide shadow-2xs">${escapeHtml(item.excelPlate)}</span>` : '<span class="text-slate-400 italic text-xs font-normal">Chưa có trên PM</span>'}
               </div>
             </div>
             <div class="text-right">
@@ -20907,6 +20907,7 @@ window.google.script = {
                 <thead class="bg-slate-50 text-slate-600 font-semibold text-[11px] sticky top-0">
                   <tr>
                     <th class="px-2.5 py-2 text-center w-10">STT</th>
+                    <th class="px-3 py-2 text-center w-36">Xe nhận hàng</th>
                     <th class="px-3 py-2 text-left">Số phiếu</th>
                     <th class="px-3 py-2 text-left">Thủ kho</th>
                     <th class="px-3 py-2 text-center">Thời gian</th>
@@ -20917,12 +20918,22 @@ window.google.script = {
                   ${(item.appRecords || []).map((a, idx) => `
                     <tr class="hover:bg-slate-50">
                       <td class="px-2.5 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
+                      <td class="px-3 py-2 text-center whitespace-nowrap">
+                        <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-lg bg-white border border-slate-300 text-slate-900 shadow-2xs">
+                          <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-black bg-teal-50 text-teal-800 border border-teal-200">
+                            Xe ${a.dailySeq || item.appDailySeq || 1}
+                          </span>
+                          <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                            ${escapeHtml(a.plate || item.appPlate || '-')}
+                          </span>
+                        </span>
+                      </td>
                       <td class="px-3 py-2 font-mono font-bold text-teal-900">${escapeHtml(a.voucherNo || '-')}</td>
                       <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(a.staff || '-')}</td>
                       <td class="px-3 py-2 text-center font-mono text-slate-500">${a.date ? formatDateVN(a.date) : ''} ${escapeHtml(a.time || '')}</td>
                       <td class="px-3 py-2 text-right font-mono font-black text-slate-900">${formatNumber(parseSmartNumber(a.qty || 0))}</td>
                     </tr>
-                  `).join('') || '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Không có phiếu phát thực tế</td></tr>'}
+                  `).join('') || '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Không có phiếu phát thực tế</td></tr>'}
                 </tbody>
               </table>
             </div>
@@ -20941,6 +20952,7 @@ window.google.script = {
                 <thead class="bg-slate-50 text-slate-600 font-semibold text-[11px] sticky top-0">
                   <tr>
                     <th class="px-2.5 py-2 text-center w-10">STT</th>
+                    <th class="px-3 py-2 text-center w-36">Mã xe phần mềm</th>
                     <th class="px-3 py-2 text-left">Số chứng từ</th>
                     <th class="px-3 py-2 text-left">Người tạo HĐ</th>
                     <th class="px-3 py-2 text-left">Diễn giải</th>
@@ -20951,12 +20963,17 @@ window.google.script = {
                   ${(item.excelRecords || []).map((e, idx) => `
                     <tr class="hover:bg-slate-50">
                       <td class="px-2.5 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
+                      <td class="px-3 py-2 text-center whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-indigo-50/80 border border-indigo-200 text-indigo-950 font-mono font-bold text-xs shadow-2xs">
+                          <i class="bi bi-truck text-indigo-600 mr-1.5 text-xs"></i>${escapeHtml(e.plate || item.excelPlate || '-')}
+                        </span>
+                      </td>
                       <td class="px-3 py-2 font-mono font-bold text-indigo-900">${escapeHtml(e.voucherNo || '-')}</td>
                       <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(e.creator || '-')}</td>
-                      <td class="px-3 py-2 text-slate-600 text-[11px] truncate max-w-[220px]" title="${escapeHtml(e.desc || '')}">${escapeHtml(e.desc || '-')}</td>
+                      <td class="px-3 py-2 text-slate-600 text-[11px] truncate max-w-[200px]" title="${escapeHtml(e.desc || '')}">${escapeHtml(e.desc || '-')}</td>
                       <td class="px-3 py-2 text-right font-mono font-black text-indigo-950">${formatNumber(parseSmartNumber(e.qty || 0))}</td>
                     </tr>
-                  `).join('') || '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Không có hóa đơn trên phần mềm</td></tr>'}
+                  `).join('') || '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Không có hóa đơn trên phần mềm</td></tr>'}
                 </tbody>
               </table>
             </div>
@@ -20967,7 +20984,7 @@ window.google.script = {
       Swal.fire({
         title: `Chi tiết đối chiếu xe`,
         html: html,
-        width: '740px',
+        width: '840px',
         confirmButtonText: '<i class="bi bi-check-lg mr-1.5"></i>Đã xem xong',
         confirmButtonColor: '#0d9488',
         customClass: {
