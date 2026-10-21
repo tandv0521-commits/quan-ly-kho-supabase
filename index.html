@@ -2529,36 +2529,6 @@
                 </div>
               </div>
 
-              <!-- THẺ TỔNG HỢP CHÊNH LỆCH: PHIẾU NÀY & TOÀN BỘ CÁC PHIẾU CÓ TRONG DANH SÁCH -->
-              <div class="p-3 bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-amber-50/80 rounded-xl border border-amber-200/90 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-2xs">
-                <div class="flex items-center space-x-2.5">
-                  <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
-                    <i class="bi bi-calculator-fill"></i>
-                  </div>
-                  <div>
-                    <div class="font-bold text-slate-800 uppercase tracking-wide text-[11px] flex items-center gap-1.5">
-                      <span>Tổng Tiền Chênh Lệch Tất Cả Các Phiếu Có Trong Danh Sách</span>
-                      <span id="kiemke-form-month-badge" class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-mono font-bold">Tháng --</span>
-                    </div>
-                    <div class="text-[11px] text-slate-500 mt-0.5">Hiển thị tổng chênh lệch của toàn bộ các phiếu trong tháng và giá trị sau khi lưu phiếu hiện tại</div>
-                  </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2.5 sm:gap-4 shrink-0">
-                  <div class="px-3 py-1.5 bg-white rounded-xl border border-slate-200 text-right shadow-2xs">
-                    <div class="text-[10px] text-slate-500 font-bold uppercase">Phiếu đang lập/sửa:</div>
-                    <div id="kiemke-form-current-voucher-diff" class="font-mono font-black text-sm text-amber-700">0 đ</div>
-                  </div>
-                  <div class="px-3 py-1.5 bg-amber-100/80 rounded-xl border border-amber-300 text-right shadow-2xs">
-                    <div class="text-[10px] text-amber-950 font-bold uppercase flex items-center justify-end gap-1">
-                      <i class="bi bi-collection-fill"></i>
-                      <span>Tổng Toàn Bộ DS:</span>
-                    </div>
-                    <div id="kiemke-form-all-vouchers-total-diff" class="font-mono font-black text-sm sm:text-base text-slate-900">0 đ</div>
-                  </div>
-                </div>
-              </div>
-
               <!-- THANH CÔNG CỤ NẠP NHANH DÒNG HÀNG -->
               <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div class="flex items-center space-x-2">
@@ -2615,44 +2585,60 @@
             </div>
 
             <!-- THANH TỔNG KẾT VÀ NÚT LƯU CỐ ĐỊNH Ở ĐÁY (STICKY FOOTER BAR) -->
-            <div id="sticky-kiemke-bar" class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/95 backdrop-blur border-t border-slate-200 p-2.5 sm:px-6 shadow-2xl z-30 transition-all duration-300 no-print">
-              <div class="w-full flex flex-col md:flex-row items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-slate-700">
-                  <div class="flex items-center space-x-1.5">
-                    <span class="font-bold text-slate-600">Tổng Tiền Thừa:</span>
-                    <b id="kiemke-footer-surplus-amount" class="text-sm sm:text-base font-black font-mono text-emerald-600">0 đ</b>
+            <div id="sticky-kiemke-bar" class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-3 sm:px-6 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] z-30 transition-all duration-300 no-print">
+              <div class="w-full flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 sm:gap-3">
+                
+                <!-- CỤM CHỈ SỐ: Responsive Grid / Flex-wrap không bị vỡ layout trên mọi cỡ màn hình -->
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2.5 text-xs">
+                  <!-- Thẻ Thừa -->
+                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80">
+                    <span class="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
+                      <i class="bi bi-arrow-up-circle-fill text-emerald-600"></i>
+                      <span>Thừa:</span>
+                    </span>
+                    <b id="kiemke-footer-surplus-amount" class="text-xs sm:text-sm font-black font-mono text-emerald-700">0 đ</b>
                   </div>
-                  <div class="h-4 w-px bg-slate-300"></div>
-                  <div class="flex items-center space-x-1.5">
-                    <span class="font-bold text-slate-600">Tổng Tiền Thiếu:</span>
-                    <b id="kiemke-footer-deficit-amount" class="text-sm sm:text-base font-black font-mono text-rose-600">0 đ</b>
+
+                  <!-- Thẻ Thiếu -->
+                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50/80 border border-rose-200/80">
+                    <span class="text-[11px] font-semibold text-rose-800 flex items-center gap-1">
+                      <i class="bi bi-arrow-down-circle-fill text-rose-600"></i>
+                      <span>Thiếu:</span>
+                    </span>
+                    <b id="kiemke-footer-deficit-amount" class="text-xs sm:text-sm font-black font-mono text-rose-700">0 đ</b>
                   </div>
-                  <div class="h-4 w-px bg-slate-300"></div>
-                  <div class="flex items-center space-x-1.5">
-                    <span class="font-bold text-slate-700">Chênh Lệch:</span>
-                    <span id="kiemke-footer-diff-amount" class="text-base sm:text-lg font-black font-mono text-slate-800">0 đ</span>
+
+                  <!-- Thẻ Chênh lệch phiếu này -->
+                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                      <i class="bi bi-calculator text-amber-600"></i>
+                      <span>Chênh lệch:</span>
+                    </span>
+                    <span id="kiemke-footer-diff-amount" class="text-xs sm:text-sm font-black font-mono text-slate-900">0 đ</span>
                   </div>
-                  <div class="h-4 w-px bg-slate-300 hidden sm:block"></div>
-                  <div class="flex items-center space-x-2 bg-amber-50 px-3 py-1 rounded-xl border border-amber-300 shadow-2xs">
-                    <i class="bi bi-collection-fill text-amber-600"></i>
-                    <span class="font-bold text-slate-700">Tổng toàn bộ DS:</span>
-                    <b id="kiemke-footer-all-vouchers-diff" class="text-sm sm:text-base font-black font-mono text-slate-900">0 đ</b>
+
+                  <!-- Thẻ Tổng toàn bộ danh sách -->
+                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50/90 border border-amber-300/80 shadow-2xs">
+                    <span class="text-[11px] font-bold text-amber-950 flex items-center gap-1">
+                      <i class="bi bi-collection-fill text-amber-600"></i>
+                      <span>Tổng toàn bộ DS:</span>
+                    </span>
+                    <b id="kiemke-footer-all-vouchers-diff" class="text-xs sm:text-sm font-black font-mono text-slate-900">0 đ</b>
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
-                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">
-                    Quay lại
-                  </button>
-                  <button type="button" onclick="exportCurrentKiemKeFormToExcel()" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold rounded-xl text-xs transition flex items-center space-x-1 cursor-pointer" title="Xuất toàn bộ bảng kiểm kê này ra Excel">
-                    <i class="bi bi-file-earmark-excel text-emerald-600"></i>
-                    <span>Xuất Excel Phiếu</span>
+                <!-- CỤM NÚT THAO TÁC: Chỉ giữ nút Quay lại và Lưu Phiếu (đã loại bỏ nút xuất excel ở cuối) -->
+                <div class="flex items-center space-x-2 justify-end shrink-0 pt-1 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Quay lại</span>
                   </button>
                   <button type="button" onclick="saveKiemKeVoucher(false)" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer">
                     <i class="bi bi-check2-circle text-base"></i>
                     <span>Lưu Phiếu (Ctrl+S)</span>
                   </button>
                 </div>
+
               </div>
             </div>
 
@@ -17581,6 +17567,18 @@ window.google.script = {
       if (stickyDispatchBar) stickyDispatchBar.classList.add('hidden');
       closeAllDropdowns();
       updateHeaderCreateDispatchButtonState();
+
+      // Nếu đang trong ngữ cảnh sửa xe từ bảng so sánh đối chiếu, quay lại bảng so sánh
+      if (window._reconciliationEditContext && window._reconciliationEditContext.returnToTab) {
+        const returnCode = window._reconciliationEditContext.itemCode;
+        const returnTab = window._reconciliationEditContext.returnToTab;
+        window._reconciliationEditContext = null;
+        if (returnCode && typeof showProductDispatchDetailModal === 'function') {
+          setTimeout(() => {
+            showProductDispatchDetailModal(returnCode, returnTab);
+          }, 80);
+        }
+      }
     }
 
     function generateDispatchVoucherNo() {
@@ -18740,17 +18738,124 @@ window.google.script = {
       }
     }
 
-    // Tự động tính toán lại đối chiếu xuất kho khi có thao tác thêm / sửa / xóa phiếu phát hàng trong ngày
+    // Tự động tính toán lại đối chiếu xuất kho & so sánh xe khi có thao tác thêm / sửa / xóa phiếu phát hàng trong ngày
     function autoRefreshReconciliationIfActive_() {
       try {
         if (typeof restoreReconciliationFromSession_ === 'function') {
           restoreReconciliationFromSession_();
         }
+
+        // 1. Tính lại đối chiếu danh mục tổng thể (file Tổng hợp xuất)
         if (currentReconciliationState && typeof recalculateReconciliation === 'function') {
           recalculateReconciliation();
           const recModal = document.getElementById('dispatch-reconciliation-modal');
           if (recModal && recModal.style.display !== 'none' && !recModal.classList.contains('hidden')) {
             renderReconciliationContent();
+          }
+        }
+
+        // 2. TỰ ĐỘNG CẬP NHẬT ĐỐI CHIẾU SỐ XE & SỐ LƯỢNG (Bảng kê chứng từ Excel)
+        const editCtx = window._reconciliationEditContext;
+        let targetCode = (editCtx && editCtx.itemCode) || 
+                         (window._currentVehicleComparisonData && window._currentVehicleComparisonData.itemCode) || 
+                         (window._currentProductDetailItem && window._currentProductDetailItem.code) || '';
+
+        if (targetCode) {
+          let currentCmp = window._currentVehicleComparisonData;
+          let excelRows = currentCmp && currentCmp.excelRows;
+
+          // Nếu chưa có excelRows trong RAM, thử phục hồi từ sessionStorage
+          if (!excelRows || excelRows.length === 0) {
+            const savedB64 = sessionStorage.getItem('wh_vehicle_compare_excel_b64');
+            const savedName = sessionStorage.getItem('wh_vehicle_compare_excel_name');
+            if (savedB64 && savedName) {
+              try {
+                const ab = base64ToArrayBuffer_(savedB64);
+                const parsed = parseExcelBangKeChungTu(ab, savedName, targetCode);
+                if (parsed && parsed.rows && parsed.rows.length > 0) {
+                  excelRows = parsed.rows;
+                  if (currentCmp) {
+                    currentCmp.fileName = savedName;
+                    currentCmp.dateText = parsed.dateText;
+                    currentCmp.excelRows = parsed.rows;
+                  }
+                }
+              } catch (e) {
+                console.warn('Lỗi đọc lại file bảng kê từ sessionStorage:', e);
+              }
+            }
+          }
+
+          // Lấy danh sách phát hàng mới nhất của mặt hàng này từ currentReconciliationState hoặc dispatchListCached
+          let updatedItem = currentReconciliationState && currentReconciliationState.items 
+            ? currentReconciliationState.items.find(x => x.code.toUpperCase() === targetCode.toUpperCase()) 
+            : null;
+
+          let updatedRecords = [];
+          if (updatedItem && updatedItem.records) {
+            updatedRecords = updatedItem.records;
+          } else {
+            const sourceList = (dispatchListCached || []).filter(v => {
+              const vDate = String(v.dispatch_date || '').substring(0, 10);
+              if (!vDate) return false;
+              if (currentReconciliationFromDate && vDate < currentReconciliationFromDate) return false;
+              if (currentReconciliationToDate && vDate > currentReconciliationToDate) return false;
+              return true;
+            });
+            const dAgg = getDispatchAggregatedByProduct(sourceList);
+            const fProd = dAgg.find(p => p.code.toUpperCase() === targetCode.toUpperCase());
+            if (fProd && fProd.records) {
+              updatedRecords = fProd.records;
+            }
+          }
+
+          // Cập nhật lại window._currentProductDetailRecords và item
+          window._currentProductDetailRecords = updatedRecords;
+          if (window._currentProductDetailItem && (!updatedItem || !updatedItem.name)) {
+            updatedItem = window._currentProductDetailItem;
+          }
+
+          // Nếu có danh sách dòng Excel phần mềm, tính toán lại đối chiếu xe tức thì
+          if (excelRows && excelRows.length > 0) {
+            const itemName = (currentCmp && currentCmp.itemName) || (updatedItem && updatedItem.name) || targetCode;
+            const itemUnit = (currentCmp && currentCmp.itemUnit) || (updatedItem && updatedItem.unit) || 'cái';
+            const newCmpData = compareAppAndExcelVehicles(updatedRecords, excelRows, targetCode, itemName, itemUnit);
+            newCmpData.fileName = (currentCmp && currentCmp.fileName) || sessionStorage.getItem('wh_vehicle_compare_excel_name') || 'File phần mềm';
+            newCmpData.dateText = (currentCmp && currentCmp.dateText) || '';
+            newCmpData.excelRows = excelRows;
+            window._currentVehicleComparisonData = newCmpData;
+
+            // Nếu người dùng vừa sửa phiếu từ bảng so sánh xe, TỰ ĐỘNG MỞ LẠI MODAL VÀ NHẢY VÀO TAB SO SÁNH
+            if (editCtx && editCtx.returnToTab === 'compare') {
+              window._reconciliationEditContext = null;
+              setTimeout(() => {
+                showProductDispatchDetailModal(targetCode, 'compare');
+                if (typeof showAppToast === 'function') {
+                  showAppToast('Đã tự động cập nhật đối chiếu xe!', `Bảng so sánh số xe & số lượng cho mã ${targetCode} đã được cập nhật khớp với số liệu mới nhất.`, 'success', 3200);
+                }
+              }, 120);
+            } else if (editCtx && editCtx.returnToTab === 'journal') {
+              window._reconciliationEditContext = null;
+              setTimeout(() => {
+                showProductDispatchDetailModal(targetCode, 'journal');
+                if (typeof showAppToast === 'function') {
+                  showAppToast('Đã cập nhật phiếu phát!', `Nhật ký phát hàng cho mã ${targetCode} đã được làm mới.`, 'success', 2500);
+                }
+              }, 120);
+            } else {
+              // Nếu modal chi tiết đang mở sẵn trên màn hình, render lại trực tiếp bảng so sánh xe
+              if (document.getElementById('pdetail-view-compare') && !document.getElementById('pdetail-view-compare').classList.contains('hidden')) {
+                renderVehicleComparisonView(newCmpData);
+              }
+            }
+          } else {
+            // Nếu chỉ ở tab journal và có yêu cầu quay lại
+            if (editCtx && editCtx.returnToTab === 'journal') {
+              window._reconciliationEditContext = null;
+              setTimeout(() => {
+                showProductDispatchDetailModal(targetCode, 'journal');
+              }, 120);
+            }
           }
         }
       } catch (e) {
@@ -20549,6 +20654,7 @@ window.google.script = {
         itemCode: itemCode || '',
         itemName: itemName || '',
         itemUnit: itemUnit || 'cái',
+        excelRows: excelRows || [],
         results: results,
         summary: {
           totalVehicles: results.length,
@@ -20587,6 +20693,7 @@ window.google.script = {
             const compareData = compareAppAndExcelVehicles(records, parsed.rows, targetCode, currentItem.name, currentItem.unit);
             compareData.fileName = savedName;
             compareData.dateText = parsed.dateText;
+            compareData.excelRows = parsed.rows;
             window._currentVehicleComparisonData = compareData;
 
             switchProductDetailTab('compare');
@@ -20643,6 +20750,7 @@ window.google.script = {
         const compareData = compareAppAndExcelVehicles(currentRecords, parsedExcel.rows, targetCode, currentItem.name, currentItem.unit);
         compareData.fileName = file.name;
         compareData.dateText = parsedExcel.dateText;
+        compareData.excelRows = parsedExcel.rows;
         window._currentVehicleComparisonData = compareData;
 
         // Nếu modal chi tiết đang mở thì chuyển tab và render bảng so sánh đối chiếu ngay lập tức
@@ -20728,6 +20836,135 @@ window.google.script = {
           footerCompare.classList.remove('flex');
         }
       }
+    }
+
+    // ========================================================
+    // TƯƠNG TÁC TRỰC TIẾP TỪ BẢNG SO SÁNH XE ĐẾN PHIẾU SỬA
+    // ========================================================
+
+    // Nhấp trực tiếp vào biển số xe trên bảng so sánh để nhảy ra phiếu sửa và tự động đối chiếu lại
+    function editVehicleDispatchFromComparison(plateStr, itemCode, defaultId = null) {
+      const currentCmp = window._currentVehicleComparisonData;
+      const targetCode = itemCode || (currentCmp && currentCmp.itemCode) || (window._currentProductDetailItem && window._currentProductDetailItem.code) || '';
+
+      // 1. Lưu ngữ cảnh để sau khi sửa xong và bấm Cập nhật, hệ thống tự động quay lại bảng so sánh đối chiếu xe
+      window._reconciliationEditContext = {
+        active: true,
+        itemCode: targetCode,
+        plate: plateStr,
+        returnToTab: 'compare'
+      };
+
+      // 2. Tìm bản ghi phiếu phát của xe này
+      let targetId = null;
+      if (defaultId) {
+        const itm = (dispatchListCached || []).find(x => Number(x.id) === Number(defaultId));
+        if (itm) targetId = itm.id;
+      }
+
+      if (!targetId && plateStr) {
+        // Tìm bản ghi có biển số xe khớp và mã sản phẩm khớp
+        const matched = (dispatchListCached || []).find(x => {
+          const isPlMatch = isVehiclePlateMatch(x.license_plate, plateStr);
+          if (!isPlMatch) return false;
+          if (targetCode) {
+            return (x.product_code || '').trim().toUpperCase() === targetCode.toUpperCase();
+          }
+          return true;
+        });
+        if (matched) targetId = matched.id;
+      }
+
+      if (!targetId && plateStr) {
+        // Nếu vẫn chưa tìm thấy theo mã hàng, tìm theo bất kỳ phiếu nào có biển số xe khớp
+        const anyVeh = (dispatchListCached || []).find(x => isVehiclePlateMatch(x.license_plate, plateStr));
+        if (anyVeh) targetId = anyVeh.id;
+      }
+
+      if (targetId) {
+        if (typeof window.jumpToEditDispatchFromModal === 'function') {
+          window.jumpToEditDispatchFromModal(targetId);
+        } else if (typeof openEditDispatchVoucher === 'function') {
+          openEditDispatchVoucher(targetId);
+        }
+      } else {
+        // Nếu xe chưa có phiếu phát trên App (xe chỉ có trên Excel phần mềm), tạo nhanh phiếu phát
+        quickCreateDispatchFromExcelVehicle(plateStr, 0, targetCode);
+      }
+    }
+
+    // Tạo nhanh phiếu phát hàng cho xe chỉ có trên Excel phần mềm
+    function quickCreateDispatchFromExcelVehicle(excelPlate, excelQty = 0, itemCode = '') {
+      const currentCmp = window._currentVehicleComparisonData;
+      const targetCode = itemCode || (currentCmp && currentCmp.itemCode) || (window._currentProductDetailItem && window._currentProductDetailItem.code) || '';
+      const cleanPlate = (excelPlate || '').trim().toUpperCase();
+
+      // 1. Lưu ngữ cảnh để sau khi lưu xong tự động quay lại bảng so sánh
+      window._reconciliationEditContext = {
+        active: true,
+        itemCode: targetCode,
+        plate: cleanPlate,
+        returnToTab: 'compare'
+      };
+
+      // 2. Tắt các modal đang mở và chuyển sang tab phát hàng
+      if (typeof Swal !== 'undefined') try { Swal.close(); } catch (e) {}
+      if (typeof closeDispatchReconciliationModal === 'function') closeDispatchReconciliationModal();
+      if (typeof closeAllDropdowns === 'function') closeAllDropdowns();
+      if (typeof switchTab === 'function') switchTab('dispatch');
+      if (typeof openCreateDispatchForm === 'function') openCreateDispatchForm();
+
+      // 3. Tự động điền thông tin xe và dòng mặt hàng từ Excel
+      setTimeout(() => {
+        const vInput = document.getElementById('dispatch-input-vehicle');
+        if (vInput && cleanPlate) {
+          vInput.value = cleanPlate;
+        }
+
+        // Nếu có ngày đối chiếu thì điền ngày đối chiếu
+        const dInput = document.getElementById('dispatch-input-date');
+        if (dInput && currentReconciliationFromDate) {
+          dInput.value = currentReconciliationFromDate;
+        }
+
+        // Nếu có mặt hàng và số lượng từ Excel thì thêm sẵn dòng phát hàng
+        if (targetCode) {
+          let prodName = `Sản phẩm ${targetCode}`;
+          let prodUnit = 'Cái';
+          if (window.inventoryMap && window.inventoryMap[targetCode.toLowerCase()]) {
+            const inv = window.inventoryMap[targetCode.toLowerCase()];
+            prodName = inv.name || prodName;
+            prodUnit = inv.unit || prodUnit;
+          } else if (currentCmp && currentCmp.itemName) {
+            prodName = currentCmp.itemName;
+            prodUnit = currentCmp.itemUnit || prodUnit;
+          }
+
+          // Xóa các dòng rỗng mặc định nếu có
+          dispatchFormRows = [];
+          const tbody = document.getElementById('dispatch-form-tbody');
+          if (tbody) tbody.innerHTML = '';
+
+          if (typeof addDispatchFormRow === 'function') {
+            addDispatchFormRow({
+              code: targetCode,
+              name: prodName,
+              unit: prodUnit,
+              quantity: excelQty > 0 ? excelQty : '',
+              note: `Đối chiếu theo HĐ phần mềm (${cleanPlate})`
+            }, true);
+          }
+        }
+
+        if (typeof showAppToast === 'function') {
+          showAppToast(
+            'Đã tạo phiếu phát cho xe ' + cleanPlate,
+            'Vui lòng chọn Thủ kho, kiểm tra số lượng và bấm Lưu phiếu để tự động cập nhật đối chiếu lại.',
+            'info',
+            4000
+          );
+        }
+      }, 120);
     }
 
     // Render toàn bộ giao diện bảng so sánh xe
@@ -20876,15 +21113,27 @@ window.google.script = {
               <td class="px-3 py-3 text-center text-slate-400 font-mono">${idx + 1}</td>
               <td class="px-4 py-3 text-center whitespace-nowrap">
                 ${r.appPlate ? `
-                  <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-900 shadow-2xs">
-                    <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-black bg-teal-50 text-teal-800 border border-teal-200">
+                  <button type="button" 
+                          onclick="editVehicleDispatchFromComparison('${escapeJsString(r.appPlate)}', '${escapeJsString(compareData.itemCode)}', ${r.appRecords && r.appRecords[0] ? r.appRecords[0].id : 'null'})"
+                          class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-teal-500 hover:bg-teal-50/50 text-slate-900 shadow-2xs transition-all cursor-pointer group active:scale-95" 
+                          title="Nhấp trực tiếp vào đây để sửa phiếu xe ${escapeHtml(r.appPlate)} và tự động cập nhật đối chiếu">
+                    <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-black bg-teal-50 text-teal-800 border border-teal-200 group-hover:border-teal-400 group-hover:bg-teal-100 transition">
                       Xe ${r.appDailySeq || 1}
                     </span>
-                    <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                    <span class="font-mono font-bold text-xs text-slate-900 tracking-wide group-hover:text-teal-900 transition">
                       ${escapeHtml(r.appPlate)}
                     </span>
-                  </span>
-                ` : `<span class="text-slate-300 italic">- Không có -</span>`}
+                    <i class="bi bi-pencil-square text-teal-600 opacity-60 group-hover:opacity-100 text-xs transition"></i>
+                  </button>
+                ` : `
+                  <button type="button" 
+                          onclick="quickCreateDispatchFromExcelVehicle('${escapeJsString(r.excelPlate)}', ${r.excelQty || 0}, '${escapeJsString(compareData.itemCode)}')"
+                          class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg border border-dashed border-amber-300 bg-amber-50/80 hover:bg-amber-100 text-amber-900 text-[11px] font-bold transition shadow-2xs cursor-pointer group active:scale-95" 
+                          title="Xe này chưa có phiếu phát trên App. Bấm vào để tạo nhanh phiếu phát cho xe này">
+                    <i class="bi bi-plus-circle-fill text-amber-600 text-xs group-hover:scale-110 transition-transform"></i>
+                    <span>+ Tạo phiếu xe</span>
+                  </button>
+                `}
               </td>
               <td class="px-4 py-3 text-center whitespace-nowrap">
                 ${r.excelPlate ? `
@@ -20893,8 +21142,10 @@ window.google.script = {
                   </span>
                 ` : `<span class="text-slate-300 italic">- Không có -</span>`}
               </td>
-              <td class="px-4 py-3 text-right font-black font-mono text-sm text-teal-950 bg-teal-50/40 whitespace-nowrap border-l border-teal-100/80">
+              <td class="px-4 py-3 text-right font-black font-mono text-sm text-teal-950 bg-teal-50/40 whitespace-nowrap border-l border-teal-100/80 ${r.appPlate ? 'cursor-pointer hover:bg-teal-100/70 transition' : ''}" 
+                  ${r.appPlate ? `onclick="editVehicleDispatchFromComparison('${escapeJsString(r.appPlate)}', '${escapeJsString(compareData.itemCode)}', ${r.appRecords && r.appRecords[0] ? r.appRecords[0].id : 'null'})" title="Bấm vào số lượng để sửa phiếu phát xe này"` : ''}>
                 ${r.appQty > 0 ? `${formatNumber(r.appQty)} <span class="text-[10px] font-normal text-slate-500">${escapeHtml(unit)}</span>` : '<span class="text-slate-300 font-normal">0</span>'}
+                ${r.appPlate ? `<i class="bi bi-pencil text-[10px] text-teal-500/60 ml-1"></i>` : ''}
               </td>
               <td class="px-4 py-3 text-right font-black font-mono text-sm text-indigo-950 bg-indigo-50/40 whitespace-nowrap border-l border-indigo-100/80">
                 ${r.excelQty > 0 ? `${formatNumber(r.excelQty)} <span class="text-[10px] font-normal text-slate-500">${escapeHtml(unit)}</span>` : '<span class="text-slate-300 font-normal">0</span>'}
@@ -20902,7 +21153,8 @@ window.google.script = {
               <td class="px-4 py-3 text-right whitespace-nowrap border-l border-slate-200">
                 ${diffDisplay}
               </td>
-              <td class="px-4 py-3 text-center whitespace-nowrap">
+              <td class="px-4 py-3 text-center whitespace-nowrap ${r.appPlate ? 'cursor-pointer' : ''}" 
+                  ${r.appPlate ? `onclick="editVehicleDispatchFromComparison('${escapeJsString(r.appPlate)}', '${escapeJsString(compareData.itemCode)}', ${r.appRecords && r.appRecords[0] ? r.appRecords[0].id : 'null'})" title="Bấm để sửa phiếu phát xe này"` : ''}>
                 ${statusBadge}
               </td>
               <td class="px-4 py-3 text-left">
@@ -21009,24 +21261,32 @@ window.google.script = {
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   ${(item.appRecords || []).map((a, idx) => `
-                    <tr class="hover:bg-slate-50">
+                    <tr class="hover:bg-teal-50/30 transition-colors">
                       <td class="px-2.5 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
                       <td class="px-3 py-2 text-center whitespace-nowrap">
-                        <span class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-lg bg-white border border-slate-300 text-slate-900 shadow-2xs">
-                          <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-black bg-teal-50 text-teal-800 border border-teal-200">
+                        <button type="button" 
+                                onclick="editVehicleDispatchFromComparison('${escapeJsString(a.plate || item.appPlate || '')}', '${escapeJsString(compareData.itemCode || '')}', ${a.id || 'null'})"
+                                class="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-lg bg-white border border-slate-300 hover:border-teal-500 hover:bg-teal-50 text-slate-900 shadow-2xs cursor-pointer group transition" 
+                                title="Bấm vào đây để sửa phiếu phát xe này">
+                          <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-black bg-teal-50 text-teal-800 border border-teal-200 group-hover:border-teal-400 group-hover:bg-teal-100 transition">
                             Xe ${a.dailySeq || item.appDailySeq || 1}
                           </span>
-                          <span class="font-mono font-bold text-xs text-slate-900 tracking-wide">
+                          <span class="font-mono font-bold text-xs text-slate-900 tracking-wide group-hover:text-teal-900 transition">
                             ${escapeHtml(a.plate || item.appPlate || '-')}
                           </span>
-                        </span>
+                          <i class="bi bi-pencil-square text-teal-600 text-xs ml-0.5 opacity-60 group-hover:opacity-100"></i>
+                        </button>
                       </td>
-                      <td class="px-3 py-2 font-mono font-bold text-teal-900">${escapeHtml(a.voucherNo || '-')}</td>
+                      <td class="px-3 py-2 font-mono font-bold text-teal-900 cursor-pointer hover:underline" 
+                          onclick="editVehicleDispatchFromComparison('${escapeJsString(a.plate || item.appPlate || '')}', '${escapeJsString(compareData.itemCode || '')}', ${a.id || 'null'})" 
+                          title="Bấm để sửa phiếu ${escapeHtml(a.voucherNo || '')}">
+                        ${escapeHtml(a.voucherNo || '-')}
+                      </td>
                       <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(a.staff || '-')}</td>
                       <td class="px-3 py-2 text-center font-mono text-slate-500">${a.date ? formatDateVN(a.date) : ''} ${escapeHtml(a.time || '')}</td>
                       <td class="px-3 py-2 text-right font-mono font-black text-slate-900">${formatNumber(parseSmartNumber(a.qty || 0))}</td>
                     </tr>
-                  `).join('') || '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Không có phiếu phát thực tế</td></tr>'}
+                  `).join('') || `<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Không có phiếu phát thực tế <button type="button" onclick="quickCreateDispatchFromExcelVehicle('${escapeJsString(item.excelPlate || '')}', ${item.excelQty || 0}, '${escapeJsString(compareData.itemCode || '')}')" class="ml-2 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shadow-2xs cursor-pointer"><i class="bi bi-plus-circle mr-1"></i>Tạo phiếu xe này</button></td></tr>`}
                 </tbody>
               </table>
             </div>
@@ -21775,6 +22035,13 @@ window.google.script = {
           badge.classList.remove('hidden');
         }
         if (isCompareActive) {
+          switchProductDetailTab('compare');
+          renderVehicleComparisonView(currentCmp);
+        }
+      } else if (isCompareActive) {
+        if (typeof triggerVehicleCompareExcel === 'function') {
+          triggerVehicleCompareExcel(item.code);
+        } else {
           switchProductDetailTab('compare');
         }
       }
@@ -26486,7 +26753,7 @@ window.google.script = {
     function exportMergedKiemKeExcel() {
       const selectedIds = window._selectedKiemKeVoucherIds || new Set();
       if (selectedIds.size === 0) {
-        Swal.fire('Thông báo', 'Vui lòng tích chọn phiếu kiểm kê để xuất Excel gộp!', 'info');
+        Swal.fire('Thông báo', 'Vui lòng tích chọn ít nhất 1 phiếu kiểm kê để xuất Excel gộp!', 'info');
         return;
       }
 
@@ -26496,13 +26763,20 @@ window.google.script = {
       }
 
       const selectedVouchers = (kiemKeVouchersList || []).filter(v => selectedIds.has(v.id));
+      if (selectedVouchers.length === 0) return;
 
       const mergedMap = new Map();
+      let grandSurplus = 0;
+      let grandDeficit = 0;
+      let grandTotalAmount = 0;
+      let grandActualQty = 0;
+
       selectedVouchers.forEach(v => {
         const vCode = v.voucher_code || 'KK';
         (v.items || []).forEach(it => {
           const code = String(it.code || '').trim().toUpperCase();
           if (!code) return;
+
           const p = Number(it.price) || getProductPrice(code) || 0;
           const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
           const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
@@ -26515,51 +26789,121 @@ window.google.script = {
               price: p,
               totalActualQty: aQty,
               totalAmount: amt,
-              vouchers: [vCode]
+              vouchers: [vCode],
+              note: it.note || ''
             });
           } else {
             const ex = mergedMap.get(code);
             ex.totalActualQty += aQty;
             ex.totalAmount += amt;
             if (!ex.vouchers.includes(vCode)) ex.vouchers.push(vCode);
+            if (!ex.price && p > 0) ex.price = p;
+            if (!ex.name && it.name) ex.name = it.name;
           }
         });
       });
 
-      const rows = [];
-      rows.push(['BẢNG TỔNG HỢP KIỂM KÊ KHO GỘP']);
-      rows.push(['Các phiếu gộp:', selectedVouchers.map(v => v.voucher_code).join(', ')]);
-      rows.push(['Thời gian xuất:', new Date().toLocaleString('vi-VN')]);
-      rows.push([]);
-      rows.push(['STT', 'Mã sản phẩm', 'Tên mặt hàng', 'ĐVT', 'Tổng SL kiểm đếm', 'Đơn giá', 'Thành tiền', 'Các phiếu xuất hiện']);
+      const mergedList = Array.from(mergedMap.values()).sort((a, b) => a.code.localeCompare(b.code));
+      mergedList.forEach(m => {
+        grandActualQty += m.totalActualQty;
+        grandTotalAmount += m.totalAmount;
+        if (m.totalAmount > 0) grandSurplus += m.totalAmount;
+        else if (m.totalAmount < 0) grandDeficit += Math.abs(m.totalAmount);
+      });
 
-      let stt = 1;
-      let totalQty = 0;
-      let totalAmount = 0;
+      const now = new Date();
+      const exportDateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const curUser = (currentAppUser && (currentAppUser.full_name || currentAppUser.name || currentAppUser.username)) || 'Ban kiểm kê';
+      const voucherCodesStr = selectedVouchers.map(v => v.voucher_code).join(', ');
 
-      Array.from(mergedMap.values()).sort((a, b) => a.code.localeCompare(b.code)).forEach(m => {
-        totalQty += m.totalActualQty;
-        totalAmount += m.totalAmount;
+      const rows = [
+        ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', '', '', '', ''],
+        ['BAN KIỂM KÊ ĐỐI CHIẾU TÀI SẢN KHO', '', '', '', 'Độc lập - Tự do - Hạnh phúc', '', '', '', ''],
+        ['', '', '', '', '------------------------', '', '', '', ''],
+        ['BIÊN BẢN TỔNG HỢP KIỂM KÊ ĐỐI CHIẾU HÀNG HÓA TỒN KHO (GỘP PHIẾU)', '', '', '', '', '', '', '', ''],
+        [`Căn cứ: Tổng hợp đối chiếu từ ${selectedVouchers.length} biên bản kiểm kê [${voucherCodesStr}]`, '', '', '', '', '', '', '', ''],
+        [`Thời điểm kiểm kê: ${exportDateStr}   •   Người lập biên bản: ${curUser}`, '', '', '', '', '', '', '', ''],
+        [],
+        ['STT', 'Mã Vật Tư / SP', 'Tên Hàng Hóa - Quy Cách Phẩm Chất', 'ĐVT', 'Tổng SL Kiểm Kê', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Phân Loại', 'Các Phiếu Xuất Hiện', 'Ghi Chú']
+      ];
+
+      mergedList.forEach((m, idx) => {
+        let status = 'Khớp';
+        if (m.totalAmount > 0) status = 'Thừa (+ tiền)';
+        else if (m.totalAmount < 0) status = 'Thiếu (- tiền)';
+
         rows.push([
-          stt++,
+          idx + 1,
           m.code,
           m.name,
           m.unit,
           m.totalActualQty,
           m.price,
           m.totalAmount,
-          m.vouchers.join(', ')
+          status,
+          m.vouchers.join(', '),
+          m.note || ''
         ]);
       });
 
+      rows.push([
+        '',
+        '',
+        'TỔNG CỘNG HÀNG HÓA GỘP:',
+        '',
+        grandActualQty,
+        '',
+        grandTotalAmount,
+        '',
+        '',
+        ''
+      ]);
+
       rows.push([]);
-      rows.push(['', '', 'TỔNG CỘNG', '', totalQty, '', totalAmount, '']);
+      rows.push(['KẾT LUẬN KIỂM KÊ ĐỐI CHIẾU GỘP:']);
+      rows.push(['- Số lượng biên bản kiểm kê gộp:', `${selectedVouchers.length} biên bản`]);
+      rows.push(['- Tổng số danh mục hàng hóa (SKU):', `${mergedList.length} mặt hàng`]);
+      rows.push(['- Tổng số lượng hàng hóa kiểm kê thực tế:', `${grandActualQty}`]);
+      rows.push(['- Tổng giá trị hàng kiểm kê thừa:', `${formatCurrency(grandSurplus)} (VNĐ)`]);
+      rows.push(['- Tổng giá trị hàng kiểm kê thiếu:', `${formatCurrency(grandDeficit)} (VNĐ)`]);
+      rows.push(['- Chênh lệch thực tế ròng (+ Thừa / - Thiếu):', `${(grandTotalAmount > 0 ? '+' : '') + formatCurrency(grandTotalAmount)} (VNĐ)`]);
+      rows.push(['- Số tiền bằng chữ:', numberToWordsVietnamese(Math.abs(grandTotalAmount)) + (grandTotalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)')]);
+      rows.push([]);
+      rows.push(['', '', '', '', '', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`]);
+      rows.push(['NGƯỜI LẬP BIÊN BẢN', '', 'THỦ KHO', '', 'KẾ TOÁN THEO DÕI', '', '', 'GIÁM ĐỐC / TRƯỞNG BAN KIỂM KÊ', '']);
+      rows.push(['(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '', '(Ký, đóng dấu, ghi rõ họ tên)', '']);
+      rows.push([]);
+      rows.push([]);
+      rows.push([curUser, '', '', '', '', '', '', '', '']);
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        { wch: 6 },  // STT
+        { wch: 18 }, // Mã SP
+        { wch: 38 }, // Tên hàng hóa
+        { wch: 10 }, // ĐVT
+        { wch: 18 }, // Tổng SL
+        { wch: 16 }, // Đơn giá
+        { wch: 22 }, // Thành tiền
+        { wch: 16 }, // Phân loại
+        { wch: 24 }, // Phiếu xuất hiện
+        { wch: 20 }  // Ghi chú
+      ];
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+        { s: { r: 0, c: 4 }, e: { r: 0, c: 9 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
+        { s: { r: 1, c: 4 }, e: { r: 1, c: 9 } },
+        { s: { r: 2, c: 4 }, e: { r: 2, c: 9 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 9 } },
+        { s: { r: 4, c: 0 }, e: { r: 4, c: 9 } },
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 9 } }
+      ];
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'KiemKeGop');
-      const nowStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      XLSX.writeFile(wb, `Bang_Kiem_Ke_Gop_${selectedVouchers.length}_phieu_${nowStr}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, "BienBanKiemKeGop");
+      const nowStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+      XLSX.writeFile(wb, `Bien_Ban_Kiem_Ke_Gop_${selectedVouchers.length}_phieu_${nowStr}.xlsx`);
     }
 
     function generateKiemKeCode() {
@@ -27751,6 +28095,10 @@ window.google.script = {
               </div>
 
               <div class="flex items-center space-x-2">
+                <button type="button" onclick="exportKiemKeVoucherExcel('${escapeHtml(v.id)}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer" title="Xuất biên bản kiểm kê đối chiếu ra file Excel chuẩn văn bản">
+                  <i class="bi bi-file-earmark-excel-fill"></i>
+                  <span>Xuất Excel Biên Bản</span>
+                </button>
                 <button type="button" onclick="printKiemKeVoucher('${escapeHtml(v.id)}')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition flex items-center space-x-1.5 shadow-xs cursor-pointer">
                   <i class="bi bi-printer-fill"></i>
                   <span>In Biên Bản A4</span>
@@ -27901,6 +28249,163 @@ window.google.script = {
       }, 500);
     }
 
+    function numberToWordsVietnamese(number) {
+      if (!number || isNaN(number) || number === 0) return 'Không đồng';
+      const units = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ'];
+      const digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+
+      let num = Math.abs(Math.round(number));
+      let str = '';
+      let i = 0;
+
+      function readGroup(n) {
+        let h = Math.floor(n / 100);
+        let t = Math.floor((n % 100) / 10);
+        let u = n % 10;
+        let res = '';
+        if (h > 0 || n >= 100) {
+          res += digits[h] + ' trăm ';
+          if (t === 0 && u > 0) res += 'lẻ ';
+        }
+        if (t > 1) {
+          res += digits[t] + ' mươi ';
+          if (u === 1) res += 'mốt ';
+          else if (u === 5) res += 'lăm ';
+          else if (u > 0) res += digits[u] + ' ';
+        } else if (t === 1) {
+          res += 'mười ';
+          if (u === 5) res += 'lăm ';
+          else if (u > 0) res += digits[u] + ' ';
+        } else if (u > 0 && h === 0) {
+          res += digits[u] + ' ';
+        }
+        return res.trim();
+      }
+
+      while (num > 0) {
+        let group = num % 1000;
+        if (group > 0) {
+          let groupStr = readGroup(group);
+          str = groupStr + ' ' + units[i] + ' ' + str;
+        }
+        num = Math.floor(num / 1000);
+        i++;
+      }
+      str = str.trim();
+      if (!str) return 'Không đồng';
+      return str.charAt(0).toUpperCase() + str.slice(1) + ' đồng chẵn.';
+    }
+
+    function exportKiemKeVoucherExcel(voucherOrId) {
+      const v = (typeof voucherOrId === 'object') ? voucherOrId : kiemKeVouchersList.find(x => x.id === voucherOrId);
+      if (!v) {
+        Swal.fire('Lỗi', 'Không tìm thấy thông tin phiếu kiểm kê để xuất Excel!', 'error');
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        Swal.fire('Lỗi', 'Thư viện SheetJS chưa sẵn sàng!', 'error');
+        return;
+      }
+
+      try {
+        const items = v.items || [];
+        const now = new Date();
+        const exportDateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
+
+        const rows = [
+          ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', '', '', '', ''],
+          ['BỘ PHẬN KHO VẬN & KIỂM KÊ TÀI SẢN', '', '', 'Độc lập - Tự do - Hạnh phúc', '', '', '', ''],
+          ['', '', '', '------------------------', '', '', '', ''],
+          ['BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA TỒN KHO', '', '', '', '', '', '', ''],
+          [`Mã biên bản: ${v.voucher_code}   •   Ngày kiểm kê: ${formatDateVN(v.kiemke_date)}   •   Kho: ${v.warehouse_name || 'Kho chính'}`, '', '', '', '', '', '', ''],
+          [`Người kiểm kê: ${v.creator_name || '-'}   •   Ghi chú: ${v.notes || 'Không có'}   •   Xuất lúc: ${exportDateStr}`, '', '', '', '', '', '', ''],
+          [],
+          ['STT', 'Mã Vật Tư / SP', 'Tên Hàng Hóa - Quy Cách Phẩm Chất', 'ĐVT', 'Kiểm Kê Thực Tế', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Ghi Chú']
+        ];
+
+        let totalQty = 0;
+        let totalSurplus = 0;
+        let totalDeficit = 0;
+
+        items.forEach((it, idx) => {
+          const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
+          const p = Number(it.price) || 0;
+          const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
+          totalQty += aQty;
+          if (amt > 0) totalSurplus += amt;
+          else if (amt < 0) totalDeficit += Math.abs(amt);
+
+          rows.push([
+            idx + 1,
+            it.code,
+            it.name,
+            it.unit || '-',
+            aQty,
+            p,
+            amt,
+            it.note || ''
+          ]);
+        });
+
+        rows.push([
+          '',
+          '',
+          'TỔNG CỘNG:',
+          '',
+          totalQty,
+          '',
+          totalAmount,
+          ''
+        ]);
+
+        rows.push([]);
+        rows.push(['KẾT QUẢ ĐỐI CHIẾU KIỂM KÊ:']);
+        rows.push(['- Tổng số mặt hàng kiểm kê (SKU):', `${items.length} mặt hàng`]);
+        rows.push(['- Tổng số lượng kiểm kê thực tế:', `${totalQty}`]);
+        rows.push(['- Tổng giá trị hàng kiểm kê thừa:', `${formatCurrency(v.total_surplus_amount || totalSurplus)} (VNĐ)`]);
+        rows.push(['- Tổng giá trị hàng kiểm kê thiếu:', `${formatCurrency(v.total_deficit_amount || totalDeficit)} (VNĐ)`]);
+        rows.push(['- Tổng tiền kiểm kê chênh lệch:', `${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)} (VNĐ)`]);
+        rows.push(['- Số tiền bằng chữ:', numberToWordsVietnamese(Math.abs(totalAmount)) + (totalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)')]);
+        rows.push([]);
+        rows.push(['', '', '', '', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`]);
+        rows.push(['NGƯỜI LẬP BIÊN BẢN', '', 'THỦ KHO', '', 'KẾ TOÁN KHO', '', 'GIÁM ĐỐC / QUẢN LÝ KHO', '']);
+        rows.push(['(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '(Ký, đóng dấu, ghi rõ họ tên)', '']);
+        rows.push([]);
+        rows.push([]);
+        rows.push([v.creator_name || '', '', '', '', '', '', '', '']);
+
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = [
+          { wch: 6 },  // STT
+          { wch: 18 }, // Mã SP
+          { wch: 38 }, // Tên hàng hóa
+          { wch: 10 }, // ĐVT
+          { wch: 18 }, // Kiểm kê thực tế
+          { wch: 16 }, // Đơn giá
+          { wch: 22 }, // Thành tiền
+          { wch: 25 }  // Ghi chú
+        ];
+        ws['!merges'] = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
+          { s: { r: 0, c: 3 }, e: { r: 0, c: 7 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
+          { s: { r: 1, c: 3 }, e: { r: 1, c: 7 } },
+          { s: { r: 2, c: 3 }, e: { r: 2, c: 7 } },
+          { s: { r: 3, c: 0 }, e: { r: 3, c: 7 } },
+          { s: { r: 4, c: 0 }, e: { r: 4, c: 7 } },
+          { s: { r: 5, c: 0 }, e: { r: 5, c: 7 } }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "BienBanKiemKe");
+        XLSX.writeFile(wb, `Bien_Ban_Kiem_Ke_${v.voucher_code}_${v.kiemke_date}.xlsx`);
+      } catch (err) {
+        Swal.fire('Lỗi', 'Không thể xuất file Excel: ' + err.message, 'error');
+      }
+    }
+
     function exportCurrentKiemKeFormToExcel() {
       const rows = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
       if (rows.length === 0) {
@@ -27912,73 +28417,126 @@ window.google.script = {
       const kiemKeDate = document.getElementById('kiemke-input-date')?.value || getLocalTodayISO();
       const warehouseSelect = document.getElementById('kiemke-input-warehouse');
       const warehouseName = warehouseSelect ? warehouseSelect.options[warehouseSelect.selectedIndex]?.text : 'Kho chính';
+      const creatorName = document.getElementById('kiemke-input-creator')?.value.trim() || '';
+      const notes = document.getElementById('kiemke-input-notes')?.value.trim() || '';
 
-      try {
-        const excelRows = [
-          ['STT', 'Mã SP', 'Tên Mặt Hàng / Quy Cách', 'ĐVT', 'Kiểm Kê Thực Tế', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Ghi Chú']
-        ];
+      const items = [];
+      let totalAmount = 0;
+      let totalSurplus = 0;
+      let totalDeficit = 0;
 
-        let totalActual = 0;
-        let totalAmount = 0;
+      rows.forEach(tr => {
+        const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
+        const name = tr.querySelector('.row-name')?.value.trim() || '';
+        const unit = tr.querySelector('.row-unit')?.value.trim() || '';
+        const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
+        const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
+        const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
+        let amount = actualQty * price;
+        if (Math.abs(amount) < 0.0001) amount = 0;
+        const note = tr.querySelector('.row-note')?.value.trim() || '';
 
-        rows.forEach((tr, i) => {
-          const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
-          const name = tr.querySelector('.row-name')?.value.trim() || '';
-          const unit = tr.querySelector('.row-unit')?.value.trim() || '';
-          const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
-          const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
-          const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
-          const amount = actualQty * price;
-          const note = tr.querySelector('.row-note')?.value.trim() || '';
-
-          if (actualVal !== '') totalActual += actualQty;
-          totalAmount += amount;
-
-          excelRows.push([
-            i + 1,
+        if (code) {
+          items.push({
             code,
             name,
             unit,
-            actualVal === '' ? '' : actualQty,
-            price,
-            amount,
-            note
-          ]);
-        });
+            actual_qty: actualVal === '' ? null : actualQty,
+            price: price,
+            amount: amount,
+            note: note
+          });
+          totalAmount += amount;
+          if (amount > 0) totalSurplus += amount;
+          else if (amount < 0) totalDeficit += Math.abs(amount);
+        }
+      });
 
-        excelRows.push([
-          '',
-          '',
-          'TỔNG CỘNG:',
-          '',
-          totalActual,
-          '',
-          totalAmount,
-          ''
-        ]);
+      const tempVoucher = {
+        voucher_code: voucherCode,
+        kiemke_date: kiemKeDate,
+        warehouse_name: warehouseName,
+        creator_name: creatorName,
+        notes: notes,
+        items: items,
+        total_amount: totalAmount,
+        total_surplus_amount: totalSurplus,
+        total_deficit_amount: totalDeficit
+      };
 
-        const ws = XLSX.utils.aoa_to_sheet(excelRows);
-        ws['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 38 }, { wch: 10 }, { wch: 18 }, { wch: 16 }, { wch: 22 }, { wch: 25 }];
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "KiemKeHangHoa");
-        XLSX.writeFile(wb, `Kiem_Ke_Hang_Hoa_${voucherCode}_${kiemKeDate}.xlsx`);
-      } catch (err) {
-        Swal.fire('Lỗi', 'Không thể xuất file Excel: ' + err.message, 'error');
-      }
+      exportKiemKeVoucherExcel(tempVoucher);
     }
 
     function exportKiemKeListToExcel() {
-      if (!kiemKeVouchersList || kiemKeVouchersList.length === 0) {
-        Swal.fire('Thông báo', 'Danh sách phiếu kiểm kê đang trống để xuất Excel!', 'info');
+      // Lấy danh sách phiếu theo đúng bộ lọc hiện tại của người dùng
+      const fromVal = document.getElementById('kiemke-filter-from')?.value;
+      const toVal = document.getElementById('kiemke-filter-to')?.value;
+      const whSelect = document.getElementById('kiemke-filter-warehouse');
+      const whVal = whSelect?.value || 'all';
+      const whName = (whSelect && whSelect.selectedIndex >= 0) ? whSelect.options[whSelect.selectedIndex].text : 'Tất cả các kho';
+      const statusVal = document.getElementById('kiemke-filter-status')?.value || 'all';
+      const searchVal = (document.getElementById('kiemke-filter-search')?.value || '').trim().toLowerCase();
+
+      let list = (kiemKeVouchersList || []).filter(v => isKiemKeInCurrentWarehouse(v));
+      if (fromVal) list = list.filter(v => (v.kiemke_date || '').substring(0, 10) >= fromVal);
+      if (toVal) list = list.filter(v => (v.kiemke_date || '').substring(0, 10) <= toVal);
+      if (whVal !== 'all') list = list.filter(v => String(v.warehouse_id || '').toLowerCase() === whVal.toLowerCase());
+      if (statusVal === 'diff') {
+        list = list.filter(v => Math.abs(Number(v.total_diff_qty) || 0) > 0 || Math.abs(Number(v.total_diff_amount) || 0) > 0);
+      } else if (statusVal === 'balanced') {
+        list = list.filter(v => Math.abs(Number(v.total_diff_qty) || 0) === 0 && Math.abs(Number(v.total_diff_amount) || 0) === 0);
+      }
+      if (searchVal) {
+        list = list.filter(v => 
+          (v.voucher_code && v.voucher_code.toLowerCase().includes(searchVal)) ||
+          (v.creator_name && v.creator_name.toLowerCase().includes(searchVal)) ||
+          (v.notes && v.notes.toLowerCase().includes(searchVal)) ||
+          (v.warehouse_name && v.warehouse_name.toLowerCase().includes(searchVal))
+        );
+      }
+
+      if (!list || list.length === 0) {
+        Swal.fire('Thông báo', 'Không có phiếu kiểm kê nào trong bộ lọc hiện tại để xuất Excel!', 'info');
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        Swal.fire('Lỗi', 'Thư viện SheetJS chưa sẵn sàng!', 'error');
         return;
       }
 
       try {
+        const curUser = (currentAppUser && (currentAppUser.full_name || currentAppUser.name || currentAppUser.username)) || 'Quản lý kho';
+        const now = new Date();
+        const exportDateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        let periodStr = 'Toàn bộ thời gian';
+        if (fromVal && toVal) {
+          if (fromVal === toVal) periodStr = `Ngày ${formatDateVN(fromVal)}`;
+          else periodStr = `Từ ngày ${formatDateVN(fromVal)} đến ngày ${formatDateVN(toVal)}`;
+        } else if (fromVal) {
+          periodStr = `Từ ngày ${formatDateVN(fromVal)}`;
+        } else if (toVal) {
+          periodStr = `Đến ngày ${formatDateVN(toVal)}`;
+        }
+
         const rows = [
-          ['STT', 'Số Phiếu', 'Ngày Kiểm Kê', 'Người Kiểm Kê', 'Số Lượng SKU', 'Tổng Tiền Thừa (VNĐ)', 'Tổng Tiền Thiếu (VNĐ)', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú']
+          ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', '', '', ''],
+          ['BỘ PHẬN KHO VẬN & KIỂM KÊ TÀI SẢN', '', '', '', '', 'Độc lập - Tự do - Hạnh phúc', '', '', ''],
+          ['', '', '', '', '', '------------------------', '', '', ''],
+          ['BẢNG TỔNG HỢP DANH SÁCH BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA KHO', '', '', '', '', '', '', '', ''],
+          [`Kỳ báo cáo: ${periodStr}   •   Kho: ${whName}   •   Thời điểm xuất: ${exportDateStr}`, '', '', '', '', '', '', '', ''],
+          [`Người lập báo cáo: ${curUser}   •   Tổng số biên bản kiểm kê: ${list.length} phiếu`, '', '', '', '', '', '', '', ''],
+          [],
+          ['STT', 'Mã Biên Bản', 'Ngày Kiểm Kê', 'Kho Kiểm Kê', 'Người Lập / Kiểm Kê', 'Số Lượng SKU', 'Tổng Tiền Thừa (VNĐ)', 'Tổng Tiền Thiếu (VNĐ)', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú']
         ];
 
-        kiemKeVouchersList.forEach((v, idx) => {
+        let totalSkus = 0;
+        let totalSurplus = 0;
+        let totalDeficit = 0;
+        let totalAmount = 0;
+
+        list.forEach((v, idx) => {
           let surplus = Number(v.total_surplus_amount) || 0;
           let deficit = Number(v.total_deficit_amount) || 0;
           if (surplus === 0 && deficit === 0 && Array.isArray(v.items) && v.items.length > 0) {
@@ -27988,27 +28546,88 @@ window.google.script = {
               else if (amt < 0) deficit += Math.abs(amt);
             });
           }
-          const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
+          const amt = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
+          const skus = v.items ? v.items.length : (Number(v.total_skus) || 0);
+
+          totalSkus += skus;
+          totalSurplus += surplus;
+          totalDeficit += deficit;
+          totalAmount += amt;
+
           rows.push([
             idx + 1,
-            v.voucher_code,
+            v.voucher_code || '-',
             formatDateVN(v.kiemke_date),
-            v.creator_name || '',
-            v.items ? v.items.length : (v.total_skus || 0),
+            v.warehouse_name || 'Kho chính',
+            v.creator_name || '-',
+            skus,
             surplus,
             deficit,
-            totalAmount,
+            amt,
             v.notes || ''
           ]);
         });
 
+        // Dòng tổng cộng
+        rows.push([
+          '',
+          '',
+          '',
+          '',
+          'TỔNG CỘNG DANH SÁCH:',
+          totalSkus,
+          totalSurplus,
+          totalDeficit,
+          totalAmount,
+          ''
+        ]);
+
+        rows.push([]);
+        rows.push(['KẾT QUẢ ĐỐI CHIẾU KIỂM KÊ TỔNG HỢP:']);
+        rows.push(['- Tổng số biên bản kiểm kê đã thực hiện:', `${list.length} biên bản`]);
+        rows.push(['- Tổng số lượt mặt hàng (SKU) đã kiểm kê:', `${totalSkus} lượt SKU`]);
+        rows.push(['- Tổng giá trị hàng kiểm kê thừa:', `${formatCurrency(totalSurplus)} (VNĐ)`]);
+        rows.push(['- Tổng giá trị hàng kiểm kê thiếu:', `${formatCurrency(totalDeficit)} (VNĐ)`]);
+        rows.push(['- Tổng tiền kiểm kê chênh lệch ròng:', `${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)} (VNĐ)`]);
+        rows.push(['- Số tiền bằng chữ:', numberToWordsVietnamese(Math.abs(totalAmount)) + (totalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)')]);
+        rows.push([]);
+        rows.push(['', '', '', '', '', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`]);
+        rows.push(['NGƯỜI LẬP BÁO CÁO', '', 'THỦ KHO', '', '', 'KẾ TOÁN THEO DÕI', '', 'GIÁM ĐỐC / QUẢN LÝ KHO', '']);
+        rows.push(['(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '', '(Ký, ghi rõ họ tên)', '', '(Ký, đóng dấu, ghi rõ họ tên)', '']);
+        rows.push([]);
+        rows.push([]);
+        rows.push([curUser, '', '', '', '', '', '', '', '']);
+
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [{ wch: 6 }, { wch: 20 }, { wch: 16 }, { wch: 22 }, { wch: 14 }, { wch: 20 }, { wch: 20 }, { wch: 24 }, { wch: 28 }];
+        ws['!cols'] = [
+          { wch: 6 },  // STT
+          { wch: 22 }, // Mã Biên Bản
+          { wch: 15 }, // Ngày kiểm kê
+          { wch: 18 }, // Kho kiểm kê
+          { wch: 24 }, // Người lập / kiểm
+          { wch: 14 }, // Số lượng SKU
+          { wch: 22 }, // Tổng tiền thừa
+          { wch: 22 }, // Tổng tiền thiếu
+          { wch: 25 }, // Tổng tiền kiểm kê
+          { wch: 30 }  // Ghi chú
+        ];
+        ws['!merges'] = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+          { s: { r: 0, c: 5 }, e: { r: 0, c: 9 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+          { s: { r: 1, c: 5 }, e: { r: 1, c: 9 } },
+          { s: { r: 2, c: 5 }, e: { r: 2, c: 9 } },
+          { s: { r: 3, c: 0 }, e: { r: 3, c: 9 } },
+          { s: { r: 4, c: 0 }, e: { r: 4, c: 9 } },
+          { s: { r: 5, c: 0 }, e: { r: 5, c: 9 } }
+        ];
+
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "DanhSachKiemKe");
-        XLSX.writeFile(wb, `Danh_Sach_Phieu_Kiem_Ke_${getLocalTodayISO()}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "DanhSachKiemKeKho");
+        const dateFile = now.toISOString().slice(0, 10).replace(/-/g, '');
+        XLSX.writeFile(wb, `Bang_Tong_Hop_Kiem_Ke_Kho_${dateFile}.xlsx`);
       } catch (err) {
-        Swal.fire('Lỗi', 'Không thể xuất danh sách phiếu kiểm kê: ' + err.message, 'error');
+        Swal.fire('Lỗi', 'Không thể xuất danh sách kiểm kê: ' + err.message, 'error');
       }
     }
 
