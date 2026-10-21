@@ -20390,33 +20390,36 @@ window.google.script = {
           const t = String(cell || '').trim().toLowerCase();
           if (!t) return;
 
-          // Mã xe / Biển số
-          if (/^(mã\s*xe|số\s*xe|biển\s*số|xe)$/i.test(t) || t.includes('mã xe') || t.includes('biển số')) {
+          // 1. Tên người tạo hóa đơn: ƯU TIÊN SỐ 1 để tránh 'tên người tạo hóa đơn' bị ăn bởi 'hóa đơn'
+          if (t.includes('người tạo') || t.includes('người lập') || /người\s*(tạo|lập)/i.test(t) || t.includes('tên người') || t === 'người tạo' || t === 'tên người tạo hóa đơn') {
+            fCreator = cIdx;
+          }
+          // 2. Mã xe / Biển số
+          else if (/^(mã\s*xe|số\s*xe|biển\s*số|xe)$/i.test(t) || t.includes('mã xe') || t.includes('biển số')) {
             fPlate = cIdx;
           }
-          // Số lượng
+          // 3. Số lượng
           else if (/^(số\s*lượng|sl|số\s*lượng\s*xuất)$/i.test(t) || t === 'sl' || t === 'số lượng') {
             fQty = cIdx;
           }
-          // Vật tư / Mã hàng
+          // 4. Vật tư / Mã hàng
           else if (/^(vật\s*tư|mã\s*vật\s*tư|mã\s*vt|mã\s*hàng|mã\s*sp|mã)$/i.test(t) || t.includes('vật tư')) {
             fCode = cIdx;
           }
-          // Số chứng từ / Số HĐ
-          else if (/^(số|số\s*chứng\s*từ|số\s*ct|số\s*hđ|số\s*hóa\s*đơn)$/i.test(t) || t.includes('chứng từ') || t.includes('hóa đơn')) {
+          // 5. Số chứng từ / Số HĐ
+          else if (/^(số|số\s*chứng\s*từ|số\s*ct|số\s*hđ|số\s*hóa\s*đơn|số\s*phiếu|mã\s*chứng\s*từ)$/i.test(t) || 
+                   t === 'số' || t === 'số ct' || t === 'số hđ' || t === 'số chứng từ' ||
+                   (t.includes('chứng từ') && !t.includes('bảng kê') && !t.includes('loại')) ||
+                   (t.includes('số') && (t.includes('ct') || t.includes('hđ') || t.includes('hóa đơn')))) {
             fVoucher = cIdx;
           }
-          // Ngày
-          else if (/^(ngày|ngày\s*ct|ngày\s*hđ)$/i.test(t)) {
+          // 6. Ngày
+          else if (/^(ngày|ngày\s*ct|ngày\s*hđ|ngày\s*hạch\s*toán)$/i.test(t) || t.includes('ngày ct')) {
             fDate = cIdx;
           }
-          // Diễn giải
-          else if (/^(diễn\s*giải|nội\s*dung)$/i.test(t) || t.includes('diễn giải')) {
+          // 7. Diễn giải
+          else if (/^(diễn\s*giải|nội\s*dung|lý\s*do)$/i.test(t) || t.includes('diễn giải')) {
             fDesc = cIdx;
-          }
-          // Tên người tạo hóa đơn
-          else if (/^(tên\s*người\s*tạo\s*hóa\s*đơn|người\s*tạo\s*hóa\s*đơn|người\s*tạo|người\s*lập)$/i.test(t) || t.includes('người tạo')) {
-            fCreator = cIdx;
           }
         });
 
@@ -20481,10 +20484,16 @@ window.google.script = {
           continue;
         }
 
-        const voucherNo = colMap.voucherNo !== -1 ? String(row[colMap.voucherNo] || '').trim() : '';
+        let voucherNo = colMap.voucherNo !== -1 ? String(row[colMap.voucherNo] || '').trim() : '';
         const date = colMap.date !== -1 ? String(row[colMap.date] || '').trim() : dateText;
         const desc = colMap.desc !== -1 ? String(row[colMap.desc] || '').trim() : '';
-        const creator = colMap.creator !== -1 ? String(row[colMap.creator] || '').trim() : '';
+        let creator = colMap.creator !== -1 ? String(row[colMap.creator] || '').trim() : '';
+
+        // Tự động chuẩn hóa: Nếu voucherNo chứa họ tên người (chữ có dấu, không có số) mà creator rỗng:
+        if (!creator && voucherNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(voucherNo) && !/\d/.test(voucherNo)) {
+          creator = voucherNo;
+          voucherNo = '';
+        }
 
         rows.push({
           rowIdx: r + 1,
@@ -20535,6 +20544,13 @@ window.google.script = {
       // 2. Gom nhóm xe trên Excel phần mềm
       const excelVehicleMap = new Map();
       (excelRows || []).forEach(row => {
+        let vNo = (row.voucherNo || '').trim();
+        let crt = (row.creator || '').trim();
+        if (!crt && vNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(vNo) && !/\d/.test(vNo)) {
+          row.creator = vNo;
+          row.voucherNo = '';
+        }
+
         const rawPlate = (row.plate || '').trim();
         const key = extractVehiclePlateKey(rawPlate) || rawPlate;
         if (!excelVehicleMap.has(key)) {
@@ -21096,8 +21112,18 @@ window.google.script = {
           // Chi tiết chứng từ: đổi phần "Phiếu: PH-..." thành tên thủ kho phát xe đó
           const appStaffs = Array.from(new Set((r.appRecords || []).map(x => (x.staff || '').trim()).filter(Boolean)));
           const appVouchers = (r.appRecords || []).map(x => x.voucherNo).filter(Boolean);
-          const excelInvoices = (r.excelRecords || []).map(x => x.voucherNo).filter(Boolean);
-          const excelCreators = Array.from(new Set((r.excelRecords || []).map(x => x.creator).filter(Boolean)));
+          const excelInvoices = (r.excelRecords || []).map(x => {
+            const vNo = (x.voucherNo || '').trim();
+            const crt = (x.creator || '').trim();
+            if (!crt && vNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(vNo) && !/\d/.test(vNo)) return '';
+            return vNo;
+          }).filter(Boolean);
+          const excelCreators = Array.from(new Set((r.excelRecords || []).map(x => {
+            const vNo = (x.voucherNo || '').trim();
+            const crt = (x.creator || '').trim();
+            if (!crt && vNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(vNo) && !/\d/.test(vNo)) return vNo;
+            return crt;
+          }).filter(Boolean)));
 
           let detailsHtml = '';
           if (appStaffs.length > 0 || appVouchers.length > 0) {
@@ -21105,8 +21131,9 @@ window.google.script = {
             const tooltipTxt = appVouchers.length > 0 ? `Phiếu phát: ${appVouchers.join(', ')}` : '';
             detailsHtml += `<div class="truncate text-slate-700 text-[11px]" title="${escapeHtml(tooltipTxt)}"><span class="font-bold text-slate-500">Thủ kho:</span> <span class="font-semibold text-slate-800">${escapeHtml(staffName)}</span></div>`;
           }
-          if (excelInvoices.length > 0) {
-            detailsHtml += `<div class="truncate text-indigo-900 text-[11px]"><span class="font-bold text-indigo-500">HĐ:</span> ${escapeHtml(excelInvoices.join(', '))}${excelCreators.length > 0 ? ` <span class="text-slate-400">(${escapeHtml(excelCreators.join(', '))})</span>` : ''}</div>`;
+          if (excelInvoices.length > 0 || excelCreators.length > 0) {
+            const invTxt = excelInvoices.length > 0 ? excelInvoices.join(', ') : 'Có HĐ';
+            detailsHtml += `<div class="truncate text-indigo-900 text-[11px]"><span class="font-bold text-indigo-500">HĐ:</span> ${escapeHtml(invTxt)}${excelCreators.length > 0 ? ` <span class="text-slate-500 font-medium">(${escapeHtml(excelCreators.join(', '))})</span>` : ''}</div>`;
           }
 
           const hasMultiDocs = (r.appRecords && r.appRecords.length > 1) || (r.excelRecords && r.excelRecords.length > 1);
@@ -21316,7 +21343,15 @@ window.google.script = {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  ${(item.excelRecords || []).map((e, idx) => `
+                  ${(item.excelRecords || []).map((e, idx) => {
+                    let vNo = (e.voucherNo || '').trim();
+                    let crt = (e.creator || '').trim();
+                    // Chuẩn hóa hiển thị an toàn: Nếu vNo là họ tên người mà crt rỗng, tự động hoán đổi hiển thị sang cột Người tạo HĐ
+                    if (!crt && vNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(vNo) && !/\d/.test(vNo)) {
+                      crt = vNo;
+                      vNo = '-';
+                    }
+                    return `
                     <tr class="hover:bg-slate-50">
                       <td class="px-2.5 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
                       <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -21324,12 +21359,13 @@ window.google.script = {
                           <i class="bi bi-truck text-indigo-600 mr-1.5 text-xs"></i>${escapeHtml(e.plate || item.excelPlate || '-')}
                         </span>
                       </td>
-                      <td class="px-3 py-2 font-mono font-bold text-indigo-900">${escapeHtml(e.voucherNo || '-')}</td>
-                      <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(e.creator || '-')}</td>
+                      <td class="px-3 py-2 font-mono font-bold text-indigo-900">${escapeHtml(vNo || '-')}</td>
+                      <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(crt || '-')}</td>
                       <td class="px-3 py-2 text-slate-600 text-[11px] truncate max-w-[200px]" title="${escapeHtml(e.desc || '')}">${escapeHtml(e.desc || '-')}</td>
                       <td class="px-3 py-2 text-right font-mono font-black text-indigo-950">${formatNumber(parseSmartNumber(e.qty || 0))}</td>
                     </tr>
-                  `).join('') || '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Không có hóa đơn trên phần mềm</td></tr>'}
+                    `;
+                  }).join('') || '<tr><td colspan="6" class="text-center py-4 text-slate-400 italic">Không có hóa đơn trên phần mềm</td></tr>'}
                 </tbody>
               </table>
             </div>
