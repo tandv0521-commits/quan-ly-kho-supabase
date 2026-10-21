@@ -2829,74 +2829,73 @@
 
   <!-- ============================================================== -->
   <!-- ============================================================== -->
-  <!-- 1. MÀN HÌNH ĐĂNG NHẬP HỆ THỐNG (BANNER TOÀN MÀN HÌNH CHÀO MỪNG 20/10) -->
+  <!-- ============================================================== -->
+  <!-- ============================================================== -->
+  <!-- 1. MÀN HÌNH ĐĂNG NHẬP HỆ THỐNG (BANNER DOANH NGHIỆP NHỰA TIỀN PHONG) -->
   <!-- ============================================================== -->
   <div id="app-login-overlay" class="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 md:p-8 overflow-y-auto" style="display: none;">
-    <!-- ẢNH NỀN BANNER TOÀN MÀN HÌNH CHÀO MỪNG 20/10 -->
+    <!-- ẢNH NỀN BANNER TOÀN MÀN HÌNH CÔNG TY CỔ PHẦN NHỰA THIẾU NIÊN TIỀN PHONG -->
     <div class="fixed inset-0 w-full h-full overflow-hidden pointer-events-none">
-      <img src="banner_20_10.jpg" alt="Chúc Mừng Ngày Phụ Nữ Việt Nam 20/10" class="w-full h-full object-cover object-center filter brightness-[0.9] contrast-[1.05] transition-transform duration-1000 scale-100">
-      <!-- Lớp phủ Gradient đa tầng tôn nổi chữ và tăng chiều sâu điện ảnh -->
-      <div class="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-rose-950/50 to-slate-950/75 backdrop-blur-[1px]"></div>
-      <!-- Lớp ánh sáng vàng hồng lung linh (Radial Glow) -->
-      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-pink-500/20 via-transparent to-slate-950/60"></div>
+      <img src="banner.JPG" alt="Công Ty Cổ Phần Nhựa Thiếu Niên Tiền Phong" class="w-full h-full object-cover object-center filter brightness-[0.88] contrast-[1.05] transition-transform duration-1000 scale-100">
+      <!-- Lớp phủ Gradient đa tầng phong cách doanh nghiệp hiện đại -->
+      <div class="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-teal-950/60 to-slate-950/80 backdrop-blur-[1.5px]"></div>
+      <!-- Lớp ánh sáng xanh ngọc Teal dịu mát -->
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-500/15 via-transparent to-slate-950/60"></div>
     </div>
 
-    <!-- CANVAS HIỆU ỨNG CÁNH HOA HỒNG RƠI 20/10 (FLOATING ROSE PETALS) -->
-    <canvas id="login-petals-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-10"></canvas>
-
-    <!-- CONTAINER CHÍNH: KHUNG ĐĂNG NHẬP KÍNH MỜ GLASSMORPHISM NGHỆ THUẬT -->
-    <div class="relative z-20 w-full max-w-5xl rounded-3xl overflow-hidden shadow-[0_25px_70px_rgba(225,29,72,0.35)] border border-rose-200/50 backdrop-blur-2xl bg-white/85 flex flex-col lg:flex-row my-auto animate-in fade-in zoom-in-95 duration-300">
+    <!-- CONTAINER CHÍNH: KHUNG ĐĂNG NHẬP KÍNH MỜ GLASSMORPHISM DOANH NGHIỆP -->
+    <div class="relative z-20 w-full max-w-5xl rounded-3xl overflow-hidden shadow-[0_25px_70px_rgba(15,118,110,0.3)] border border-teal-200/40 backdrop-blur-2xl bg-white/90 flex flex-col lg:flex-row my-auto animate-in fade-in zoom-in-95 duration-300">
       
-      <!-- CỘT TRÁI: THIỆP CHÚC MỪNG & THƯƠNG HIỆU 20/10 -->
-      <div class="lg:w-1/2 relative bg-gradient-to-br from-rose-950/90 via-pink-950/80 to-slate-950/95 overflow-hidden flex flex-col justify-between p-6 sm:p-8 text-white border-b lg:border-b-0 lg:border-r border-rose-300/20 shrink-0">
-        <!-- Ánh sáng mờ nghệ thuật nền -->
-        <div class="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-rose-500/25 blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-pink-500/25 blur-3xl pointer-events-none"></div>
+      <!-- CỘT TRÁI: THƯƠNG HIỆU & GIỚI THIỆU PHÂN HỆ QUẢN LÝ KHO -->
+      <div class="lg:w-1/2 relative bg-gradient-to-br from-slate-950/95 via-teal-950/85 to-slate-950/95 overflow-hidden flex flex-col justify-between p-6 sm:p-8 text-white border-b lg:border-b-0 lg:border-r border-teal-400/20 shrink-0">
+        <!-- Ánh sáng mờ nghệ thuật nền xanh ngọc Tiền Phong -->
+        <div class="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-teal-500/20 blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none"></div>
 
-        <!-- Header Cột Trái: Huy hiệu 20/10 phát sáng -->
+        <!-- Header Cột Trái: Huy hiệu Hệ thống Nội bộ -->
         <div class="relative z-10 flex items-center justify-between gap-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-rose-500/30 to-pink-500/30 border border-rose-300/40 text-rose-200 text-xs font-black shadow-inner backdrop-blur-md">
-            <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
-            <i class="bi bi-flower1 text-rose-300 text-sm"></i>
-            <span>CHÀO MỪNG 20/10 • PHỤ NỮ VIỆT NAM</span>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-teal-500/25 to-emerald-500/25 border border-teal-300/35 text-teal-200 text-xs font-black shadow-inner backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+            <i class="bi bi-shield-check text-teal-300 text-sm"></i>
+            <span>HỆ THỐNG NỘI BỘ • QUẢN LÝ KHO DOANH NGHIỆP</span>
           </div>
-          <span class="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-white/10 text-rose-200 border border-white/15">
-            Phiên bản Đặc biệt
+          <span class="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-white/10 text-teal-200 border border-white/15">
+            Tiền Phong v3.2
           </span>
         </div>
 
-        <!-- Nội dung Thương hiệu & Lời chúc 20/10 -->
+        <!-- Nội dung Thương hiệu Tiền Phong -->
         <div class="relative z-10 my-auto py-5">
           <div class="flex items-center gap-3 mb-3.5">
             <div class="p-2 rounded-2xl bg-white/95 backdrop-blur-md shadow-md border border-white/50 flex items-center justify-center shrink-0">
               <img src="logo_tien_phong.png" alt="Nhựa Tiền Phong" class="h-9 sm:h-10 w-auto object-contain" />
             </div>
             <div>
-              <div class="text-[11px] font-extrabold uppercase tracking-widest text-rose-300 flex items-center gap-1.5 leading-tight">
-                <i class="bi bi-buildings-fill text-rose-400"></i>
+              <div class="text-[11px] font-extrabold uppercase tracking-widest text-teal-300 flex items-center gap-1.5 leading-tight">
+                <i class="bi bi-buildings-fill text-teal-400"></i>
                 <span>CÔNG TY CP NHỰA THIẾU NIÊN TIỀN PHONG</span>
               </div>
-              <div class="text-[10px] text-rose-100/80 font-medium mt-0.5">Tiền Phong Plastic • Hải Phòng, Việt Nam</div>
+              <div class="text-[10px] text-teal-100/80 font-medium mt-0.5">Tiền Phong Plastic • Hải Phòng, Việt Nam</div>
             </div>
           </div>
           <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white drop-shadow-md leading-tight">
             HỆ THỐNG QUẢN LÝ KHO &amp; BÀN GIAO PHÁT HÀNG
           </h1>
-          <div class="w-16 h-1 bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300 rounded-full my-3"></div>
+          <div class="w-16 h-1 bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-300 rounded-full my-3"></div>
 
-          <!-- Thiệp chúc mừng 20/10 trang trọng -->
-          <div class="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-rose-300/25 text-rose-50 text-xs sm:text-[13px] leading-relaxed shadow-inner space-y-2 mt-3.5">
-            <div class="font-black text-rose-200 flex items-center gap-2 text-sm">
-              <i class="bi bi-balloon-heart-fill text-rose-400 text-base"></i>
-              <span>Tri Ân &amp; Tôn Vinh Phái Đẹp</span>
+          <!-- Khung sứ mệnh / giới thiệu Tiền Phong -->
+          <div class="p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-teal-300/20 text-slate-100 text-xs sm:text-[13px] leading-relaxed shadow-inner space-y-2 mt-3.5">
+            <div class="font-black text-teal-200 flex items-center gap-2 text-sm">
+              <i class="bi bi-award-fill text-teal-400 text-base"></i>
+              <span>Tiên Phong - Chất Lượng - Uy Tín</span>
             </div>
-            <p class="italic text-slate-100">
-              "Nhân Ngày Phụ nữ Việt Nam 20/10, kính chúc toàn thể Nữ cán bộ công nhân viên cùng Quý đối tác luôn luôn rạng rỡ, xinh đẹp như những đóa hoa tươi thắm, ngập tràn niềm vui, hạnh phúc và gặt hái nhiều thành công trọn vẹn!"
+            <p class="text-slate-200 text-xs leading-relaxed">
+              Phân hệ quản lý bàn giao vật tư, kiểm soát tồn kho thông minh, đối chiếu phát hàng theo xe và quản trị điều phối luân chuyển kho chính xác theo thời gian thực.
             </p>
           </div>
 
           <!-- Badges tính năng phân hệ -->
-          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-rose-100 font-semibold">
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-teal-100 font-semibold">
             <div class="flex items-center space-x-2">
               <i class="bi bi-check-circle-fill text-emerald-400 text-xs shrink-0"></i>
               <span>Phân hệ độc lập theo từng kho</span>
@@ -2917,9 +2916,9 @@
         </div>
 
         <!-- Footer Cột Trái -->
-        <div class="relative z-10 text-[10.5px] text-rose-200/70 font-medium flex items-center justify-between border-t border-rose-300/20 pt-3">
+        <div class="relative z-10 text-[10.5px] text-teal-200/70 font-medium flex items-center justify-between border-t border-teal-400/20 pt-3">
           <span>Hệ thống Tiền Phong v3.2</span>
-          <span class="flex items-center gap-1 text-rose-200"><i class="bi bi-shield-lock-fill text-rose-400"></i> An toàn &amp; Bảo mật tuyệt đối</span>
+          <span class="flex items-center gap-1 text-teal-200"><i class="bi bi-shield-lock-fill text-teal-400"></i> An toàn &amp; Bảo mật tuyệt đối</span>
         </div>
       </div>
 
@@ -2932,8 +2931,8 @@
               <div class="flex items-center gap-2">
                 <img src="logo_tien_phong.png" alt="Logo Nhựa Tiền Phong" class="h-11 sm:h-12 w-auto object-contain" />
               </div>
-              <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shadow-2xs">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-800 text-xs font-bold border border-teal-200 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
                 <span>Phân Hệ Quản Lý Kho</span>
               </div>
             </div>
@@ -2955,11 +2954,11 @@
               <label class="block text-slate-700 font-bold mb-1.5">Tên đăng nhập / Tài khoản:</label>
               <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="bi bi-person-fill text-base text-rose-600"></i>
+                  <i class="bi bi-person-fill text-base text-teal-600"></i>
                 </span>
                 <input type="text" id="login-username" required autocomplete="username"
                        placeholder="Nhập tên tài khoản của bạn..."
-                       class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl bg-slate-50/70 focus:bg-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 font-bold text-slate-900 transition text-xs sm:text-sm shadow-2xs">
+                       class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl bg-slate-50/70 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-900 transition text-xs sm:text-sm shadow-2xs">
               </div>
             </div>
 
@@ -2969,11 +2968,11 @@
               </div>
               <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <i class="bi bi-lock-fill text-base text-rose-600"></i>
+                  <i class="bi bi-lock-fill text-base text-teal-600"></i>
                 </span>
                 <input type="password" id="login-password" required autocomplete="current-password"
                        placeholder="Nhập mật khẩu truy cập..."
-                       class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-xl bg-slate-50/70 focus:bg-white focus:ring-2 focus:ring-rose-500 focus:border-rose-500 font-bold text-slate-900 transition text-xs sm:text-sm shadow-2xs">
+                       class="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-xl bg-slate-50/70 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-900 transition text-xs sm:text-sm shadow-2xs">
                 <button type="button" onclick="togglePasswordVisibility('login-password', this)"
                         class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer">
                   <i class="bi bi-eye text-base"></i>
@@ -2984,13 +2983,13 @@
             <div class="flex items-center justify-between pt-0.5">
               <label class="flex items-center space-x-2 text-slate-600 font-medium select-none cursor-pointer">
                 <input type="checkbox" id="login-remember-me" checked
-                       class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer accent-rose-600">
+                       class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 cursor-pointer accent-teal-600">
                 <span>Ghi nhớ đăng nhập trên thiết bị này</span>
               </label>
             </div>
 
             <button type="submit" id="btn-login-submit"
-                    class="w-full py-3 px-4 bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 hover:from-rose-700 hover:to-pink-700 text-white font-black rounded-xl shadow-lg shadow-rose-500/35 transition flex items-center justify-center space-x-2 text-sm cursor-pointer active:scale-[0.99] transform hover:-translate-y-0.5">
+                    class="w-full py-3 px-4 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-700 hover:to-emerald-700 text-white font-black rounded-xl shadow-lg shadow-teal-600/30 transition flex items-center justify-center space-x-2 text-sm cursor-pointer active:scale-[0.99] transform hover:-translate-y-0.5">
               <i class="bi bi-box-arrow-in-right text-base"></i>
               <span id="btn-login-submit-text">ĐĂNG NHẬP VÀO HỆ THỐNG</span>
             </button>
@@ -7683,106 +7682,14 @@ window.google.script = {
       return false;
     }
 
-    let petalsAnimationId = null;
-    let petalsResizeHandler = null;
-
-    function initPetalsCanvas() {
-      const canvas = document.getElementById('login-petals-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      let width = canvas.width = window.innerWidth;
-      let height = canvas.height = window.innerHeight;
-
-      if (petalsResizeHandler) {
-        window.removeEventListener('resize', petalsResizeHandler);
-      }
-      petalsResizeHandler = () => {
-        if (!canvas) return;
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      };
-      window.addEventListener('resize', petalsResizeHandler);
-
-      const petalColors = [
-        'rgba(244, 63, 94, 0.75)',   // rose-500
-        'rgba(251, 113, 133, 0.7)',  // rose-400
-        'rgba(236, 72, 153, 0.65)',  // pink-500
-        'rgba(244, 114, 182, 0.6)',  // pink-400
-        'rgba(254, 205, 211, 0.85)'  // rose-200
-      ];
-
-      const petals = [];
-      const totalPetals = Math.min(32, Math.max(16, Math.floor(width / 40)));
-
-      for (let i = 0; i < totalPetals; i++) {
-        petals.push({
-          x: Math.random() * width,
-          y: Math.random() * height - height,
-          size: Math.random() * 8 + 6,
-          speedY: Math.random() * 1.2 + 0.7,
-          speedX: Math.random() * 0.8 - 0.4,
-          angle: Math.random() * Math.PI * 2,
-          angularSpeed: (Math.random() - 0.5) * 0.02,
-          color: petalColors[Math.floor(Math.random() * petalColors.length)],
-          sway: Math.random() * 0.02 + 0.01
-        });
-      }
-
-      function drawPetal(p) {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.angle);
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(p.size / 2, -p.size / 2, p.size, 0, 0, p.size);
-        ctx.bezierCurveTo(-p.size, 0, -p.size / 2, -p.size / 2, 0, 0);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function animate() {
-        ctx.clearRect(0, 0, width, height);
-        petals.forEach(p => {
-          p.y += p.speedY;
-          p.x += Math.sin(p.y * p.sway) * 0.7 + p.speedX;
-          p.angle += p.angularSpeed;
-
-          if (p.y > height + 20) {
-            p.y = -20;
-            p.x = Math.random() * width;
-          }
-          if (p.x > width + 20) p.x = -20;
-          if (p.x < -20) p.x = width + 20;
-
-          drawPetal(p);
-        });
-        petalsAnimationId = requestAnimationFrame(animate);
-      }
-
-      if (petalsAnimationId) cancelAnimationFrame(petalsAnimationId);
-      animate();
-    }
-
-    function stopPetalsCanvas() {
-      if (petalsAnimationId) {
-        cancelAnimationFrame(petalsAnimationId);
-        petalsAnimationId = null;
-      }
-      if (petalsResizeHandler) {
-        window.removeEventListener('resize', petalsResizeHandler);
-        petalsResizeHandler = null;
-      }
-    }
+    function initPetalsCanvas() {}
+    function stopPetalsCanvas() {}
 
     function showLoginOverlay() {
       const overlay = document.getElementById('app-login-overlay');
       if (overlay) {
         overlay.classList.remove('hidden');
         overlay.style.display = 'flex';
-        initPetalsCanvas();
         const errBox = document.getElementById('login-error-box');
         if (errBox) errBox.classList.add('hidden');
         setTimeout(() => {
