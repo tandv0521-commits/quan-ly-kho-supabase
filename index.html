@@ -98,7 +98,6 @@
     }
     img, svg, i, button, a {
       -webkit-user-drag: none;
-      user-drag: none;
     }
     /* ĐỊNH DẠNG FONT CHỮ SỐ CHUẨN: PHÂN BIỆT RẠCH RÒI SỐ "0" VÀ SỐ "8", KHÔNG BỊ LẪN NÉT, THẲNG HÀNG TABULAR ĐẸP MẮT */
     .font-mono, .col-num, [inputmode="decimal"], .stat-num, .num-tabular, .voucher-badge, .pack-pill {
@@ -2304,11 +2303,27 @@
                     <i class="bi bi-clipboard2-check text-amber-600 text-base"></i>
                     <span class="uppercase tracking-wide">Kiểm Kê Kho Hàng Hóa</span>
                   </div>
-                  <div class="flex items-center space-x-1 text-xs">
+                  <!-- BỘ CHỌN THÁNG KIỂM KÊ THÔNG MINH -->
+                  <div class="flex items-center space-x-1 bg-amber-50/80 px-2 py-1 rounded-xl border border-amber-200/90 shadow-2xs">
+                    <button type="button" onclick="navigateKiemKeMonth(-1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Xem phiếu tháng trước">
+                      <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <select id="kiemke-filter-month" onchange="onKiemKeMonthChange(this.value)" class="px-2 py-1 text-xs font-black text-amber-950 bg-white border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs">
+                      <!-- Populated dynamically -->
+                    </select>
+                    <button type="button" onclick="navigateKiemKeMonth(1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Xem phiếu tháng sau">
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <button type="button" onclick="resetKiemKeToCurrentMonth()" class="px-2 py-1 text-[11px] font-bold text-amber-800 hover:text-white hover:bg-amber-600 rounded-lg transition cursor-pointer border border-amber-300/80 bg-white" title="Trở về tháng hiện tại">
+                      Tháng này
+                    </button>
+                  </div>
+
+                  <div id="kiemke-date-range-wrap" class="flex items-center space-x-1 text-xs">
                     <span class="text-slate-500 font-medium">Từ:</span>
-                    <input type="date" id="kiemke-filter-from" onchange="filterKiemKeTable()" class="px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-semibold bg-white font-mono">
+                    <input type="date" id="kiemke-filter-from" onchange="onKiemKeCustomDateChange()" class="px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-semibold bg-white font-mono">
                     <span class="text-slate-500 font-medium ml-1">Đến:</span>
-                    <input type="date" id="kiemke-filter-to" onchange="filterKiemKeTable()" class="px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-semibold bg-white font-mono">
+                    <input type="date" id="kiemke-filter-to" onchange="onKiemKeCustomDateChange()" class="px-2 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 font-semibold bg-white font-mono">
                   </div>
                   <div class="w-36">
                     <select id="kiemke-filter-warehouse" onchange="filterKiemKeTable()" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg font-bold text-slate-700 focus:ring-2 focus:ring-amber-500 bg-white">
@@ -2338,6 +2353,45 @@
               <div class="relative w-full">
                 <i class="bi bi-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                 <input type="text" id="kiemke-filter-search" oninput="filterKiemKeTable()" placeholder="Tìm kiếm nhanh mã phiếu, người kiểm kê, ghi chú..." class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 bg-slate-50/50">
+              </div>
+            </div>
+
+            <!-- THANH TỔNG HỢP PHIẾU GỘP (HIỂN THỊ KHI TÍCH CHỌN TỪ 1 PHIẾU TRỞ LÊN) -->
+            <div id="kiemke-merge-toolbar" class="hidden bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-300 rounded-2xl p-3 shadow-xs transition-all duration-300 no-print">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-3 sm:gap-5 text-xs">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-amber-600 text-white font-bold text-xs shadow-2xs">
+                    <i class="bi bi-check2-square mr-1.5"></i>Đã chọn <b id="kiemke-merge-count" class="mx-1">0</b> phiếu gộp
+                  </span>
+                  <div class="h-4 w-px bg-amber-200 hidden sm:block"></div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="text-slate-600 font-medium">Tiền Thừa Gộp:</span>
+                    <b id="kiemke-merge-surplus" class="font-mono font-bold text-emerald-700">0 đ</b>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="text-slate-600 font-medium">Tiền Thiếu Gộp:</span>
+                    <b id="kiemke-merge-deficit" class="font-mono font-bold text-rose-700">0 đ</b>
+                  </div>
+                  <div class="flex items-center space-x-1.5 bg-white px-3 py-1 rounded-xl border border-amber-300 shadow-2xs">
+                    <span class="font-bold text-slate-700 uppercase text-[11px]">Tổng Chênh Lệch Gộp:</span>
+                    <b id="kiemke-merge-diff" class="font-mono font-black text-sm sm:text-base text-slate-900">0 đ</b>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-2 shrink-0">
+                  <button type="button" onclick="showMergedKiemKeModal()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-2xs cursor-pointer">
+                    <i class="bi bi-layers-fill"></i>
+                    <span>Xem Chi Tiết Phiếu Gộp</span>
+                  </button>
+                  <button type="button" onclick="exportMergedKiemKeExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1 shadow-2xs cursor-pointer" title="Xuất toàn bộ mặt hàng gộp ra Excel">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    <span>Xuất Excel Gộp</span>
+                  </button>
+                  <button type="button" onclick="uncheckAllKiemKe()" class="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 font-semibold rounded-xl text-xs border border-slate-200 transition cursor-pointer" title="Bỏ chọn tất cả">
+                    <i class="bi bi-x-lg"></i>
+                    <span>Bỏ chọn</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2400,6 +2454,9 @@
                 <table id="kiemke-vouchers-table" class="min-w-full divide-y divide-slate-200 text-xs">
                   <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider text-[11px]">
                     <tr>
+                      <th class="px-2 py-2.5 text-center w-10 no-print">
+                        <input type="checkbox" id="kiemke-check-all" onchange="toggleCheckAllKiemKe(this.checked)" title="Chọn tất cả phiếu gộp" class="rounded text-amber-600 focus:ring-amber-500 cursor-pointer w-4 h-4">
+                      </th>
                       <th class="px-2 py-2.5 text-center w-12 font-mono">STT</th>
                       <th class="px-3 py-2.5 text-center w-40 font-mono">Số Phiếu</th>
                       <th class="px-3 py-2.5 text-left min-w-[150px]">Người Kiểm Kê</th>
@@ -2412,7 +2469,7 @@
                     </tr>
                   </thead>
                   <tbody id="kiemke-vouchers-tbody" class="divide-y divide-slate-100 bg-white">
-                    <tr><td colspan="9" class="text-center py-8 text-slate-400">Đang nạp danh sách phiếu kiểm kê...</td></tr>
+                    <tr><td colspan="10" class="text-center py-8 text-slate-400">Đang nạp danh sách phiếu kiểm kê...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -2469,6 +2526,36 @@
                 <div>
                   <label class="block font-bold text-slate-700 mb-1">Ghi Chú Phiếu:</label>
                   <input type="text" id="kiemke-input-notes" placeholder="VD: Kiểm kê định kỳ, bàn giao ca..." class="w-full px-2.5 py-2 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-amber-500">
+                </div>
+              </div>
+
+              <!-- THẺ TỔNG HỢP CHÊNH LỆCH: PHIẾU NÀY & TOÀN BỘ CÁC PHIẾU CÓ TRONG DANH SÁCH -->
+              <div class="p-3 bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-amber-50/80 rounded-xl border border-amber-200/90 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-2xs">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
+                    <i class="bi bi-calculator-fill"></i>
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-800 uppercase tracking-wide text-[11px] flex items-center gap-1.5">
+                      <span>Tổng Tiền Chênh Lệch Tất Cả Các Phiếu Có Trong Danh Sách</span>
+                      <span id="kiemke-form-month-badge" class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-mono font-bold">Tháng --</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Hiển thị tổng chênh lệch của toàn bộ các phiếu trong tháng và giá trị sau khi lưu phiếu hiện tại</div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5 sm:gap-4 shrink-0">
+                  <div class="px-3 py-1.5 bg-white rounded-xl border border-slate-200 text-right shadow-2xs">
+                    <div class="text-[10px] text-slate-500 font-bold uppercase">Phiếu đang lập/sửa:</div>
+                    <div id="kiemke-form-current-voucher-diff" class="font-mono font-black text-sm text-amber-700">0 đ</div>
+                  </div>
+                  <div class="px-3 py-1.5 bg-amber-100/80 rounded-xl border border-amber-300 text-right shadow-2xs">
+                    <div class="text-[10px] text-amber-950 font-bold uppercase flex items-center justify-end gap-1">
+                      <i class="bi bi-collection-fill"></i>
+                      <span>Tổng Toàn Bộ DS:</span>
+                    </div>
+                    <div id="kiemke-form-all-vouchers-total-diff" class="font-mono font-black text-sm sm:text-base text-slate-900">0 đ</div>
+                  </div>
                 </div>
               </div>
 
@@ -2544,6 +2631,12 @@
                   <div class="flex items-center space-x-1.5">
                     <span class="font-bold text-slate-700">Chênh Lệch:</span>
                     <span id="kiemke-footer-diff-amount" class="text-base sm:text-lg font-black font-mono text-slate-800">0 đ</span>
+                  </div>
+                  <div class="h-4 w-px bg-slate-300 hidden sm:block"></div>
+                  <div class="flex items-center space-x-2 bg-amber-50 px-3 py-1 rounded-xl border border-amber-300 shadow-2xs">
+                    <i class="bi bi-collection-fill text-amber-600"></i>
+                    <span class="font-bold text-slate-700">Tổng toàn bộ DS:</span>
+                    <b id="kiemke-footer-all-vouchers-diff" class="text-sm sm:text-base font-black font-mono text-slate-900">0 đ</b>
                   </div>
                 </div>
 
@@ -25616,34 +25709,174 @@ window.google.script = {
     let kiemKeVouchersList = [];
     let currentKiemKeItems = [];
     let currentEditingKiemKeId = null;
+    window._selectedKiemKeVoucherIds = new Set();
+    window._currentKiemKeSelectedMonth = null;
 
-    async function loadKiemKeTab() {
+    function getKiemKeMonthKey(dateObj) {
+      const d = dateObj || new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+
+    function getKiemKeMonthRange(monthKey) {
+      if (!monthKey || monthKey === 'all' || monthKey === 'custom') return null;
+      const parts = monthKey.split('-');
+      const y = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const startDate = new Date(y, m - 1, 1);
+      const endDate = new Date(y, m, 0); // Ngày cuối cùng của tháng m
+      const sy = startDate.getFullYear();
+      const sm = String(startDate.getMonth() + 1).padStart(2, '0');
+      const sd = String(startDate.getDate()).padStart(2, '0');
+      const ey = endDate.getFullYear();
+      const em = String(endDate.getMonth() + 1).padStart(2, '0');
+      const ed = String(endDate.getDate()).padStart(2, '0');
+      return {
+        from: `${sy}-${sm}-${sd}`,
+        to: `${ey}-${em}-${ed}`
+      };
+    }
+
+    function populateKiemKeMonthDropdown(selectedKey) {
+      const sel = document.getElementById('kiemke-filter-month');
+      if (!sel) return;
+
+      const currentKey = getKiemKeMonthKey();
+      const activeKey = selectedKey || window._currentKiemKeSelectedMonth || currentKey;
+      window._currentKiemKeSelectedMonth = activeKey;
+
+      const monthSet = new Set();
+      monthSet.add(currentKey);
+
+      // Thêm 11 tháng trước đó
+      const now = new Date();
+      for (let i = 1; i <= 11; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        monthSet.add(getKiemKeMonthKey(d));
+      }
+
+      // Thêm các tháng có trong dữ liệu phiếu
+      (kiemKeVouchersList || []).forEach(v => {
+        if (v && v.kiemke_date) {
+          const mk = v.kiemke_date.substring(0, 7);
+          if (mk && mk.length === 7) monthSet.add(mk);
+        }
+      });
+
+      const sortedMonths = Array.from(monthSet).sort().reverse();
+
+      let optionsHtml = '';
+      sortedMonths.forEach(mk => {
+        const parts = mk.split('-');
+        const y = parts[0];
+        const m = parts[1];
+        let label = `Tháng ${m}/${y}`;
+        if (mk === currentKey) {
+          label += ' (Tháng này)';
+        } else {
+          const [cy, cm] = currentKey.split('-').map(Number);
+          const [ty, tm] = mk.split('-').map(Number);
+          const diffMonths = (cy - ty) * 12 + (cm - tm);
+          if (diffMonths === 1) {
+            label += ' (Tháng trước)';
+          }
+        }
+        optionsHtml += `<option value="${mk}" ${mk === activeKey ? 'selected' : ''}>${label}</option>`;
+      });
+
+      optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng --</option>`;
+      optionsHtml += `<option value="custom" ${activeKey === 'custom' ? 'selected' : ''}>-- Tùy chỉnh ngày... --</option>`;
+
+      sel.innerHTML = optionsHtml;
+    }
+
+    function initKiemKeMonthSelector() {
+      const currentMonthKey = getKiemKeMonthKey();
+      if (!window._currentKiemKeSelectedMonth) {
+        window._currentKiemKeSelectedMonth = currentMonthKey;
+      }
+      populateKiemKeMonthDropdown(window._currentKiemKeSelectedMonth);
+
       const fromEl = document.getElementById('kiemke-filter-from');
       const toEl = document.getElementById('kiemke-filter-to');
-      const today = getLocalTodayISO();
-
-      if (fromEl && !fromEl.value) {
-        const d30 = new Date();
-        d30.setDate(d30.getDate() - 30);
-        fromEl.value = d30.toISOString().split('T')[0];
+      if (window._currentKiemKeSelectedMonth !== 'all' && window._currentKiemKeSelectedMonth !== 'custom') {
+        const range = getKiemKeMonthRange(window._currentKiemKeSelectedMonth);
+        if (range) {
+          if (fromEl) fromEl.value = range.from;
+          if (toEl) toEl.value = range.to;
+        }
       }
-      if (toEl && !toEl.value) {
-        toEl.value = today;
-      }
+    }
 
-      // Nạp danh sách kho vào bộ lọc và form
+    function onKiemKeMonthChange(val) {
+      window._currentKiemKeSelectedMonth = val;
+      const fromEl = document.getElementById('kiemke-filter-from');
+      const toEl = document.getElementById('kiemke-filter-to');
+      if (val === 'all') {
+        if (fromEl) fromEl.value = '';
+        if (toEl) toEl.value = '';
+      } else if (val === 'custom') {
+        // Tùy chỉnh ngày: giữ nguyên giá trị người dùng nhập
+      } else {
+        const range = getKiemKeMonthRange(val);
+        if (range) {
+          if (fromEl) fromEl.value = range.from;
+          if (toEl) toEl.value = range.to;
+        }
+      }
+      filterKiemKeTable();
+    }
+
+    function navigateKiemKeMonth(dir) {
+      const current = window._currentKiemKeSelectedMonth || getKiemKeMonthKey();
+      if (current === 'all' || current === 'custom') {
+        resetKiemKeToCurrentMonth();
+        return;
+      }
+      const parts = current.split('-');
+      let y = parseInt(parts[0], 10);
+      let m = parseInt(parts[1], 10) + dir;
+      if (m < 1) { m = 12; y--; }
+      else if (m > 12) { m = 1; y++; }
+      const newKey = `${y}-${String(m).padStart(2, '0')}`;
+      window._currentKiemKeSelectedMonth = newKey;
+      populateKiemKeMonthDropdown(newKey);
+      onKiemKeMonthChange(newKey);
+    }
+
+    function resetKiemKeToCurrentMonth() {
+      const currentKey = getKiemKeMonthKey();
+      window._currentKiemKeSelectedMonth = currentKey;
+      populateKiemKeMonthDropdown(currentKey);
+      onKiemKeMonthChange(currentKey);
+    }
+
+    function onKiemKeCustomDateChange() {
+      const sel = document.getElementById('kiemke-filter-month');
+      if (sel) sel.value = 'custom';
+      window._currentKiemKeSelectedMonth = 'custom';
+      filterKiemKeTable();
+    }
+
+    async function loadKiemKeTab() {
+      // 1. Mặc định chỉ hiển thị và tính toán các phiếu trong tháng hiện tại
+      initKiemKeMonthSelector();
+
+      // 2. Nạp danh sách kho vào bộ lọc và form
       populateKiemKeWarehouseDropdowns();
 
-      // Nạp bảng giá sản phẩm trước
+      // 3. Nạp bảng giá sản phẩm trước
       loadProductPrices();
 
-      // Nạp dữ liệu phiếu kiểm kê từ Supabase / LocalDB
+      // 4. Nạp dữ liệu phiếu kiểm kê từ Supabase / LocalDB
       const tbody = document.getElementById('kiemke-vouchers-tbody');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
       }
 
       await fetchKiemKeVouchersFromCloud_();
+      populateKiemKeMonthDropdown(window._currentKiemKeSelectedMonth);
       filterKiemKeTable();
     }
 
@@ -25939,7 +26172,8 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400">Không có phiếu kiểm kê nào phù hợp với bộ lọc</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">Không có phiếu kiểm kê nào phù hợp với bộ lọc</td></tr>';
+        updateKiemKeMergeToolbar();
         return;
       }
 
@@ -25960,9 +26194,14 @@ window.google.script = {
 
         const itemCount = v.items ? v.items.length : (v.total_skus || 0);
         const notesDisplay = v.notes ? escapeHtml(v.notes) : '<span class="text-slate-300 italic">-</span>';
+        const isChecked = window._selectedKiemKeVoucherIds && window._selectedKiemKeVoucherIds.has(v.id);
 
         return `
-          <tr class="hover:bg-amber-50/40 transition border-b border-slate-100 text-xs">
+          <tr class="hover:bg-amber-50/40 transition border-b border-slate-100 text-xs ${isChecked ? 'bg-amber-50/50' : ''}">
+            <td class="px-2 py-2.5 text-center no-print">
+              <input type="checkbox" class="kiemke-row-checkbox rounded text-amber-600 focus:ring-amber-500 cursor-pointer w-4 h-4" 
+                     value="${escapeHtml(v.id)}" onchange="onKiemKeCheckboxChange()" ${isChecked ? 'checked' : ''}>
+            </td>
             <td class="px-2 py-2.5 text-center font-mono text-slate-400">${idx + 1}</td>
             <td class="px-3 py-2.5 text-center font-mono font-bold text-amber-900 bg-amber-50/30">
               <span class="hover:underline cursor-pointer" onclick="viewKiemKeDetail('${escapeHtml(v.id)}')">${escapeHtml(v.voucher_code)}</span>
@@ -25978,9 +26217,6 @@ window.google.script = {
               <button type="button" onclick="viewKiemKeDetail('${escapeHtml(v.id)}')" class="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold transition cursor-pointer" title="Xem chi tiết phiếu">
                 <i class="bi bi-eye"></i>
               </button>
-              <button type="button" onclick="printKiemKeVoucher('${escapeHtml(v.id)}')" class="px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg font-bold transition cursor-pointer" title="In biên bản kiểm kê A4">
-                <i class="bi bi-printer"></i>
-              </button>
               <button type="button" onclick="editKiemKeVoucher('${escapeHtml(v.id)}')" class="px-2 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-bold transition cursor-pointer" title="Chỉnh sửa phiếu">
                 <i class="bi bi-pencil-square"></i>
               </button>
@@ -25991,6 +26227,339 @@ window.google.script = {
           </tr>
         `;
       }).join('');
+
+      setTimeout(updateKiemKeMergeToolbar, 0);
+    }
+
+    function onKiemKeCheckboxChange() {
+      const allBoxes = document.querySelectorAll('.kiemke-row-checkbox');
+      const checkedBoxes = document.querySelectorAll('.kiemke-row-checkbox:checked');
+      window._selectedKiemKeVoucherIds = new Set(Array.from(checkedBoxes).map(cb => cb.value));
+
+      const checkAll = document.getElementById('kiemke-check-all');
+      if (checkAll) {
+        checkAll.checked = (allBoxes.length > 0 && checkedBoxes.length === allBoxes.length);
+        checkAll.indeterminate = (checkedBoxes.length > 0 && checkedBoxes.length < allBoxes.length);
+      }
+
+      // Tô màu nền nhẹ cho dòng được chọn
+      allBoxes.forEach(cb => {
+        const tr = cb.closest('tr');
+        if (tr) {
+          if (cb.checked) tr.classList.add('bg-amber-50/50');
+          else tr.classList.remove('bg-amber-50/50');
+        }
+      });
+
+      updateKiemKeMergeToolbar();
+    }
+
+    function toggleCheckAllKiemKe(checked) {
+      const allBoxes = document.querySelectorAll('.kiemke-row-checkbox');
+      allBoxes.forEach(cb => {
+        cb.checked = checked;
+        const tr = cb.closest('tr');
+        if (tr) {
+          if (checked) tr.classList.add('bg-amber-50/50');
+          else tr.classList.remove('bg-amber-50/50');
+        }
+      });
+      window._selectedKiemKeVoucherIds = checked ? new Set(Array.from(allBoxes).map(cb => cb.value)) : new Set();
+      updateKiemKeMergeToolbar();
+    }
+
+    function uncheckAllKiemKe() {
+      const checkAll = document.getElementById('kiemke-check-all');
+      if (checkAll) {
+        checkAll.checked = false;
+        checkAll.indeterminate = false;
+      }
+      const allBoxes = document.querySelectorAll('.kiemke-row-checkbox');
+      allBoxes.forEach(cb => {
+        cb.checked = false;
+        const tr = cb.closest('tr');
+        if (tr) tr.classList.remove('bg-amber-50/50');
+      });
+      window._selectedKiemKeVoucherIds = new Set();
+      updateKiemKeMergeToolbar();
+    }
+
+    function updateKiemKeMergeToolbar() {
+      const toolbar = document.getElementById('kiemke-merge-toolbar');
+      if (!toolbar) return;
+
+      const selectedIds = window._selectedKiemKeVoucherIds || new Set();
+      if (selectedIds.size === 0) {
+        toolbar.classList.add('hidden');
+        return;
+      }
+
+      toolbar.classList.remove('hidden');
+
+      const selectedVouchers = (kiemKeVouchersList || []).filter(v => selectedIds.has(v.id));
+
+      let totalSurplus = 0;
+      let totalDeficit = 0;
+      let totalAmount = 0;
+
+      selectedVouchers.forEach(v => {
+        let surplus = Number(v.total_surplus_amount) || 0;
+        let deficit = Number(v.total_deficit_amount) || 0;
+        if (surplus === 0 && deficit === 0 && Array.isArray(v.items)) {
+          v.items.forEach(it => {
+            const amt = Number(it.amount !== undefined ? it.amount : it.diff_amount) || 0;
+            if (amt > 0) surplus += amt;
+            else if (amt < 0) deficit += Math.abs(amt);
+          });
+        }
+        totalSurplus += surplus;
+        totalDeficit += deficit;
+        const amt = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
+        totalAmount += amt;
+      });
+
+      const countEl = document.getElementById('kiemke-merge-count');
+      const surplusEl = document.getElementById('kiemke-merge-surplus');
+      const deficitEl = document.getElementById('kiemke-merge-deficit');
+      const diffEl = document.getElementById('kiemke-merge-diff');
+
+      if (countEl) countEl.innerText = selectedVouchers.length;
+      if (surplusEl) surplusEl.innerText = formatCurrency(totalSurplus);
+      if (deficitEl) deficitEl.innerText = (totalDeficit > 0 ? '-' : '') + formatCurrency(totalDeficit);
+      if (diffEl) {
+        diffEl.innerText = (totalAmount > 0 ? '+' : (totalAmount < 0 ? '-' : '')) + formatCurrency(Math.abs(totalAmount));
+        diffEl.className = `font-mono font-black text-sm sm:text-base ${totalAmount > 0 ? 'text-emerald-700' : (totalAmount < 0 ? 'text-rose-600' : 'text-slate-900')}`;
+      }
+    }
+
+    function showMergedKiemKeModal() {
+      const selectedIds = window._selectedKiemKeVoucherIds || new Set();
+      if (selectedIds.size === 0) {
+        Swal.fire('Thông báo', 'Vui lòng tích chọn ít nhất 1 phiếu kiểm kê để xem bảng gộp!', 'info');
+        return;
+      }
+
+      const selectedVouchers = (kiemKeVouchersList || []).filter(v => selectedIds.has(v.id));
+      if (selectedVouchers.length === 0) return;
+
+      const mergedMap = new Map();
+      let grandSurplus = 0;
+      let grandDeficit = 0;
+      let grandTotalAmount = 0;
+      let grandActualQty = 0;
+
+      selectedVouchers.forEach(v => {
+        const vCode = v.voucher_code || 'KK';
+        (v.items || []).forEach(it => {
+          const code = String(it.code || '').trim().toUpperCase();
+          if (!code) return;
+
+          const p = Number(it.price) || getProductPrice(code) || 0;
+          const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
+          const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
+
+          if (!mergedMap.has(code)) {
+            mergedMap.set(code, {
+              code: code,
+              name: it.name || '',
+              unit: it.unit || '-',
+              price: p,
+              totalActualQty: aQty,
+              totalAmount: amt,
+              vouchers: [vCode]
+            });
+          } else {
+            const existing = mergedMap.get(code);
+            existing.totalActualQty += aQty;
+            existing.totalAmount += amt;
+            if (!existing.vouchers.includes(vCode)) {
+              existing.vouchers.push(vCode);
+            }
+            if (!existing.price && p > 0) existing.price = p;
+            if (!existing.name && it.name) existing.name = it.name;
+          }
+        });
+      });
+
+      const mergedList = Array.from(mergedMap.values()).sort((a, b) => a.code.localeCompare(b.code));
+
+      mergedList.forEach(m => {
+        grandActualQty += m.totalActualQty;
+        grandTotalAmount += m.totalAmount;
+        if (m.totalAmount > 0) grandSurplus += m.totalAmount;
+        else if (m.totalAmount < 0) grandDeficit += Math.abs(m.totalAmount);
+      });
+
+      const voucherCodesStr = selectedVouchers.map(v => `<span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-mono font-bold text-[11px]">${escapeHtml(v.voucher_code)}</span>`).join(' ');
+
+      const rowsHtml = mergedList.map((m, idx) => {
+        const isNeg = m.totalAmount < 0;
+        const amtStr = m.totalAmount > 0 ? ('+' + formatCurrency(m.totalAmount)) : (m.totalAmount < 0 ? ('-' + formatCurrency(Math.abs(m.totalAmount))) : '0 đ');
+        const amtColor = m.totalAmount > 0 ? 'text-emerald-700 font-bold' : (m.totalAmount < 0 ? 'text-rose-600 font-bold' : 'text-slate-600');
+        const rowBg = isNeg ? 'bg-rose-50/60' : 'hover:bg-slate-50';
+
+        return `
+          <tr class="${rowBg} border-b border-slate-100 text-xs">
+            <td class="px-2 py-2 text-center font-mono text-slate-400">${idx + 1}</td>
+            <td class="px-2.5 py-2 text-center font-mono font-bold text-amber-950">${escapeHtml(m.code)}</td>
+            <td class="px-3 py-2 text-left text-slate-900 font-semibold">${escapeHtml(m.name || '-')}</td>
+            <td class="px-2 py-2 text-center text-slate-600 font-medium">${escapeHtml(m.unit || '-')}</td>
+            <td class="px-3 py-2 text-right font-mono font-bold ${isNeg ? 'text-rose-700' : 'text-blue-800'}">${formatNumber(m.totalActualQty)}</td>
+            <td class="px-3 py-2 text-right font-mono text-slate-700">${formatCurrency(m.price)}</td>
+            <td class="px-3.5 py-2 text-right font-mono ${amtColor}">${amtStr}</td>
+            <td class="px-2.5 py-2 text-left text-[11px] text-slate-500 font-mono">${escapeHtml(m.vouchers.join(', '))}</td>
+          </tr>
+        `;
+      }).join('');
+
+      Swal.fire({
+        title: `<div class="flex items-center justify-between text-base font-extrabold uppercase text-slate-800 pb-2 border-b border-slate-200">
+          <div class="flex items-center space-x-2">
+            <i class="bi bi-layers-fill text-amber-600"></i>
+            <span>Bảng Tổng Hợp Phiếu Kiểm Kê Gộp (${selectedVouchers.length} Phiếu)</span>
+          </div>
+          <button type="button" onclick="Swal.close()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"><i class="bi bi-x-lg text-sm"></i></button>
+        </div>`,
+        width: '920px',
+        showConfirmButton: false,
+        showCloseButton: false,
+        html: `
+          <div class="text-left text-xs space-y-3 pt-2">
+            <!-- Danh sách phiếu gộp -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <div class="text-slate-600 font-medium flex items-center flex-wrap gap-1.5">
+                <span class="font-bold text-slate-700 uppercase text-[11px]">Các phiếu gộp:</span>
+                ${voucherCodesStr}
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-slate-200/80 text-slate-700">
+                <div>Số phiếu: <b class="font-mono text-blue-800">${selectedVouchers.length}</b></div>
+                <div>Tổng SKU gộp: <b class="font-mono text-blue-800">${mergedList.length}</b></div>
+                <div>Tổng tiền thừa: <b class="font-mono text-emerald-700">${formatCurrency(grandSurplus)}</b></div>
+                <div>Tổng tiền thiếu: <b class="font-mono text-rose-700">${grandDeficit > 0 ? ('-' + formatCurrency(grandDeficit)) : '0 đ'}</b></div>
+              </div>
+            </div>
+
+            <!-- Bảng chi tiết mặt hàng gộp -->
+            <div class="max-h-[50vh] overflow-y-auto custom-scroll border border-slate-200 rounded-xl bg-white">
+              <table class="min-w-full divide-y divide-slate-200 text-xs">
+                <thead class="bg-slate-100/90 sticky top-0 font-semibold uppercase text-slate-700 tracking-wider text-[11px]">
+                  <tr>
+                    <th class="px-2 py-2 text-center w-10">STT</th>
+                    <th class="px-2.5 py-2 text-center w-28">Mã SP</th>
+                    <th class="px-3 py-2 text-left">Tên Mặt Hàng</th>
+                    <th class="px-2 py-2 text-center w-14">ĐVT</th>
+                    <th class="px-3 py-2 text-right w-24 text-blue-800">Tổng SL Gộp</th>
+                    <th class="px-3 py-2 text-right w-28">Đơn Giá</th>
+                    <th class="px-3.5 py-2 text-right w-32 font-bold text-slate-900">Thành Tiền</th>
+                    <th class="px-2.5 py-2 text-left min-w-[120px]">Phiếu Xuất Hiện</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                  ${rowsHtml || '<tr><td colspan="8" class="text-center py-6 text-slate-400 italic">Không có mặt hàng nào trong các phiếu gộp</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Thanh chân bảng: TỔNG CHÊNH LỆCH GỘP & Nút xuất Excel -->
+            <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="font-bold text-slate-700 uppercase">TỔNG CHÊNH LỆCH CỦA CÁC PHIẾU GỘP:</span>
+                <b class="text-base sm:text-lg font-black font-mono ${grandTotalAmount > 0 ? 'text-emerald-700' : (grandTotalAmount < 0 ? 'text-rose-600' : 'text-slate-900')}">
+                  ${(grandTotalAmount > 0 ? '+' : (grandTotalAmount < 0 ? '-' : '')) + formatCurrency(Math.abs(grandTotalAmount))}
+                </b>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button type="button" onclick="exportMergedKiemKeExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center space-x-1.5 shadow-2xs cursor-pointer">
+                  <i class="bi bi-file-earmark-excel-fill"></i>
+                  <span>Xuất Excel Bảng Gộp</span>
+                </button>
+                <button type="button" onclick="Swal.close()" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold transition cursor-pointer">
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        `
+      });
+    }
+
+    function exportMergedKiemKeExcel() {
+      const selectedIds = window._selectedKiemKeVoucherIds || new Set();
+      if (selectedIds.size === 0) {
+        Swal.fire('Thông báo', 'Vui lòng tích chọn phiếu kiểm kê để xuất Excel gộp!', 'info');
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        Swal.fire('Lỗi', 'Thư viện Excel (SheetJS) chưa sẵn sàng!', 'error');
+        return;
+      }
+
+      const selectedVouchers = (kiemKeVouchersList || []).filter(v => selectedIds.has(v.id));
+
+      const mergedMap = new Map();
+      selectedVouchers.forEach(v => {
+        const vCode = v.voucher_code || 'KK';
+        (v.items || []).forEach(it => {
+          const code = String(it.code || '').trim().toUpperCase();
+          if (!code) return;
+          const p = Number(it.price) || getProductPrice(code) || 0;
+          const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
+          const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
+
+          if (!mergedMap.has(code)) {
+            mergedMap.set(code, {
+              code,
+              name: it.name || '',
+              unit: it.unit || '-',
+              price: p,
+              totalActualQty: aQty,
+              totalAmount: amt,
+              vouchers: [vCode]
+            });
+          } else {
+            const ex = mergedMap.get(code);
+            ex.totalActualQty += aQty;
+            ex.totalAmount += amt;
+            if (!ex.vouchers.includes(vCode)) ex.vouchers.push(vCode);
+          }
+        });
+      });
+
+      const rows = [];
+      rows.push(['BẢNG TỔNG HỢP KIỂM KÊ KHO GỘP']);
+      rows.push(['Các phiếu gộp:', selectedVouchers.map(v => v.voucher_code).join(', ')]);
+      rows.push(['Thời gian xuất:', new Date().toLocaleString('vi-VN')]);
+      rows.push([]);
+      rows.push(['STT', 'Mã sản phẩm', 'Tên mặt hàng', 'ĐVT', 'Tổng SL kiểm đếm', 'Đơn giá', 'Thành tiền', 'Các phiếu xuất hiện']);
+
+      let stt = 1;
+      let totalQty = 0;
+      let totalAmount = 0;
+
+      Array.from(mergedMap.values()).sort((a, b) => a.code.localeCompare(b.code)).forEach(m => {
+        totalQty += m.totalActualQty;
+        totalAmount += m.totalAmount;
+        rows.push([
+          stt++,
+          m.code,
+          m.name,
+          m.unit,
+          m.totalActualQty,
+          m.price,
+          m.totalAmount,
+          m.vouchers.join(', ')
+        ]);
+      });
+
+      rows.push([]);
+      rows.push(['', '', 'TỔNG CỘNG', '', totalQty, '', totalAmount, '']);
+
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'KiemKeGop');
+      const nowStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      XLSX.writeFile(wb, `Bang_Kiem_Ke_Gop_${selectedVouchers.length}_phieu_${nowStr}.xlsx`);
     }
 
     function generateKiemKeCode() {
@@ -26666,6 +27235,80 @@ window.google.script = {
           diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-rose-600';
           diffAmtEl.innerText = '-' + formatCurrency(Math.abs(totalAmount));
         }
+      }
+
+      // Tính tổng tiền chênh lệch của tất cả các phiếu có trong danh sách
+      const fromVal = document.getElementById('kiemke-filter-from')?.value;
+      const toVal = document.getElementById('kiemke-filter-to')?.value;
+      const whVal = document.getElementById('kiemke-filter-warehouse')?.value || 'all';
+
+      let otherVouchers = (kiemKeVouchersList || []).filter(v => {
+        if (!isKiemKeInCurrentWarehouse(v)) return false;
+        if (currentEditingKiemKeId && v.id === currentEditingKiemKeId) return false;
+        const d = (v.kiemke_date || '').substring(0, 10);
+        if (fromVal && d < fromVal) return false;
+        if (toVal && d > toVal) return false;
+        if (whVal !== 'all' && String(v.warehouse_id || '').toLowerCase() !== whVal.toLowerCase()) return false;
+        return true;
+      });
+
+      let otherTotalDiff = 0;
+      otherVouchers.forEach(v => {
+        const amt = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
+        otherTotalDiff += amt;
+      });
+
+      const totalAllVouchersDiff = otherTotalDiff + totalAmount;
+
+      const formCurrentDiffEl = document.getElementById('kiemke-form-current-voucher-diff');
+      const formAllTotalDiffEl = document.getElementById('kiemke-form-all-vouchers-total-diff');
+      const footerAllTotalDiffEl = document.getElementById('kiemke-footer-all-vouchers-diff');
+      const monthBadgeEl = document.getElementById('kiemke-form-month-badge');
+
+      if (formCurrentDiffEl) {
+        if (Math.abs(totalAmount) < 0.0001) {
+          formCurrentDiffEl.innerText = '0 đ';
+          formCurrentDiffEl.className = 'font-mono font-black text-sm text-slate-800';
+        } else if (totalAmount > 0) {
+          formCurrentDiffEl.innerText = '+' + formatCurrency(totalAmount);
+          formCurrentDiffEl.className = 'font-mono font-black text-sm text-emerald-700';
+        } else {
+          formCurrentDiffEl.innerText = '-' + formatCurrency(Math.abs(totalAmount));
+          formCurrentDiffEl.className = 'font-mono font-black text-sm text-rose-600';
+        }
+      }
+
+      if (formAllTotalDiffEl) {
+        if (Math.abs(totalAllVouchersDiff) < 0.0001) {
+          formAllTotalDiffEl.innerText = '0 đ';
+          formAllTotalDiffEl.className = 'font-mono font-black text-sm sm:text-base text-slate-800';
+        } else if (totalAllVouchersDiff > 0) {
+          formAllTotalDiffEl.innerText = '+' + formatCurrency(totalAllVouchersDiff);
+          formAllTotalDiffEl.className = 'font-mono font-black text-sm sm:text-base text-emerald-700';
+        } else {
+          formAllTotalDiffEl.innerText = '-' + formatCurrency(Math.abs(totalAllVouchersDiff));
+          formAllTotalDiffEl.className = 'font-mono font-black text-sm sm:text-base text-rose-600';
+        }
+      }
+
+      if (footerAllTotalDiffEl) {
+        if (Math.abs(totalAllVouchersDiff) < 0.0001) {
+          footerAllTotalDiffEl.innerText = '0 đ';
+          footerAllTotalDiffEl.className = 'text-sm sm:text-base font-black font-mono text-slate-800';
+        } else if (totalAllVouchersDiff > 0) {
+          footerAllTotalDiffEl.innerText = '+' + formatCurrency(totalAllVouchersDiff);
+          footerAllTotalDiffEl.className = 'text-sm sm:text-base font-black font-mono text-emerald-700';
+        } else {
+          footerAllTotalDiffEl.innerText = '-' + formatCurrency(Math.abs(totalAllVouchersDiff));
+          footerAllTotalDiffEl.className = 'text-sm sm:text-base font-black font-mono text-rose-600';
+        }
+      }
+
+      if (monthBadgeEl) {
+        const mSelect = document.getElementById('kiemke-filter-month');
+        const mText = (mSelect && mSelect.options[mSelect.selectedIndex]) ? mSelect.options[mSelect.selectedIndex].text : '';
+        const count = otherVouchers.length + 1;
+        monthBadgeEl.innerText = `${mText || 'Hiện tại'} (${count} phiếu)`;
       }
     }
 
