@@ -2345,9 +2345,9 @@
                     <i class="bi bi-arrow-clockwise"></i>
                     <span>Làm mới</span>
                   </button>
-                  <button type="button" onclick="openCreateKiemKeForm()" id="btn-open-create-kiemke" class="px-4 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-xs cursor-pointer">
+                  <button type="button" onclick="openCreateKiemKeForm()" id="btn-open-create-kiemke" class="px-4 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-xs cursor-pointer" title="Lập phiếu kiểm kê / tính tiền chênh lệch (Phím tắt F2)">
                     <i class="bi bi-plus-circle-fill"></i>
-                    <span>Lập Phiếu Tính Tiền Chênh Lệch (F2)</span>
+                    <span>Lập phiếu</span>
                   </button>
                 </div>
               </div>
@@ -26068,10 +26068,11 @@ window.google.script = {
           optionsHtml += `<option value="${mk}" ${mk === activeKey ? 'selected' : ''}>${label}</option>`;
         });
 
-        // Nếu người dùng cố ý chọn "Tháng này" mà tháng này chưa có phiếu nào
-        if (!monthsMap[currentKey] && activeKey === currentKey) {
-          const [cy, cm] = currentKey.split('-');
-          optionsHtml = `<option value="${currentKey}" selected>Tháng ${cm}/${cy} (Tháng này - 0 phiếu)</option>` + optionsHtml;
+        // Nếu tháng đang chọn chưa có phiếu nào (ví dụ tháng hiện tại hoặc tháng đang xem)
+        if (!monthsMap[activeKey] && activeKey !== 'all' && activeKey !== 'custom') {
+          const mParts = activeKey.split('-');
+          const selM = parseInt(mParts[1] || '1', 10);
+          optionsHtml = `<option value="${activeKey}" selected>Tháng ${selM} (0 phiếu)</option>` + optionsHtml;
         }
 
         // Tùy chọn xem tất cả các tháng
@@ -26079,7 +26080,9 @@ window.google.script = {
       } else {
         // Nếu hệ thống hoàn toàn chưa có phiếu nào
         const [cy, cm] = currentKey.split('-');
-        optionsHtml += `<option value="${currentKey}" selected>Tháng ${cm}/${cy} (Chưa có phiếu kiểm kê nào)</option>`;
+        const selKey = (activeKey && activeKey !== 'all' && activeKey !== 'custom') ? activeKey : currentKey;
+        const selM = parseInt(selKey.split('-')[1] || cm, 10);
+        optionsHtml += `<option value="${selKey}" selected>Tháng ${selM} (0 phiếu)</option>`;
         optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng (0 phiếu) --</option>`;
       }
 
