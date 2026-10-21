@@ -20056,12 +20056,21 @@ window.google.script = {
     window._currentVehicleComparisonSearch = '';
     window._currentProductDetailActiveTab = 'journal';
 
-    // Hàm chuẩn hóa bóc tách khóa mã xe để so sánh
+    // Hàm chuẩn hóa bóc tách khóa mã xe để so sánh (không phân biệt hoa thường, khoảng trắng, dấu gạch ngang, chấm)
     function extractVehiclePlateKey(plateStr) {
       if (!plateStr) return '';
-      const s = String(plateStr).trim().toUpperCase();
-      // Bỏ tiền tố "Xe 1", "Xe 2", "Xe", "#1" nếu có
-      const clean = s.replace(/^xe\s*\d*\s*[-:]*\s*/i, '').replace(/[^A-Z0-9]/g, '');
+      let s = String(plateStr).trim().toUpperCase();
+      // Bỏ dấu tiếng Việt nếu có
+      s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      // Bỏ tiền tố "Xe [stt] -" hoặc "Xe [stt] :" hoặc "Xe [stt] " (ví dụ: "Xe 26 83632" -> "83632", "Xe 26 29H83632" -> "29H83632")
+      s = s.replace(/^XE\s*#?\d+\s*[-:]\s*/i, '');
+      s = s.replace(/^XE\s+(\d{1,2})\s+([0-9A-Z]{4,})/i, '$2');
+      // Nếu chỉ có "Xe " ở đầu (ví dụ "Xe 29H83632", "Xe 29h83632", "Xe 83632")
+      s = s.replace(/^XE\s+(?=[0-9A-Z])/i, '');
+
+      // Bỏ tất cả các ký tự phân cách như dấu gạch ngang (-), chấm (.), khoảng trắng, v.v.
+      const clean = s.replace(/[^A-Z0-9]/g, '');
       return clean;
     }
 
@@ -20072,29 +20081,38 @@ window.google.script = {
     }
 
     // Hàm kiểm tra khớp mã xe giữa App và Excel phần mềm
-    // Quy tắc: 01794 khớp với 15E01794 (đuôi 01794)
+    // Quy tắc:
+    // 1. App viết đầy đủ 29H83632 khớp 29H83632, hoặc viết thường 29h83632 khớp 29H83632 (không phân biệt in hoa/thường)
+    // 2. App viết tắt 5 số cuối 83632 khớp với 29H83632, 01794 khớp với 15E01794
+    // 3. App viết có dấu gạch/chấm 29H-836.32 khớp 29H83632
     function isVehiclePlateMatch(appPlate, excelPlate) {
       if (!appPlate || !excelPlate) return false;
       const cleanApp = extractVehiclePlateKey(appPlate);
       const cleanExcel = extractVehiclePlateKey(excelPlate);
       if (!cleanApp || !cleanExcel) return false;
 
-      // 1. Khớp chính xác hoàn toàn
+      // 1. Khớp chính xác hoàn toàn (không phân biệt in thường, in hoa, dấu gạch nối, dấu chấm)
+      // Ví dụ: 29H83632 <-> 29H83632, 29h83632 <-> 29H83632, 29H-836.32 <-> 29H83632
       if (cleanApp === cleanExcel) return true;
 
-      // 2. Một bên kết thúc bằng bên kia (ví dụ excel là 15E01794, app là 01794)
+      // 2. Một bên kết thúc bằng bên kia (ví dụ app là 83632, excel là 29H83632; hoặc app là 01794, excel là 15E01794)
       if (cleanExcel.endsWith(cleanApp) || cleanApp.endsWith(cleanExcel)) return true;
 
-      // 3. Khớp theo chuỗi số đuôi (ví dụ: 01794 và 15E01794 -> digits 01794 và 1501794)
+      // 3. Khớp theo chuỗi số đuôi (ví dụ: 83632 và 29H83632, 01794 và 15E01794)
       const digApp = extractPlateDigits(cleanApp);
       const digExcel = extractPlateDigits(cleanExcel);
       if (digApp && digExcel) {
         if (digApp === digExcel) return true;
+        // Nếu một bên có 4 hoặc 5 số cuối và là phần đuôi của bên kia
         if (digApp.length >= 4 && digExcel.endsWith(digApp)) return true;
         if (digExcel.length >= 4 && digApp.endsWith(digExcel)) return true;
+        // So khớp 5 chữ số đăng ký cuối cùng (nếu cả 2 bên đều có từ 5 chữ số trở lên)
+        if (digApp.length >= 5 && digExcel.length >= 5 && digApp.slice(-5) === digExcel.slice(-5)) return true;
+        // So khớp 4 chữ số đăng ký cuối cùng
+        if (digApp.length >= 4 && digExcel.length >= 4 && digApp.slice(-4) === digExcel.slice(-4)) return true;
       }
 
-      // 4. Nếu một bên chứa bên kia (độ dài >= 4 ký tự)
+      // 4. Nếu một bên chứa trọn vẹn bên kia (độ dài >= 4 ký tự)
       if (cleanApp.length >= 4 && cleanExcel.includes(cleanApp)) return true;
       if (cleanExcel.length >= 4 && cleanApp.includes(cleanExcel)) return true;
 
@@ -20799,11 +20817,9 @@ window.google.script = {
                   <div class="min-w-0 flex-1">
                     ${detailsHtml || '<span class="text-slate-400 italic text-[11px]">-</span>'}
                   </div>
-                  ${hasMultiDocs ? `
-                    <button type="button" onclick="showVehicleDetailDocsModal('${escapeJsString(r.appPlate || r.excelPlate)}')" class="shrink-0 p-1 text-teal-700 hover:text-teal-900 hover:bg-teal-100/60 rounded transition" title="Xem danh sách tất cả các phiếu & hóa đơn của xe này">
-                      <i class="bi bi-list-ul text-xs"></i>
-                    </button>
-                  ` : ''}
+                  <button type="button" onclick="showVehicleDetailDocsModal('${escapeJsString(r.appPlate || r.excelPlate)}', ${compareData.results.indexOf(r)})" class="shrink-0 p-1.5 text-teal-700 hover:text-teal-900 hover:bg-teal-100/70 rounded-lg transition border border-teal-200 bg-white shadow-2xs cursor-pointer ml-1" title="Bấm xem chi tiết tất cả các phiếu phát & hóa đơn phần mềm của xe này">
+                    <i class="bi bi-list-ul text-xs"></i>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -20841,60 +20857,70 @@ window.google.script = {
     }
 
     // Modal hiển thị danh sách các phiếu phát và hóa đơn chi tiết của 1 xe
-    function showVehicleDetailDocsModal(plateKey) {
+    function showVehicleDetailDocsModal(plateKey, rowIndex = null) {
       const compareData = window._currentVehicleComparisonData;
       if (!compareData) return;
 
-      const item = compareData.results.find(x => x.appPlate === plateKey || x.excelPlate === plateKey);
+      let item = null;
+      if (typeof rowIndex === 'number' && rowIndex >= 0 && compareData.results[rowIndex]) {
+        item = compareData.results[rowIndex];
+      }
+      if (!item) {
+        item = compareData.results.find(x => x.appPlate === plateKey || x.excelPlate === plateKey);
+      }
+      if (!item) {
+        const cleanKey = extractVehiclePlateKey(plateKey);
+        item = compareData.results.find(x => extractVehiclePlateKey(x.appPlate) === cleanKey || extractVehiclePlateKey(x.excelPlate) === cleanKey);
+      }
       if (!item) return;
 
       const unit = compareData.itemUnit || 'cái';
       let html = `
-        <div class="text-left space-y-3.5 p-2">
-          <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+        <div class="text-left space-y-3.5 p-2 font-sans">
+          <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between shadow-2xs">
             <div>
-              <div class="text-xs text-slate-500 font-medium">Xe đối chiếu:</div>
-              <div class="font-bold text-sm text-slate-900 mt-0.5">
-                ${item.appPlate ? `<span class="font-mono text-teal-800">[Xe ${item.appDailySeq || 1}] ${escapeHtml(item.appPlate)}</span>` : '<span class="text-slate-400">Chưa có trên App</span>'}
-                <span class="text-slate-400 mx-1">⟷</span>
-                ${item.excelPlate ? `<span class="font-mono text-indigo-800">[PM] ${escapeHtml(item.excelPlate)}</span>` : '<span class="text-slate-400">Chưa có trên PM</span>'}
+              <div class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Xe đối chiếu:</div>
+              <div class="font-bold text-sm text-slate-900 mt-1 flex items-center flex-wrap gap-1.5">
+                ${item.appPlate ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-900 font-mono text-xs"><b class="mr-1">Xe ${item.appDailySeq || 1}:</b> ${escapeHtml(item.appPlate)}</span>` : '<span class="text-slate-400 italic text-xs">Chưa có trên App</span>'}
+                <span class="text-slate-300 mx-1">⟷</span>
+                ${item.excelPlate ? `<span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-950 font-mono text-xs"><i class="bi bi-truck mr-1 text-indigo-600"></i>[PM] ${escapeHtml(item.excelPlate)}</span>` : '<span class="text-slate-400 italic text-xs">Chưa có trên PM</span>'}
               </div>
             </div>
             <div class="text-right">
-              <div class="text-xs text-slate-500">Chênh lệch:</div>
-              <div class="font-mono font-black text-sm ${item.diffQty === 0 ? 'text-emerald-700' : 'text-rose-700'}">
-                ${item.diffQty > 0 ? '+' : ''}${formatNumber(item.diffQty)} ${escapeHtml(unit)}
+              <div class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Chênh lệch:</div>
+              <div class="font-mono font-black text-sm mt-0.5 ${item.diffQty === 0 ? 'text-emerald-700' : 'text-rose-700'}">
+                ${item.diffQty > 0 ? '+' : ''}${formatNumber(item.diffQty)} <span class="text-xs font-normal text-slate-500">${escapeHtml(unit)}</span>
               </div>
             </div>
           </div>
 
           <!-- CỘT 1: CÁC PHIẾU PHÁT HÀNG THỰC TẾ (APP) -->
-          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
-            <div class="bg-teal-50 px-3 py-2 border-b border-teal-100 flex items-center justify-between">
+          <div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+            <div class="bg-teal-50 px-3.5 py-2 border-b border-teal-100 flex items-center justify-between">
               <span class="font-bold text-xs text-teal-950 flex items-center gap-1.5">
                 <i class="bi bi-box-seam-fill text-teal-600"></i>Phiếu phát hàng thực tế (${(item.appRecords || []).length} lượt phát)
               </span>
               <span class="font-mono font-bold text-xs text-teal-900">Tổng: ${formatNumber(item.appQty)} ${escapeHtml(unit)}</span>
             </div>
-            <div class="max-h-48 overflow-y-auto">
+            <div class="max-h-52 overflow-y-auto custom-scroll">
               <table class="min-w-full divide-y divide-slate-100 text-xs">
-                <thead class="bg-slate-50 text-slate-600 font-semibold text-[11px]">
+                <thead class="bg-slate-50 text-slate-600 font-semibold text-[11px] sticky top-0">
                   <tr>
-                    <th class="px-2.5 py-1.5 text-center w-10">STT</th>
-                    <th class="px-3 py-1.5 text-left">Số phiếu</th>
-                    <th class="px-3 py-1.5 text-left">Thủ kho</th>
-                    <th class="px-3 py-1.5 text-center">Thời gian</th>
-                    <th class="px-3 py-1.5 text-right">Số lượng</th>
+                    <th class="px-2.5 py-2 text-center w-10">STT</th>
+                    <th class="px-3 py-2 text-left">Số phiếu</th>
+                    <th class="px-3 py-2 text-left">Thủ kho</th>
+                    <th class="px-3 py-2 text-center">Thời gian</th>
+                    <th class="px-3 py-2 text-right">Số lượng</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   ${(item.appRecords || []).map((a, idx) => `
-                    <tr>
-                      <td class="px-2.5 py-1.5 text-center text-slate-400 font-mono">${idx + 1}</td>
-                      <td class="px-3 py-1.5 font-mono font-bold text-teal-900">${escapeHtml(a.voucherNo || '-')}</td>
-                      <td class="px-3 py-1.5 text-slate-700">${escapeHtml(a.staff || '-')}</td>
-                      <td class="px-3 py-1.5 text-center font-mono text-slate-500">${a.date ? formatDateVN(a.date) : ''} ${escapeHtml(a.time || '')}</td>
-                      <td class="px-3 py-1.5 text-right font-mono font-bold text-slate-900">${formatNumber(parseSmartNumber(a.qty || 0))}</td>
+                    <tr class="hover:bg-slate-50">
+                      <td class="px-2.5 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
+                      <td class="px-3 py-2 font-mono font-bold text-teal-900">${escapeHtml(a.voucherNo || '-')}</td>
+                      <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(a.staff || '-')}</td>
+                      <td class="px-3 py-2 text-center font-mono text-slate-500">${a.date ? formatDateVN(a.date) : ''} ${escapeHtml(a.time || '')}</td>
+                      <td class="px-3 py-2 text-right font-mono font-black text-slate-900">${formatNumber(parseSmartNumber(a.qty || 0))}</td>
                     </tr>
                   `).join('') || '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Không có phiếu phát thực tế</td></tr>'}
                 </tbody>
@@ -20903,32 +20929,32 @@ window.google.script = {
           </div>
 
           <!-- CỘT 2: CÁC HÓA ĐƠN TRÊN PHẦN MỀM (EXCEL) -->
-          <div class="border border-indigo-200 rounded-xl overflow-hidden bg-white">
-            <div class="bg-indigo-50 px-3 py-2 border-b border-indigo-100 flex items-center justify-between">
+          <div class="border border-indigo-200 rounded-xl overflow-hidden bg-white shadow-2xs">
+            <div class="bg-indigo-50 px-3.5 py-2 border-b border-indigo-100 flex items-center justify-between">
               <span class="font-bold text-xs text-indigo-950 flex items-center gap-1.5">
                 <i class="bi bi-file-earmark-text-fill text-indigo-600"></i>Hóa đơn phần mềm (${(item.excelRecords || []).length} hóa đơn)
               </span>
               <span class="font-mono font-bold text-xs text-indigo-900">Tổng: ${formatNumber(item.excelQty)} ${escapeHtml(unit)}</span>
             </div>
-            <div class="max-h-48 overflow-y-auto">
+            <div class="max-h-52 overflow-y-auto custom-scroll">
               <table class="min-w-full divide-y divide-slate-100 text-xs">
-                <thead class="bg-slate-50 text-slate-600 font-semibold text-[11px]">
+                <thead class="bg-slate-50 text-slate-600 font-semibold text-[11px] sticky top-0">
                   <tr>
-                    <th class="px-2.5 py-1.5 text-center w-10">STT</th>
-                    <th class="px-3 py-1.5 text-left">Số chứng từ</th>
-                    <th class="px-3 py-1.5 text-left">Người tạo HĐ</th>
-                    <th class="px-3 py-1.5 text-left">Diễn giải</th>
-                    <th class="px-3 py-1.5 text-right">Số lượng</th>
+                    <th class="px-2.5 py-2 text-center w-10">STT</th>
+                    <th class="px-3 py-2 text-left">Số chứng từ</th>
+                    <th class="px-3 py-2 text-left">Người tạo HĐ</th>
+                    <th class="px-3 py-2 text-left">Diễn giải</th>
+                    <th class="px-3 py-2 text-right">Số lượng</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   ${(item.excelRecords || []).map((e, idx) => `
-                    <tr>
-                      <td class="px-2.5 py-1.5 text-center text-slate-400 font-mono">${idx + 1}</td>
-                      <td class="px-3 py-1.5 font-mono font-bold text-indigo-900">${escapeHtml(e.voucherNo || '-')}</td>
-                      <td class="px-3 py-1.5 text-slate-700">${escapeHtml(e.creator || '-')}</td>
-                      <td class="px-3 py-1.5 text-slate-600 text-[11px] truncate max-w-[200px]" title="${escapeHtml(e.desc || '')}">${escapeHtml(e.desc || '-')}</td>
-                      <td class="px-3 py-1.5 text-right font-mono font-bold text-indigo-950">${formatNumber(parseSmartNumber(e.qty || 0))}</td>
+                    <tr class="hover:bg-slate-50">
+                      <td class="px-2.5 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
+                      <td class="px-3 py-2 font-mono font-bold text-indigo-900">${escapeHtml(e.voucherNo || '-')}</td>
+                      <td class="px-3 py-2 text-slate-700 font-medium">${escapeHtml(e.creator || '-')}</td>
+                      <td class="px-3 py-2 text-slate-600 text-[11px] truncate max-w-[220px]" title="${escapeHtml(e.desc || '')}">${escapeHtml(e.desc || '-')}</td>
+                      <td class="px-3 py-2 text-right font-mono font-black text-indigo-950">${formatNumber(parseSmartNumber(e.qty || 0))}</td>
                     </tr>
                   `).join('') || '<tr><td colspan="5" class="text-center py-4 text-slate-400 italic">Không có hóa đơn trên phần mềm</td></tr>'}
                 </tbody>
@@ -20941,9 +20967,21 @@ window.google.script = {
       Swal.fire({
         title: `Chi tiết đối chiếu xe`,
         html: html,
-        width: '680px',
-        confirmButtonText: 'Đã xem xong',
-        confirmButtonColor: '#4f46e5'
+        width: '740px',
+        confirmButtonText: '<i class="bi bi-check-lg mr-1.5"></i>Đã xem xong',
+        confirmButtonColor: '#0d9488',
+        customClass: {
+          popup: '!rounded-2xl !p-5 !border !border-slate-200 !shadow-2xl',
+          confirmButton: '!rounded-xl !px-6 !py-2.5 !font-bold !text-xs !shadow-sm cursor-pointer'
+        },
+        allowOutsideClick: true
+      }).then(() => {
+        // QUAN TRỌNG: Khi đóng chi tiết xe (bấm "Đã xem xong", ESC, hoặc click ngoài),
+        // hệ thống PHẢI giữ nguyên bảng so sánh đối chiếu xe hiện tại!
+        const targetCode = (compareData && compareData.itemCode) || (window._currentProductDetailItem && window._currentProductDetailItem.code) || '';
+        if (targetCode) {
+          showProductDispatchDetailModal(targetCode, 'compare');
+        }
       });
     }
 
