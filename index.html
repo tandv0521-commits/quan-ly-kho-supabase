@@ -26548,6 +26548,9 @@ window.google.script = {
               <button type="button" onclick="viewKiemKeDetail('${escapeHtml(v.id)}')" class="px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold transition cursor-pointer" title="Xem chi tiết phiếu">
                 <i class="bi bi-eye"></i>
               </button>
+              <button type="button" onclick="exportKiemKeVoucherExcel('${escapeHtml(v.id)}')" class="px-2 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-bold transition cursor-pointer" title="Xuất file Excel biên bản kiểm kê">
+                <i class="bi bi-file-earmark-excel"></i>
+              </button>
               <button type="button" onclick="editKiemKeVoucher('${escapeHtml(v.id)}')" class="px-2 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-bold transition cursor-pointer" title="Chỉnh sửa phiếu">
                 <i class="bi bi-pencil-square"></i>
               </button>
@@ -26814,160 +26817,442 @@ window.google.script = {
       });
     }
 
-    function exportMergedKiemKeExcel() {
+    // HÀM XUẤT EXCEL CHUẨN DOANH NGHIỆP CHO TAB TÍNH TIỀN CHÊNH LỆCH / KIỂM KÊ KHO
+    // ĐẶC ĐIỂM: KẺ BẢNG ĐẦY ĐỦ (BORDERS), FONT TIMES NEW ROMAN, CĂN LỀ CHUẨN, ĐỊNH DẠNG SỐ #,##0 VÀ KHỐI CHỮ KÝ 4 BÊN
+    async function exportKiemKeStyledExcelDocument({
+      sheetName = 'KiemKeKho',
+      fileName = 'Bien_Ban_Kiem_Ke.xlsx',
+      docTitle = 'BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA KHO',
+      subTitles = [],
+      headers = [],
+      colWidths = [],
+      alignments = [],
+      numColsIdx = [],
+      currencyColsIdx = [],
+      rows = [],
+      totalRow = null,
+      summaryItems = [],
+      moneyWords = '',
+      creatorName = '',
+      headerThemeColor = 'FFB45309' // Màu hổ phách amber sang trọng đồng bộ với tab
+    }) {
+      // 1. Nếu có ExcelJS: xuất chuẩn chuyên nghiệp đẳng cấp cao
+      if (typeof ExcelJS !== 'undefined') {
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Hệ Thống Quản Lý Kho';
+        workbook.lastModifiedBy = creatorName || 'Ban kiểm kê';
+        workbook.created = new Date();
+        workbook.modified = new Date();
+
+        const ws = workbook.addWorksheet(sheetName, {
+          views: [{ showGridLines: true }]
+        });
+
+        const totalCols = headers.length;
+        const midCol = Math.max(2, Math.floor(totalCols / 2));
+
+        // Dòng 1: Quốc hiệu & Tiêu ngữ bên phải, Tiêu đề cơ quan bên trái
+        const r1 = ws.addRow([]);
+        r1.getCell(1).value = 'HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP';
+        r1.getCell(midCol + 1).value = 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM';
+        ws.mergeCells(1, 1, 1, midCol);
+        ws.mergeCells(1, midCol + 1, 1, totalCols);
+        r1.getCell(1).font = { name: 'Times New Roman', size: 10, bold: true, color: { argb: 'FF334155' } };
+        r1.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        r1.getCell(midCol + 1).font = { name: 'Times New Roman', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+        r1.getCell(midCol + 1).alignment = { vertical: 'middle', horizontal: 'center' };
+        r1.height = 19;
+
+        // Dòng 2
+        const r2 = ws.addRow([]);
+        r2.getCell(1).value = 'BỘ PHẬN KHO VẬN & KIỂM KÊ TÀI SẢN';
+        r2.getCell(midCol + 1).value = 'Độc lập - Tự do - Hạnh phúc';
+        ws.mergeCells(2, 1, 2, midCol);
+        ws.mergeCells(2, midCol + 1, 2, totalCols);
+        r2.getCell(1).font = { name: 'Times New Roman', size: 9.5, italic: true, color: { argb: 'FF64748B' } };
+        r2.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        r2.getCell(midCol + 1).font = { name: 'Times New Roman', size: 10, bold: true, italic: true, color: { argb: 'FF0F172A' } };
+        r2.getCell(midCol + 1).alignment = { vertical: 'middle', horizontal: 'center' };
+        r2.height = 19;
+
+        // Dòng 3: Gạch nối
+        const r3 = ws.addRow([]);
+        r3.getCell(midCol + 1).value = '------------------------';
+        ws.mergeCells(3, midCol + 1, 3, totalCols);
+        r3.getCell(midCol + 1).font = { name: 'Times New Roman', size: 9, color: { argb: 'FF94A3B8' } };
+        r3.getCell(midCol + 1).alignment = { vertical: 'top', horizontal: 'center' };
+        r3.height = 12;
+
+        // Dòng 4: Cách
+        ws.addRow([]).height = 6;
+
+        // Dòng 5: TIÊU ĐỀ BIÊN BẢN (IN HOA, ĐẬM, 15PT)
+        const r5 = ws.addRow([docTitle.toUpperCase()]);
+        ws.mergeCells(5, 1, 5, totalCols);
+        r5.getCell(1).font = { name: 'Times New Roman', size: 15, bold: true, color: { argb: 'FF0F172A' } };
+        r5.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        r5.height = 28;
+
+        // Các dòng phụ đề
+        subTitles.forEach(st => {
+          const sr = ws.addRow([st]);
+          const rNum = sr.number;
+          ws.mergeCells(rNum, 1, rNum, totalCols);
+          sr.getCell(1).font = { name: 'Times New Roman', size: 10.5, italic: true, color: { argb: 'FF334155' } };
+          sr.getCell(1).alignment = { vertical: 'middle', horizontal: 'center' };
+          sr.height = 18;
+        });
+
+        // Dòng trống trước bảng
+        ws.addRow([]).height = 8;
+
+        // 2. HEADER BẢNG DỮ LIỆU (KẺ BẢNG + NỀN AMBER SANG TRỌNG + CHỮ TRẮNG BOLD)
+        const headerRow = ws.addRow(headers);
+        headerRow.height = 28;
+        headerRow.eachCell((cell) => {
+          cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: headerThemeColor } };
+          cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FF78350F' } },
+            left: { style: 'thin', color: { argb: 'FF78350F' } },
+            bottom: { style: 'medium', color: { argb: 'FF451A03' } },
+            right: { style: 'thin', color: { argb: 'FF78350F' } }
+          };
+        });
+
+        // 3. CÁC DÒNG DỮ LIỆU (KẺ BẢNG ĐẦY ĐỦ 4 VIỀN TỪNG Ô, CĂN LỀ, SO LE NỀN)
+        rows.forEach((rowData, rIdx) => {
+          const row = ws.addRow(rowData);
+          row.height = 21;
+          const isAlternate = (rIdx % 2 === 1);
+
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber > totalCols) return;
+
+            const align = alignments[colNumber - 1] || 'left';
+            const isNumCol = (numColsIdx.includes(colNumber) || currencyColsIdx.includes(colNumber));
+
+            cell.font = { name: 'Times New Roman', size: 11, color: { argb: 'FF000000' } };
+            cell.alignment = { vertical: 'middle', horizontal: align };
+
+            // KẺ BẢNG ĐẦY ĐỦ 4 CẠNH CHO MỌI Ô DỮ LIỆU
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+              left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+              bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+              right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+            };
+
+            // Nền so le trang nhã
+            if (isAlternate) {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+            }
+
+            // Định dạng số phân cách hàng nghìn
+            if (isNumCol) {
+              cell.numFmt = '#,##0';
+              if (typeof cell.value === 'number') {
+                if (cell.value < 0) {
+                  cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFB91C1C' } };
+                }
+              }
+            }
+          });
+        });
+
+        // 4. DÒNG TỔNG CỘNG
+        if (totalRow && totalRow.length > 0) {
+          const tr = ws.addRow(totalRow);
+          tr.height = 24;
+          tr.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber > totalCols) return;
+            cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+            cell.border = {
+              top: { style: 'medium', color: { argb: 'FF64748B' } },
+              left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+              bottom: { style: 'double', color: { argb: 'FF0F172A' } },
+              right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+            };
+
+            const align = alignments[colNumber - 1] || 'right';
+            const isText = (typeof cell.value === 'string' && cell.value.includes('TỔNG'));
+            cell.alignment = { vertical: 'middle', horizontal: isText ? 'right' : align };
+
+            if (numColsIdx.includes(colNumber) || currencyColsIdx.includes(colNumber)) {
+              cell.numFmt = '#,##0';
+              if (typeof cell.value === 'number') {
+                if (cell.value < 0) {
+                  cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FFB91C1C' } };
+                } else if (cell.value > 0 && colNumber >= 7) {
+                  cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF047857' } };
+                }
+              }
+            }
+          });
+        }
+
+        ws.addRow([]).height = 10;
+
+        // 5. KHỐI TÓM TẮT KẾT LUẬN KIỂM KÊ
+        if (summaryItems && summaryItems.length > 0) {
+          const sumHeader = ws.addRow(['KẾT QUẢ ĐỐI CHIẾU KIỂM KÊ:']);
+          sumHeader.getCell(1).font = { name: 'Times New Roman', size: 11.5, bold: true, color: { argb: 'FF0F172A' } };
+          sumHeader.height = 20;
+
+          summaryItems.forEach(item => {
+            const itemRow = ws.addRow([item.label, '', item.value]);
+            const num = itemRow.number;
+            ws.mergeCells(num, 1, num, 3);
+            itemRow.getCell(1).font = { name: 'Times New Roman', size: 11, color: { argb: 'FF334155' } };
+            itemRow.getCell(3).font = { 
+              name: 'Times New Roman', 
+              size: 11, 
+              bold: true, 
+              color: { argb: item.color || 'FF0F172A' } 
+            };
+            itemRow.getCell(3).alignment = { vertical: 'middle', horizontal: 'left' };
+            itemRow.height = 19;
+          });
+
+          if (moneyWords) {
+            const mwRow = ws.addRow(['- Số tiền bằng chữ:', '', moneyWords]);
+            const mwNum = mwRow.number;
+            ws.mergeCells(mwNum, 1, mwNum, 2);
+            ws.mergeCells(mwNum, 3, mwNum, totalCols);
+            mwRow.getCell(1).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+            mwRow.getCell(3).font = { name: 'Times New Roman', size: 11, bold: true, italic: true, color: { argb: 'FF047857' } };
+            mwRow.height = 22;
+          }
+
+          ws.addRow([]).height = 10;
+        }
+
+        // 6. KHỐI CHỮ KÝ 4 BÊN CHUẨN DOANH NGHIỆP
+        const now = new Date();
+        const dateRow = ws.addRow([]);
+        dateRow.getCell(totalCols - 2).value = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+        ws.mergeCells(dateRow.number, totalCols - 2, dateRow.number, totalCols);
+        dateRow.getCell(totalCols - 2).font = { name: 'Times New Roman', size: 11, italic: true, color: { argb: 'FF334155' } };
+        dateRow.getCell(totalCols - 2).alignment = { vertical: 'middle', horizontal: 'center' };
+        dateRow.height = 20;
+
+        const step = Math.max(1, Math.floor(totalCols / 4));
+        const col1 = 1;
+        const col2 = Math.min(totalCols - 2, col1 + step);
+        const col3 = Math.min(totalCols - 1, col2 + step);
+        const col4 = Math.min(totalCols, col3 + step);
+
+        const signTitleRow = ws.addRow([]);
+        signTitleRow.getCell(col1).value = 'NGƯỜI LẬP BIÊN BẢN';
+        signTitleRow.getCell(col2).value = 'THỦ KHO';
+        signTitleRow.getCell(col3).value = 'KẾ TOÁN KHO';
+        signTitleRow.getCell(col4).value = 'GIÁM ĐỐC / QUẢN LÝ KHO';
+
+        [col1, col2, col3, col4].forEach(c => {
+          const cell = signTitleRow.getCell(c);
+          cell.font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+        signTitleRow.height = 20;
+
+        const signSubRow = ws.addRow([]);
+        signSubRow.getCell(col1).value = '(Ký, ghi rõ họ tên)';
+        signSubRow.getCell(col2).value = '(Ký, ghi rõ họ tên)';
+        signSubRow.getCell(col3).value = '(Ký, ghi rõ họ tên)';
+        signSubRow.getCell(col4).value = '(Ký, đóng dấu, ghi rõ họ tên)';
+
+        [col1, col2, col3, col4].forEach(c => {
+          const cell = signSubRow.getCell(c);
+          cell.font = { name: 'Times New Roman', size: 10, italic: true, color: { argb: 'FF64748B' } };
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+        signSubRow.height = 18;
+
+        ws.addRow([]).height = 16;
+        ws.addRow([]).height = 16;
+        ws.addRow([]).height = 16;
+
+        const nameRow = ws.addRow([]);
+        nameRow.getCell(col1).value = creatorName || '';
+        nameRow.getCell(col1).font = { name: 'Times New Roman', size: 11, bold: true, color: { argb: 'FF0F172A' } };
+        nameRow.getCell(col1).alignment = { vertical: 'middle', horizontal: 'center' };
+        nameRow.height = 20;
+
+        // Cấu hình độ rộng các cột
+        ws.columns = colWidths.map(w => ({ width: w }));
+
+        // Tải file về máy người dùng
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+      } else if (typeof XLSX !== 'undefined') {
+        // Dự phòng an toàn nếu không có ExcelJS: xuất bằng XLSX
+        const aoa = [
+          ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM'],
+          ['BỘ PHẬN KHO VẬN & KIỂM KÊ TÀI SẢN', '', '', 'Độc lập - Tự do - Hạnh phúc'],
+          ['', '', '', '------------------------'],
+          [docTitle.toUpperCase()],
+          ...subTitles.map(st => [st]),
+          [],
+          headers,
+          ...rows
+        ];
+        if (totalRow) aoa.push(totalRow);
+        aoa.push([]);
+        if (summaryItems) summaryItems.forEach(s => aoa.push([s.label, '', s.value]));
+        if (moneyWords) aoa.push(['- Số tiền bằng chữ:', '', moneyWords]);
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!cols'] = colWidths.map(w => ({ wch: w }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, fileName);
+      } else {
+        throw new Error('Thư viện Excel chưa sẵn sàng!');
+      }
+    }
+
+    async function exportMergedKiemKeExcel() {
       const selectedIds = window._selectedKiemKeVoucherIds || new Set();
       if (selectedIds.size === 0) {
         Swal.fire('Thông báo', 'Vui lòng tích chọn ít nhất 1 phiếu kiểm kê để xuất Excel gộp!', 'info');
         return;
       }
 
-      if (typeof XLSX === 'undefined') {
-        Swal.fire('Lỗi', 'Thư viện Excel (SheetJS) chưa sẵn sàng!', 'error');
-        return;
-      }
-
       const selectedVouchers = (kiemKeVouchersList || []).filter(v => selectedIds.has(v.id));
       if (selectedVouchers.length === 0) return;
 
-      const mergedMap = new Map();
-      let grandSurplus = 0;
-      let grandDeficit = 0;
-      let grandTotalAmount = 0;
-      let grandActualQty = 0;
+      Swal.fire({ title: 'Đang tạo file Excel gộp...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-      selectedVouchers.forEach(v => {
-        const vCode = v.voucher_code || 'KK';
-        (v.items || []).forEach(it => {
-          const code = String(it.code || '').trim().toUpperCase();
-          if (!code) return;
+      try {
+        const mergedMap = new Map();
+        let grandSurplus = 0;
+        let grandDeficit = 0;
+        let grandTotalAmount = 0;
+        let grandActualQty = 0;
 
-          const p = Number(it.price) || getProductPrice(code) || 0;
-          const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
-          const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
+        selectedVouchers.forEach(v => {
+          const vCode = v.voucher_code || 'KK';
+          (v.items || []).forEach(it => {
+            const code = String(it.code || '').trim().toUpperCase();
+            if (!code) return;
 
-          if (!mergedMap.has(code)) {
-            mergedMap.set(code, {
-              code,
-              name: it.name || '',
-              unit: it.unit || '-',
-              price: p,
-              totalActualQty: aQty,
-              totalAmount: amt,
-              vouchers: [vCode],
-              note: it.note || ''
-            });
-          } else {
-            const ex = mergedMap.get(code);
-            ex.totalActualQty += aQty;
-            ex.totalAmount += amt;
-            if (!ex.vouchers.includes(vCode)) ex.vouchers.push(vCode);
-            if (!ex.price && p > 0) ex.price = p;
-            if (!ex.name && it.name) ex.name = it.name;
-          }
+            const p = Number(it.price) || getProductPrice(code) || 0;
+            const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
+            const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
+
+            if (!mergedMap.has(code)) {
+              mergedMap.set(code, {
+                code,
+                name: it.name || '',
+                unit: it.unit || '-',
+                price: p,
+                totalActualQty: aQty,
+                totalAmount: amt,
+                vouchers: [vCode],
+                note: it.note || ''
+              });
+            } else {
+              const ex = mergedMap.get(code);
+              ex.totalActualQty += aQty;
+              ex.totalAmount += amt;
+              if (!ex.vouchers.includes(vCode)) ex.vouchers.push(vCode);
+              if (!ex.price && p > 0) ex.price = p;
+              if (!ex.name && it.name) ex.name = it.name;
+            }
+          });
         });
-      });
 
-      const mergedList = Array.from(mergedMap.values()).sort((a, b) => a.code.localeCompare(b.code));
-      mergedList.forEach(m => {
-        grandActualQty += m.totalActualQty;
-        grandTotalAmount += m.totalAmount;
-        if (m.totalAmount > 0) grandSurplus += m.totalAmount;
-        else if (m.totalAmount < 0) grandDeficit += Math.abs(m.totalAmount);
-      });
+        const mergedList = Array.from(mergedMap.values()).sort((a, b) => a.code.localeCompare(b.code));
+        mergedList.forEach(m => {
+          grandActualQty += m.totalActualQty;
+          grandTotalAmount += m.totalAmount;
+          if (m.totalAmount > 0) grandSurplus += m.totalAmount;
+          else if (m.totalAmount < 0) grandDeficit += Math.abs(m.totalAmount);
+        });
 
-      const now = new Date();
-      const exportDateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const curUser = (currentAppUser && (currentAppUser.full_name || currentAppUser.name || currentAppUser.username)) || 'Ban kiểm kê';
-      const voucherCodesStr = selectedVouchers.map(v => v.voucher_code).join(', ');
+        const now = new Date();
+        const exportDateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const curUser = (currentAppUser && (currentAppUser.full_name || currentAppUser.name || currentAppUser.username)) || 'Ban kiểm kê';
+        const voucherCodesStr = selectedVouchers.map(v => v.voucher_code).join(', ');
 
-      const rows = [
-        ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', '', '', '', ''],
-        ['BAN KIỂM KÊ ĐỐI CHIẾU TÀI SẢN KHO', '', '', '', 'Độc lập - Tự do - Hạnh phúc', '', '', '', ''],
-        ['', '', '', '', '------------------------', '', '', '', ''],
-        ['BIÊN BẢN TỔNG HỢP KIỂM KÊ ĐỐI CHIẾU HÀNG HÓA TỒN KHO (GỘP PHIẾU)', '', '', '', '', '', '', '', ''],
-        [`Căn cứ: Tổng hợp đối chiếu từ ${selectedVouchers.length} biên bản kiểm kê [${voucherCodesStr}]`, '', '', '', '', '', '', '', ''],
-        [`Thời điểm kiểm kê: ${exportDateStr}   •   Người lập biên bản: ${curUser}`, '', '', '', '', '', '', '', ''],
-        [],
-        ['STT', 'Mã Vật Tư / SP', 'Tên Hàng Hóa - Quy Cách Phẩm Chất', 'ĐVT', 'Tổng SL Kiểm Kê', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Phân Loại', 'Các Phiếu Xuất Hiện', 'Ghi Chú']
-      ];
+        const rowsData = mergedList.map((m, idx) => {
+          let status = 'Khớp';
+          if (m.totalAmount > 0) status = 'Thừa (+ tiền)';
+          else if (m.totalAmount < 0) status = 'Thiếu (- tiền)';
 
-      mergedList.forEach((m, idx) => {
-        let status = 'Khớp';
-        if (m.totalAmount > 0) status = 'Thừa (+ tiền)';
-        else if (m.totalAmount < 0) status = 'Thiếu (- tiền)';
+          return [
+            idx + 1,
+            m.code,
+            m.name,
+            m.unit,
+            m.totalActualQty,
+            m.price,
+            m.totalAmount,
+            status,
+            m.vouchers.join(', '),
+            m.note || ''
+          ];
+        });
 
-        rows.push([
-          idx + 1,
-          m.code,
-          m.name,
-          m.unit,
-          m.totalActualQty,
-          m.price,
-          m.totalAmount,
-          status,
-          m.vouchers.join(', '),
-          m.note || ''
-        ]);
-      });
+        const totalRow = [
+          '',
+          '',
+          'TỔNG CỘNG HÀNG HÓA GỘP:',
+          '',
+          grandActualQty,
+          '',
+          grandTotalAmount,
+          '',
+          '',
+          ''
+        ];
 
-      rows.push([
-        '',
-        '',
-        'TỔNG CỘNG HÀNG HÓA GỘP:',
-        '',
-        grandActualQty,
-        '',
-        grandTotalAmount,
-        '',
-        '',
-        ''
-      ]);
+        const summaryItems = [
+          { label: '- Số lượng biên bản kiểm kê gộp:', value: `${selectedVouchers.length} biên bản` },
+          { label: '- Tổng số danh mục hàng hóa (SKU):', value: `${mergedList.length} mặt hàng` },
+          { label: '- Tổng số lượng hàng hóa kiểm kê thực tế:', value: `${formatNumber(grandActualQty)}` },
+          { label: '- Tổng giá trị hàng kiểm kê thừa:', value: `${formatCurrency(grandSurplus)} (VNĐ)`, color: 'FF047857' },
+          { label: '- Tổng giá trị hàng kiểm kê thiếu:', value: `${formatCurrency(grandDeficit)} (VNĐ)`, color: 'FFB91C1C' },
+          { label: '- Chênh lệch thực tế ròng (+ Thừa / - Thiếu):', value: `${(grandTotalAmount > 0 ? '+' : '') + formatCurrency(grandTotalAmount)} (VNĐ)`, color: grandTotalAmount >= 0 ? 'FF047857' : 'FFB91C1C' }
+        ];
 
-      rows.push([]);
-      rows.push(['KẾT LUẬN KIỂM KÊ ĐỐI CHIẾU GỘP:']);
-      rows.push(['- Số lượng biên bản kiểm kê gộp:', `${selectedVouchers.length} biên bản`]);
-      rows.push(['- Tổng số danh mục hàng hóa (SKU):', `${mergedList.length} mặt hàng`]);
-      rows.push(['- Tổng số lượng hàng hóa kiểm kê thực tế:', `${grandActualQty}`]);
-      rows.push(['- Tổng giá trị hàng kiểm kê thừa:', `${formatCurrency(grandSurplus)} (VNĐ)`]);
-      rows.push(['- Tổng giá trị hàng kiểm kê thiếu:', `${formatCurrency(grandDeficit)} (VNĐ)`]);
-      rows.push(['- Chênh lệch thực tế ròng (+ Thừa / - Thiếu):', `${(grandTotalAmount > 0 ? '+' : '') + formatCurrency(grandTotalAmount)} (VNĐ)`]);
-      rows.push(['- Số tiền bằng chữ:', numberToWordsVietnamese(Math.abs(grandTotalAmount)) + (grandTotalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)')]);
-      rows.push([]);
-      rows.push(['', '', '', '', '', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`]);
-      rows.push(['NGƯỜI LẬP BIÊN BẢN', '', 'THỦ KHO', '', 'KẾ TOÁN THEO DÕI', '', '', 'GIÁM ĐỐC / TRƯỞNG BAN KIỂM KÊ', '']);
-      rows.push(['(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '', '(Ký, đóng dấu, ghi rõ họ tên)', '']);
-      rows.push([]);
-      rows.push([]);
-      rows.push([curUser, '', '', '', '', '', '', '', '']);
+        const moneyWords = numberToWordsVietnamese(Math.abs(grandTotalAmount)) + (grandTotalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)');
+        const nowStr = now.toISOString().slice(0, 10).replace(/-/g, '');
 
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [
-        { wch: 6 },  // STT
-        { wch: 18 }, // Mã SP
-        { wch: 38 }, // Tên hàng hóa
-        { wch: 10 }, // ĐVT
-        { wch: 18 }, // Tổng SL
-        { wch: 16 }, // Đơn giá
-        { wch: 22 }, // Thành tiền
-        { wch: 16 }, // Phân loại
-        { wch: 24 }, // Phiếu xuất hiện
-        { wch: 20 }  // Ghi chú
-      ];
-      ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
-        { s: { r: 0, c: 4 }, e: { r: 0, c: 9 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
-        { s: { r: 1, c: 4 }, e: { r: 1, c: 9 } },
-        { s: { r: 2, c: 4 }, e: { r: 2, c: 9 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 9 } },
-        { s: { r: 4, c: 0 }, e: { r: 4, c: 9 } },
-        { s: { r: 5, c: 0 }, e: { r: 5, c: 9 } }
-      ];
+        await exportKiemKeStyledExcelDocument({
+          sheetName: 'BienBanKiemKeGop',
+          fileName: `Bien_Ban_Kiem_Ke_Gop_${selectedVouchers.length}_phieu_${nowStr}.xlsx`,
+          docTitle: 'BIÊN BẢN TỔNG HỢP KIỂM KÊ ĐỐI CHIẾU HÀNG HÓA TỒN KHO (GỘP PHIẾU)',
+          subTitles: [
+            `Căn cứ: Tổng hợp đối chiếu từ ${selectedVouchers.length} biên bản kiểm kê [${voucherCodesStr}]`,
+            `Thời điểm xuất file: ${exportDateStr}   •   Người lập biên bản: ${curUser}`
+          ],
+          headers: ['STT', 'Mã Vật Tư / SP', 'Tên Hàng Hóa - Quy Cách Phẩm Chất', 'ĐVT', 'Tổng SL Kiểm Kê', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Phân Loại', 'Các Phiếu Xuất Hiện', 'Ghi Chú'],
+          colWidths: [7, 18, 40, 10, 18, 16, 22, 16, 24, 22],
+          alignments: ['center', 'center', 'left', 'center', 'right', 'right', 'right', 'center', 'left', 'left'],
+          numColsIdx: [5, 6, 7],
+          currencyColsIdx: [6, 7],
+          rows: rowsData,
+          totalRow: totalRow,
+          summaryItems: summaryItems,
+          moneyWords: moneyWords,
+          creatorName: curUser
+        });
 
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "BienBanKiemKeGop");
-      const nowStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-      XLSX.writeFile(wb, `Bien_Ban_Kiem_Ke_Gop_${selectedVouchers.length}_phieu_${nowStr}.xlsx`);
+        Swal.close();
+      } catch (err) {
+        Swal.fire('Lỗi', 'Không thể xuất file Excel gộp: ' + err.message, 'error');
+      }
     }
 
     function generateKiemKeCode() {
@@ -28366,17 +28651,14 @@ window.google.script = {
       return str.charAt(0).toUpperCase() + str.slice(1) + ' đồng chẵn.';
     }
 
-    function exportKiemKeVoucherExcel(voucherOrId) {
+    async function exportKiemKeVoucherExcel(voucherOrId) {
       const v = (typeof voucherOrId === 'object') ? voucherOrId : kiemKeVouchersList.find(x => x.id === voucherOrId);
       if (!v) {
         Swal.fire('Lỗi', 'Không tìm thấy thông tin phiếu kiểm kê để xuất Excel!', 'error');
         return;
       }
 
-      if (typeof XLSX === 'undefined') {
-        Swal.fire('Lỗi', 'Thư viện SheetJS chưa sẵn sàng!', 'error');
-        return;
-      }
+      Swal.fire({ title: 'Đang tạo file Excel...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
         const items = v.items || [];
@@ -28384,22 +28666,11 @@ window.google.script = {
         const exportDateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const totalAmount = (v.total_amount !== undefined && v.total_amount !== null) ? Number(v.total_amount) : (Number(v.total_diff_amount) || 0);
 
-        const rows = [
-          ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', '', '', '', ''],
-          ['BỘ PHẬN KHO VẬN & KIỂM KÊ TÀI SẢN', '', '', 'Độc lập - Tự do - Hạnh phúc', '', '', '', ''],
-          ['', '', '', '------------------------', '', '', '', ''],
-          ['BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA TỒN KHO', '', '', '', '', '', '', ''],
-          [`Mã biên bản: ${v.voucher_code}   •   Ngày kiểm kê: ${formatDateVN(v.kiemke_date)}   •   Kho: ${v.warehouse_name || 'Kho chính'}`, '', '', '', '', '', '', ''],
-          [`Người kiểm kê: ${v.creator_name || '-'}   •   Ghi chú: ${v.notes || 'Không có'}   •   Xuất lúc: ${exportDateStr}`, '', '', '', '', '', '', ''],
-          [],
-          ['STT', 'Mã Vật Tư / SP', 'Tên Hàng Hóa - Quy Cách Phẩm Chất', 'ĐVT', 'Kiểm Kê Thực Tế', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Ghi Chú']
-        ];
-
         let totalQty = 0;
         let totalSurplus = 0;
         let totalDeficit = 0;
 
-        items.forEach((it, idx) => {
+        const rowsData = items.map((it, idx) => {
           const aQty = (it.actual_qty !== null && it.actual_qty !== undefined) ? Number(it.actual_qty) : 0;
           const p = Number(it.price) || 0;
           const amt = (it.amount !== null && it.amount !== undefined) ? Number(it.amount) : (aQty * p);
@@ -28407,7 +28678,7 @@ window.google.script = {
           if (amt > 0) totalSurplus += amt;
           else if (amt < 0) totalDeficit += Math.abs(amt);
 
-          rows.push([
+          return [
             idx + 1,
             it.code,
             it.name,
@@ -28416,61 +28687,51 @@ window.google.script = {
             p,
             amt,
             it.note || ''
-          ]);
+          ];
         });
 
-        rows.push([
+        const totalRow = [
           '',
           '',
-          'TỔNG CỘNG:',
+          'TỔNG CỘNG HÀNG HÓA:',
           '',
           totalQty,
           '',
           totalAmount,
           ''
-        ]);
-
-        rows.push([]);
-        rows.push(['KẾT QUẢ ĐỐI CHIẾU KIỂM KÊ:']);
-        rows.push(['- Tổng số mặt hàng kiểm kê (SKU):', `${items.length} mặt hàng`]);
-        rows.push(['- Tổng số lượng kiểm kê thực tế:', `${totalQty}`]);
-        rows.push(['- Tổng giá trị hàng kiểm kê thừa:', `${formatCurrency(v.total_surplus_amount || totalSurplus)} (VNĐ)`]);
-        rows.push(['- Tổng giá trị hàng kiểm kê thiếu:', `${formatCurrency(v.total_deficit_amount || totalDeficit)} (VNĐ)`]);
-        rows.push(['- Tổng tiền kiểm kê chênh lệch:', `${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)} (VNĐ)`]);
-        rows.push(['- Số tiền bằng chữ:', numberToWordsVietnamese(Math.abs(totalAmount)) + (totalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)')]);
-        rows.push([]);
-        rows.push(['', '', '', '', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`]);
-        rows.push(['NGƯỜI LẬP BIÊN BẢN', '', 'THỦ KHO', '', 'KẾ TOÁN KHO', '', 'GIÁM ĐỐC / QUẢN LÝ KHO', '']);
-        rows.push(['(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '(Ký, đóng dấu, ghi rõ họ tên)', '']);
-        rows.push([]);
-        rows.push([]);
-        rows.push([v.creator_name || '', '', '', '', '', '', '', '']);
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [
-          { wch: 6 },  // STT
-          { wch: 18 }, // Mã SP
-          { wch: 38 }, // Tên hàng hóa
-          { wch: 10 }, // ĐVT
-          { wch: 18 }, // Kiểm kê thực tế
-          { wch: 16 }, // Đơn giá
-          { wch: 22 }, // Thành tiền
-          { wch: 25 }  // Ghi chú
-        ];
-        ws['!merges'] = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } },
-          { s: { r: 0, c: 3 }, e: { r: 0, c: 7 } },
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } },
-          { s: { r: 1, c: 3 }, e: { r: 1, c: 7 } },
-          { s: { r: 2, c: 3 }, e: { r: 2, c: 7 } },
-          { s: { r: 3, c: 0 }, e: { r: 3, c: 7 } },
-          { s: { r: 4, c: 0 }, e: { r: 4, c: 7 } },
-          { s: { r: 5, c: 0 }, e: { r: 5, c: 7 } }
         ];
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "BienBanKiemKe");
-        XLSX.writeFile(wb, `Bien_Ban_Kiem_Ke_${v.voucher_code}_${v.kiemke_date}.xlsx`);
+        const summaryItems = [
+          { label: '- Tổng số mặt hàng kiểm kê (SKU):', value: `${items.length} mặt hàng` },
+          { label: '- Tổng số lượng kiểm kê thực tế:', value: `${formatNumber(totalQty)}` },
+          { label: '- Tổng giá trị hàng kiểm kê thừa:', value: `${formatCurrency(v.total_surplus_amount || totalSurplus)} (VNĐ)`, color: 'FF047857' },
+          { label: '- Tổng giá trị hàng kiểm kê thiếu:', value: `${formatCurrency(v.total_deficit_amount || totalDeficit)} (VNĐ)`, color: 'FFB91C1C' },
+          { label: '- Tổng tiền kiểm kê chênh lệch:', value: `${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)} (VNĐ)`, color: totalAmount >= 0 ? 'FF047857' : 'FFB91C1C' }
+        ];
+
+        const moneyWords = numberToWordsVietnamese(Math.abs(totalAmount)) + (totalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)');
+
+        await exportKiemKeStyledExcelDocument({
+          sheetName: 'BienBanKiemKe',
+          fileName: `Bien_Ban_Kiem_Ke_${v.voucher_code}_${v.kiemke_date}.xlsx`,
+          docTitle: 'BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA TỒN KHO',
+          subTitles: [
+            `Mã biên bản: ${v.voucher_code}   •   Ngày kiểm kê: ${formatDateVN(v.kiemke_date)}   •   Kho kiểm kê: ${v.warehouse_name || 'Kho chính'}`,
+            `Người lập: ${v.creator_name || '-'}   •   Ghi chú: ${v.notes || 'Không có'}   •   Thời điểm xuất file: ${exportDateStr}`
+          ],
+          headers: ['STT', 'Mã Vật Tư / SP', 'Tên Hàng Hóa - Quy Cách Phẩm Chất', 'ĐVT', 'Kiểm Kê Thực Tế', 'Đơn Giá (VNĐ)', 'Thành Tiền (VNĐ)', 'Ghi Chú'],
+          colWidths: [7, 18, 42, 10, 18, 16, 22, 25],
+          alignments: ['center', 'center', 'left', 'center', 'right', 'right', 'right', 'left'],
+          numColsIdx: [5, 6, 7],
+          currencyColsIdx: [6, 7],
+          rows: rowsData,
+          totalRow: totalRow,
+          summaryItems: summaryItems,
+          moneyWords: moneyWords,
+          creatorName: v.creator_name || ''
+        });
+
+        Swal.close();
       } catch (err) {
         Swal.fire('Lỗi', 'Không thể xuất file Excel: ' + err.message, 'error');
       }
@@ -28537,7 +28798,7 @@ window.google.script = {
       exportKiemKeVoucherExcel(tempVoucher);
     }
 
-    function exportKiemKeListToExcel() {
+    async function exportKiemKeListToExcel() {
       // Lấy danh sách phiếu theo đúng bộ lọc hiện tại của người dùng
       const fromVal = document.getElementById('kiemke-filter-from')?.value;
       const toVal = document.getElementById('kiemke-filter-to')?.value;
@@ -28570,10 +28831,7 @@ window.google.script = {
         return;
       }
 
-      if (typeof XLSX === 'undefined') {
-        Swal.fire('Lỗi', 'Thư viện SheetJS chưa sẵn sàng!', 'error');
-        return;
-      }
+      Swal.fire({ title: 'Đang tạo bảng tổng hợp Excel...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
       try {
         const curUser = (currentAppUser && (currentAppUser.full_name || currentAppUser.name || currentAppUser.username)) || 'Quản lý kho';
@@ -28590,23 +28848,12 @@ window.google.script = {
           periodStr = `Đến ngày ${formatDateVN(toVal)}`;
         }
 
-        const rows = [
-          ['HỆ THỐNG QUẢN LÝ KHO DOANH NGHIỆP', '', '', '', '', 'CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', '', '', ''],
-          ['BỘ PHẬN KHO VẬN & KIỂM KÊ TÀI SẢN', '', '', '', '', 'Độc lập - Tự do - Hạnh phúc', '', '', ''],
-          ['', '', '', '', '', '------------------------', '', '', ''],
-          ['BẢNG TỔNG HỢP DANH SÁCH BIÊN BẢN ĐỐI CHIẾU KIỂM KÊ HÀNG HÓA KHO', '', '', '', '', '', '', '', ''],
-          [`Kỳ báo cáo: ${periodStr}   •   Kho: ${whName}   •   Thời điểm xuất: ${exportDateStr}`, '', '', '', '', '', '', '', ''],
-          [`Người lập báo cáo: ${curUser}   •   Tổng số biên bản kiểm kê: ${list.length} phiếu`, '', '', '', '', '', '', '', ''],
-          [],
-          ['STT', 'Mã Biên Bản', 'Ngày Kiểm Kê', 'Kho Kiểm Kê', 'Người Lập / Kiểm Kê', 'Số Lượng SKU', 'Tổng Tiền Thừa (VNĐ)', 'Tổng Tiền Thiếu (VNĐ)', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú']
-        ];
-
         let totalSkus = 0;
         let totalSurplus = 0;
         let totalDeficit = 0;
         let totalAmount = 0;
 
-        list.forEach((v, idx) => {
+        const rowsData = list.map((v, idx) => {
           let surplus = Number(v.total_surplus_amount) || 0;
           let deficit = Number(v.total_deficit_amount) || 0;
           if (surplus === 0 && deficit === 0 && Array.isArray(v.items) && v.items.length > 0) {
@@ -28624,7 +28871,7 @@ window.google.script = {
           totalDeficit += deficit;
           totalAmount += amt;
 
-          rows.push([
+          return [
             idx + 1,
             v.voucher_code || '-',
             formatDateVN(v.kiemke_date),
@@ -28635,11 +28882,10 @@ window.google.script = {
             deficit,
             amt,
             v.notes || ''
-          ]);
+          ];
         });
 
-        // Dòng tổng cộng
-        rows.push([
+        const totalRow = [
           '',
           '',
           '',
@@ -28650,52 +28896,40 @@ window.google.script = {
           totalDeficit,
           totalAmount,
           ''
-        ]);
-
-        rows.push([]);
-        rows.push(['KẾT QUẢ ĐỐI CHIẾU KIỂM KÊ TỔNG HỢP:']);
-        rows.push(['- Tổng số biên bản kiểm kê đã thực hiện:', `${list.length} biên bản`]);
-        rows.push(['- Tổng số lượt mặt hàng (SKU) đã kiểm kê:', `${totalSkus} lượt SKU`]);
-        rows.push(['- Tổng giá trị hàng kiểm kê thừa:', `${formatCurrency(totalSurplus)} (VNĐ)`]);
-        rows.push(['- Tổng giá trị hàng kiểm kê thiếu:', `${formatCurrency(totalDeficit)} (VNĐ)`]);
-        rows.push(['- Tổng tiền kiểm kê chênh lệch ròng:', `${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)} (VNĐ)`]);
-        rows.push(['- Số tiền bằng chữ:', numberToWordsVietnamese(Math.abs(totalAmount)) + (totalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)')]);
-        rows.push([]);
-        rows.push(['', '', '', '', '', `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`]);
-        rows.push(['NGƯỜI LẬP BÁO CÁO', '', 'THỦ KHO', '', '', 'KẾ TOÁN THEO DÕI', '', 'GIÁM ĐỐC / QUẢN LÝ KHO', '']);
-        rows.push(['(Ký, ghi rõ họ tên)', '', '(Ký, ghi rõ họ tên)', '', '', '(Ký, ghi rõ họ tên)', '', '(Ký, đóng dấu, ghi rõ họ tên)', '']);
-        rows.push([]);
-        rows.push([]);
-        rows.push([curUser, '', '', '', '', '', '', '', '']);
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws['!cols'] = [
-          { wch: 6 },  // STT
-          { wch: 22 }, // Mã Biên Bản
-          { wch: 15 }, // Ngày kiểm kê
-          { wch: 18 }, // Kho kiểm kê
-          { wch: 24 }, // Người lập / kiểm
-          { wch: 14 }, // Số lượng SKU
-          { wch: 22 }, // Tổng tiền thừa
-          { wch: 22 }, // Tổng tiền thiếu
-          { wch: 25 }, // Tổng tiền kiểm kê
-          { wch: 30 }  // Ghi chú
-        ];
-        ws['!merges'] = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-          { s: { r: 0, c: 5 }, e: { r: 0, c: 9 } },
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
-          { s: { r: 1, c: 5 }, e: { r: 1, c: 9 } },
-          { s: { r: 2, c: 5 }, e: { r: 2, c: 9 } },
-          { s: { r: 3, c: 0 }, e: { r: 3, c: 9 } },
-          { s: { r: 4, c: 0 }, e: { r: 4, c: 9 } },
-          { s: { r: 5, c: 0 }, e: { r: 5, c: 9 } }
         ];
 
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "DanhSachKiemKeKho");
+        const summaryItems = [
+          { label: '- Tổng số biên bản kiểm kê đã thực hiện:', value: `${list.length} biên bản` },
+          { label: '- Tổng số lượt mặt hàng (SKU) đã kiểm kê:', value: `${formatNumber(totalSkus)} lượt SKU` },
+          { label: '- Tổng giá trị hàng kiểm kê thừa:', value: `${formatCurrency(totalSurplus)} (VNĐ)`, color: 'FF047857' },
+          { label: '- Tổng giá trị hàng kiểm kê thiếu:', value: `${formatCurrency(totalDeficit)} (VNĐ)`, color: 'FFB91C1C' },
+          { label: '- Tổng tiền kiểm kê chênh lệch ròng:', value: `${(totalAmount > 0 ? '+' : '') + formatCurrency(totalAmount)} (VNĐ)`, color: totalAmount >= 0 ? 'FF047857' : 'FFB91C1C' }
+        ];
+
+        const moneyWords = numberToWordsVietnamese(Math.abs(totalAmount)) + (totalAmount >= 0 ? ' (Chênh lệch thừa)' : ' (Chênh lệch thiếu)');
         const dateFile = now.toISOString().slice(0, 10).replace(/-/g, '');
-        XLSX.writeFile(wb, `Bang_Tong_Hop_Kiem_Ke_Kho_${dateFile}.xlsx`);
+
+        await exportKiemKeStyledExcelDocument({
+          sheetName: 'DanhSachKiemKeKho',
+          fileName: `Bang_Tong_Hop_Kiem_Ke_Kho_${dateFile}.xlsx`,
+          docTitle: 'BẢNG TỔNG HỢP DANH SÁCH BIÊN BẢN TÍNH TIỀN CHÊNH LỆCH KHO',
+          subTitles: [
+            `Kỳ báo cáo: ${periodStr}   •   Kho: ${whName}   •   Thời điểm xuất: ${exportDateStr}`,
+            `Người lập báo cáo: ${curUser}   •   Tổng số biên bản kiểm kê: ${list.length} phiếu`
+          ],
+          headers: ['STT', 'Mã Biên Bản', 'Ngày Kiểm Kê', 'Kho Kiểm Kê', 'Người Lập / Kiểm Kê', 'Số Lượng SKU', 'Tổng Tiền Thừa (VNĐ)', 'Tổng Tiền Thiếu (VNĐ)', 'Tổng Tiền Kiểm Kê (VNĐ)', 'Ghi Chú'],
+          colWidths: [7, 22, 15, 18, 22, 14, 22, 22, 25, 25],
+          alignments: ['center', 'center', 'center', 'left', 'left', 'right', 'right', 'right', 'right', 'left'],
+          numColsIdx: [6, 7, 8, 9],
+          currencyColsIdx: [7, 8, 9],
+          rows: rowsData,
+          totalRow: totalRow,
+          summaryItems: summaryItems,
+          moneyWords: moneyWords,
+          creatorName: curUser
+        });
+
+        Swal.close();
       } catch (err) {
         Swal.fire('Lỗi', 'Không thể xuất danh sách kiểm kê: ' + err.message, 'error');
       }
