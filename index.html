@@ -752,7 +752,7 @@
             </button>
             <button onclick="switchTab('kiemke')" id="tab-btn-kiemke" class="sidebar-nav-btn w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-amber-700 hover:bg-amber-50 transition">
               <i class="bi bi-clipboard2-check text-sm shrink-0 text-amber-600"></i>
-              <span class="sidebar-label">Đối Chiếu Kiểm Kê</span>
+              <span class="sidebar-label">Tính Tiền Chênh Lệch</span>
             </button>
           </div>
 
@@ -2301,21 +2301,24 @@
                 <div class="flex flex-wrap items-center gap-2">
                   <div class="flex items-center space-x-1.5 text-xs font-bold text-slate-700 mr-1">
                     <i class="bi bi-clipboard2-check text-amber-600 text-base"></i>
-                    <span class="uppercase tracking-wide">Kiểm Kê Kho Hàng Hóa</span>
+                    <span class="uppercase tracking-wide">Tính Tiền Chênh Lệch Kho</span>
                   </div>
-                  <!-- BỘ CHỌN THÁNG KIỂM KÊ THÔNG MINH -->
+                  <!-- BỘ CHỌN THÁNG KIỂM KÊ THÔNG MINH (CHỈ HIỆN CÁC THÁNG CÓ PHIẾU) -->
                   <div class="flex items-center space-x-1 bg-amber-50/80 px-2 py-1 rounded-xl border border-amber-200/90 shadow-2xs">
-                    <button type="button" onclick="navigateKiemKeMonth(-1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Xem phiếu tháng trước">
+                    <button type="button" onclick="navigateKiemKeMonth(-1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Chuyển về đợt kiểm kê trước đó">
                       <i class="bi bi-chevron-left"></i>
                     </button>
                     <select id="kiemke-filter-month" onchange="onKiemKeMonthChange(this.value)" class="px-2 py-1 text-xs font-black text-amber-950 bg-white border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-2xs">
-                      <!-- Populated dynamically -->
+                      <!-- Chỉ nạp các tháng thực tế có phiếu kiểm kê -->
                     </select>
-                    <button type="button" onclick="navigateKiemKeMonth(1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Xem phiếu tháng sau">
+                    <button type="button" onclick="navigateKiemKeMonth(1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Chuyển về đợt kiểm kê sau đó">
                       <i class="bi bi-chevron-right"></i>
                     </button>
-                    <button type="button" onclick="resetKiemKeToCurrentMonth()" class="px-2 py-1 text-[11px] font-bold text-amber-800 hover:text-white hover:bg-amber-600 rounded-lg transition cursor-pointer border border-amber-300/80 bg-white" title="Trở về tháng hiện tại">
-                      Tháng này
+                    <button type="button" onclick="resetKiemKeToCurrentMonth()" class="px-2 py-1 text-[11px] font-bold text-amber-800 hover:text-white hover:bg-amber-600 rounded-lg transition cursor-pointer border border-amber-300/80 bg-white" title="Xem tháng có phiếu kiểm kê gần nhất">
+                      Gần nhất
+                    </button>
+                    <button type="button" onclick="onKiemKeMonthChange('all')" class="px-2 py-1 text-[11px] font-bold text-amber-800 hover:text-white hover:bg-amber-600 rounded-lg transition cursor-pointer border border-amber-300/80 bg-white" title="Xem tất cả các phiếu kiểm kê trong cả năm">
+                      Tất cả
                     </button>
                   </div>
 
@@ -2344,7 +2347,7 @@
                   </button>
                   <button type="button" onclick="openCreateKiemKeForm()" id="btn-open-create-kiemke" class="px-4 py-1.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl text-xs transition flex items-center space-x-1.5 shadow-xs cursor-pointer">
                     <i class="bi bi-plus-circle-fill"></i>
-                    <span>Lập Phiếu Kiểm Kê (F2)</span>
+                    <span>Lập Phiếu Tính Tiền Chênh Lệch (F2)</span>
                   </button>
                 </div>
               </div>
@@ -2490,7 +2493,7 @@
                     <i class="bi bi-clipboard2-check-fill text-sm"></i>
                   </div>
                   <div>
-                    <h2 id="kiemke-form-title" class="font-extrabold text-sm text-slate-800 uppercase tracking-wide">Lập Phiếu Kiểm Kê Hàng Hóa</h2>
+                    <h2 id="kiemke-form-title" class="font-extrabold text-sm text-slate-800 uppercase tracking-wide">Lập Phiếu Tính Tiền Chênh Lệch</h2>
                     <p class="text-[11px] text-slate-500">Ghi nhận số lượng kiểm kê thực tế và tính toán thành tiền theo đơn giá mặt hàng</p>
                   </div>
                 </div>
@@ -8996,7 +8999,7 @@ window.google.script = {
         voucher: currentVoucherType === 'NHAP' ? 'LẬP PHIẾU NHẬP' : 'LẬP PHIẾU XUẤT',
         nhaptra: 'HÀNG NHẬP TRẢ',
         dispatch: 'KIỂM TRA PHÁT HÀNG HÀNG NGÀY',
-        kiemke: 'ĐỐI CHIẾU KIỂM KÊ KHO',
+        kiemke: 'TÍNH TIỀN CHÊNH LỆCH',
         daily: 'BIẾN ĐỘNG TRONG NGÀY',
         history: 'NHẬT KÝ THAO TÁC PHIẾU'
       };
@@ -26005,79 +26008,113 @@ window.google.script = {
       };
     }
 
-    function populateKiemKeMonthDropdown(selectedKey) {
+    // Lấy map thống kê các tháng thực tế có phiếu kiểm kê của tài khoản: { '2026-05': 2, '2025-12': 1 }
+    function getAvailableKiemKeMonthsMap() {
+      const accountVouchers = (kiemKeVouchersList || []).filter(v => isKiemKeInCurrentWarehouse(v));
+      const map = {};
+      accountVouchers.forEach(v => {
+        if (v && v.kiemke_date) {
+          const mk = String(v.kiemke_date).substring(0, 7);
+          if (mk && /^\d{4}-\d{2}$/.test(mk)) {
+            map[mk] = (map[mk] || 0) + 1;
+          }
+        }
+      });
+      return map;
+    }
+
+    // Nạp dropdown tháng: CHỈ hiện những tháng nào có phiếu kiểm kê!
+    // Tự động chọn tháng gần nhất có phiếu để các thẻ thông tin ở trên hiện số liệu ngay!
+    function populateKiemKeMonthDropdown(selectedKey, autoPickBest = false) {
       const sel = document.getElementById('kiemke-filter-month');
       if (!sel) return;
 
       const currentKey = getKiemKeMonthKey();
-      const activeKey = selectedKey || window._currentKiemKeSelectedMonth || currentKey;
-      window._currentKiemKeSelectedMonth = activeKey;
+      const monthsMap = getAvailableKiemKeMonthsMap();
+      const availableMonths = Object.keys(monthsMap).sort().reverse(); // Tháng mới nhất -> cũ nhất
+      const totalVouchersCount = Object.values(monthsMap).reduce((a, b) => a + b, 0);
 
-      const monthSet = new Set();
-      monthSet.add(currentKey);
+      let activeKey = selectedKey || window._currentKiemKeSelectedMonth;
 
-      // Thêm 11 tháng trước đó
-      const now = new Date();
-      for (let i = 1; i <= 11; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        monthSet.add(getKiemKeMonthKey(d));
+      // Nếu autoPickBest = true hoặc activeKey đang là tháng không có phiếu nào:
+      // Tự động ưu tiên chọn THÁNG GẦN NHẤT CÓ PHIẾU KIỂM KÊ để người dùng thấy thông tin ngay!
+      if (autoPickBest || !activeKey || (!monthsMap[activeKey] && activeKey !== 'all' && activeKey !== 'custom')) {
+        if (availableMonths.length > 0) {
+          if (monthsMap[currentKey]) {
+            activeKey = currentKey;
+          } else {
+            activeKey = availableMonths[0]; // Chọn ngay tháng gần nhất có phiếu kiểm kê
+          }
+        } else {
+          activeKey = currentKey;
+        }
       }
 
-      // Thêm các tháng có trong dữ liệu phiếu
-      (kiemKeVouchersList || []).forEach(v => {
-        if (v && v.kiemke_date) {
-          const mk = v.kiemke_date.substring(0, 7);
-          if (mk && mk.length === 7) monthSet.add(mk);
-        }
-      });
-
-      const sortedMonths = Array.from(monthSet).sort().reverse();
+      window._currentKiemKeSelectedMonth = activeKey;
 
       let optionsHtml = '';
-      sortedMonths.forEach(mk => {
-        const parts = mk.split('-');
-        const y = parts[0];
-        const m = parts[1];
-        let label = `Tháng ${m}/${y}`;
-        if (mk === currentKey) {
-          label += ' (Tháng này)';
-        } else {
-          const [cy, cm] = currentKey.split('-').map(Number);
-          const [ty, tm] = mk.split('-').map(Number);
-          const diffMonths = (cy - ty) * 12 + (cm - tm);
-          if (diffMonths === 1) {
-            label += ' (Tháng trước)';
-          }
-        }
-        optionsHtml += `<option value="${mk}" ${mk === activeKey ? 'selected' : ''}>${label}</option>`;
-      });
 
-      optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng --</option>`;
+      if (availableMonths.length > 0) {
+        // CHỈ HIỆN CÁC THÁNG THỰC TẾ CÓ PHIẾU KIỂM KÊ
+        availableMonths.forEach(mk => {
+          const parts = mk.split('-');
+          const y = parts[0];
+          const m = parts[1];
+          const count = monthsMap[mk] || 0;
+          let label = `Tháng ${m}/${y} (${count} phiếu)`;
+          if (mk === currentKey) {
+            label = `Tháng ${m}/${y} (Tháng này - ${count} phiếu)`;
+          }
+          optionsHtml += `<option value="${mk}" ${mk === activeKey ? 'selected' : ''}>${label}</option>`;
+        });
+
+        // Nếu người dùng cố ý chọn "Tháng này" mà tháng này chưa có phiếu nào
+        if (!monthsMap[currentKey] && activeKey === currentKey) {
+          const [cy, cm] = currentKey.split('-');
+          optionsHtml = `<option value="${currentKey}" selected>Tháng ${cm}/${cy} (Tháng này - 0 phiếu)</option>` + optionsHtml;
+        }
+
+        // Tùy chọn xem tất cả các tháng
+        optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng (Tổng: ${totalVouchersCount} phiếu) --</option>`;
+      } else {
+        // Nếu hệ thống hoàn toàn chưa có phiếu nào
+        const [cy, cm] = currentKey.split('-');
+        optionsHtml += `<option value="${currentKey}" selected>Tháng ${cm}/${cy} (Chưa có phiếu kiểm kê nào)</option>`;
+        optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng (0 phiếu) --</option>`;
+      }
+
       optionsHtml += `<option value="custom" ${activeKey === 'custom' ? 'selected' : ''}>-- Tùy chỉnh ngày... --</option>`;
 
       sel.innerHTML = optionsHtml;
+
+      // Cập nhật giá trị khoảng ngày vào 2 ô Từ ngày - Đến ngày
+      if (activeKey !== 'custom') {
+        const fromEl = document.getElementById('kiemke-filter-from');
+        const toEl = document.getElementById('kiemke-filter-to');
+        if (activeKey === 'all') {
+          if (fromEl) fromEl.value = '';
+          if (toEl) toEl.value = '';
+        } else {
+          const range = getKiemKeMonthRange(activeKey);
+          if (range) {
+            if (fromEl) fromEl.value = range.from;
+            if (toEl) toEl.value = range.to;
+          }
+        }
+      }
     }
 
     function initKiemKeMonthSelector() {
-      const currentMonthKey = getKiemKeMonthKey();
-      if (!window._currentKiemKeSelectedMonth) {
-        window._currentKiemKeSelectedMonth = currentMonthKey;
-      }
-      populateKiemKeMonthDropdown(window._currentKiemKeSelectedMonth);
-
-      const fromEl = document.getElementById('kiemke-filter-from');
-      const toEl = document.getElementById('kiemke-filter-to');
-      if (window._currentKiemKeSelectedMonth !== 'all' && window._currentKiemKeSelectedMonth !== 'custom') {
-        const range = getKiemKeMonthRange(window._currentKiemKeSelectedMonth);
-        if (range) {
-          if (fromEl) fromEl.value = range.from;
-          if (toEl) toEl.value = range.to;
-        }
-      }
+      populateKiemKeMonthDropdown(window._currentKiemKeSelectedMonth, true);
     }
 
     function onKiemKeMonthChange(val) {
       window._currentKiemKeSelectedMonth = val;
+      const sel = document.getElementById('kiemke-filter-month');
+      if (sel && sel.value !== val) {
+        sel.value = val;
+      }
+
       const fromEl = document.getElementById('kiemke-filter-from');
       const toEl = document.getElementById('kiemke-filter-to');
       if (val === 'all') {
@@ -26095,28 +26132,53 @@ window.google.script = {
       filterKiemKeTable();
     }
 
+    // Điều hướng tuần tự qua lại giữa các tháng CÓ PHIẾU KIỂM KÊ (không nhảy vào các tháng trống)
     function navigateKiemKeMonth(dir) {
-      const current = window._currentKiemKeSelectedMonth || getKiemKeMonthKey();
-      if (current === 'all' || current === 'custom') {
+      const monthsMap = getAvailableKiemKeMonthsMap();
+      const availableMonths = Object.keys(monthsMap).sort().reverse(); // mới nhất -> cũ nhất
+
+      if (availableMonths.length === 0) {
         resetKiemKeToCurrentMonth();
         return;
       }
-      const parts = current.split('-');
-      let y = parseInt(parts[0], 10);
-      let m = parseInt(parts[1], 10) + dir;
-      if (m < 1) { m = 12; y--; }
-      else if (m > 12) { m = 1; y++; }
-      const newKey = `${y}-${String(m).padStart(2, '0')}`;
-      window._currentKiemKeSelectedMonth = newKey;
-      populateKiemKeMonthDropdown(newKey);
-      onKiemKeMonthChange(newKey);
+
+      const current = window._currentKiemKeSelectedMonth;
+      let currentIndex = availableMonths.indexOf(current);
+
+      let nextIndex = 0;
+      if (currentIndex === -1) {
+        nextIndex = 0;
+      } else {
+        // dir = -1: Lùi về đợt kiểm kê trước đó (tháng cũ hơn) -> index tăng lên trong mảng sắp xếp giảm dần
+        // dir = 1: Tiến về đợt kiểm kê sau đó (tháng mới hơn) -> index giảm đi
+        if (dir === -1) {
+          nextIndex = currentIndex + 1;
+          if (nextIndex >= availableMonths.length) nextIndex = availableMonths.length - 1;
+        } else {
+          nextIndex = currentIndex - 1;
+          if (nextIndex < 0) nextIndex = 0;
+        }
+      }
+
+      const targetMonth = availableMonths[nextIndex];
+      window._currentKiemKeSelectedMonth = targetMonth;
+      populateKiemKeMonthDropdown(targetMonth);
+      onKiemKeMonthChange(targetMonth);
     }
 
+    // Trở về tháng có phiếu kiểm kê gần nhất hoặc tháng hiện tại
     function resetKiemKeToCurrentMonth() {
+      const monthsMap = getAvailableKiemKeMonthsMap();
+      const availableMonths = Object.keys(monthsMap).sort().reverse();
       const currentKey = getKiemKeMonthKey();
-      window._currentKiemKeSelectedMonth = currentKey;
-      populateKiemKeMonthDropdown(currentKey);
-      onKiemKeMonthChange(currentKey);
+
+      let targetKey = currentKey;
+      if (!monthsMap[currentKey] && availableMonths.length > 0) {
+        targetKey = availableMonths[0]; // Ưu tiên tháng có phiếu gần nhất
+      }
+      window._currentKiemKeSelectedMonth = targetKey;
+      populateKiemKeMonthDropdown(targetKey);
+      onKiemKeMonthChange(targetKey);
     }
 
     function onKiemKeCustomDateChange() {
@@ -26127,23 +26189,22 @@ window.google.script = {
     }
 
     async function loadKiemKeTab() {
-      // 1. Mặc định chỉ hiển thị và tính toán các phiếu trong tháng hiện tại
-      initKiemKeMonthSelector();
-
-      // 2. Nạp danh sách kho vào bộ lọc và form
+      // 1. Nạp danh sách kho vào bộ lọc và form
       populateKiemKeWarehouseDropdowns();
 
-      // 3. Nạp bảng giá sản phẩm trước
+      // 2. Nạp bảng giá sản phẩm trước
       loadProductPrices();
 
-      // 4. Nạp dữ liệu phiếu kiểm kê từ Supabase / LocalDB
+      // 3. Nạp dữ liệu phiếu kiểm kê từ Supabase / LocalDB
       const tbody = document.getElementById('kiemke-vouchers-tbody');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu đối chiếu kiểm kê...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-8 text-amber-700 font-semibold"><span class="inline-block animate-spin mr-2">&#9203;</span> Đang nạp danh sách phiếu tính tiền chênh lệch...</td></tr>';
       }
 
       await fetchKiemKeVouchersFromCloud_();
-      populateKiemKeMonthDropdown(window._currentKiemKeSelectedMonth);
+
+      // 4. Tự động chọn tháng gần nhất CÓ PHIẾU KIỂM KÊ và lọc ngay ra thông tin ở trên
+      populateKiemKeMonthDropdown(null, true);
       filterKiemKeTable();
     }
 
@@ -26936,7 +26997,7 @@ window.google.script = {
 
       if (voucherToEdit) {
         currentEditingKiemKeId = voucherToEdit.id;
-        document.getElementById('kiemke-form-title').innerText = 'Hiệu Chỉnh Phiếu Đối Chiếu Kiểm Kê Hàng Hóa';
+        document.getElementById('kiemke-form-title').innerText = 'Hiệu Chỉnh Phiếu Tính Tiền Chênh Lệch';
         document.getElementById('kiemke-input-code').value = voucherToEdit.voucher_code || generateKiemKeCode();
         document.getElementById('kiemke-input-date').value = voucherToEdit.kiemke_date ? voucherToEdit.kiemke_date.substring(0, 10) : getLocalTodayISO();
         if (whInp) whInp.value = voucherToEdit.warehouse_id || (availableWarehouses[0]?.id || 'KHO_CHINH');
@@ -26946,7 +27007,7 @@ window.google.script = {
         currentKiemKeItems = Array.isArray(voucherToEdit.items) ? JSON.parse(JSON.stringify(voucherToEdit.items)) : [];
       } else {
         currentEditingKiemKeId = null;
-        document.getElementById('kiemke-form-title').innerText = 'Lập Phiếu Đối Chiếu Kiểm Kê Hàng Hóa';
+        document.getElementById('kiemke-form-title').innerText = 'Lập Phiếu Tính Tiền Chênh Lệch';
         document.getElementById('kiemke-input-code').value = generateKiemKeCode();
         document.getElementById('kiemke-input-date').value = getLocalTodayISO();
         if (typeof currentWarehouseId !== 'undefined' && currentWarehouseId && whInp) {
@@ -27919,6 +27980,11 @@ window.google.script = {
         }
 
         doCloseCreateKiemKeForm_();
+        const voucherMonth = (voucherObj.kiemke_date || '').substring(0, 7);
+        if (voucherMonth && /^\d{4}-\d{2}$/.test(voucherMonth)) {
+          window._currentKiemKeSelectedMonth = voucherMonth;
+        }
+        populateKiemKeMonthDropdown(window._currentKiemKeSelectedMonth, false);
         filterKiemKeTable();
 
       } catch (err) {
@@ -28000,6 +28066,7 @@ window.google.script = {
           showConfirmButton: false
         });
 
+        populateKiemKeMonthDropdown(null, true);
         filterKiemKeTable();
       } catch (err) {
         Swal.fire('Lỗi', err.message || 'Không thể xóa phiếu!', 'error');
