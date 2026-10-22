@@ -3257,6 +3257,20 @@
       </div>
 
       <div class="p-4 space-y-4 max-h-[75vh] overflow-y-auto custom-scroll text-xs">
+        <!-- HỘP CHỌN KHO ÁP DỤNG (DÀNH CHO QUẢN TRỊ VIÊN CẤU HÌNH KHO RIÊNG BIỆT) -->
+        <div id="staff-modal-warehouse-box" class="p-2.5 bg-teal-50/70 rounded-xl border border-teal-200/90 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+          <div class="flex items-center space-x-2">
+            <i class="bi bi-buildings-fill text-teal-700 text-sm shrink-0"></i>
+            <span class="font-bold text-slate-700 whitespace-nowrap">Kho đang cấu hình:</span>
+            <!-- Dropdown chọn kho cho Admin -->
+            <select id="staff-modal-warehouse-select" onchange="handleStaffModalWarehouseChange(this.value)" class="px-2.5 py-1 text-xs border border-teal-300 rounded-lg bg-white font-bold text-teal-950 focus:ring-2 focus:ring-teal-500 outline-none cursor-pointer">
+            </select>
+            <!-- Badge hiển thị tên kho cố định cho tài khoản nhân viên kho -->
+            <span id="staff-modal-warehouse-badge" class="hidden px-2.5 py-1 text-xs font-bold rounded-lg bg-teal-100 text-teal-900 border border-teal-200"></span>
+          </div>
+          <span id="staff-modal-warehouse-hint" class="text-[11px] text-teal-800 font-medium">Thành viên thêm mới sẽ thuộc kho này</span>
+        </div>
+
         <!-- Form thêm thành viên -->
         <div id="staff-form-box" class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5 transition-all">
           <div id="staff-form-title" class="font-bold text-slate-700 uppercase text-[11px]">Thêm thành viên mới:</div>
@@ -7372,8 +7386,8 @@ window.google.script = {
       try {
         const staffNorm = (typeof normalizeStaffName === 'function') ? normalizeStaffName(staff).toLowerCase() : staff;
         
-        // Nhận diện đặc biệt cho kho Hạnh / Loan: 5 thành viên chính thức
-        if (normScope === 'hanh' || normScope === 'loan' || curUser === 'hanh' || curUser === 'loan' || curName.includes('hạnh') || curName.includes('hanh') || curName.includes('loan')) {
+        // Nhận diện đặc biệt cho kho Hạnh: 5 thành viên chính thức
+        if (normScope === 'hanh' || curUser === 'hanh') {
           const hanhStaffNorms = ['nguyễn kim ngọc', 'trịnh thúy', 'nhật tân', 'ngọc diệp', 'trang'];
           if (hanhStaffNorms.includes(staffNorm)) {
             isStaffInCurrentWh = true;
@@ -8132,6 +8146,9 @@ window.google.script = {
               <td class="px-2.5 py-2 text-center">${statusBadge}</td>
               <td class="px-2.5 py-2 text-center">
                 <div class="flex items-center justify-center space-x-1">
+                  <button type="button" onclick="openWarehouseStaffModal('${u.username}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded transition cursor-pointer" title="Cấu hình thành viên kho ${u.username}">
+                    <i class="bi bi-people-fill text-xs"></i>
+                  </button>
                   <button type="button" onclick="openEditAppUserModal(${u.id})" class="p-1 text-slate-400 hover:text-teal-700 rounded transition cursor-pointer" title="Chỉnh sửa tài khoản (Tên đăng nhập, họ tên, mật khẩu)">
                     <i class="bi bi-pencil-square text-xs"></i>
                   </button>
@@ -13502,19 +13519,20 @@ window.google.script = {
       return [];
     }
 
-    function getStaffListForCurrentWarehouse() {
-      if (!currentAppUser) return warehouseStaffListCached;
-      const isAdmin = (currentAppUser.role === 'admin');
-      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+    function getStaffListForCurrentWarehouse(customWarehouseScope = null) {
+      if (!currentAppUser && !customWarehouseScope) return warehouseStaffListCached || [];
+      const isAdmin = (currentAppUser && currentAppUser.role === 'admin');
+      const scope = customWarehouseScope 
+        ? String(customWarehouseScope).trim().toLowerCase()
+        : ((typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope().toLowerCase() : 'all');
 
-      const normScope = scope.toLowerCase();
-      const curName = String(currentAppUser.full_name || '').trim().toLowerCase();
-      const curUser = String(currentAppUser.username || '').trim().toLowerCase();
-      const isHanhWarehouse = (normScope === 'hanh' || normScope === 'loan' || curUser === 'hanh' || curUser === 'loan' || curName.includes('hạnh') || curName.includes('hanh') || curName.includes('loan'));
+      const normScope = scope;
+      const curUser = (currentAppUser && currentAppUser.username) ? String(currentAppUser.username).trim().toLowerCase() : '';
+      const curName = (currentAppUser && currentAppUser.full_name) ? String(currentAppUser.full_name).trim().toLowerCase() : '';
 
-      // 1. Nếu là tài khoản kho Hạnh hoặc đang xem kho Hạnh:
-      // Luôn đảm bảo trả về ĐỦ và ĐÚNG 5 thành viên chuẩn của kho Hạnh (không lỗi font, không trùng lặp)
-      if (isHanhWarehouse) {
+      // 1. Nếu là kho Hạnh (chỉ duy nhất kho Hạnh mới có 5 thành viên lịch sử chuẩn):
+      const isHanh = (normScope === 'hanh' || (!customWarehouseScope && (curUser === 'hanh' || curName.includes('hạnh') || curName.includes('hanh'))));
+      if (isHanh) {
         const hanhStaffStandard = [
           { name: "Nguyễn Kim Ngọc", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
           { name: "Trịnh Thúy", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
@@ -13523,7 +13541,6 @@ window.google.script = {
           { name: "Trang", role: "Nhân viên kho", warehouse: "hanh", phone: "" }
         ];
 
-        // Lấy thông tin từ cache nếu có (giữ ID và số điện thoại đã lưu)
         const result = [];
         const seen = new Set();
 
@@ -13532,7 +13549,7 @@ window.google.script = {
           const found = (warehouseStaffListCached || []).find(st => {
             const stWh = String(st.warehouse || '').trim().toLowerCase();
             const sNorm = normalizeStaffName(st.name || '').toLowerCase();
-            return (stWh === 'hanh' || stWh === 'loan' || !stWh) && sNorm === stdNorm;
+            return (stWh === 'hanh' || !stWh) && sNorm === stdNorm;
           });
 
           const item = found ? { ...found, name: std.name } : { id: 47 + idx, ...std };
@@ -13542,10 +13559,10 @@ window.google.script = {
           }
         });
 
-        // Nếu có thành viên mới do người dùng vừa tự thêm vào kho Hạnh
+        // Nếu có thành viên mới do người dùng thêm vào kho Hạnh
         (warehouseStaffListCached || []).forEach(st => {
           const stWh = String(st.warehouse || '').trim().toLowerCase();
-          if (stWh === 'hanh' || stWh === 'loan') {
+          if (stWh === 'hanh') {
             const sNorm = normalizeStaffName(st.name || '').toLowerCase();
             if (!seen.has(sNorm)) {
               seen.add(sNorm);
@@ -13557,8 +13574,8 @@ window.google.script = {
         return result;
       }
 
-      if (isAdmin && scope === 'all') {
-        // Trả về danh sách đã được làm sạch font chữ và khử trùng lặp
+      // 2. Nếu là Admin xem toàn bộ (scope === 'all'):
+      if (normScope === 'all') {
         const seen = new Set();
         return (warehouseStaffListCached || []).map(st => ({
           ...st,
@@ -13571,24 +13588,23 @@ window.google.script = {
         });
       }
 
-      // 2. Nếu là Admin đang lọc theo kho cụ thể khác hoặc tài khoản chi nhánh khác
-      return warehouseStaffListCached.filter(st => {
-        const stWh = String(st.warehouse || '').trim().toLowerCase();
-        const stName = String(st.name || '').trim().toLowerCase();
-
-        if (!isAdmin) {
-          if (stWh && (stWh === normScope || stWh === curName || stWh === curUser || stWh.includes(curName) || curName.includes(stWh))) return true;
-          if (curName && (stName === curName || stName.includes(curName))) return true;
-          if (curUser && (stName === curUser || stName.includes(curUser))) return true;
-          if (st.id && currentAppUser.staff_id && st.id === currentAppUser.staff_id) return true;
-          return false;
-        }
-
-        if (normScope === 'admin') {
+      // 3. Nếu là Admin xem kho tổng 'admin':
+      if (normScope === 'admin') {
+        return (warehouseStaffListCached || []).filter(st => {
+          const stWh = String(st.warehouse || '').trim().toLowerCase();
           return !stWh || stWh === 'admin' || stWh === 'main';
-        }
-        if (stWh && (stWh === normScope || stWh.includes(normScope) || normScope.includes(stWh))) return true;
-        return false;
+        }).map(st => ({
+          ...st,
+          name: normalizeStaffName(st.name)
+        }));
+      }
+
+      // 4. Cho TẤT CẢ các kho khác (bao gồm 'loan', 'tuan', 'trang', và bất kỳ tài khoản kho nào mới tạo):
+      // CHỈ lấy các thành viên có `st.warehouse === normScope`!
+      // Nếu kho đó chưa từng được thêm thành viên nào -> Trả về mảng rỗng [] (không có ai)
+      return (warehouseStaffListCached || []).filter(st => {
+        const stWh = String(st.warehouse || '').trim().toLowerCase();
+        return stWh === normScope;
       }).map(st => ({
         ...st,
         name: normalizeStaffName(st.name)
@@ -13601,38 +13617,19 @@ window.google.script = {
       }
       const activeStaffList = getStaffListForCurrentWarehouse();
 
-      // Tự động kiểm tra và đồng bộ nếu tài khoản trong app_users đã đổi họ tên mới nhưng warehouse_staff còn tên cũ
-      const usersList = (Array.isArray(appUsersCachedList) && appUsersCachedList.length > 0)
-        ? appUsersCachedList 
-        : ((typeof LocalDB !== 'undefined' && LocalDB.cache?.['app_users']) || []);
-
-      if (Array.isArray(usersList) && usersList.length > 0) {
-        usersList.forEach(u => {
-          if (!u.username || !u.full_name) return;
-          const uWh = String(u.username).trim().toLowerCase();
-          const uFullName = String(u.full_name).trim();
-          warehouseStaffListCached.forEach(st => {
-            const stWh = String(st.warehouse || '').trim().toLowerCase();
-            if (stWh && stWh === uWh && st.name && st.name.trim() !== uFullName) {
-              const oldStName = st.name;
-              st.name = uFullName;
-              callSupabaseSingle_(`warehouse_staff?id=eq.${st.id}`, 'PATCH', { name: uFullName }).catch(() => {});
-              if (localStorage.getItem('last_dispatch_staff') === oldStName) {
-                localStorage.setItem('last_dispatch_staff', uFullName);
-              }
-            }
-          });
-        });
-      }
-
-      // 1. Cập nhật dropdown chọn người phát hàng ở form tạo phiếu (Loại bỏ triệt để tên cũ và chống trùng lặp)
+      // 1. Cập nhật dropdown chọn người phát hàng ở form tạo phiếu
       const staffSelect = document.getElementById('dispatch-input-staff');
       if (staffSelect) {
         const currentSelected = staffSelect.value ? staffSelect.value.trim() : '';
         const lastSelected = (localStorage.getItem('last_dispatch_staff') || '').trim();
         let targetVal = currentSelected || lastSelected;
 
-        let optionsHtml = '<option value="">-- Chọn thành viên phát hàng --</option>';
+        let optionsHtml = '';
+        if (activeStaffList.length === 0) {
+          optionsHtml = '<option value="">-- Kho này chưa có thành viên (Vào Quản lý để thêm) --</option>';
+        } else {
+          optionsHtml = '<option value="">-- Chọn thành viên phát hàng --</option>';
+        }
 
         const seenNames = new Set();
         let hasMatchedTarget = false;
@@ -13646,17 +13643,6 @@ window.google.script = {
           optionsHtml += `<option value="${escapeHtml(sName)}" ${isSel ? 'selected' : ''}>${escapeHtml(sName)}</option>`;
         });
 
-        // Bổ sung tên chủ kho đang đăng nhập nếu chưa có trong danh sách
-        if (currentAppUser && currentAppUser.full_name) {
-          const curFullName = currentAppUser.full_name.trim();
-          if (curFullName && !seenNames.has(curFullName.toLowerCase())) {
-            seenNames.add(curFullName.toLowerCase());
-            const isSel = (curFullName === targetVal);
-            if (isSel) hasMatchedTarget = true;
-            optionsHtml += `<option value="${escapeHtml(curFullName)}" ${isSel ? 'selected' : ''}>${escapeHtml(curFullName)}</option>`;
-          }
-        }
-
         // CHỈ giữ lại targetVal nếu đang chỉnh sửa một phiếu phát hàng cũ có tên người phát cũ đó
         const isEditingVoucher = !!(typeof editingDispatchContext !== 'undefined' && editingDispatchContext?.isEdit);
         if (targetVal && !hasMatchedTarget && isEditingVoucher) {
@@ -13668,24 +13654,52 @@ window.google.script = {
         if (targetVal && hasMatchedTarget) {
           staffSelect.value = targetVal;
         } else {
-          // Xóa tên cũ khỏi cache localStorage nếu tên đó không còn thuộc kho
           localStorage.removeItem('last_dispatch_staff');
-          if (currentAppUser && currentAppUser.full_name && seenNames.has(currentAppUser.full_name.trim().toLowerCase())) {
-            staffSelect.value = currentAppUser.full_name.trim();
-          } else if (staffSelect.options.length > 1) {
+          if (activeStaffList.length > 0 && staffSelect.options.length > 1) {
             staffSelect.selectedIndex = 1;
+          } else {
+            staffSelect.selectedIndex = 0;
           }
         }
       }
 
-      // 2. Cập nhật modal quản lý thành viên kho
+      // 2. Cập nhật bảng modal nếu modal đang mở
+      const modal = document.getElementById('warehouse-staff-modal');
+      if (modal && !modal.classList.contains('hidden') && modal.style.display !== 'none') {
+        renderStaffModalTable();
+      }
+    }
+
+    function renderStaffModalTable(targetWarehouse = null) {
+      if (targetWarehouse) {
+        window._staffModalActiveWarehouse = String(targetWarehouse).trim().toLowerCase();
+      } else if (!window._staffModalActiveWarehouse) {
+        if (currentAppUser && currentAppUser.role !== 'admin') {
+          window._staffModalActiveWarehouse = String(currentAppUser.username || 'staff').toLowerCase();
+        } else {
+          const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope().toLowerCase() : 'admin';
+          window._staffModalActiveWarehouse = (scope !== 'all') ? scope : 'admin';
+        }
+      }
+
+      const activeScope = window._staffModalActiveWarehouse;
+      const activeStaffList = getStaffListForCurrentWarehouse(activeScope);
+
       const countEl = document.getElementById('staff-modal-count');
       if (countEl) countEl.innerText = activeStaffList.length;
 
       const modalTbody = document.getElementById('staff-modal-tbody');
       if (modalTbody) {
         if (activeStaffList.length === 0) {
-          modalTbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-slate-400">Chưa có thành viên nào trong kho này. Hãy thêm thành viên phía trên!</td></tr>';
+          modalTbody.innerHTML = `
+            <tr>
+              <td colspan="3" class="text-center py-6 text-slate-400 font-medium">
+                <i class="bi bi-people text-2xl text-slate-300 block mb-1"></i>
+                Kho này hiện chưa có thành viên nào ("không có ai").<br>
+                <span class="text-[11px] text-slate-400">Hãy nhập tên phía trên và nhấn <b>"+ Thêm thành viên"</b> để bắt đầu cấu hình.</span>
+              </td>
+            </tr>
+          `;
         } else {
           modalTbody.innerHTML = activeStaffList.map((st, idx) => {
             const isEditing = typeof editingStaffId !== 'undefined' && editingStaffId === st.id;
@@ -14563,7 +14577,7 @@ window.google.script = {
         btnCancel.classList.remove('hidden');
       }
 
-      populateWarehouseStaffUI();
+      renderStaffModalTable();
 
       const scrollContainer = document.querySelector('#warehouse-staff-modal .overflow-y-auto');
       if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
@@ -14605,30 +14619,102 @@ window.google.script = {
         btnCancel.classList.add('hidden');
       }
 
-      populateWarehouseStaffUI();
+      renderStaffModalTable();
     }
 
-    function openWarehouseStaffModal() {
+    function openWarehouseStaffModal(targetWarehouse = null) {
       const modal = document.getElementById('warehouse-staff-modal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.style.display = 'flex';
-        cancelEditWarehouseStaff();
-        const descEl = document.getElementById('staff-modal-warehouse-desc');
-        if (descEl) {
-          if (currentAppUser && currentAppUser.role !== 'admin') {
-            descEl.innerText = `Thành viên phát hàng thuộc kho: ${currentAppUser.full_name || currentAppUser.username}`;
-          } else {
-            const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
-            descEl.innerText = `Thành viên phát hàng (${getWarehouseScopeLabel(scope)})`;
+      if (!modal) return;
+
+      const isAdmin = (currentAppUser && currentAppUser.role === 'admin');
+
+      // 1. Xác định kho đang cấu hình
+      if (targetWarehouse) {
+        window._staffModalActiveWarehouse = String(targetWarehouse).trim().toLowerCase();
+      } else if (!isAdmin) {
+        window._staffModalActiveWarehouse = String((currentAppUser && currentAppUser.username) || 'staff').toLowerCase();
+      } else {
+        const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope().toLowerCase() : 'admin';
+        window._staffModalActiveWarehouse = (scope !== 'all') ? scope : 'admin';
+      }
+
+      // 2. Cập nhật UI bộ chọn kho trong modal
+      const selectEl = document.getElementById('staff-modal-warehouse-select');
+      const badgeEl = document.getElementById('staff-modal-warehouse-badge');
+      const hintEl = document.getElementById('staff-modal-warehouse-hint');
+
+      if (isAdmin) {
+        if (selectEl) {
+          selectEl.classList.remove('hidden');
+          const usersList = (Array.isArray(appUsersCachedList) && appUsersCachedList.length > 0)
+            ? appUsersCachedList 
+            : ((typeof LocalDB !== 'undefined' && LocalDB.cache?.['app_users']) || []);
+
+          let opts = '<option value="admin">Kho Tổng (Admin)</option>';
+          const addedUsers = new Set(['admin']);
+          usersList.forEach(u => {
+            const uName = String(u.username || '').trim().toLowerCase();
+            if (uName && !addedUsers.has(uName)) {
+              addedUsers.add(uName);
+              opts += `<option value="${escapeHtml(uName)}">Kho: ${escapeHtml(u.full_name || u.username)} (${escapeHtml(uName)})</option>`;
+            }
+          });
+          if (window._staffModalActiveWarehouse && !addedUsers.has(window._staffModalActiveWarehouse)) {
+            opts += `<option value="${escapeHtml(window._staffModalActiveWarehouse)}">Kho: ${escapeHtml(window._staffModalActiveWarehouse)}</option>`;
           }
+          selectEl.innerHTML = opts;
+          selectEl.value = window._staffModalActiveWarehouse;
         }
-        const inputName = document.getElementById('staff-modal-input-name');
-        if (inputName) {
-          inputName.value = '';
-          setTimeout(() => inputName.focus(), 100);
+        if (badgeEl) badgeEl.classList.add('hidden');
+      } else {
+        if (selectEl) selectEl.classList.add('hidden');
+        if (badgeEl) {
+          badgeEl.classList.remove('hidden');
+          badgeEl.innerText = `Kho: ${(currentAppUser && (currentAppUser.full_name || currentAppUser.username)) || 'Cá nhân'}`;
         }
       }
+
+      if (hintEl) {
+        hintEl.innerHTML = `Đang cấu hình kho: <b class="text-teal-900 uppercase font-mono">${window._staffModalActiveWarehouse}</b>`;
+      }
+
+      const descEl = document.getElementById('staff-modal-warehouse-desc');
+      if (descEl) {
+        descEl.innerText = `Cấu hình và phân quyền nhân sự phát hàng cho từng kho riêng biệt`;
+      }
+
+      cancelEditWarehouseStaff();
+      renderStaffModalTable();
+
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+
+      const inputName = document.getElementById('staff-modal-input-name');
+      if (inputName) {
+        inputName.value = '';
+        setTimeout(() => inputName.focus(), 100);
+      }
+    }
+
+    function handleStaffModalWarehouseChange(newWarehouse) {
+      window._staffModalActiveWarehouse = String(newWarehouse || 'admin').toLowerCase();
+      const selectEl = document.getElementById('staff-modal-warehouse-select');
+      if (selectEl && selectEl.value !== window._staffModalActiveWarehouse) {
+        let hasOpt = Array.from(selectEl.options).some(o => o.value === window._staffModalActiveWarehouse);
+        if (!hasOpt) {
+          const opt = document.createElement('option');
+          opt.value = window._staffModalActiveWarehouse;
+          opt.textContent = `Kho: ${window._staffModalActiveWarehouse}`;
+          selectEl.appendChild(opt);
+        }
+        selectEl.value = window._staffModalActiveWarehouse;
+      }
+      const hintEl = document.getElementById('staff-modal-warehouse-hint');
+      if (hintEl) {
+        hintEl.innerHTML = `Đang cấu hình kho: <b class="text-teal-900 uppercase font-mono">${window._staffModalActiveWarehouse}</b>`;
+      }
+      cancelEditWarehouseStaff();
+      renderStaffModalTable();
     }
 
     function closeWarehouseStaffModal() {
@@ -14668,7 +14754,6 @@ window.google.script = {
         } catch (err) {
           const errMsg = String(err.message || err || '');
           if (errMsg.includes('warehouse_staff_name_key') || errMsg.includes('23505')) {
-            // Tên đã có sẵn trong bảng do unique constraint cũ trên Supabase: tự động cập nhật bản ghi đó sang kho hiện tại
             const existList = await callSupabaseSingle_(`warehouse_staff?name=ilike.${encodeURIComponent(payload.name)}&select=*`, 'GET').catch(() => []);
             if (Array.isArray(existList) && existList.length > 0) {
               const existItem = existList[0];
@@ -14724,6 +14809,8 @@ window.google.script = {
           }
 
           cancelEditWarehouseStaff();
+          renderStaffModalTable();
+          populateWarehouseStaffUI();
           populateDispatchFilterDropdowns();
 
           Swal.fire({
@@ -14734,23 +14821,25 @@ window.google.script = {
             showConfirmButton: false
           });
         } else {
-          const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
+          const targetWh = window._staffModalActiveWarehouse || 
+            (currentAppUser && currentAppUser.role !== 'admin' ? String(currentAppUser.username).toLowerCase() : 'admin');
           const payload = {
             name: name,
             role: role || 'Nhân viên kho',
             phone: phone,
-            warehouse: activeScope,
+            warehouse: targetWh,
             created_at: new Date().toISOString()
           };
 
           const createdObj = await safeSaveWarehouseStaffRecord(payload, null);
-          const existIdx = warehouseStaffListCached.findIndex(s => s.id === createdObj.id || (s.name && s.name.trim().toLowerCase() === name.toLowerCase()));
+          const existIdx = warehouseStaffListCached.findIndex(s => s.id === createdObj.id || (s.name && s.name.trim().toLowerCase() === name.toLowerCase() && String(s.warehouse || '').toLowerCase() === targetWh));
           if (existIdx !== -1) {
             warehouseStaffListCached[existIdx] = createdObj;
           } else {
             warehouseStaffListCached.push(createdObj);
           }
 
+          renderStaffModalTable();
           populateWarehouseStaffUI();
           populateDispatchFilterDropdowns();
 
@@ -14770,7 +14859,7 @@ window.google.script = {
           Swal.fire({
             icon: 'success',
             title: 'Đã thêm thành viên!',
-            text: `Thành viên "${name}" đã được đưa vào danh sách.`,
+            text: `Thành viên "${name}" đã được thêm vào kho "${targetWh}".`,
             timer: 1500,
             showConfirmButton: false
           });
@@ -14798,7 +14887,8 @@ window.google.script = {
         await callSupabaseSingle_(`warehouse_staff?id=eq.${id}`, 'DELETE');
         warehouseStaffListCached = warehouseStaffListCached.filter(st => st.id !== id);
         if (editingStaffId === id) cancelEditWarehouseStaff();
-        else populateWarehouseStaffUI();
+        else renderStaffModalTable();
+        populateWarehouseStaffUI();
         populateDispatchFilterDropdowns();
         Swal.fire({ icon: 'success', title: 'Đã xóa thành viên!', timer: 1200, showConfirmButton: false });
       } catch (err) {
