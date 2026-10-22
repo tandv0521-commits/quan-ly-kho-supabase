@@ -2361,7 +2361,7 @@
               <!-- TÌM KIẾM NHANH PHIẾU KIỂM KÊ -->
               <div class="relative w-full">
                 <i class="bi bi-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                <input type="text" id="kiemke-filter-search" oninput="filterKiemKeTable()" placeholder="Tìm kiếm nhanh mã phiếu, người kiểm kê, ghi chú..." class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 bg-slate-50/50">
+                <input type="text" id="kiemke-filter-search" oninput="debounceFilterKiemKeTable()" onkeydown="if(event.key==='Enter') filterKiemKeTable()" placeholder="Tìm kiếm nhanh mã phiếu, người kiểm kê, ghi chú..." class="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 bg-slate-50/50">
               </div>
             </div>
 
@@ -3961,7 +3961,7 @@
             <!-- Tìm kiếm nhanh trong nhóm -->
             <div class="relative w-full sm:w-64">
               <i class="bi bi-search absolute left-2.5 top-1.5 text-slate-400 text-xs pointer-events-none"></i>
-              <input type="text" id="group-detail-table-filter" oninput="renderGroupDetailItemsTable()" 
+              <input type="text" id="group-detail-table-filter" oninput="debounceRenderGroupDetailItemsTable()" onkeydown="if(event.key==='Enter') renderGroupDetailItemsTable()" 
                      placeholder="Lọc nhanh trong nhóm..." 
                      class="w-full pl-7 pr-6 py-1 border border-slate-300 rounded-lg text-xs bg-white focus:ring-2 focus:ring-teal-500 transition shadow-2xs">
               <button type="button" onclick="document.getElementById('group-detail-table-filter').value=''; renderGroupDetailItemsTable();" class="absolute right-2 top-1.5 text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -4220,7 +4220,7 @@
       <div class="p-3 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs">
         <div class="relative flex-1 min-w-[240px]">
           <i class="bi bi-search absolute left-3 top-2.5 text-slate-400"></i>
-          <input type="text" id="price-manager-search" oninput="renderProductPriceManagerList(this.value)" placeholder="Tìm mã hoặc tên sản phẩm để cài giá..." 
+          <input type="text" id="price-manager-search" oninput="debounceRenderProductPriceManagerList(this.value)" onkeydown="if(event.key==='Enter') renderProductPriceManagerList(this.value)" placeholder="Tìm mã hoặc tên sản phẩm để cài giá..." 
                  class="w-full pl-8 pr-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 bg-slate-50/50">
         </div>
         <div class="flex items-center space-x-2 flex-wrap gap-y-1">
@@ -6844,12 +6844,22 @@ window.google.script = {
     // THUẬT TOÁN TÌM KIẾM MÃ TỪ TRÁI SANG PHẢI (CHỈ GỢI Ý MÃ TỪ TRÁI SANG PHẢI,
     // KHÔNG HIỂN THỊ THÊM CÁC MÃ CHỨA KÝ TỰ Ở GIỮA HOẶC TRONG TÊN CÓ CHỨA KÝ TỰ)
     // ============================================================================
+    window._rankProductMatchesCache = window._rankProductMatchesCache || new Map();
+    function clearProductSearchCache() {
+      if (window._rankProductMatchesCache) window._rankProductMatchesCache.clear();
+    }
+
     function rankProductMatches(list, rawQuery, maxResults = 30) {
       if (!list || !Array.isArray(list)) return [];
       const rawQ = (rawQuery || '').trim();
       if (!rawQ) return list.slice(0, maxResults);
 
       const q = rawQ.toLowerCase();
+      const cacheKey = `${list.length}_${q}_${maxResults}`;
+      if (window._rankProductMatchesCache && window._rankProductMatchesCache.has(cacheKey)) {
+        return window._rankProductMatchesCache.get(cacheKey);
+      }
+
       const qNorm = q.replace(/[\s\-_.\/]/g, '');
 
       // BƯỚC 1: TÌM CÁC MÃ KHỚP TỪ TRÁI SANG PHẢI (PREFIX MATCH)
@@ -6894,7 +6904,12 @@ window.google.script = {
           const cB = b.item.code || '';
           return cA < cB ? -1 : (cA > cB ? 1 : 0);
         });
-        return codeMatches.slice(0, maxResults).map(s => s.item);
+        const res = codeMatches.slice(0, maxResults).map(s => s.item);
+        if (window._rankProductMatchesCache) {
+          if (window._rankProductMatchesCache.size > 200) window._rankProductMatchesCache.clear();
+          window._rankProductMatchesCache.set(cacheKey, res);
+        }
+        return res;
       }
 
       // BƯỚC 2: NẾU HOÀN TOÀN KHÔNG CÓ MÃ NÀO KHỚP TỪ TRÁI SANG PHẢI
@@ -6949,7 +6964,12 @@ window.google.script = {
         return nA < nB ? -1 : (nA > nB ? 1 : 0);
       });
 
-      return nameMatches.slice(0, maxResults).map(s => s.item);
+      const finalRes = nameMatches.slice(0, maxResults).map(s => s.item);
+      if (window._rankProductMatchesCache) {
+        if (window._rankProductMatchesCache.size > 200) window._rankProductMatchesCache.clear();
+        window._rankProductMatchesCache.set(cacheKey, finalRes);
+      }
+      return finalRes;
     }
 
     function escapeHtml(str) {
@@ -9937,10 +9957,10 @@ window.google.script = {
       if (cont) cont.scrollTop = 0;
     }
 
-    function renderInventoryTable(items) {
+    function renderInventoryTable(items, updateCards = false) {
       currentFilteredInventory = items || [];
       inventoryCurrentPage = 1;
-      updateDashboardCards();
+      if (updateCards) updateDashboardCards();
       renderInventoryCurrentPage();
     }
 
@@ -15992,37 +16012,40 @@ window.google.script = {
       filterDailyDispatchTable();
     }
 
+    const _viCollator = (typeof Intl !== 'undefined' && Intl.Collator) ? new Intl.Collator('vi', { sensitivity: 'base' }) : null;
+
     function sortDispatchesByStaffAndSeq(a, b) {
       if (!a && !b) return 0;
       if (!a) return 1;
       if (!b) return -1;
 
       // 1. Nhóm thành viên phát giống nhau nằm cạnh nhau (A-Z theo tiếng Việt)
-      const staffA = normalizeStaffName(String(a.staff_name || a.staff || '').trim());
-      const staffB = normalizeStaffName(String(b.staff_name || b.staff || '').trim());
-      const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
-      if (staffCmp !== 0) return staffCmp;
+      const staffA = a._normStaff || (a._normStaff = normalizeStaffName(String(a.staff_name || a.staff || '').trim()));
+      const staffB = b._normStaff || (b._normStaff = normalizeStaffName(String(b.staff_name || b.staff || '').trim()));
+      if (staffA !== staffB) {
+        const staffCmp = _viCollator ? _viCollator.compare(staffA, staffB) : staffA.localeCompare(staffB, 'vi');
+        if (staffCmp !== 0) return staffCmp;
+      }
 
       // 2. Ngày phát (nếu xem nhiều ngày: ngày gần nhất lên trước)
-      const dateA = String(a.dispatch_date || a.date || '').substring(0, 10);
-      const dateB = String(b.dispatch_date || b.date || '').substring(0, 10);
-      if (dateA !== dateB) return dateB.localeCompare(dateA);
+      const dateA = a._dateStr || (a._dateStr = String(a.dispatch_date || a.date || '').substring(0, 10));
+      const dateB = b._dateStr || (b._dateStr = String(b.dispatch_date || b.date || '').substring(0, 10));
+      if (dateA !== dateB) return dateB < dateA ? -1 : 1;
 
       // 3. Số thứ tự xe trong ngày (STT Xe) chạy từ nhỏ đến lớn (1 -> N theo chiều từ trên xuống)
-      const seqA = typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(a, dispatchListCached) : 1;
-      const seqB = typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(b, dispatchListCached) : 1;
+      const seqA = a.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(a, dispatchListCached) : 1);
+      const seqB = b.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(b, dispatchListCached) : 1);
       if (seqA !== seqB) return seqA - seqB;
 
       // 4. Giờ phát (nếu có: theo thứ tự thời gian)
-      const timeA = String(a.dispatch_time || a.time || '');
-      const timeB = String(b.dispatch_time || b.time || '');
-      if (timeA !== timeB) return timeA.localeCompare(timeB);
+      const timeA = a.dispatch_time || a.time || '';
+      const timeB = b.dispatch_time || b.time || '';
+      if (timeA !== timeB) return timeA < timeB ? -1 : 1;
 
       // 5. Cùng chuyến xe / phiếu phát: giữ thứ tự ID hoặc sản phẩm
-      const codeA = String(a.product_code || '');
-      const codeB = String(b.product_code || '');
-      const codeCmp = codeA.localeCompare(codeB, 'vi');
-      if (codeCmp !== 0) return codeCmp;
+      const codeA = a.product_code || '';
+      const codeB = b.product_code || '';
+      if (codeA !== codeB) return codeA < codeB ? -1 : 1;
 
       return (Number(a.id) || 0) - (Number(b.id) || 0);
     }
@@ -17527,9 +17550,15 @@ window.google.script = {
       return null;
     }
 
+    window._dailyStaffTripSeqsCache = window._dailyStaffTripSeqsCache || new Map();
+    function clearDailyVehicleSeqCache() {
+      if (window._dailyStaffTripSeqsCache) window._dailyStaffTripSeqsCache.clear();
+    }
+
     // Chuẩn hóa và cố định STT xe cho từng chuyến theo từng người và từng ngày
     // Đảm bảo khi xóa 1 xe bất kỳ, các xe khác không bao giờ bị nhảy số!
     function normalizeDispatchDailySeqs(list) {
+      if (window._dailyStaffTripSeqsCache) window._dailyStaffTripSeqsCache.clear();
       if (!Array.isArray(list) || list.length === 0) return;
 
       const groups = new Map();
@@ -17589,7 +17618,7 @@ window.google.script = {
             return a.directSeq - b.directSeq;
           }
           if (a.time && b.time && a.time !== b.time) {
-            return a.time.localeCompare(b.time);
+            return a.time < b.time ? -1 : 1;
           }
           return a.id - b.id;
         });
@@ -17615,9 +17644,15 @@ window.google.script = {
 
     function resolveDailyVehicleSeq(it, allRecordsList = null) {
       if (!it) return 1;
+      if (it.daily_seq && Number.isInteger(Number(it.daily_seq)) && Number(it.daily_seq) > 0) {
+        return Number(it.daily_seq);
+      }
+      if (it.dailySeq && Number.isInteger(Number(it.dailySeq)) && Number(it.dailySeq) > 0) {
+        return Number(it.dailySeq);
+      }
       const direct = getRecordDailyVehicleSeq(it);
       if (direct) {
-        if (!it.daily_seq) it.daily_seq = direct;
+        it.daily_seq = direct;
         return direct;
       }
 
@@ -17631,78 +17666,89 @@ window.google.script = {
       const date = String(it.dispatch_date || it.date || '').substring(0, 10);
       if (!staff || !date) return 1;
 
-      // Tìm tất cả các phiếu của người đó trong ngày đó
-      const sameDayStaffRecords = list.filter(r => {
-        const rStaff = String(r.staff_name || r.staff || '').trim().toLowerCase();
-        const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
-        return rStaff === staff && rDate === date;
-      });
+      window._dailyStaffTripSeqsCache = window._dailyStaffTripSeqsCache || new Map();
+      const groupCacheKey = `${staff}__${date}`;
+      let groupKeyToSeqMap = window._dailyStaffTripSeqsCache.get(groupCacheKey);
 
-      // Gom các chuyến xe độc lập và sắp xếp
-      const tripsMap = new Map();
-      sameDayStaffRecords.forEach(r => {
-        const vClean = (r.voucher_no && String(r.voucher_no).trim() !== '-' && String(r.voucher_no).trim() !== '') 
-          ? String(r.voucher_no).trim() 
-          : ((r.voucherNo && String(r.voucherNo).trim() !== '-' && String(r.voucherNo).trim() !== '') ? String(r.voucherNo).trim() : '');
-        const plate = String(r.license_plate || r.plate || '').trim().toUpperCase();
-        const time = String(r.dispatch_time || r.time || '').trim();
-        const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
-        const vKey = vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time}`;
-        
-        const rSeq = getRecordDailyVehicleSeq(r);
-        if (!tripsMap.has(vKey)) {
-          tripsMap.set(vKey, {
-            key: vKey,
-            plate: plate,
-            time: time,
-            id: Number(r.id) || 0,
-            directSeq: rSeq,
-            records: [r]
-          });
-        } else {
-          const tripObj = tripsMap.get(vKey);
-          tripObj.records.push(r);
-          if (rSeq && !tripObj.directSeq) {
-            tripObj.directSeq = rSeq;
+      if (!groupKeyToSeqMap) {
+        groupKeyToSeqMap = new Map();
+        // Tìm tất cả các phiếu của người đó trong ngày đó
+        const sameDayStaffRecords = list.filter(r => {
+          const rStaff = String(r.staff_name || r.staff || '').trim().toLowerCase();
+          const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
+          return rStaff === staff && rDate === date;
+        });
+
+        // Gom các chuyến xe độc lập và sắp xếp
+        const tripsMap = new Map();
+        sameDayStaffRecords.forEach(r => {
+          const vClean = (r.voucher_no && String(r.voucher_no).trim() !== '-' && String(r.voucher_no).trim() !== '') 
+            ? String(r.voucher_no).trim() 
+            : ((r.voucherNo && String(r.voucherNo).trim() !== '-' && String(r.voucherNo).trim() !== '') ? String(r.voucherNo).trim() : '');
+          const plate = String(r.license_plate || r.plate || '').trim().toUpperCase();
+          const time = String(r.dispatch_time || r.time || '').trim();
+          const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
+          const vKey = vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time}`;
+          
+          const rSeq = getRecordDailyVehicleSeq(r);
+          if (!tripsMap.has(vKey)) {
+            tripsMap.set(vKey, {
+              key: vKey,
+              plate: plate,
+              time: time,
+              id: Number(r.id) || 0,
+              directSeq: rSeq,
+              records: [r]
+            });
+          } else {
+            const tripObj = tripsMap.get(vKey);
+            tripObj.records.push(r);
+            if (rSeq && !tripObj.directSeq) {
+              tripObj.directSeq = rSeq;
+            }
           }
-        }
-      });
+        });
 
-      const sortedTrips = Array.from(tripsMap.values()).sort((a, b) => {
-        if (a.directSeq && b.directSeq && a.directSeq !== b.directSeq) {
-          return a.directSeq - b.directSeq;
-        }
-        if (a.time && b.time && a.time !== b.time) {
-          return a.time.localeCompare(b.time);
-        }
-        return a.id - b.id;
-      });
-
-      // Gán số thứ tự duy nhất không trùng lặp
-      const assignedSeqs = new Set();
-      sortedTrips.forEach(t => {
-        if (t.directSeq && !assignedSeqs.has(t.directSeq)) {
-          t.assignedSeq = t.directSeq;
-          assignedSeqs.add(t.directSeq);
-        }
-      });
-      let nextAvailableSeq = 1;
-      sortedTrips.forEach(t => {
-        if (!t.assignedSeq) {
-          while (assignedSeqs.has(nextAvailableSeq)) {
-            nextAvailableSeq++;
+        const sortedTrips = Array.from(tripsMap.values()).sort((a, b) => {
+          if (a.directSeq && b.directSeq && a.directSeq !== b.directSeq) {
+            return a.directSeq - b.directSeq;
           }
-          t.assignedSeq = nextAvailableSeq;
-          assignedSeqs.add(nextAvailableSeq);
-        }
-        // Gán cố định vào từng bản ghi để không bị nhảy số khi xóa chuyến xe khác
-        if (Array.isArray(t.records)) {
-          t.records.forEach(rec => {
-            if (!rec.daily_seq) rec.daily_seq = t.assignedSeq;
-            if (!rec.dailySeq) rec.dailySeq = t.assignedSeq;
-          });
-        }
-      });
+          if (a.time && b.time && a.time !== b.time) {
+            return a.time < b.time ? -1 : 1;
+          }
+          return a.id - b.id;
+        });
+
+        // Gán số thứ tự duy nhất không trùng lặp
+        const assignedSeqs = new Set();
+        sortedTrips.forEach(t => {
+          if (t.directSeq && !assignedSeqs.has(t.directSeq)) {
+            t.assignedSeq = t.directSeq;
+            assignedSeqs.add(t.directSeq);
+          }
+        });
+        let nextAvailableSeq = 1;
+        sortedTrips.forEach(t => {
+          if (!t.assignedSeq) {
+            while (assignedSeqs.has(nextAvailableSeq)) {
+              nextAvailableSeq++;
+            }
+            t.assignedSeq = nextAvailableSeq;
+            assignedSeqs.add(nextAvailableSeq);
+          }
+          groupKeyToSeqMap.set(t.key, t.assignedSeq);
+          if (t.plate) groupKeyToSeqMap.set(`plate_${t.plate}`, t.assignedSeq);
+          // Gán cố định vào từng bản ghi để không bị nhảy số khi xóa chuyến xe khác
+          if (Array.isArray(t.records)) {
+            t.records.forEach(rec => {
+              rec.daily_seq = t.assignedSeq;
+              rec.dailySeq = t.assignedSeq;
+            });
+          }
+        });
+
+        window._dailyStaffTripSeqsCache.set(groupCacheKey, groupKeyToSeqMap);
+      }
 
       // Xác định chuyến xe cần tra cứu
       const itVClean = (it.voucher_no && String(it.voucher_no).trim() !== '-' && String(it.voucher_no).trim() !== '') 
@@ -17712,22 +17758,9 @@ window.google.script = {
       const itTime = String(it.dispatch_time || it.time || '').trim();
       const targetKey = itVClean ? `v_${itVClean.toLowerCase()}` : `${itPlate}_${date}_${itTime}`;
 
-      const matchedTrip = sortedTrips.find(t => t.key === targetKey);
-      if (matchedTrip && matchedTrip.assignedSeq) {
-        it.daily_seq = matchedTrip.assignedSeq;
-        return matchedTrip.assignedSeq;
-      }
-
-      // Dự phòng tìm theo biển số xe nếu thời gian bị lệch nhẹ
-      if (itPlate) {
-        const matchedByPlate = sortedTrips.find(t => t.plate === itPlate);
-        if (matchedByPlate && matchedByPlate.assignedSeq) {
-          it.daily_seq = matchedByPlate.assignedSeq;
-          return matchedByPlate.assignedSeq;
-        }
-      }
-
-      return 1;
+      let matchedSeq = groupKeyToSeqMap.get(targetKey) || (itPlate ? groupKeyToSeqMap.get(`plate_${itPlate}`) : null) || 1;
+      it.daily_seq = matchedSeq;
+      return matchedSeq;
     }
 
     function calculateNextDailyVehicleSeq(targetStaff, targetDate, excludeVoucherNo = null) {
@@ -20260,9 +20293,13 @@ window.google.script = {
       renderReconciliationContent();
     }
 
+    let _reconcileSearchDebounceTimer = null;
     function handleReconciliationSearch(query) {
       currentReconciliationSearch = (query || '').trim().toLowerCase();
-      renderReconciliationContent(true);
+      if (_reconcileSearchDebounceTimer) clearTimeout(_reconcileSearchDebounceTimer);
+      _reconcileSearchDebounceTimer = setTimeout(() => {
+        renderReconciliationContent(true);
+      }, 100);
     }
 
     function getReconciliationDateDisplay_() {
@@ -25167,6 +25204,12 @@ window.google.script = {
       updateModalSummaryBadge();
     }
 
+    let _groupDetailFilterDebounceTimer = null;
+    function debounceRenderGroupDetailItemsTable() {
+      if (_groupDetailFilterDebounceTimer) clearTimeout(_groupDetailFilterDebounceTimer);
+      _groupDetailFilterDebounceTimer = setTimeout(renderGroupDetailItemsTable, 100);
+    }
+
     function renderGroupDetailItemsTable() {
       const tbody = document.getElementById('group-detail-items-tbody');
       const badge = document.getElementById('group-detail-count-badge');
@@ -25188,8 +25231,8 @@ window.google.script = {
 
       // Sắp xếp theo đúng quy tắc: Số đầu tiên cùng chung 1 nhóm (DN1) -> Số thứ 1 "-" Số thứ 2 cùng cạnh nhau (DN2) -> PN từ nhỏ đến lớn
       groupItems.sort((a, b) => {
-        const pA = getDnPnForGroupSort(a);
-        const pB = getDnPnForGroupSort(b);
+        const pA = a._dnpn || (a._dnpn = getDnPnForGroupSort(a));
+        const pB = b._dnpn || (b._dnpn = getDnPnForGroupSort(b));
 
         // 1. Số đầu tiên cùng chung 1 nhóm từ nhỏ đến lớn (ví dụ tất cả sản phẩm 60-... đứng trước 75-...)
         if (pA.dn1 !== pB.dn1) return pA.dn1 - pB.dn1;
@@ -26666,6 +26709,14 @@ window.google.script = {
       }
     }
 
+    let _priceManagerSearchDebounceTimer = null;
+    function debounceRenderProductPriceManagerList(val) {
+      if (_priceManagerSearchDebounceTimer) clearTimeout(_priceManagerSearchDebounceTimer);
+      _priceManagerSearchDebounceTimer = setTimeout(() => {
+        renderProductPriceManagerList(val);
+      }, 100);
+    }
+
     function renderProductPriceManagerList(query) {
       const tbody = document.getElementById('price-manager-tbody');
       const statusEl = document.getElementById('price-manager-status-text');
@@ -27378,6 +27429,12 @@ window.google.script = {
           LocalDB.cache['warehouse_kiemke'] = kiemKeVouchersList;
         }
       }
+    }
+
+    let _kiemKeFilterDebounceTimer = null;
+    function debounceFilterKiemKeTable() {
+      if (_kiemKeFilterDebounceTimer) clearTimeout(_kiemKeFilterDebounceTimer);
+      _kiemKeFilterDebounceTimer = setTimeout(filterKiemKeTable, 120);
     }
 
     function filterKiemKeTable() {
