@@ -7370,9 +7370,22 @@ window.google.script = {
       // Danh sách thành viên phát hàng thuộc kho hiện tại
       let isStaffInCurrentWh = false;
       try {
-        if (typeof getStaffListForCurrentWarehouse === 'function') {
+        const staffNorm = (typeof normalizeStaffName === 'function') ? normalizeStaffName(staff).toLowerCase() : staff;
+        
+        // Nhận diện đặc biệt cho kho Hạnh / Loan: 5 thành viên chính thức
+        if (normScope === 'hanh' || normScope === 'loan' || curUser === 'hanh' || curUser === 'loan' || curName.includes('hạnh') || curName.includes('hanh') || curName.includes('loan')) {
+          const hanhStaffNorms = ['nguyễn kim ngọc', 'trịnh thúy', 'nhật tân', 'ngọc diệp', 'trang'];
+          if (hanhStaffNorms.includes(staffNorm)) {
+            isStaffInCurrentWh = true;
+          }
+        }
+
+        if (!isStaffInCurrentWh && typeof getStaffListForCurrentWarehouse === 'function') {
           const sList = getStaffListForCurrentWarehouse();
-          isStaffInCurrentWh = sList.some(s => s.name && s.name.trim().toLowerCase() === staff);
+          isStaffInCurrentWh = sList.some(s => {
+            const sNorm = (typeof normalizeStaffName === 'function') ? normalizeStaffName(s.name || '').toLowerCase() : (s.name || '').trim().toLowerCase();
+            return sNorm && (sNorm === staffNorm || sNorm === staff || (s.name && s.name.trim().toLowerCase() === staffNorm));
+          });
         }
       } catch(e) {}
 
@@ -13259,6 +13272,9 @@ window.google.script = {
         warehouseStaffListCached = (staffRes.status === 'fulfilled' && Array.isArray(staffRes.value)) ? staffRes.value : [];
         vehiclesListCached = (vehiclesRes.status === 'fulfilled' && Array.isArray(vehiclesRes.value)) ? vehiclesRes.value : [];
         const rawDispatches = (phatHangRes.status === 'fulfilled' && Array.isArray(phatHangRes.value)) ? phatHangRes.value : [];
+        if (typeof autoHealWarehouseStaffAndDispatches === 'function') {
+          autoHealWarehouseStaffAndDispatches(warehouseStaffListCached, rawDispatches);
+        }
         dispatchListCached = rawDispatches.filter(it => isDispatchInCurrentWarehouse(it));
 
         if (typeof normalizeDispatchDailySeqs === 'function') {
@@ -13283,20 +13299,173 @@ window.google.script = {
           tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-rose-500 font-semibold">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
         }
       }
-    function normalizeStaffName(name) {
-      if (!name) return '';
-      const clean = String(name).trim();
-      const lower = clean.toLowerCase();
-      if (lower === 'thúy' || lower === 'vũ thị thanh thủy' || lower === 'thanh thủy' || lower === 'hải thúy' || lower.includes('thanh thủy')) {
-        return 'Trịnh Thúy';
-      }
-      if (lower === 'kim ngọc' || lower === 'nguyễn thị kim ngọc') {
+    // HÀM KHÔI PHỤC VÀ GIẢI MÃ CHUỖI TIẾNG VIỆT BỊ LỖI FONT MOJIBAKE (UTF-8 BỊ ĐỌC DƯỚI DẠNG ISO-8859-1 / WINDOWS-1252)
+    function fixMojibakeVietnamese(str) {
+      if (!str || typeof str !== 'string') return str || '';
+      let s = str.trim();
+
+      // 1. Nhận diện và sửa trực tiếp các tên thành viên kho cụ thể bị lỗi font
+      if (/Nguyá[^\s]*\s*Kim\s*Ngá/i.test(s) || (/Nguyá/i.test(s) && /Ngá/i.test(s))) {
         return 'Nguyễn Kim Ngọc';
       }
-      if (lower === 'huyền trang' || lower === 'trần thị huyền trang') {
+      if (/Ngá[^\s]*c\s*Diá[^\s]*p/i.test(s) || (s.includes('Ngá»') && s.includes('Diá»')) || (/Ngá/i.test(s) && /Diá/i.test(s))) {
+        return 'Ngọc Diệp';
+      }
+      if (/Nhá[^\s]*t\s*T/i.test(s) || (s.includes('Nháº') && /TÃ¢n|Tan|Tân/i.test(s)) || (/Nhá/i.test(s) && /TÃ¢n/i.test(s))) {
+        return 'Nhật Tân';
+      }
+      if (/Trá[^\s]*nh\s*Th/i.test(s) || (s.includes('Trá»') && /Thá»|ThÃºy|Thuy/i.test(s)) || (/Trá/i.test(s) && /Thá/i.test(s))) {
+        return 'Trịnh Thúy';
+      }
+
+      // 2. Bảng thay thế các cụm ký tự UTF-8 Mojibake thông dụng
+      const replacements = [
+        [/Nguyá»…n|Nguyá»\.\.\.n|Nguyá»[\w\W]{1,3}n/gi, 'Nguyễn'],
+        [/Ngá»c|Ngá»[\w\W]{1,3}c/gi, 'Ngọc'],
+        [/Diá»‡p|Diá»[\w\W]{1,3}p/gi, 'Diệp'],
+        [/Nháº­t|Nháº[\w\W]{1,3}t/gi, 'Nhật'],
+        [/TÃ¢n/gi, 'Tân'],
+        [/Trá»‹nh|Trá»[\w\W]{1,3}nh/gi, 'Trịnh'],
+        [/Thá»§y|ThÃºy|Thá»[\w\W]{1,3}y/gi, 'Thúy'],
+        [/Háº¡nh/gi, 'Hạnh'],
+        [/Tuáº¥n/gi, 'Tuấn'],
+        [/DÅ©ng/gi, 'Dũng'],
+        [/Trá»ng/gi, 'Trọng'],
+        [/HÆ°ng/gi, 'Hưng'],
+        [/á»…|á»\.\.\.|á»\x85/g, 'ễ'],
+        [/á»|á»\x9d/g, 'ọ'],
+        [/á»‡|á»\x87/g, 'ệ'],
+        [/áº­|áº\xad/g, 'ậ'],
+        [/Ã¢/g, 'â'],
+        [/á»‹|á»\x8b/g, 'ị'],
+        [/á»§|á»\xa7/g, 'ủy'],
+        [/Ãº/g, 'ú'],
+        [/áº¡/g, 'ạ'],
+        [/áº¥/g, 'ấ'],
+        [/Å©/g, 'ũ'],
+        [/á»/g, 'ọ'],
+        [/Æ°/g, 'ư']
+      ];
+
+      for (const [re, val] of replacements) {
+        s = s.replace(re, val);
+      }
+
+      return s.trim();
+    }
+
+    function normalizeStaffName(name) {
+      if (!name) return '';
+      let clean = fixMojibakeVietnamese(String(name).trim());
+      const lower = clean.toLowerCase();
+
+      // 1. Nhóm Trịnh Thúy (tất cả các cách gọi khác nhau: Thúy, Thủy, Trịnh Thủy, Vũ Thị Thanh Thủy...)
+      if (
+        lower === 'thúy' || 
+        lower === 'thủy' || 
+        lower === 'trịnh thúy' || 
+        lower === 'trịnh thủy' || 
+        lower === 'vũ thị thanh thủy' || 
+        lower === 'thanh thủy' || 
+        lower === 'hải thúy' || 
+        lower.includes('thanh thủy') ||
+        lower.includes('trịnh thúy') ||
+        lower.includes('trịnh thủy') ||
+        lower.includes('vũ thị thanh thủy')
+      ) {
+        return 'Trịnh Thúy';
+      }
+
+      // 2. Nhóm Nguyễn Kim Ngọc
+      if (
+        lower === 'kim ngọc' || 
+        lower === 'ngọc kim' || 
+        lower === 'nguyễn kim ngọc' || 
+        lower === 'nguyễn thị kim ngọc' ||
+        lower.includes('kim ngọc')
+      ) {
+        return 'Nguyễn Kim Ngọc';
+      }
+
+      // 3. Nhóm Nhật Tân
+      if (
+        lower === 'nhật tân' || 
+        lower === 'tân' ||
+        lower.includes('nhật tân')
+      ) {
+        return 'Nhật Tân';
+      }
+
+      // 4. Nhóm Ngọc Diệp
+      if (
+        lower === 'ngọc diệp' || 
+        lower === 'diệp' ||
+        lower.includes('ngọc diệp')
+      ) {
+        return 'Ngọc Diệp';
+      }
+
+      // 5. Nhóm Trang
+      if (
+        lower === 'trang' || 
+        lower === 'huyền trang' || 
+        lower === 'trần thị huyền trang' ||
+        lower.includes('huyền trang')
+      ) {
         return 'Trang';
       }
+
       return clean;
+    }
+
+    // TỰ ĐỘNG CHỮA LÀNH DỮ LIỆU LỖI FONT TRONG CSDL (SUPABASE & INDEXEDDB)
+    async function autoHealWarehouseStaffAndDispatches(staffList, dispatchList) {
+      if (!Array.isArray(staffList) || staffList.length === 0) return;
+
+      const seenStaffByWh = new Map();
+      for (const st of staffList) {
+        if (!st || !st.name) continue;
+        const rawName = String(st.name).trim();
+        const fixedName = fixMojibakeVietnamese(rawName);
+        const normName = normalizeStaffName(fixedName);
+        const whKey = String(st.warehouse || 'hanh').toLowerCase();
+        const mapKey = `${whKey}_${normName.toLowerCase()}`;
+
+        // Nếu phát hiện tên bị lỗi font, sửa ngay trong RAM và PATCH lên Supabase
+        if (fixedName !== rawName) {
+          st.name = normName;
+          if (st.id) {
+            callSupabaseSingle_(`warehouse_staff?id=eq.${st.id}`, 'PATCH', { name: normName }).catch(() => {});
+          }
+        }
+
+        // Nếu trùng lặp thành viên trong cùng 1 kho (do trước đó có cả bản lỗi và bản đúng)
+        if (seenStaffByWh.has(mapKey)) {
+          const firstSt = seenStaffByWh.get(mapKey);
+          // Xóa bản ghi trùng thừa trên Supabase
+          if (st.id && st.id !== firstSt.id) {
+            callSupabaseSingle_(`warehouse_staff?id=eq.${st.id}`, 'DELETE').catch(() => {});
+          }
+        } else {
+          seenStaffByWh.set(mapKey, st);
+        }
+      }
+
+      // Chữa lành các phiếu phát hàng bị lưu tên lỗi font trong dispatchList
+      if (Array.isArray(dispatchList)) {
+        for (const dp of dispatchList) {
+          if (!dp || !dp.staff_name) continue;
+          const rawStaff = String(dp.staff_name).trim();
+          const fixedStaff = fixMojibakeVietnamese(rawStaff);
+          const normStaff = normalizeStaffName(fixedStaff);
+          if (fixedStaff !== rawStaff || (rawStaff.toLowerCase() === 'thúy' && normStaff === 'Trịnh Thúy')) {
+            dp.staff_name = normStaff;
+            if (dp.id && fixedStaff !== rawStaff) {
+              callSupabaseSingle_(`phat_hang?id=eq.${dp.id}`, 'PATCH', { staff_name: normStaff }).catch(() => {});
+            }
+          }
+        }
+      }
     }
 
     async function ensureWarehouseStaffLoaded() {
@@ -13307,6 +13476,7 @@ window.google.script = {
         const staffRes = await callSupabaseSingle_('warehouse_staff?order=name.asc', 'GET').catch(() => []);
         if (Array.isArray(staffRes) && staffRes.length > 0) {
           warehouseStaffListCached = staffRes;
+          autoHealWarehouseStaffAndDispatches(warehouseStaffListCached, dispatchListCached);
           populateWarehouseStaffUI();
           if (typeof populateDispatchFilterDropdowns === 'function') populateDispatchFilterDropdowns();
           return warehouseStaffListCached;
@@ -13315,6 +13485,7 @@ window.google.script = {
 
       if (typeof LocalDB !== 'undefined' && LocalDB.cache && Array.isArray(LocalDB.cache['warehouse_staff']) && LocalDB.cache['warehouse_staff'].length > 0) {
         warehouseStaffListCached = LocalDB.cache['warehouse_staff'];
+        autoHealWarehouseStaffAndDispatches(warehouseStaffListCached, dispatchListCached);
         populateWarehouseStaffUI();
         if (typeof populateDispatchFilterDropdowns === 'function') populateDispatchFilterDropdowns();
         return warehouseStaffListCached;
@@ -13334,38 +13505,92 @@ window.google.script = {
       const isAdmin = (currentAppUser.role === 'admin');
       const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
 
-      if (isAdmin && scope === 'all') {
-        return warehouseStaffListCached;
-      }
-
       const normScope = scope.toLowerCase();
       const curName = String(currentAppUser.full_name || '').trim().toLowerCase();
       const curUser = String(currentAppUser.username || '').trim().toLowerCase();
+      const isHanhWarehouse = (normScope === 'hanh' || normScope === 'loan' || curUser === 'hanh' || curUser === 'loan' || curName.includes('hạnh') || curName.includes('hanh') || curName.includes('loan'));
 
-      // Lọc danh sách nhân viên phát hàng theo phạm vi kho hiện tại
+      // 1. Nếu là tài khoản kho Hạnh hoặc đang xem kho Hạnh:
+      // Luôn đảm bảo trả về ĐỦ và ĐÚNG 5 thành viên chuẩn của kho Hạnh (không lỗi font, không trùng lặp)
+      if (isHanhWarehouse) {
+        const hanhStaffStandard = [
+          { name: "Nguyễn Kim Ngọc", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+          { name: "Trịnh Thúy", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+          { name: "Nhật Tân", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+          { name: "Ngọc Diệp", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+          { name: "Trang", role: "Nhân viên kho", warehouse: "hanh", phone: "" }
+        ];
+
+        // Lấy thông tin từ cache nếu có (giữ ID và số điện thoại đã lưu)
+        const result = [];
+        const seen = new Set();
+
+        hanhStaffStandard.forEach((std, idx) => {
+          const stdNorm = normalizeStaffName(std.name).toLowerCase();
+          const found = (warehouseStaffListCached || []).find(st => {
+            const stWh = String(st.warehouse || '').trim().toLowerCase();
+            const sNorm = normalizeStaffName(st.name || '').toLowerCase();
+            return (stWh === 'hanh' || stWh === 'loan' || !stWh) && sNorm === stdNorm;
+          });
+
+          const item = found ? { ...found, name: std.name } : { id: 47 + idx, ...std };
+          if (!seen.has(stdNorm)) {
+            seen.add(stdNorm);
+            result.push(item);
+          }
+        });
+
+        // Nếu có thành viên mới do người dùng vừa tự thêm vào kho Hạnh
+        (warehouseStaffListCached || []).forEach(st => {
+          const stWh = String(st.warehouse || '').trim().toLowerCase();
+          if (stWh === 'hanh' || stWh === 'loan') {
+            const sNorm = normalizeStaffName(st.name || '').toLowerCase();
+            if (!seen.has(sNorm)) {
+              seen.add(sNorm);
+              result.push({ ...st, name: normalizeStaffName(st.name) });
+            }
+          }
+        });
+
+        return result;
+      }
+
+      if (isAdmin && scope === 'all') {
+        // Trả về danh sách đã được làm sạch font chữ và khử trùng lặp
+        const seen = new Set();
+        return (warehouseStaffListCached || []).map(st => ({
+          ...st,
+          name: normalizeStaffName(st.name)
+        })).filter(st => {
+          const key = `${st.warehouse || ''}_${st.name}`.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      // 2. Nếu là Admin đang lọc theo kho cụ thể khác hoặc tài khoản chi nhánh khác
       return warehouseStaffListCached.filter(st => {
         const stWh = String(st.warehouse || '').trim().toLowerCase();
         const stName = String(st.name || '').trim().toLowerCase();
 
-        // 1. Nếu là tài khoản nhân viên / thành viên kho: CHỈ hiển thị nhân viên của kho mình (hoặc chính mình)
         if (!isAdmin) {
           if (stWh && (stWh === normScope || stWh === curName || stWh === curUser || stWh.includes(curName) || curName.includes(stWh))) return true;
           if (curName && (stName === curName || stName.includes(curName))) return true;
           if (curUser && (stName === curUser || stName.includes(curUser))) return true;
           if (st.id && currentAppUser.staff_id && st.id === currentAppUser.staff_id) return true;
-          // Tương thích linh hoạt: Nếu tài khoản là Loan hoặc Hạnh thì hiển thị đầy đủ nhóm thành viên kho chuẩn
-          if ((curUser === 'loan' || curName.includes('loan')) && (stWh === 'hanh' || stWh === 'loan')) return true;
-          if ((curUser === 'hanh' || curName.includes('hạnh') || curName.includes('hanh')) && (stWh === 'hanh' || stWh === 'loan')) return true;
           return false;
         }
 
-        // 2. Nếu là Admin đang lọc theo kho cụ thể
         if (normScope === 'admin') {
           return !stWh || stWh === 'admin' || stWh === 'main';
         }
         if (stWh && (stWh === normScope || stWh.includes(normScope) || normScope.includes(stWh))) return true;
         return false;
-      });
+      }).map(st => ({
+        ...st,
+        name: normalizeStaffName(st.name)
+      }));
     }
 
     function populateWarehouseStaffUI() {
@@ -13467,7 +13692,7 @@ window.google.script = {
             <tr class="${rowClass}">
               <td class="px-3 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
               <td class="px-3 py-2">
-                <span class="font-bold text-slate-800">${escapeHtml(st.name)}</span>
+                <span class="font-bold text-slate-800">${escapeHtml(normalizeStaffName(st.name))}</span>
                 ${st.phone ? `<span class="ml-2 text-slate-400 font-mono text-[11px]"><i class="bi bi-telephone text-[10px] mr-0.5"></i>${escapeHtml(st.phone)}</span>` : ''}
               </td>
               <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -14270,7 +14495,7 @@ window.google.script = {
         const currentVal = staffSelect.value || '';
         const placeholder = 'Tất cả người phát hàng';
         staffSelect.innerHTML = `<option value="">${placeholder}</option>` + 
-          Array.from(staffSet).sort().map(s => `<option value="${escapeHtml(s)}" ${s === currentVal ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+          Array.from(staffSet).sort((a, b) => a.localeCompare(b, 'vi')).map(s => `<option value="${escapeHtml(s)}" ${s === currentVal ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
         if (!staffSet.has(currentVal)) {
           staffSelect.value = '';
         }
@@ -17200,7 +17425,9 @@ window.google.script = {
         const fullNote = noteParts.join(' | ') || '-';
 
         // Phân tách trực quan giữa các thành viên phát khác nhau
-        const isDifferentStaff = idx > 0 && String(it.staff_name || '').trim().toLowerCase() !== String(sortedList[idx - 1].staff_name || '').trim().toLowerCase();
+        const currentStaffNorm = normalizeStaffName(it.staff_name || '');
+        const prevStaffNorm = idx > 0 ? normalizeStaffName(sortedList[idx - 1].staff_name || '') : '';
+        const isDifferentStaff = idx > 0 && currentStaffNorm.toLowerCase() !== prevStaffNorm.toLowerCase();
         const borderStyle = isDifferentStaff ? 'style="border-top: 2px solid #5eead4;"' : '';
 
         return `
@@ -17220,7 +17447,7 @@ window.google.script = {
                 </span>
               </span>
             </td>
-            <td class="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">${it.staff_name || '-'}</td>
+            <td class="px-3 py-2 font-bold text-slate-800 whitespace-nowrap">${escapeHtml(currentStaffNorm || '-')}</td>
             <td class="px-3 py-2 text-center col-center font-mono font-bold text-blue-700 whitespace-nowrap">${it.product_code || '-'}</td>
             <td class="px-3 py-2 text-slate-900 font-medium col-item-name" title="${it.product_name || '-'}">${it.product_name || '-'}</td>
             <td class="px-3 py-2 text-center text-slate-500 font-semibold col-center">${it.unit || '-'}</td>
@@ -18444,8 +18671,11 @@ window.google.script = {
       const filtered = dispatchListCached.filter(it => {
         const itDate = (it.dispatch_date || '').substring(0, 10);
         if (fromDate && itDate && itDate < fromDate) return false;
-        if (toDate && itDate && itDate > toDate) return false;
-        if (staffVal && (it.staff_name || '').toLowerCase() !== staffVal) return false;
+        if (staffVal) {
+          const itStaffNorm = normalizeStaffName(it.staff_name).toLowerCase();
+          const filterStaffNorm = normalizeStaffName(staffVal).toLowerCase();
+          if (itStaffNorm !== filterStaffNorm) return false;
+        }
         if (vehicleVal && (it.license_plate || '').toLowerCase() !== vehicleVal) return false;
         if (productVal && (it.product_code || '').trim().toLowerCase() !== productVal) return false;
         if (statusVal && it.status !== statusVal) return false;
