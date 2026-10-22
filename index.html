@@ -2018,7 +2018,7 @@
                 </div>
                 <div class="relative w-full">
                   <select id="dispatch-input-staff" 
-                          onchange="if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" 
+                          onchange="if(typeof setLastDispatchStaff==='function') setLastDispatchStaff(this.value); else if(this.value) localStorage.setItem('last_dispatch_staff', this.value); if(typeof updateDailyVehicleSeqInput==='function') updateDailyVehicleSeqInput();" 
                           class="w-full h-[38px] px-3 border border-slate-300 rounded-lg font-semibold focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 bg-white text-slate-800 text-xs transition shadow-2xs">
                     <option value="">-- Chọn NV kho --</option>
                   </select>
@@ -6304,8 +6304,8 @@ const ClientBackend = {
     try {
       const baseProds = "products?select=code,name,unit,pack_qty,pack_unit&order=code.asc";
       const [dayTxs, beforeTxs, prods] = await Promise.all([
-        callSupabaseSingle_(`inventory_transactions?voucher_date=eq.${targetDateStr}&select=id,voucher_no,type,code,name,unit,quantity,quality,note&order=id.asc&limit=1000`, "GET").catch(() => []),
-        callSupabase_(`inventory_transactions?voucher_date=lt.${targetDateStr}&select=code,quantity,type`, "GET").catch(() => []),
+        callSupabaseSingle_(`inventory_transactions?voucher_date=eq.${targetDateStr}&select=id,voucher_no,type,code,name,unit,quantity,quality,note,warehouse&order=id.asc&limit=1000`, "GET").catch(() => []),
+        callSupabase_(`inventory_transactions?voucher_date=lt.${targetDateStr}&select=code,quantity,type,note,warehouse`, "GET").catch(() => []),
         callSupabase_(baseProds, "GET").catch(() => [])
       ]);
 
@@ -7332,18 +7332,91 @@ window.google.script = {
       return currentWarehouseScope || 'all';
     }
 
+    function getLastDispatchStaff() {
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+      const scopedKey = `last_dispatch_staff_${String(scope).trim().toLowerCase()}`;
+      let val = (localStorage.getItem(scopedKey) || '').trim();
+      if (!val) {
+        const legacyVal = (localStorage.getItem('last_dispatch_staff') || '').trim();
+        if (legacyVal) {
+          if (typeof getStaffListForCurrentWarehouse === 'function') {
+            const sList = getStaffListForCurrentWarehouse(scope);
+            if (Array.isArray(sList) && sList.some(s => s && s.name && s.name.trim().toLowerCase() === legacyVal.toLowerCase())) {
+              val = legacyVal;
+              try { localStorage.setItem(scopedKey, val); } catch(e) {}
+            }
+          }
+          try { localStorage.removeItem('last_dispatch_staff'); } catch(e) {}
+        }
+      } else {
+        if (scope !== 'all' && typeof getStaffListForCurrentWarehouse === 'function') {
+          const sList = getStaffListForCurrentWarehouse(scope);
+          if (Array.isArray(sList) && sList.length > 0) {
+            const exists = sList.some(s => s && s.name && s.name.trim().toLowerCase() === val.toLowerCase());
+            if (!exists) {
+              try { localStorage.removeItem(scopedKey); } catch(e) {}
+              val = '';
+            }
+          } else if (Array.isArray(sList) && sList.length === 0) {
+            try { localStorage.removeItem(scopedKey); } catch(e) {}
+            val = '';
+          }
+        }
+      }
+      return val;
+    }
+
+    function setLastDispatchStaff(name) {
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+      const scopedKey = `last_dispatch_staff_${String(scope).trim().toLowerCase()}`;
+      if (name && String(name).trim()) {
+        try { localStorage.setItem(scopedKey, String(name).trim()); } catch(e) {}
+      } else {
+        try { localStorage.removeItem(scopedKey); } catch(e) {}
+      }
+      try { localStorage.removeItem('last_dispatch_staff'); } catch(e) {}
+    }
+
+    function removeLastDispatchStaff() {
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
+      const scopedKey = `last_dispatch_staff_${String(scope).trim().toLowerCase()}`;
+      try { localStorage.removeItem(scopedKey); } catch(e) {}
+      try { localStorage.removeItem('last_dispatch_staff'); } catch(e) {}
+    }
+
     function isTransactionInCurrentWarehouse(tx) {
-      const scope = getActiveWarehouseScope();
+      if (!tx) return false;
+      const scope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all';
       if (scope === 'all') return true;
 
-      const note = String((tx && tx.note) || '');
-      const wh = String((tx && tx.warehouse) || '').toLowerCase();
+      const note = String(tx.note || '');
+      const wh = String(tx.warehouse || '').trim().toLowerCase();
+      const normScope = scope.toLowerCase();
+      const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username.trim().toLowerCase() : '';
+      const curFullName = (currentAppUser && currentAppUser.full_name) ? currentAppUser.full_name.trim().toLowerCase() : '';
 
-      if (scope === 'admin') {
-        return !note.includes('[Kho:') || note.includes('[Kho: admin]') || wh === 'admin' || wh === 'main';
+      const tagMatch = note.match(/\[Kho:\s*([^\]]+)\]/i);
+      const tagWh = tagMatch ? tagMatch[1].trim().toLowerCase() : '';
+
+      if (normScope === 'admin') {
+        if (tagWh && tagWh !== 'admin' && tagWh !== 'main') return false;
+        if (wh && wh !== 'admin' && wh !== 'main' && wh !== '') return false;
+        return true;
       }
 
-      return note.includes(`[Kho: ${scope}]`) || wh === scope.toLowerCase();
+      const isMatch = (val) => {
+        if (!val) return false;
+        const v = String(val).trim().toLowerCase();
+        if (v === normScope || v === curUser) return true;
+        if (v === `kho ${normScope}` || v === `kho ${curUser}`) return true;
+        if (curFullName && (v === curFullName || v === `kho ${curFullName}`)) return true;
+        return false;
+      };
+
+      if (tagWh && !isMatch(tagWh)) return false;
+      if (wh && !isMatch(wh)) return false;
+
+      return isMatch(tagWh) || isMatch(wh);
     }
 
     function isDispatchInCurrentWarehouse(dp) {
@@ -7386,8 +7459,8 @@ window.google.script = {
         return false;
       }
 
-      // NGUYÊN TẮC 2: Nếu phiếu có cột warehouse mà cột đó KHÔNG khớp kho hiện tại (và không phải admin/main) -> LOẠI BỎ TUYỆT ĐỐI
-      if (wh && wh !== 'admin' && wh !== 'main' && !isMatchWarehouseIdentifier(wh)) {
+      // NGUYÊN TẮC 2: Nếu phiếu có cột warehouse mà cột đó KHÔNG khớp kho hiện tại -> LOẠI BỎ TUYỆT ĐỐI
+      if (wh && !isMatchWarehouseIdentifier(wh)) {
         return false;
       }
 
@@ -7674,18 +7747,24 @@ window.google.script = {
       }
 
       // Tự động chọn tên nhân viên kho đang đăng nhập vào ô người phát hàng nếu chưa có lưu trước đó
-      const lastStaff = localStorage.getItem('last_dispatch_staff');
+      const lastStaff = (typeof getLastDispatchStaff === 'function') ? getLastDispatchStaff() : '';
       const staffSelect = document.getElementById('dispatch-input-staff');
       if (staffSelect) {
-        if (lastStaff) {
+        const activeStaff = (typeof getStaffListForCurrentWarehouse === 'function') ? getStaffListForCurrentWarehouse() : [];
+        if (lastStaff && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === lastStaff.toLowerCase())) {
           staffSelect.value = lastStaff;
-        } else if (currentAppUser && currentAppUser.full_name) {
+        } else if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === currentAppUser.full_name.trim().toLowerCase())) {
           for (let i = 0; i < staffSelect.options.length; i++) {
             if (staffSelect.options[i].value.trim().toLowerCase() === currentAppUser.full_name.trim().toLowerCase()) {
               staffSelect.selectedIndex = i;
               break;
             }
           }
+        } else if (activeStaff.length > 0 && staffSelect.options.length > 1) {
+          staffSelect.selectedIndex = 1;
+        } else {
+          staffSelect.value = '';
+          if (staffSelect.options.length > 0) staffSelect.selectedIndex = 0;
         }
       }
 
@@ -8386,7 +8465,9 @@ window.google.script = {
             }
           }
 
-          if (localStorage.getItem('last_dispatch_staff') === oldFullName) {
+          if (typeof getLastDispatchStaff === 'function' && getLastDispatchStaff() === oldFullName) {
+            setLastDispatchStaff(cleanFullName);
+          } else if (localStorage.getItem('last_dispatch_staff') === oldFullName) {
             localStorage.setItem('last_dispatch_staff', cleanFullName);
           }
           if (typeof populateDispatchFilterDropdowns === 'function') {
@@ -13626,7 +13707,7 @@ window.google.script = {
       const staffSelect = document.getElementById('dispatch-input-staff');
       if (staffSelect) {
         const currentSelected = staffSelect.value ? staffSelect.value.trim() : '';
-        const lastSelected = (localStorage.getItem('last_dispatch_staff') || '').trim();
+        const lastSelected = (typeof getLastDispatchStaff === 'function') ? getLastDispatchStaff() : (localStorage.getItem('last_dispatch_staff') || '').trim();
         let targetVal = currentSelected || lastSelected;
 
         let optionsHtml = '';
@@ -13659,7 +13740,8 @@ window.google.script = {
         if (targetVal && hasMatchedTarget) {
           staffSelect.value = targetVal;
         } else {
-          localStorage.removeItem('last_dispatch_staff');
+          if (typeof removeLastDispatchStaff === 'function') removeLastDispatchStaff();
+          else localStorage.removeItem('last_dispatch_staff');
           if (activeStaffList.length > 0 && staffSelect.options.length > 1) {
             staffSelect.selectedIndex = 1;
           } else {
@@ -14809,7 +14891,9 @@ window.google.script = {
             warehouseStaffListCached[idx] = { ...warehouseStaffListCached[idx], ...savedItem };
           }
 
-          if (oldName && localStorage.getItem('last_dispatch_staff') === oldName) {
+          if (oldName && typeof getLastDispatchStaff === 'function' && getLastDispatchStaff() === oldName) {
+            setLastDispatchStaff(name);
+          } else if (oldName && localStorage.getItem('last_dispatch_staff') === oldName) {
             localStorage.setItem('last_dispatch_staff', name);
           }
 
@@ -14851,7 +14935,8 @@ window.google.script = {
           const sel = document.getElementById('dispatch-input-staff');
           if (sel) {
             sel.value = name;
-            localStorage.setItem('last_dispatch_staff', name);
+            if (typeof setLastDispatchStaff === 'function') setLastDispatchStaff(name);
+            else localStorage.setItem('last_dispatch_staff', name);
           }
 
           const inputName = document.getElementById('staff-modal-input-name');
@@ -14944,7 +15029,8 @@ window.google.script = {
         const sel = document.getElementById('dispatch-input-staff');
         if (sel) {
           sel.value = cleanName;
-          localStorage.setItem('last_dispatch_staff', cleanName);
+          if (typeof setLastDispatchStaff === 'function') setLastDispatchStaff(cleanName);
+          else localStorage.setItem('last_dispatch_staff', cleanName);
         }
 
         Swal.fire({
@@ -17720,7 +17806,10 @@ window.google.script = {
       const dStaffEl = document.getElementById('dispatch-input-staff');
       if (dStaffEl) {
         dStaffEl.value = targetItem.staff_name || '';
-        if (targetItem.staff_name) localStorage.setItem('last_dispatch_staff', targetItem.staff_name);
+        if (targetItem.staff_name) {
+          if (typeof setLastDispatchStaff === 'function') setLastDispatchStaff(targetItem.staff_name);
+          else localStorage.setItem('last_dispatch_staff', targetItem.staff_name);
+        }
       }
 
       // Nạp số thứ tự chuyến xe trong ngày của người đó
@@ -17892,11 +17981,17 @@ window.google.script = {
 
       const staffEl = document.getElementById('dispatch-input-staff');
       if (staffEl) {
-        if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name) {
+        const activeStaff = (typeof getStaffListForCurrentWarehouse === 'function') ? getStaffListForCurrentWarehouse() : [];
+        const lastStaff = (typeof getLastDispatchStaff === 'function') ? getLastDispatchStaff() : '';
+        if (lastStaff && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === lastStaff.toLowerCase())) {
+          staffEl.value = lastStaff;
+        } else if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === currentAppUser.full_name.trim().toLowerCase())) {
           staffEl.value = currentAppUser.full_name;
+        } else if (activeStaff.length > 0 && staffEl.options.length > 1) {
+          staffEl.selectedIndex = 1;
         } else {
-          const lastStaff = localStorage.getItem('last_dispatch_staff') || '';
-          if (lastStaff) staffEl.value = lastStaff;
+          staffEl.value = '';
+          if (staffEl.options.length > 0) staffEl.selectedIndex = 0;
         }
       }
 
@@ -18168,8 +18263,12 @@ window.google.script = {
         return;
       }
 
-      // Luôn tự động lưu tên thủ kho cho các phiên làm việc tiếp theo
-      localStorage.setItem('last_dispatch_staff', staff);
+      // Luôn tự động lưu tên thủ kho cho các phiên làm việc tiếp theo của kho này
+      if (typeof setLastDispatchStaff === 'function') {
+        setLastDispatchStaff(staff);
+      } else {
+        localStorage.setItem('last_dispatch_staff', staff);
+      }
 
       // 1. Lấy danh sách từ Bảng phát nhanh (có SL > 0)
       const fastItems = getCustomFastItems();
@@ -18438,12 +18537,21 @@ window.google.script = {
 
       // Tự động giữ và lưu tên người phát hàng cho các chuyến xe tiếp theo
       const staffInput = document.getElementById('dispatch-input-staff');
-      const savedStaff = localStorage.getItem('last_dispatch_staff') || '';
+      const activeStaff = (typeof getStaffListForCurrentWarehouse === 'function') ? getStaffListForCurrentWarehouse() : [];
+      const savedStaff = (typeof getLastDispatchStaff === 'function') ? getLastDispatchStaff() : (localStorage.getItem('last_dispatch_staff') || '');
       if (staffInput) {
-        if (staffInput.value) {
-          localStorage.setItem('last_dispatch_staff', staffInput.value);
-        } else if (savedStaff) {
+        if (staffInput.value && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === staffInput.value.trim().toLowerCase())) {
+          if (typeof setLastDispatchStaff === 'function') setLastDispatchStaff(staffInput.value.trim());
+          else localStorage.setItem('last_dispatch_staff', staffInput.value.trim());
+        } else if (savedStaff && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === savedStaff.toLowerCase())) {
           staffInput.value = savedStaff;
+        } else if (currentAppUser && currentAppUser.role !== 'admin' && currentAppUser.full_name && activeStaff.some(s => s && s.name && s.name.trim().toLowerCase() === currentAppUser.full_name.trim().toLowerCase())) {
+          staffInput.value = currentAppUser.full_name;
+        } else if (activeStaff.length > 0 && staffInput.options.length > 1) {
+          staffInput.selectedIndex = 1;
+        } else {
+          staffInput.value = '';
+          if (staffInput.options.length > 0) staffInput.selectedIndex = 0;
         }
       }
 
