@@ -4855,18 +4855,33 @@ async function callSupabaseSingle_(endpoint, method, payload, extraHeaders) {
     ...(extraHeaders || {})
   };
 
+  const controller = new AbortController();
+  const timeoutMs = (method === 'GET') ? 15000 : 12000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   const options = {
     method: method || "GET",
-    headers: headers
+    headers: headers,
+    signal: controller.signal
   };
 
   if (payload && (method === "POST" || method === "PATCH" || method === "PUT")) {
     options.body = JSON.stringify(payload);
   }
 
-  const response = await fetch(url, options);
-  const status = response.status;
-  const resText = await response.text();
+  let response, status, resText;
+  try {
+    response = await fetch(url, options);
+    status = response.status;
+    resText = await response.text();
+  } catch (fetchErr) {
+    clearTimeout(timeoutId);
+    if (fetchErr.name === 'AbortError') {
+      throw new Error(`Yêu cầu máy chủ hết thời gian chờ (${timeoutMs/1000}s)`);
+    }
+    throw fetchErr;
+  }
+  clearTimeout(timeoutId);
 
   if (status >= 400) {
     const tableName = cleanEp.split('?')[0].split('/')[0];
@@ -18239,6 +18254,75 @@ window.google.script = {
       if (typeof updateFastDispatchFilledBadge === 'function') updateFastDispatchFilledBadge();
     }
 
+    // HÀNG ĐỢI ĐỒNG BỘ NGOẠI TUYẾN CHO PHIẾU PHÁT HÀNG (BẢO VỆ DỮ LIỆU TUYỆT ĐỐI, CHỐNG NGHẼN MẠNG)
+    const OFFLINE_DISPATCH_QUEUE_KEY = 'wh_offline_dispatch_queue';
+
+    function enqueueOfflineDispatchSync(payload, editContext = null) {
+      if (!Array.isArray(payload) || payload.length === 0) return;
+      try {
+        const raw = localStorage.getItem(OFFLINE_DISPATCH_QUEUE_KEY);
+        const queue = raw ? JSON.parse(raw) : [];
+        queue.push({
+          id: 'q_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          payload: payload,
+          editContext: editContext,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem(OFFLINE_DISPATCH_QUEUE_KEY, JSON.stringify(queue));
+      } catch (e) {
+        console.warn('Lỗi lưu hàng đợi phát hàng ngoại tuyến:', e);
+      }
+    }
+
+    let isFlushingDispatchQueue = false;
+    async function flushOfflineDispatchQueue() {
+      if (isFlushingDispatchQueue || STORAGE_MODE !== 'CLOUD' || !navigator.onLine) return;
+      isFlushingDispatchQueue = true;
+      try {
+        const raw = localStorage.getItem(OFFLINE_DISPATCH_QUEUE_KEY);
+        if (!raw) return;
+        const queue = JSON.parse(raw);
+        if (!Array.isArray(queue) || queue.length === 0) return;
+
+        const remaining = [];
+        for (const item of queue) {
+          try {
+            if (item.editContext) {
+              if (item.editContext.voucher_no && item.editContext.voucher_no !== '-') {
+                await callSupabaseSingle_('phat_hang?voucher_no=eq.' + encodeURIComponent(item.editContext.voucher_no), 'DELETE').catch(() => {});
+              }
+              if (item.editContext.originalIds && item.editContext.originalIds.length > 0) {
+                await callSupabaseSingle_('phat_hang?id=in.(' + item.editContext.originalIds.join(',') + ')', 'DELETE').catch(() => {});
+              }
+            }
+            const cloudPayload = item.payload.map(r => {
+              const cp = { ...r };
+              delete cp.daily_seq;
+              delete cp.dailySeq;
+              if (typeof cp.id === 'number' && cp.id > 1700000000000) delete cp.id;
+              return cp;
+            });
+            await callSupabaseSingle_('phat_hang', 'POST', cloudPayload);
+          } catch (syncErr) {
+            console.warn('Đồng bộ lại một lô phiếu phát chưa thành công:', syncErr);
+            remaining.push(item);
+          }
+        }
+        if (remaining.length > 0) {
+          localStorage.setItem(OFFLINE_DISPATCH_QUEUE_KEY, JSON.stringify(remaining));
+        } else {
+          localStorage.removeItem(OFFLINE_DISPATCH_QUEUE_KEY);
+        }
+      } catch (e) {
+        console.warn('Lỗi xử lý hàng đợi phiếu phát hàng:', e);
+      } finally {
+        isFlushingDispatchQueue = false;
+      }
+    }
+
+    window.addEventListener('online', () => { setTimeout(flushOfflineDispatchQueue, 1500); });
+    setInterval(flushOfflineDispatchQueue, 45000);
+
     async function submitDispatchVoucher(andAddNew = false) {
       const voucherNo = document.getElementById('dispatch-input-voucherno').value.trim() || generateDispatchVoucherNo();
       const date = document.getElementById('dispatch-input-date').value;
@@ -18370,21 +18454,19 @@ window.google.script = {
         return;
       }
 
-      if (btnSave) { btnSave.disabled = true; btnSave.classList.add('opacity-70', 'pointer-events-none'); }
-      if (btnNew) { btnNew.disabled = true; btnNew.classList.add('opacity-70', 'pointer-events-none'); }
-
-      // Hiển thị thông báo trạng thái nhẹ dạng toast ở góc trên để không làm gián đoạn người dùng
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        title: isEditing ? 'Đang cập nhật phiếu...' : 'Đang lưu phiếu phát hàng...',
-        showConfirmButton: false,
-        didOpen: () => Swal.showLoading()
-      });
+      if (window._isDispatchSubmitting) return;
+      window._isDispatchSubmitting = true;
+      setTimeout(() => { window._isDispatchSubmitting = false; }, 350);
 
       const activeScope = (typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'admin';
       const currentWh = (activeScope && activeScope !== 'all') ? activeScope : 'admin';
-      const payload = allValidItems.map(r => {
+      const timestampNow = new Date().toISOString();
+      const editingContextCopy = editingDispatchContext ? { 
+        ...editingDispatchContext, 
+        originalIds: [...(editingDispatchContext.originalIds || [])] 
+      } : null;
+
+      const payload = allValidItems.map((r, rIdx) => {
         const itemNoteParts = [];
         itemNoteParts.push(`[Xe #${dailySeq}]`);
         // Làm sạch tag Xe cũ trong note dòng hàng để tránh lặp [Xe #...] khi sửa phiếu
@@ -18398,6 +18480,7 @@ window.google.script = {
         const itemNote = itemNoteParts.join(' ');
 
         return {
+          id: Date.now() + rIdx,
           voucher_no: voucherNo,
           dispatch_date: date,
           dispatch_time: time || '',
@@ -18413,98 +18496,125 @@ window.google.script = {
           status: 'pending',
           warehouse: currentWh,
           note: itemNote,
-          created_at: new Date().toISOString()
+          created_at: timestampNow,
+          daily_seq: dailySeq,
+          dailySeq: dailySeq
         };
       });
 
-      try {
-        if (isEditing) {
-          // Xóa các bản ghi cũ của phiếu phát này
-          if (editingDispatchContext.voucher_no) {
-            await callSupabaseSingle_('phat_hang?voucher_no=eq.' + encodeURIComponent(editingDispatchContext.voucher_no), 'DELETE').catch(() => {});
-            dispatchListCached = dispatchListCached.filter(x => x.voucher_no !== editingDispatchContext.voucher_no);
-          }
-          if (editingDispatchContext.originalIds && editingDispatchContext.originalIds.length > 0) {
-            const oIdSet = new Set(editingDispatchContext.originalIds.map(Number));
-            for (const oId of editingDispatchContext.originalIds) {
-              await callSupabaseSingle_('phat_hang?id=eq.' + oId, 'DELETE').catch(() => {});
-            }
-            dispatchListCached = dispatchListCached.filter(x => !oIdSet.has(Number(x.id)));
-          }
-        }
-
-        await callSupabaseSingle_('phat_hang', 'POST', payload);
-
-        // Cập nhật ngay vào cache cục bộ để STT xe tiếp theo tính toán chính xác tức thì
-        if (Array.isArray(payload) && payload.length > 0) {
-          payload.forEach((p, pIdx) => {
-            dispatchListCached.unshift({
-              id: Date.now() + pIdx,
-              ...p,
-              daily_seq: dailySeq,
-              dailySeq: dailySeq
-            });
-          });
-        }
-        if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
-          LocalDB.cache['phat_hang'] = dispatchListCached;
-        }
-
-        editingDispatchContext = null;
-
-        // TỰ ĐỘNG LƯU SỐ XE MỚI VÀO DANH MỤC XE NẾU CHƯA TỪNG CÓ
-        const cleanPlate = vehicle.trim().toUpperCase();
-        const vehicleExists = vehiclesListCached.some(v => 
-          (v.plate && v.plate.toUpperCase() === cleanPlate) || 
-          (v.code && v.code.toUpperCase() === cleanPlate)
-        );
-        if (!vehicleExists && cleanPlate) {
-          const autoCode = `XE-${String(vehiclesListCached.length + 1).padStart(2, '0')}`;
-          const newVehicleRecord = {
-            code: autoCode,
-            plate: cleanPlate,
-            driver: driver || '',
-            phone: driverPhone || '',
-            note: 'Tự động lưu từ phiếu phát ' + voucherNo,
-            created_at: new Date().toISOString()
-          };
-          callSupabaseSingle_('vehicles', 'POST', newVehicleRecord)
-            .then(res => {
-              const savedObj = (Array.isArray(res) && res.length > 0) ? res[0] : newVehicleRecord;
-              vehiclesListCached.push(savedObj);
-              populateVehiclesUI();
-              populateDispatchFilterDropdowns();
-            })
-            .catch(e => console.warn('Lỗi tự động lưu xe:', e));
-        }
-
-        try { Swal.close(); } catch(e) {}
-        const successTitle = isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu phiếu xe ${vehicle}!`;
-        const successMsg = `${allValidItems.length} mã hàng • Tổng SL: ${formatNumber(totalQty)}`;
-
-        if (andAddNew) {
-          if (typeof showAppToast === 'function') {
-            showAppToast(successTitle, successMsg, 'success', 2200);
-          }
-          resetCreateDispatchFormKeepScreen();
-          loadDailyDispatchTab();
-        } else {
-          if (typeof showAppToast === 'function') {
-            showAppToast(successTitle, successMsg, 'success', 2200);
-          }
-          closeCreateDispatchForm(true);
-          loadDailyDispatchTab();
-        }
-
-        if (typeof autoRefreshReconciliationIfActive_ === 'function') {
-          autoRefreshReconciliationIfActive_();
-        }
-      } catch (err) {
-        Swal.fire('Lỗi lưu dữ liệu', err.message, 'error');
-      } finally {
-        if (btnSave) { btnSave.disabled = false; btnSave.classList.remove('opacity-70', 'pointer-events-none'); }
-        if (btnNew) { btnNew.disabled = false; btnNew.classList.remove('opacity-70', 'pointer-events-none'); }
+      // 1. CẬP NHẬT DỮ LIỆU TỨC THÌ VÀO BỘ NHỚ RAM & INDEXEDDB (0MS DELAY)
+      if (isEditing && editingContextCopy) {
+        const origVoucher = editingContextCopy.voucher_no;
+        const origIdsSet = new Set((editingContextCopy.originalIds || []).map(Number));
+        dispatchListCached = dispatchListCached.filter(x => {
+          if (origVoucher && origVoucher !== '-' && x.voucher_no === origVoucher) return false;
+          if (origIdsSet.has(Number(x.id))) return false;
+          return true;
+        });
       }
+
+      // Thêm ngay các dòng phát hàng mới vào đầu danh sách cache
+      dispatchListCached = [...payload, ...dispatchListCached];
+
+      if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
+        LocalDB.cache['phat_hang'] = dispatchListCached;
+        if (typeof LocalDB.persist === 'function') {
+          LocalDB.persist('phat_hang');
+        }
+      }
+
+      // 2. TỰ ĐỘNG LƯU SỐ XE MỚI VÀO BỘ NHỚ CỤC BỘ
+      const cleanPlate = vehicle.trim().toUpperCase();
+      const vehicleExists = vehiclesListCached.some(v => 
+        (v.plate && v.plate.toUpperCase() === cleanPlate) || 
+        (v.code && v.code.toUpperCase() === cleanPlate)
+      );
+      let newVehicleRecord = null;
+      if (!vehicleExists && cleanPlate) {
+        const autoCode = `XE-${String(vehiclesListCached.length + 1).padStart(2, '0')}`;
+        newVehicleRecord = {
+          code: autoCode,
+          plate: cleanPlate,
+          driver: driver || '',
+          phone: driverPhone || '',
+          note: 'Tự động lưu từ phiếu phát ' + voucherNo,
+          created_at: timestampNow
+        };
+        vehiclesListCached.unshift(newVehicleRecord);
+        populateVehiclesUI();
+        populateDispatchFilterDropdowns();
+      }
+
+      editingDispatchContext = null;
+
+      // 3. PHẢN HỒI GIAO DIỆN LẬP TỨC (KHÔNG CHỜ MẠNG, KHÔNG TREO FORM)
+      const successTitle = isEditing ? `Đã cập nhật xe ${vehicle}!` : `Đã lưu xe ${vehicle}!`;
+      const successMsg = `${allValidItems.length} mã hàng • Tổng SL: ${formatNumber(totalQty)} (Chuyến #${dailySeq})`;
+      if (typeof showAppToast === 'function') {
+        showAppToast(successTitle, successMsg, 'success', 2000);
+      }
+
+      if (andAddNew) {
+        // Làm mới form để tiếp tục nhập ngay xe tiếp theo
+        resetCreateDispatchFormKeepScreen();
+      } else {
+        // Đóng form và quay lại bảng danh sách phát hàng
+        closeCreateDispatchForm(true);
+      }
+
+      // Cập nhật lại bảng danh sách phát hàng tức thì từ bộ nhớ RAM
+      if (typeof filterDailyDispatchTable === 'function') {
+        filterDailyDispatchTable();
+      }
+      if (typeof autoRefreshReconciliationIfActive_ === 'function') {
+        autoRefreshReconciliationIfActive_();
+      }
+
+      // 4. TIẾN TRÌNH ĐỒNG BỘ NGẦM LÊN ĐÁM MÂY (ASYNCHRONOUS BACKGROUND SYNC - KHÔNG CHẶN GIAO DIỆN)
+      (async () => {
+        if (STORAGE_MODE !== 'CLOUD') return;
+        try {
+          if (isEditing && editingContextCopy) {
+            if (editingContextCopy.voucher_no && editingContextCopy.voucher_no !== '-') {
+              await callSupabaseSingle_('phat_hang?voucher_no=eq.' + encodeURIComponent(editingContextCopy.voucher_no), 'DELETE').catch(() => {});
+            }
+            if (editingContextCopy.originalIds && editingContextCopy.originalIds.length > 0) {
+              await callSupabaseSingle_('phat_hang?id=in.(' + editingContextCopy.originalIds.join(',') + ')', 'DELETE').catch(() => {});
+            }
+          }
+
+          // Dữ liệu gửi lên Supabase bỏ trường ID tạm
+          const cloudPayload = payload.map(item => {
+            const copy = { ...item };
+            delete copy.daily_seq;
+            delete copy.dailySeq;
+            if (typeof copy.id === 'number' && copy.id > 1700000000000) {
+              delete copy.id;
+            }
+            return copy;
+          });
+
+          const serverRes = await callSupabaseSingle_('phat_hang', 'POST', cloudPayload);
+          if (Array.isArray(serverRes) && serverRes.length > 0) {
+            serverRes.forEach(srvItem => {
+              const localMatch = dispatchListCached.find(x => x.voucher_no === voucherNo && x.product_code === srvItem.product_code);
+              if (localMatch && srvItem.id) {
+                localMatch.id = srvItem.id;
+              }
+            });
+            if (typeof LocalDB !== 'undefined' && LocalDB.cache) {
+              LocalDB.cache['phat_hang'] = dispatchListCached;
+            }
+          }
+
+          if (newVehicleRecord) {
+            callSupabaseSingle_('vehicles', 'POST', newVehicleRecord).catch(() => {});
+          }
+        } catch (syncErr) {
+          console.warn('Đồng bộ ngầm phiếu phát lên Supabase gặp lỗi, tự động lưu hàng đợi ngoại tuyến:', syncErr);
+          enqueueOfflineDispatchSync(payload, isEditing ? editingContextCopy : null);
+        }
+      })();
     }
 
     function resetCreateDispatchFormKeepScreen() {
