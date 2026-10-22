@@ -7366,52 +7366,57 @@ window.google.script = {
         return true;
       }
 
-      // 2. TRƯỜNG HỢP KHO CHI NHÁNH CỤ THỂ (ví dụ: 'trang', 'tuan', 'trong', 'hung', 'dung'...)
+      // 2. TRƯỜNG HỢP KHO CHI NHÁNH CỤ THỂ (ví dụ: 'loan', 'hanh', 'tuan', 'trang'...)
       const normScope = scope.toLowerCase();
       const curUser = (currentAppUser && currentAppUser.username) ? currentAppUser.username.trim().toLowerCase() : '';
       const curFullName = (currentAppUser && currentAppUser.full_name) ? currentAppUser.full_name.trim().toLowerCase() : '';
 
-      // Tập các định danh hợp lệ của kho hiện tại
-      const validWhIdentifiers = [normScope, curUser, curFullName].filter(Boolean);
-      const isTagMatch = tagWh && validWhIdentifiers.some(id => tagWh === id || tagWh.includes(id) || id.includes(tagWh));
-      const isWhMatch = wh && validWhIdentifiers.some(id => wh === id || wh.includes(id) || id.includes(wh));
+      // ĐỊNH DANH HỢP LỆ CỦA KHO HIỆN TẠI (So khớp chính xác hoặc có tiền tố 'kho ')
+      const isMatchWarehouseIdentifier = (val) => {
+        if (!val) return false;
+        const v = String(val).trim().toLowerCase();
+        if (v === normScope || v === curUser) return true;
+        if (v === `kho ${normScope}` || v === `kho ${curUser}`) return true;
+        if (curFullName && (v === curFullName || v === `kho ${curFullName}`)) return true;
+        return false;
+      };
 
-      // NGUYÊN TẮC LOẠI TRỪ: Phiếu có tag hoặc cột warehouse của một kho chi nhánh KHÁC rõ ràng -> Loại bỏ tuyệt đối
-      const isOtherBranchTag = tagWh && !isTagMatch && tagWh !== 'admin' && tagWh !== 'main';
-      const isOtherBranchWh = wh && !isWhMatch && wh !== 'admin' && wh !== 'main';
-      if (isOtherBranchTag || isOtherBranchWh) return false;
+      // NGUYÊN TẮC 1: Nếu phiếu có nhãn [Kho: ...] mà nhãn đó KHÔNG khớp kho hiện tại -> LOẠI BỎ TUYỆT ĐỐI
+      if (tagWh && !isMatchWarehouseIdentifier(tagWh)) {
+        return false;
+      }
 
-      // Danh sách thành viên phát hàng thuộc kho hiện tại
-      let isStaffInCurrentWh = false;
-      try {
-        const staffNorm = (typeof normalizeStaffName === 'function') ? normalizeStaffName(staff).toLowerCase() : staff;
-        
-        // Nhận diện đặc biệt cho kho Hạnh: 5 thành viên chính thức
-        if (normScope === 'hanh' || curUser === 'hanh') {
-          const hanhStaffNorms = ['nguyễn kim ngọc', 'trịnh thúy', 'nhật tân', 'ngọc diệp', 'trang'];
-          if (hanhStaffNorms.includes(staffNorm)) {
-            isStaffInCurrentWh = true;
-          }
-        }
+      // NGUYÊN TẮC 2: Nếu phiếu có cột warehouse mà cột đó KHÔNG khớp kho hiện tại (và không phải admin/main) -> LOẠI BỎ TUYỆT ĐỐI
+      if (wh && wh !== 'admin' && wh !== 'main' && !isMatchWarehouseIdentifier(wh)) {
+        return false;
+      }
 
-        if (!isStaffInCurrentWh && typeof getStaffListForCurrentWarehouse === 'function') {
-          const sList = getStaffListForCurrentWarehouse();
-          isStaffInCurrentWh = sList.some(s => {
-            const sNorm = (typeof normalizeStaffName === 'function') ? normalizeStaffName(s.name || '').toLowerCase() : (s.name || '').trim().toLowerCase();
-            return sNorm && (sNorm === staffNorm || sNorm === staff || (s.name && s.name.trim().toLowerCase() === staffNorm));
-          });
-        }
-      } catch(e) {}
-
-      const isCurAccount = (staff && (staff === curFullName || staff === curUser));
-
-      // CHẤP NHẬN NẾU:
-      // a. Người phát hàng là thành viên thuộc kho mình hoặc chính tài khoản kho
-      if (isStaffInCurrentWh || isCurAccount) {
+      // NGUYÊN TẮC 3: Nếu phiếu đã khớp chính xác nhãn tag hoặc cột warehouse của kho này -> CHẤP NHẬN
+      if (isMatchWarehouseIdentifier(tagWh) || isMatchWarehouseIdentifier(wh)) {
         return true;
       }
-      // b. Tag ghi chú hoặc cột warehouse khớp kho mình
-      if (isTagMatch || isWhMatch) {
+
+      // NGUYÊN TẮC 4: Với phiếu cũ chưa có nhãn kho (tagWh và wh đều trống):
+      // - Nếu đang ở kho Hạnh: đối chiếu 5 thành viên lịch sử của Hạnh
+      if (normScope === 'hanh' || curUser === 'hanh') {
+        const hanhStaffNorms = ['nguyễn kim ngọc', 'trịnh thúy', 'nhật tân', 'ngọc diệp', 'trang', 'trần thị minh hạnh'];
+        if (hanhStaffNorms.includes(staffNorm)) {
+          return true;
+        }
+      }
+
+      // - Đối chiếu danh sách thành viên cụ thể của kho hiện tại
+      if (typeof getStaffListForCurrentWarehouse === 'function') {
+        const sList = getStaffListForCurrentWarehouse(normScope);
+        const isStaffInCurrentWh = sList.some(s => {
+          const sNorm = (typeof normalizeStaffName === 'function') ? normalizeStaffName(s.name || '').toLowerCase() : (s.name || '').trim().toLowerCase();
+          return sNorm && (sNorm === staffNorm || (s.name && s.name.trim().toLowerCase() === staffNorm));
+        });
+        if (isStaffInCurrentWh) return true;
+      }
+
+      // - Hoặc phiếu do chính tài khoản kho phát hàng
+      if (staffNorm && (staffNorm === curUser || (curFullName && staffNorm === curFullName))) {
         return true;
       }
 
@@ -13447,7 +13452,7 @@ window.google.script = {
         const rawName = String(st.name).trim();
         const fixedName = fixMojibakeVietnamese(rawName);
         const normName = normalizeStaffName(fixedName);
-        const whKey = String(st.warehouse || 'hanh').toLowerCase();
+        const whKey = String(st.warehouse || '').toLowerCase();
         const mapKey = `${whKey}_${normName.toLowerCase()}`;
 
         // Nếu phát hiện tên bị lỗi font, sửa ngay trong RAM và PATCH lên Supabase
@@ -13531,7 +13536,7 @@ window.google.script = {
       const curName = (currentAppUser && currentAppUser.full_name) ? String(currentAppUser.full_name).trim().toLowerCase() : '';
 
       // 1. Nếu là kho Hạnh (chỉ duy nhất kho Hạnh mới có 5 thành viên lịch sử chuẩn):
-      const isHanh = (normScope === 'hanh' || (!customWarehouseScope && (curUser === 'hanh' || curName.includes('hạnh') || curName.includes('hanh'))));
+      const isHanh = (normScope === 'hanh' || (!customWarehouseScope && (curUser === 'hanh' || curName === 'trần thị minh hạnh' || curName === 'hạnh')));
       if (isHanh) {
         const hanhStaffStandard = [
           { name: "Nguyễn Kim Ngọc", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
