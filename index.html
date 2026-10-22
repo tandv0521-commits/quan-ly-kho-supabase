@@ -2299,10 +2299,6 @@
             <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-200/80 space-y-3 no-print">
               <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
                 <div class="flex flex-wrap items-center gap-2">
-                  <div class="flex items-center space-x-1.5 text-xs font-bold text-slate-700 mr-1">
-                    <i class="bi bi-clipboard2-check text-amber-600 text-base"></i>
-                    <span class="uppercase tracking-wide">Tính Tiền Chênh Lệch Kho</span>
-                  </div>
                   <!-- BỘ CHỌN THÁNG KIỂM KÊ THÔNG MINH (CHỈ HIỆN CÁC THÁNG CÓ PHIẾU) -->
                   <div class="flex items-center space-x-1 bg-amber-50/80 px-2 py-1 rounded-xl border border-amber-200/90 shadow-2xs">
                     <button type="button" onclick="navigateKiemKeMonth(-1)" class="p-1 text-xs font-bold text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-lg transition cursor-pointer" title="Chuyển về đợt kiểm kê trước đó">
@@ -4501,6 +4497,14 @@ const DEFAULT_APP_USERS = [
   }
 ];
 
+const DEFAULT_WAREHOUSE_STAFF = [
+  { id: 47, name: "Nguyễn Kim Ngọc", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+  { id: 48, name: "Trịnh Thúy", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+  { id: 49, name: "Nhật Tân", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+  { id: 50, name: "Ngọc Diệp", role: "Nhân viên kho", warehouse: "hanh", phone: "" },
+  { id: 51, name: "Trang", role: "Nhân viên kho", warehouse: "hanh", phone: "" }
+];
+
 const LocalDB = {
   dbName: 'QUAN_LY_KHO_STANDALONE_DB',
   version: 3,
@@ -4584,6 +4588,12 @@ const LocalDB = {
     if (!this.cache['app_users'] || this.cache['app_users'].length === 0) {
       this.cache['app_users'] = JSON.parse(JSON.stringify(DEFAULT_APP_USERS));
       this.persist('app_users');
+    }
+
+    // 4. Khởi tạo danh sách thành viên kho mặc định ban đầu nếu chưa có
+    if (!this.cache['warehouse_staff'] || this.cache['warehouse_staff'].length === 0) {
+      this.cache['warehouse_staff'] = JSON.parse(JSON.stringify(DEFAULT_WAREHOUSE_STAFF));
+      this.persist('warehouse_staff');
     }
 
     this.initialized = true;
@@ -13273,6 +13283,20 @@ window.google.script = {
           tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-rose-500 font-semibold">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
         }
       }
+    function normalizeStaffName(name) {
+      if (!name) return '';
+      const clean = String(name).trim();
+      const lower = clean.toLowerCase();
+      if (lower === 'thúy' || lower === 'vũ thị thanh thủy' || lower === 'thanh thủy' || lower === 'hải thúy' || lower.includes('thanh thủy')) {
+        return 'Trịnh Thúy';
+      }
+      if (lower === 'kim ngọc' || lower === 'nguyễn thị kim ngọc') {
+        return 'Nguyễn Kim Ngọc';
+      }
+      if (lower === 'huyền trang' || lower === 'trần thị huyền trang') {
+        return 'Trang';
+      }
+      return clean;
     }
 
     async function ensureWarehouseStaffLoaded() {
@@ -13289,8 +13313,15 @@ window.google.script = {
         }
       } catch (e) {}
 
-      if (typeof LocalDB !== 'undefined' && LocalDB.cache && Array.isArray(LocalDB.cache['warehouse_staff'])) {
+      if (typeof LocalDB !== 'undefined' && LocalDB.cache && Array.isArray(LocalDB.cache['warehouse_staff']) && LocalDB.cache['warehouse_staff'].length > 0) {
         warehouseStaffListCached = LocalDB.cache['warehouse_staff'];
+        populateWarehouseStaffUI();
+        if (typeof populateDispatchFilterDropdowns === 'function') populateDispatchFilterDropdowns();
+        return warehouseStaffListCached;
+      }
+
+      if (typeof DEFAULT_WAREHOUSE_STAFF !== 'undefined' && Array.isArray(DEFAULT_WAREHOUSE_STAFF)) {
+        warehouseStaffListCached = JSON.parse(JSON.stringify(DEFAULT_WAREHOUSE_STAFF));
         populateWarehouseStaffUI();
         if (typeof populateDispatchFilterDropdowns === 'function') populateDispatchFilterDropdowns();
         return warehouseStaffListCached;
@@ -13322,6 +13353,9 @@ window.google.script = {
           if (curName && (stName === curName || stName.includes(curName))) return true;
           if (curUser && (stName === curUser || stName.includes(curUser))) return true;
           if (st.id && currentAppUser.staff_id && st.id === currentAppUser.staff_id) return true;
+          // Tương thích linh hoạt: Nếu tài khoản là Loan hoặc Hạnh thì hiển thị đầy đủ nhóm thành viên kho chuẩn
+          if ((curUser === 'loan' || curName.includes('loan')) && (stWh === 'hanh' || stWh === 'loan')) return true;
+          if ((curUser === 'hanh' || curName.includes('hạnh') || curName.includes('hanh')) && (stWh === 'hanh' || stWh === 'loan')) return true;
           return false;
         }
 
@@ -13377,10 +13411,10 @@ window.google.script = {
         let hasMatchedTarget = false;
 
         activeStaffList.forEach(st => {
-          const sName = (st.name || '').trim();
+          const sName = normalizeStaffName((st.name || '').trim());
           if (!sName || seenNames.has(sName.toLowerCase())) return;
           seenNames.add(sName.toLowerCase());
-          const isSel = (sName === targetVal);
+          const isSel = (sName === targetVal || normalizeStaffName(targetVal) === sName);
           if (isSel) hasMatchedTarget = true;
           optionsHtml += `<option value="${escapeHtml(sName)}" ${isSel ? 'selected' : ''}>${escapeHtml(sName)}</option>`;
         });
@@ -14211,18 +14245,22 @@ window.google.script = {
       const staffSet = new Set();
       const vehicleSet = new Set();
 
-      // Đưa danh mục nhân sự thuộc kho hiện tại vào bộ lọc
+      // Đưa danh mục nhân sự thuộc kho hiện tại vào bộ lọc (chuẩn hóa tên)
       activeStaffList.forEach(st => {
-        if (st.name && st.name.trim()) staffSet.add(st.name.trim());
+        const sNorm = normalizeStaffName((st.name || '').trim());
+        if (sNorm) staffSet.add(sNorm);
       });
       vehiclesListCached.forEach(v => {
         if (v.plate && v.plate.trim()) vehicleSet.add(v.plate.trim().toUpperCase());
       });
 
-      // Bổ sung dữ liệu lịch sử từ bảng phát hàng thuộc kho hiện tại
+      // Bổ sung dữ liệu lịch sử từ bảng phát hàng thuộc kho hiện tại (chuẩn hóa tên đồng bộ)
       dispatchListCached.forEach(it => {
         if (typeof isDispatchInCurrentWarehouse !== 'function' || isDispatchInCurrentWarehouse(it)) {
-          if (it.staff_name && it.staff_name.trim()) staffSet.add(it.staff_name.trim());
+          if (it.staff_name && it.staff_name.trim()) {
+            const sNorm = normalizeStaffName(it.staff_name.trim());
+            if (sNorm) staffSet.add(sNorm);
+          }
           if (it.license_plate && it.license_plate.trim()) vehicleSet.add(it.license_plate.trim().toUpperCase());
         }
       });
@@ -15299,8 +15337,8 @@ window.google.script = {
       if (!b) return -1;
 
       // 1. Nhóm thành viên phát giống nhau nằm cạnh nhau (A-Z theo tiếng Việt)
-      const staffA = String(a.staff_name || a.staff || '').trim();
-      const staffB = String(b.staff_name || b.staff || '').trim();
+      const staffA = normalizeStaffName(String(a.staff_name || a.staff || '').trim());
+      const staffB = normalizeStaffName(String(b.staff_name || b.staff || '').trim());
       const staffCmp = staffA.localeCompare(staffB, 'vi', { sensitivity: 'base' });
       if (staffCmp !== 0) return staffCmp;
 
@@ -15347,7 +15385,11 @@ window.google.script = {
         if (fromDate && itDate && itDate < fromDate) return false;
         if (toDate && itDate && itDate > toDate) return false;
 
-        if (staffVal && (it.staff_name || '').toLowerCase() !== staffVal) return false;
+        if (staffVal) {
+          const itStaffNorm = normalizeStaffName(it.staff_name).toLowerCase();
+          const filterStaffNorm = normalizeStaffName(staffVal).toLowerCase();
+          if (itStaffNorm !== filterStaffNorm) return false;
+        }
         if (vehicleVal && (it.license_plate || '').toLowerCase() !== vehicleVal) return false;
         if (productVal && (it.product_code || '').trim().toLowerCase() !== productVal) return false;
         if (statusVal && it.status !== statusVal) return false;
@@ -15457,7 +15499,8 @@ window.google.script = {
       const staffMap = new Map();
 
       list.forEach(it => {
-        const sName = (it.staff_name || 'Chưa phân công').trim();
+        const rawStaff = (it.staff_name || 'Chưa phân công').trim();
+        const sName = normalizeStaffName(rawStaff) || 'Chưa phân công';
         if (!staffMap.has(sName)) {
           staffMap.set(sName, {
             staff_name: sName,
@@ -17558,7 +17601,7 @@ window.google.script = {
       }, 100);
     }
 
-    function closeCreateDispatchForm() {
+    function closeCreateDispatchForm(isFromSubmit = false) {
       editingDispatchContext = null;
       const titleEl = document.getElementById('dispatch-create-view-title');
       if (titleEl) titleEl.innerHTML = 'GHI NHẬN PHÁT HÀNG CHO XE LẤY HÀNG';
@@ -17571,8 +17614,8 @@ window.google.script = {
       closeAllDropdowns();
       updateHeaderCreateDispatchButtonState();
 
-      // Nếu đang trong ngữ cảnh sửa xe từ bảng so sánh đối chiếu, quay lại bảng so sánh
-      if (window._reconciliationEditContext && window._reconciliationEditContext.returnToTab) {
+      // Nếu người dùng bấm Hủy/Đóng (không phải lưu) từ bảng so sánh đối chiếu, quay lại bảng so sánh
+      if (!isFromSubmit && window._reconciliationEditContext && window._reconciliationEditContext.returnToTab) {
         const returnCode = window._reconciliationEditContext.itemCode;
         const returnTab = window._reconciliationEditContext.returnToTab;
         window._reconciliationEditContext = null;
@@ -18026,7 +18069,7 @@ window.google.script = {
           if (typeof showAppToast === 'function') {
             showAppToast(successTitle, successMsg, 'success', 2200);
           }
-          closeCreateDispatchForm();
+          closeCreateDispatchForm(true);
           loadDailyDispatchTab();
         }
 
@@ -18293,7 +18336,11 @@ window.google.script = {
         const itDate = (it.dispatch_date || '').substring(0, 10);
         if (fromDate && itDate && itDate < fromDate) return false;
         if (toDate && itDate && itDate > toDate) return false;
-        if (staffVal && it.staff_name !== staffVal) return false;
+        if (staffVal) {
+          const itStaffNorm = normalizeStaffName(it.staff_name).toLowerCase();
+          const filterStaffNorm = normalizeStaffName(staffVal).toLowerCase();
+          if (itStaffNorm !== filterStaffNorm) return false;
+        }
         if (vehicleVal && it.license_plate !== vehicleVal) return false;
         if (statusVal && it.status !== statusVal) return false;
         if (query) {
@@ -18488,7 +18535,11 @@ window.google.script = {
         const itDate = (it.dispatch_date || '').substring(0, 10);
         if (fromDate && itDate && itDate < fromDate) return false;
         if (toDate && itDate && itDate > toDate) return false;
-        if (staffVal && (it.staff_name || '').toLowerCase() !== staffVal) return false;
+        if (staffVal) {
+          const itStaffNorm = normalizeStaffName(it.staff_name).toLowerCase();
+          const filterStaffNorm = normalizeStaffName(staffVal).toLowerCase();
+          if (itStaffNorm !== filterStaffNorm) return false;
+        }
         if (vehicleVal && (it.license_plate || '').toLowerCase() !== vehicleVal) return false;
         if (productVal && (it.product_code || '').trim().toLowerCase() !== productVal) return false;
         if (query) {
@@ -26185,16 +26236,13 @@ window.google.script = {
       let optionsHtml = '';
 
       if (availableMonths.length > 0) {
-        // CHỈ HIỆN CÁC THÁNG THỰC TẾ CÓ PHIẾU KIỂM KÊ
+        // CHỈ HIỆN CÁC THÁNG THỰC TẾ CÓ PHIẾU KIỂM KÊ (gọn gàng, dễ nhìn)
         availableMonths.forEach(mk => {
           const parts = mk.split('-');
           const y = parts[0];
-          const m = parts[1];
+          const m = parseInt(parts[1], 10);
           const count = monthsMap[mk] || 0;
-          let label = `Tháng ${m}/${y} (${count} phiếu)`;
-          if (mk === currentKey) {
-            label = `Tháng ${m}/${y} (Tháng này - ${count} phiếu)`;
-          }
+          const label = `Tháng ${m}/${y}` + (count > 0 ? ` (${count})` : '');
           optionsHtml += `<option value="${mk}" ${mk === activeKey ? 'selected' : ''}>${label}</option>`;
         });
 
@@ -26202,21 +26250,23 @@ window.google.script = {
         if (!monthsMap[activeKey] && activeKey !== 'all' && activeKey !== 'custom') {
           const mParts = activeKey.split('-');
           const selM = parseInt(mParts[1] || '1', 10);
-          optionsHtml = `<option value="${activeKey}" selected>Tháng ${selM} (0 phiếu)</option>` + optionsHtml;
+          const selY = mParts[0] || new Date().getFullYear();
+          optionsHtml = `<option value="${activeKey}" selected>Tháng ${selM}/${selY}</option>` + optionsHtml;
         }
 
         // Tùy chọn xem tất cả các tháng
-        optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng (Tổng: ${totalVouchersCount} phiếu) --</option>`;
+        optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>Tất cả các tháng${totalVouchersCount > 0 ? ` (${totalVouchersCount})` : ''}</option>`;
       } else {
         // Nếu hệ thống hoàn toàn chưa có phiếu nào
         const [cy, cm] = currentKey.split('-');
         const selKey = (activeKey && activeKey !== 'all' && activeKey !== 'custom') ? activeKey : currentKey;
         const selM = parseInt(selKey.split('-')[1] || cm, 10);
-        optionsHtml += `<option value="${selKey}" selected>Tháng ${selM} (0 phiếu)</option>`;
-        optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>-- Tất cả các tháng (0 phiếu) --</option>`;
+        const selY = selKey.split('-')[0] || cy;
+        optionsHtml += `<option value="${selKey}" selected>Tháng ${selM}/${selY}</option>`;
+        optionsHtml += `<option value="all" ${activeKey === 'all' ? 'selected' : ''}>Tất cả các tháng</option>`;
       }
 
-      optionsHtml += `<option value="custom" ${activeKey === 'custom' ? 'selected' : ''}>-- Tùy chỉnh ngày... --</option>`;
+      optionsHtml += `<option value="custom" ${activeKey === 'custom' ? 'selected' : ''}>Tùy chỉnh ngày...</option>`;
 
       sel.innerHTML = optionsHtml;
 
