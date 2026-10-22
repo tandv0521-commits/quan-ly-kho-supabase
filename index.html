@@ -20406,10 +20406,9 @@ window.google.script = {
           else if (/^(vật\s*tư|mã\s*vật\s*tư|mã\s*vt|mã\s*hàng|mã\s*sp|mã)$/i.test(t) || t.includes('vật tư')) {
             fCode = cIdx;
           }
-          // 5. Số chứng từ / Số HĐ
+          // 5. Số chứng từ / Số HĐ (Chỉ bắt cột ghi rõ "Số", "Số CT", "Số HĐ", "Số chứng từ", "Số hóa đơn" - Không bắt chữ "Chứng từ" nhóm cha)
           else if (/^(số|số\s*chứng\s*từ|số\s*ct|số\s*hđ|số\s*hóa\s*đơn|số\s*phiếu|mã\s*chứng\s*từ)$/i.test(t) || 
                    t === 'số' || t === 'số ct' || t === 'số hđ' || t === 'số chứng từ' ||
-                   (t.includes('chứng từ') && !t.includes('bảng kê') && !t.includes('loại')) ||
                    (t.includes('số') && (t.includes('ct') || t.includes('hđ') || t.includes('hóa đơn')))) {
             fVoucher = cIdx;
           }
@@ -20436,6 +20435,37 @@ window.google.script = {
         }
       }
 
+      // Phát hiện và xử lý Header 2 tầng (Sub-Header):
+      // Dòng trên (dòng headerRowIdx) có ô gộp "Chứng từ", dòng dưới (headerRowIdx + 1) có các cột chi tiết "Mã" - "Ngày" - "Số"
+      let dataStartRow = headerRowIdx + 1;
+      if (headerRowIdx !== -1 && headerRowIdx + 1 < rawRows.length) {
+        const nextRow = rawRows[headerRowIdx + 1] || [];
+        let subVoucher = -1;
+        let subDate = -1;
+        let subType = -1;
+
+        nextRow.forEach((cell, cIdx) => {
+          const t = String(cell || '').trim().toLowerCase();
+          if (!t) return;
+          // Cột "Số" trong nhóm chứng từ (Cột C trong hình người dùng: C26TTP131105)
+          if (t === 'số' || t === 'số ct' || t === 'số hđ' || t === 'số chứng từ' || /^(số|số\s*ct|số\s*hđ|số\s*chứng\s*từ)$/i.test(t)) {
+            subVoucher = cIdx;
+          } else if (t === 'ngày' || t === 'ngày ct' || t === 'ngày hđ' || /^(ngày|ngày\s*ct|ngày\s*hđ)$/i.test(t)) {
+            subDate = cIdx;
+          } else if (t === 'mã' || t === 'mã ct' || t === 'loại' || t === 'loại ct') {
+            subType = cIdx;
+          }
+        });
+
+        // Nếu dòng kế tiếp có các cột chi tiết này -> Đây chính là dòng Sub-Header
+        if (subVoucher !== -1 || subDate !== -1 || subType !== -1) {
+          if (subVoucher !== -1) colMap.voucherNo = subVoucher;
+          if (subDate !== -1) colMap.date = subDate;
+          if (subType !== -1) colMap.voucherType = subType;
+          dataStartRow = headerRowIdx + 2; // Bỏ qua dòng sub-header, bắt đầu đọc dữ liệu từ dòng kế tiếp
+        }
+      }
+
       // Fallback theo định dạng mặc định (Hình 2): Col 0: Mã, Col 1: Ngày, Col 2: Số, Col 3: Diễn giải, Col 4: Vật tư, Col 5: Số lượng, Col 6: Mã xe, Col 7: Kho, Col 8: Người tạo
       if (headerRowIdx === -1) {
         for (let r = 0; r < Math.min(rawRows.length, 30); r++) {
@@ -20455,6 +20485,7 @@ window.google.script = {
               warehouse: 7,
               creator: 8
             };
+            dataStartRow = r;
             break;
           }
         }
@@ -20464,11 +20495,46 @@ window.google.script = {
         throw new Error('Không tìm thấy dòng tiêu đề có cột "Mã xe" và "Số lượng" trong file Excel đã chọn!');
       }
 
+      // DATA-DRIVEN AUTO-CORRECTION:
+      // Quét các dòng dữ liệu mẫu đầu tiên để đảm bảo colMap.voucherNo trỏ đúng cột Số chứng từ thật (như C26TTP131105) thay vì trỏ vào cột "HD"
+      let sampleRowsChecked = 0;
+      let shortVoucherHits = 0;
+      let realVoucherColCandidate = -1;
+
+      for (let r = dataStartRow; r < Math.min(rawRows.length, dataStartRow + 20); r++) {
+        const row = rawRows[r] || [];
+        const plate = String(row[colMap.plate] || '').trim();
+        if (!plate) continue;
+        sampleRowsChecked++;
+
+        const currentVal = colMap.voucherNo !== -1 ? String(row[colMap.voucherNo] || '').trim() : '';
+        if (!currentVal || currentVal.toUpperCase() === 'HD' || currentVal.length <= 4) {
+          shortVoucherHits++;
+        }
+
+        // Quét tìm cột nào có chuỗi số chứng từ thật (dạng C26TTP131105, C26..., hoặc chữ+số dài >= 6)
+        row.forEach((cell, cIdx) => {
+          if (cIdx === colMap.plate || cIdx === colMap.qty || cIdx === colMap.creator) return;
+          const str = String(cell || '').trim();
+          if (/^[A-Za-z0-9_-]{6,}$/.test(str) && /\d{3,}/.test(str)) {
+            realVoucherColCandidate = cIdx;
+          }
+        });
+      }
+
+      // Nếu cột voucherNo hiện tại trỏ vào "HD" hoặc rỗng, tự động chuyển sang cột số chứng từ thật tìm được
+      if (realVoucherColCandidate !== -1 && (colMap.voucherNo === -1 || shortVoucherHits >= Math.max(1, Math.floor(sampleRowsChecked * 0.5)))) {
+        if (colMap.voucherNo !== -1 && colMap.voucherNo !== realVoucherColCandidate) {
+          colMap.voucherType = colMap.voucherNo;
+        }
+        colMap.voucherNo = realVoucherColCandidate;
+      }
+
       // 3. Đọc dữ liệu từng dòng
       const rows = [];
       const normTargetCode = String(targetCode || '').trim().toUpperCase();
 
-      for (let r = headerRowIdx + 1; r < rawRows.length; r++) {
+      for (let r = dataStartRow; r < rawRows.length; r++) {
         const row = rawRows[r] || [];
         const plateRaw = String(row[colMap.plate] !== undefined ? row[colMap.plate] : '').trim();
         if (!plateRaw) continue;
@@ -20493,6 +20559,18 @@ window.google.script = {
         if (!creator && voucherNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(voucherNo) && !/\d/.test(voucherNo)) {
           creator = voucherNo;
           voucherNo = '';
+        }
+
+        // Tự động bảo vệ: Nếu voucherNo vẫn là "HD" hoặc chuỗi mã loại ngắn <= 3 ký tự, tìm ngay ô chứa số chứng từ thật trong dòng
+        if (!voucherNo || voucherNo.toUpperCase() === 'HD' || voucherNo.length <= 3) {
+          for (let c = 0; c < row.length; c++) {
+            if (c === colMap.plate || c === colMap.qty || c === colMap.creator) continue;
+            const cellVal = String(row[c] || '').trim();
+            if (/^[A-Za-z0-9_-]{6,}$/.test(cellVal) && /\d{3,}/.test(cellVal)) {
+              voucherNo = cellVal;
+              break;
+            }
+          }
         }
 
         rows.push({
@@ -20694,10 +20772,13 @@ window.google.script = {
       const currentItem = window._currentProductDetailItem || {};
       const targetCode = code || currentItem.code || '';
 
-      // 1. Nếu đã có dữ liệu so sánh của mã này thì chuyển tab xem ngay
+      // 1. Nếu đã có dữ liệu so sánh của mã này thì kiểm tra dữ liệu có bị cũ (chứa 'HD' thay vì số CT thực tế) không
       if (window._currentVehicleComparisonData && window._currentVehicleComparisonData.itemCode.toUpperCase() === targetCode.toUpperCase()) {
-        switchProductDetailTab('compare');
-        return;
+        const hasLegacyHd = (window._currentVehicleComparisonData.results || []).some(r => (r.excelRecords || []).some(x => (x.voucherNo || '').trim().toUpperCase() === 'HD'));
+        if (!hasLegacyHd) {
+          switchProductDetailTab('compare');
+          return;
+        }
       }
 
       // 2. Kiểm tra nếu trong sessionStorage đã có file Excel bảng kê chứng từ
@@ -21116,6 +21197,7 @@ window.google.script = {
             const vNo = (x.voucherNo || '').trim();
             const crt = (x.creator || '').trim();
             if (!crt && vNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(vNo) && !/\d/.test(vNo)) return '';
+            if (vNo.toUpperCase() === 'HD' || vNo.length <= 3) return '';
             return vNo;
           }).filter(Boolean);
           const excelCreators = Array.from(new Set((r.excelRecords || []).map(x => {
@@ -21350,6 +21432,17 @@ window.google.script = {
                     if (!crt && vNo && /^[A-ZÀ-Ỹa-zà-ỹ\s]{3,}$/.test(vNo) && !/\d/.test(vNo)) {
                       crt = vNo;
                       vNo = '-';
+                    }
+                    // Nếu vNo vẫn là "HD" (dữ liệu cũ trong phiên), thử tra cứu lại số chứng từ thật từ excelRows
+                    if (vNo.toUpperCase() === 'HD' || vNo.length <= 3) {
+                      const compareData = window._currentVehicleComparisonData;
+                      if (compareData && compareData.excelRows) {
+                        const matched = compareData.excelRows.find(x => x.rowIdx === e.rowIdx || ((x.plate === (e.plate || item.excelPlate)) && Math.abs(x.qty - e.qty) < 0.001 && x.voucherNo && x.voucherNo.toUpperCase() !== 'HD'));
+                        if (matched && matched.voucherNo && matched.voucherNo.toUpperCase() !== 'HD') {
+                          vNo = matched.voucherNo;
+                        }
+                      }
+                      if (vNo.toUpperCase() === 'HD') vNo = '-';
                     }
                     return `
                     <tr class="hover:bg-slate-50">
