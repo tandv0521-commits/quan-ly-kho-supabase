@@ -21214,8 +21214,9 @@ window.google.script = {
             detailsHtml += `<div class="truncate text-slate-700 text-[11px]" title="${escapeHtml(tooltipTxt)}"><span class="font-bold text-slate-500">Thủ kho:</span> <span class="font-semibold text-slate-800">${escapeHtml(staffName)}</span></div>`;
           }
           if (excelInvoices.length > 0 || excelCreators.length > 0) {
-            const invTxt = excelInvoices.length > 0 ? excelInvoices.join(', ') : 'Có HĐ';
-            detailsHtml += `<div class="truncate text-indigo-900 text-[11px]"><span class="font-bold text-indigo-500">HĐ:</span> ${escapeHtml(invTxt)}${excelCreators.length > 0 ? ` <span class="text-slate-500 font-medium">(${escapeHtml(excelCreators.join(', '))})</span>` : ''}</div>`;
+            const creatorName = excelCreators.length > 0 ? excelCreators.join(', ') : (excelInvoices.join(', ') || 'Có HĐ');
+            const tooltipInv = excelInvoices.length > 0 ? `Số HĐ: ${excelInvoices.join(', ')}` : '';
+            detailsHtml += `<div class="truncate text-indigo-900 text-[11px]" title="${escapeHtml(tooltipInv)}"><span class="font-bold text-indigo-500">HĐ:</span> <span class="font-semibold text-slate-800">${escapeHtml(creatorName)}</span></div>`;
           }
 
           const hasMultiDocs = (r.appRecords && r.appRecords.length > 1) || (r.excelRecords && r.excelRecords.length > 1);
