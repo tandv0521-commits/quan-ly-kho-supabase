@@ -777,50 +777,69 @@
           </div>
         </nav>
 
-        <div id="sidebar-user-widget" class="mt-2.5 pt-2.5 border-t border-slate-100 no-print">
-          <div id="sidebar-user-card" class="p-2.5 bg-gradient-to-b from-white to-slate-50/90 hover:from-white hover:to-slate-100/90 border border-slate-200/90 hover:border-teal-300 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200">
-            <!-- User Profile Header -->
-            <div class="flex items-center space-x-2.5 min-w-0">
-              <!-- Avatar with online indicator -->
-              <div class="relative shrink-0 cursor-pointer" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Xem thông tin tài khoản">
-                <div id="sidebar-user-avatar" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-teal-600 flex items-center justify-center text-white text-xs font-black uppercase shadow-xs">
-                  HT
-                </div>
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white absolute -bottom-0.5 -right-0.5" title="Đang trực tuyến"></span>
+        <div id="sidebar-user-widget" class="mt-2 pt-2 border-t border-slate-100 no-print relative">
+          <!-- Popover Menu các chức năng tùy chọn khi bấm vào -->
+          <div id="sidebar-user-popover" class="hidden absolute bottom-full mb-2 left-0 right-0 bg-white border border-slate-200/90 rounded-2xl shadow-xl p-2 z-50 text-xs backdrop-blur transition-all">
+            <!-- Thẻ tóm tắt thông tin người dùng -->
+            <div class="px-2.5 py-2 bg-slate-50/90 rounded-xl border border-slate-100 mb-1">
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span id="sidebar-popover-user-name" class="font-bold text-slate-800 truncate text-xs">...</span>
+                <span id="sidebar-user-role-badge" class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-teal-50 text-teal-800 border border-teal-200 shrink-0">Kho</span>
               </div>
-
-              <!-- Name & Role / Warehouse Info -->
-              <div class="sidebar-user-details min-w-0 flex-1 overflow-hidden cursor-pointer" onclick="if(isUserAdmin()) openUserManagementModal(); else openChangePasswordModal();" title="Bấm để xem thông tin tài khoản">
-                <div id="sidebar-user-name" class="text-xs font-bold text-slate-800 truncate leading-tight hover:text-teal-700 transition">
-                  Trần Thị Huyền Trang
-                </div>
-                <div class="flex items-center space-x-1.5 mt-1 overflow-hidden">
-                  <span id="sidebar-user-role-badge" class="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-teal-50 text-teal-800 border border-teal-200 shrink-0">
-                    Kho
-                  </span>
-                  <span id="sidebar-user-warehouse" class="text-[10px] font-medium text-slate-500 truncate" title="Kho phụ trách">
-                    Kho Trần Thị Huyền Trang
-                  </span>
-                </div>
-              </div>
+              <div id="sidebar-user-warehouse" class="text-[10px] font-medium text-slate-500 truncate" title="Kho phụ trách">...</div>
             </div>
 
-            <!-- Action Buttons (Đổi mật khẩu & Đăng xuất chuyên nghiệp, tinh tế) -->
-            <div class="sidebar-user-details flex items-center gap-1.5 mt-2.5 pt-2 border-t border-slate-100/80">
-              <button type="button" onclick="openChangePasswordModal()" 
-                      class="flex-1 py-1 px-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-blue-700 border border-slate-200 rounded-lg text-[10.5px] font-semibold transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer group" 
-                      title="Đổi mật khẩu tài khoản">
-                <i class="bi bi-key-fill text-slate-400 group-hover:text-blue-600 text-xs"></i>
-                <span>Đổi MK</span>
+            <!-- Danh sách chức năng tùy chọn -->
+            <div class="space-y-0.5">
+              <button type="button" onclick="openChangePasswordModal(); toggleSidebarUserMenu(false);" 
+                      class="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-blue-700 transition cursor-pointer">
+                <i class="bi bi-key-fill text-slate-400 text-sm shrink-0"></i>
+                <span>Đổi mật khẩu</span>
               </button>
+              
+              <button type="button" id="sidebar-menu-btn-users" onclick="openUserManagementModal(); toggleSidebarUserMenu(false);" 
+                      class="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-rose-700 transition cursor-pointer hidden">
+                <i class="bi bi-people-fill text-slate-400 text-sm shrink-0"></i>
+                <span>Quản lý tài khoản</span>
+              </button>
+
+              <button type="button" onclick="loadInventory(); toggleSidebarUserMenu(false);" 
+                      class="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-teal-700 transition cursor-pointer">
+                <i class="bi bi-arrow-clockwise text-slate-400 text-sm shrink-0"></i>
+                <span>Làm mới dữ liệu tồn kho</span>
+              </button>
+
+              <div class="border-t border-slate-100 my-1"></div>
+
               <button type="button" onclick="handleAppLogout()" 
-                      class="py-1 px-2.5 bg-rose-50/60 hover:bg-rose-100 text-rose-600 hover:text-rose-700 border border-rose-200/70 rounded-lg text-[10.5px] font-bold transition flex items-center justify-center gap-1 shadow-2xs cursor-pointer shrink-0" 
-                      title="Đăng xuất khỏi phần mềm">
-                <i class="bi bi-box-arrow-right text-xs"></i>
+                      class="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer">
+                <i class="bi bi-box-arrow-right text-rose-500 text-sm shrink-0"></i>
                 <span>Đăng xuất</span>
               </button>
             </div>
           </div>
+
+          <!-- Nút cô đọng 1 dòng hiện tên -->
+          <button type="button" id="sidebar-user-card" onclick="toggleSidebarUserMenu()" 
+                  class="w-full py-1.5 px-2 bg-gradient-to-r from-slate-50 to-white hover:bg-slate-100/80 border border-slate-200/90 hover:border-slate-300 rounded-xl shadow-2xs hover:shadow-xs transition flex items-center justify-between gap-2 cursor-pointer group" 
+                  title="Tài khoản &amp; Tùy chọn chức năng">
+            <div class="flex items-center space-x-2 min-w-0">
+              <div class="relative shrink-0">
+                <div id="sidebar-user-avatar" class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-teal-600 flex items-center justify-center text-white text-[11px] font-black uppercase shadow-xs">
+                  VT
+                </div>
+                <span class="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white absolute -bottom-0.5 -right-0.5" title="Đang trực tuyến"></span>
+              </div>
+              <div class="sidebar-user-details min-w-0 flex-1 overflow-hidden text-left">
+                <div id="sidebar-user-name" class="text-xs font-bold text-slate-800 truncate leading-none group-hover:text-teal-700 transition">
+                  Nguyễn Văn Tuấn
+                </div>
+              </div>
+            </div>
+            <div class="sidebar-user-details shrink-0 text-slate-400 group-hover:text-slate-600 pr-0.5">
+              <i id="sidebar-user-menu-chevron" class="bi bi-chevron-up text-[11px] transition-transform duration-200"></i>
+            </div>
+          </button>
         </div>
       </div>
     </aside>
@@ -7770,9 +7789,11 @@ window.google.script = {
 
       if (sideAvatar) {
         sideAvatar.innerText = initials;
-        sideAvatar.className = `w-9 h-9 rounded-xl ${avatarBgClass} flex items-center justify-center text-white text-xs font-black uppercase shadow-xs`;
+        sideAvatar.className = `w-7 h-7 rounded-lg ${avatarBgClass} flex items-center justify-center text-white text-[11px] font-black uppercase shadow-xs shrink-0`;
       }
       if (sideName) sideName.innerText = user.full_name || user.username;
+      const popoverName = document.getElementById('sidebar-popover-user-name');
+      if (popoverName) popoverName.innerText = user.full_name || user.username;
       if (sideRole) {
         sideRole.innerText = isAdmin ? 'Admin' : 'Kho';
         sideRole.className = roleBadgeClass;
@@ -7788,12 +7809,20 @@ window.google.script = {
         headRole.className = roleBadgeClass;
       }
 
-      // Ẩn/Hiện mục Quản Lý Tài Khoản trên Sidebar
+      // Ẩn/Hiện mục Quản Lý Tài Khoản trên Sidebar & Menu Popover
       if (sideAdminSection) {
         if (isAdmin) {
           sideAdminSection.classList.remove('hidden');
         } else {
           sideAdminSection.classList.add('hidden');
+        }
+      }
+      const sideMenuBtnUsers = document.getElementById('sidebar-menu-btn-users');
+      if (sideMenuBtnUsers) {
+        if (isAdmin) {
+          sideMenuBtnUsers.classList.remove('hidden');
+        } else {
+          sideMenuBtnUsers.classList.add('hidden');
         }
       }
 
@@ -8361,7 +8390,30 @@ window.google.script = {
       }
     }
 
+    function toggleSidebarUserMenu(force) {
+      const popover = document.getElementById('sidebar-user-popover');
+      const chevron = document.getElementById('sidebar-user-menu-chevron');
+      if (!popover) return;
+      const isOpen = !popover.classList.contains('hidden');
+      const shouldOpen = (typeof force === 'boolean') ? force : !isOpen;
+      if (shouldOpen) {
+        popover.classList.remove('hidden');
+        if (chevron) chevron.classList.add('rotate-180');
+      } else {
+        popover.classList.add('hidden');
+        if (chevron) chevron.classList.remove('rotate-180');
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      const widget = document.getElementById('sidebar-user-widget');
+      if (widget && !widget.contains(e.target)) {
+        toggleSidebarUserMenu(false);
+      }
+    });
+
     async function handleAppLogout() {
+      toggleSidebarUserMenu(false);
       const res = await Swal.fire({
         title: 'Đăng xuất khỏi phần mềm?',
         text: 'Bạn sẽ cần nhập lại mật khẩu để truy cập dữ liệu kho.',
