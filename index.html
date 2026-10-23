@@ -16290,8 +16290,19 @@ window.google.script = {
           : '';
         const tripDate = String(it.dispatch_date || '').substring(0, 10);
         const tripTime = String(it.dispatch_time || '').trim();
-        const tripKey = vNoClean ? `v_${vNoClean.toLowerCase()}` : `${plate}_${tripDate}_${tripTime}`;
-        const itSeq = getRecordDailyVehicleSeq(it);
+        const itSeq = getRecordDailyVehicleSeq(it) || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(it, list) : null);
+        
+        // Định danh chuyến xe độc lập:
+        // Nếu người dùng đã đánh dấu số thứ tự xe (ví dụ: Xe 6, Xe 36):
+        // Tuyệt đối KHÔNG GỘP xe! Mỗi số thứ tự xe là 1 chuyến xe phát hàng độc lập!
+        let tripKey = '';
+        if (itSeq) {
+          tripKey = `seq_${tripDate}_${sName.toLowerCase()}_${itSeq}`;
+        } else if (vNoClean) {
+          tripKey = `v_${tripDate}_${sName.toLowerCase()}_${vNoClean.toLowerCase()}`;
+        } else {
+          tripKey = `${sName.toLowerCase()}_${plate}_${tripDate}_${tripTime || it.id}`;
+        }
 
         if (!sData.tripsMap.has(tripKey)) {
           sData.tripsMap.set(tripKey, {
@@ -16338,6 +16349,9 @@ window.google.script = {
 
       return Array.from(staffMap.values()).map(s => {
         const trips = Array.from(s.tripsMap.values()).sort((a, b) => {
+          const seqA = a.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(a, dispatchListCached) : 0);
+          const seqB = b.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(b, dispatchListCached) : 0);
+          if (seqA !== seqB) return seqA - seqB;
           const timeA = `${a.dispatch_date} ${a.dispatch_time}`;
           const timeB = `${b.dispatch_date} ${b.dispatch_time}`;
           return timeB.localeCompare(timeA);
@@ -16456,63 +16470,45 @@ window.google.script = {
       `;
 
       staffStats.forEach((s, idx) => {
-        const rawPlates = s.distinctPlates || [];
-
-        // Gom và gắn số thứ tự xe (daily sequence) của người này cho từng biển số
-        const platesInfo = rawPlates.map((p, pIdx) => {
-          const tripCount = s.plateTripsMap ? (s.plateTripsMap.get(p) || 1) : 1;
-          const multiBadge = tripCount > 1 
-            ? `<span class="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] font-black bg-teal-100 text-teal-800 border border-teal-200 shrink-0" title="Phát ${tripCount} lượt">${tripCount} lượt</span>` 
-            : '';
-          const matchingTrips = (s.trips || []).filter(t => (t.license_plate || '').toUpperCase() === p.toUpperCase());
-          const matchingTrip = matchingTrips[0] || null;
-          const targetRecId = matchingTrip ? (matchingTrip.firstRecordId || matchingTrip.items?.[0]?.id || 0) : 0;
-          const dblClickAttr = targetRecId ? `ondblclick="event.stopPropagation(); openEditDispatchVoucher(${targetRecId})"` : '';
-
-          // Lấy danh sách số thứ tự chuyến xe trong ngày của người này
-          const seqs = matchingTrips.map(t => {
-            return (typeof resolveDailyVehicleSeq === 'function')
-              ? resolveDailyVehicleSeq(t, dispatchListCached)
-              : null;
-          }).filter(n => typeof n === 'number' && !isNaN(n) && n > 0);
-
-          const uniqueSeqs = Array.from(new Set(seqs)).sort((a, b) => a - b);
-          const firstSeq = uniqueSeqs.length > 0 ? uniqueSeqs[0] : (pIdx + 1);
-          const seqLabel = uniqueSeqs.length > 0 ? uniqueSeqs.join(', ') : `${pIdx + 1}`;
-
-          return {
-            plate: p,
-            firstSeq: firstSeq,
-            seqLabel: seqLabel,
-            tripCount: tripCount,
-            multiBadge: multiBadge,
-            dblClickAttr: dblClickAttr,
-            targetRecId: targetRecId
-          };
+        // Sắp xếp danh sách tất cả các chuyến xe theo đúng số thứ tự tăng dần (Xe 1, Xe 2, Xe 3... Xe 78)
+        // Tuyệt đối KHÔNG GỘP xe! Mỗi xe/chuyến xe hiển thị 1 thẻ riêng biệt để người dùng cập nhật chính xác từng chuyến
+        const sortedTrips = [...(s.trips || [])].sort((a, b) => {
+          const seqA = a.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(a, dispatchListCached) : 0);
+          const seqB = b.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(b, dispatchListCached) : 0);
+          if (seqA !== seqB) return seqA - seqB;
+          const timeA = `${a.dispatch_date} ${a.dispatch_time}`;
+          const timeB = `${b.dispatch_date} ${b.dispatch_time}`;
+          return timeA.localeCompare(timeB);
         });
 
-        // Sắp xếp các thẻ biển số theo thứ tự chuyến xe của người đó tăng dần (Xe 1, Xe 2, Xe 3...)
-        platesInfo.sort((a, b) => a.firstSeq - b.firstSeq || a.plate.localeCompare(b.plate));
+        const tripsPillsHtml = sortedTrips.map((trip, tIdx) => {
+          const tripSeq = trip.daily_seq || (typeof resolveDailyVehicleSeq === 'function' ? resolveDailyVehicleSeq(trip, dispatchListCached) : (tIdx + 1));
+          const targetRecId = trip.firstRecordId || trip.items?.[0]?.id || 0;
+          const dblClickAttr = targetRecId ? `ondblclick="event.stopPropagation(); openEditDispatchVoucher(${targetRecId})"` : '';
+          const plate = trip.license_plate || 'Chưa rõ biển số';
 
-        const platesHtml = platesInfo.map(info => {
           return `
-            <span ${info.dblClickAttr} onmousedown="event.detail > 1 && event.preventDefault()" 
+            <span ${dblClickAttr} onmousedown="event.detail > 1 && event.preventDefault()" 
                   class="inline-flex items-center px-2 py-1 rounded-lg text-xs font-mono font-bold bg-white text-slate-800 border border-slate-300 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-950 shadow-2xs transition-all tracking-wide select-none cursor-pointer" 
-                  title="Chuyến xe thứ ${info.seqLabel} của ${escapeHtml(s.staff_name)} - Biển số: ${escapeHtml(info.plate)}${info.tripCount > 1 ? ` (${info.tripCount} lượt)` : ''} - Nhấp đúp chuột để sửa phiếu">
+                  title="Chuyến xe thứ ${tripSeq} của ${escapeHtml(s.staff_name)} - Biển số: ${escapeHtml(plate)} - Nhấp đúp chuột để sửa phiếu">
               <span class="inline-flex items-center justify-center px-1.5 py-0.2 rounded bg-teal-50 text-teal-800 border border-teal-200 text-[10.5px] font-sans font-black mr-1.5 shrink-0">
-                Xe ${info.seqLabel}
+                Xe ${tripSeq}
               </span>
-              <span>${escapeHtml(info.plate)}</span>
-              ${info.multiBadge}
+              <span>${escapeHtml(plate)}</span>
             </span>
           `;
         }).join('');
 
-        const platesHeader = rawPlates.length >= 4 
-          ? `<div class="mb-1 flex items-center">
-               <span class="inline-flex items-center text-[10.5px] text-teal-900 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
-                 <i class="bi bi-collection-fill mr-1 text-teal-600 text-[10px]"></i> ${rawPlates.length} biển số xe
+        const tripsCount = sortedTrips.length;
+        const distinctCount = s.distinctPlatesCount || (s.distinctPlates ? s.distinctPlates.length : 0);
+        const platesHeader = tripsCount >= 4 
+          ? `<div class="mb-1.5 flex items-center space-x-1.5 flex-wrap">
+               <span class="inline-flex items-center text-[10.5px] text-teal-900 font-bold bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200 shadow-2xs">
+                 <i class="bi bi-truck mr-1 text-teal-600 text-[11px]"></i> ${tripsCount} xe đã phát
                </span>
+               ${(distinctCount && distinctCount !== tripsCount)
+                 ? `<span class="inline-flex items-center text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200">(${distinctCount} biển số xe)</span>`
+                 : ''}
              </div>`
           : '';
 
@@ -16535,7 +16531,7 @@ window.google.script = {
             <td class="px-4 py-3 align-middle">
               ${platesHeader}
               <div class="flex flex-wrap items-center gap-1.5">
-                ${platesHtml || '<span class="text-slate-400 italic">Chưa ghi biển số</span>'}
+                ${tripsPillsHtml || '<span class="text-slate-400 italic">Chưa ghi biển số</span>'}
               </div>
             </td>
             <td class="px-4 py-3 text-center col-center no-print align-middle">
@@ -16556,7 +16552,9 @@ window.google.script = {
                 <tr>
                   <td colspan="2" class="px-4 py-2.5 text-right uppercase">Tổng cộng:</td>
                   <td class="px-3.5 py-2.5 text-center font-black font-mono text-emerald-800 text-sm">${totalTrips} xe</td>
-                  <td class="px-4 py-2.5 text-slate-500 font-normal">${allDistinctPlates.size} biển số xe khác nhau</td>
+                  <td class="px-4 py-2.5 text-slate-600 font-medium">
+                    <b>${totalTrips}</b> xe đã phát ${allDistinctPlates.size !== totalTrips ? `<span class="text-slate-500 font-normal">(${allDistinctPlates.size} biển số xe khác nhau)</span>` : ''}
+                  </td>
                   <td class="px-4 py-2.5 text-center text-slate-400 font-medium no-print">${staffStats.length} nhân viên</td>
                 </tr>
               </tfoot>
@@ -17662,9 +17660,10 @@ window.google.script = {
           const plate = String(r.license_plate || r.plate || '').trim().toUpperCase();
           const time = String(r.dispatch_time || r.time || '').trim();
           const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
-          const vKey = vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time}`;
-
           const rSeq = getRecordDailyVehicleSeq(r);
+          const vKey = rSeq 
+            ? `seq_${rSeq}` 
+            : (vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time || r.id}`);
           if (!tripsMap.has(vKey)) {
             tripsMap.set(vKey, {
               key: vKey,
@@ -17767,9 +17766,11 @@ window.google.script = {
           const plate = String(r.license_plate || r.plate || '').trim().toUpperCase();
           const time = String(r.dispatch_time || r.time || '').trim();
           const rDate = String(r.dispatch_date || r.date || '').substring(0, 10);
-          const vKey = vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time}`;
-          
           const rSeq = getRecordDailyVehicleSeq(r);
+          const vKey = rSeq 
+            ? `seq_${rSeq}` 
+            : (vClean ? `v_${vClean.toLowerCase()}` : `${plate}_${rDate}_${time || r.id}`);
+          
           if (!tripsMap.has(vKey)) {
             tripsMap.set(vKey, {
               key: vKey,
@@ -17816,12 +17817,12 @@ window.google.script = {
             assignedSeqs.add(nextAvailableSeq);
           }
           groupKeyToSeqMap.set(t.key, t.assignedSeq);
-          if (t.plate) groupKeyToSeqMap.set(`plate_${t.plate}`, t.assignedSeq);
           // Gán cố định vào từng bản ghi để không bị nhảy số khi xóa chuyến xe khác
           if (Array.isArray(t.records)) {
             t.records.forEach(rec => {
               rec.daily_seq = t.assignedSeq;
               rec.dailySeq = t.assignedSeq;
+              if (rec.id) groupKeyToSeqMap.set(`rec_${rec.id}`, t.assignedSeq);
             });
           }
         });
@@ -17835,9 +17836,14 @@ window.google.script = {
         : ((it.voucherNo && String(it.voucherNo).trim() !== '-' && String(it.voucherNo).trim() !== '') ? String(it.voucherNo).trim() : '');
       const itPlate = String(it.license_plate || it.plate || '').trim().toUpperCase();
       const itTime = String(it.dispatch_time || it.time || '').trim();
-      const targetKey = itVClean ? `v_${itVClean.toLowerCase()}` : `${itPlate}_${date}_${itTime}`;
+      const itRecSeq = getRecordDailyVehicleSeq(it);
+      const targetKey = itRecSeq ? `seq_${itRecSeq}` : (itVClean ? `v_${itVClean.toLowerCase()}` : `${itPlate}_${date}_${itTime || it.id}`);
 
-      let matchedSeq = groupKeyToSeqMap.get(targetKey) || (itPlate ? groupKeyToSeqMap.get(`plate_${itPlate}`) : null) || 1;
+      let matchedSeq = (it.id ? groupKeyToSeqMap.get(`rec_${it.id}`) : null) 
+        || itRecSeq 
+        || groupKeyToSeqMap.get(targetKey) 
+        || (itPlate ? groupKeyToSeqMap.get(`plate_${itPlate}`) : null) 
+        || 1;
       it.daily_seq = matchedSeq;
       return matchedSeq;
     }
