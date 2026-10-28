@@ -12707,7 +12707,11 @@ window.google.script = {
       
       const countEl = document.getElementById('voucher-items-count');
       if (countEl) {
-        countEl.innerHTML = `${validRows.length} <span class="text-xs text-slate-400 font-normal">/ ${totalRows} dòng</span>`;
+        if (totalRows > 0 && validRows.length < totalRows) {
+          countEl.innerHTML = `<span class="text-rose-600 font-bold">${validRows.length}</span> <span class="text-xs text-rose-500 font-semibold">/ ${totalRows} dòng (chưa đủ mã/SL)</span>`;
+        } else {
+          countEl.innerHTML = `${validRows.length} <span class="text-xs text-slate-400 font-normal">/ ${totalRows} dòng</span>`;
+        }
       }
       document.getElementById('voucher-total-qty').innerText = formatNumber(totalQty);
     }
@@ -12754,11 +12758,59 @@ window.google.script = {
         if (noteEl) r.note = cleanNoteContent(noteEl.value);
       });
 
-      const validItems = voucherRows.filter(r => r.code.trim() !== '' && parseSmartNumber(r.quantity) > 0);
-      if (validItems.length === 0) {
-        Swal.fire('Chú ý', 'Vui lòng nhập ít nhất 1 mặt hàng có số lượng!', 'warning');
+      if (!voucherRows || voucherRows.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Phiếu chưa có mặt hàng nào',
+          text: 'Vui lòng thêm ít nhất 1 dòng mặt hàng trước khi lưu phiếu!',
+          confirmButtonColor: '#0284c7'
+        });
         return;
       }
+
+      // KIỂM TRA CHẶT CHẼ: Không cho phép lưu khi có dòng trống hoặc thiếu mã/số lượng
+      const invalidRowErrors = [];
+      voucherRows.forEach((r, idx) => {
+        const rowNo = idx + 1;
+        const code = String(r.code || '').trim();
+        const rawQty = r.quantity;
+        const qty = parseSmartNumber(rawQty);
+        const hasCode = code !== '';
+        const hasQty = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qty) && qty > 0);
+
+        if (!hasCode && !hasQty) {
+          invalidRowErrors.push(`Dòng ${rowNo}: Chưa điền mã hàng và số lượng (dòng trống)`);
+        } else if (!hasCode && hasQty) {
+          invalidRowErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm (số lượng: ${qty})`);
+        } else if (hasCode && !hasQty) {
+          invalidRowErrors.push(`Dòng ${rowNo} [${code}]: Chưa điền số lượng hoặc số lượng phải lớn hơn 0`);
+        }
+      });
+
+      if (invalidRowErrors.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Chưa đủ thông tin mặt hàng',
+          html: `
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
+                Không thể lưu phiếu vì phát hiện <b>${invalidRowErrors.length} dòng</b> chưa điền đầy đủ Mã hàng hoặc Số lượng:
+              </div>
+              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidRowErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              </div>
+              <div class="text-slate-500 italic text-[11px] pt-1">
+                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng (> 0)</b>, hoặc bấm nút xóa (<i class="bi bi-x-circle text-rose-500"></i>) ở cuối dòng đối với các dòng thừa trước khi lưu phiếu.
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Đã hiểu & kiểm tra lại',
+          confirmButtonColor: '#0284c7'
+        });
+        return;
+      }
+
+      const validItems = voucherRows;
 
       if (!isNhap) {
         const missingCodes = validItems.filter(r => !inventoryMap[r.code.toLowerCase()]);
@@ -13005,10 +13057,11 @@ window.google.script = {
       const lines = rawText.split(/\r?\n/);
       const parsedItems = [];
       const newCodesFound = [];
+      const notFoundRows = [];
       const isNhap = (currentVoucherType === 'NHAP');
       let skippedHeader = false;
 
-      lines.forEach((line) => {
+      lines.forEach((line, lineIdx) => {
         const trimmed = line.trim();
         if (!trimmed) return;
 
@@ -13031,38 +13084,38 @@ window.google.script = {
           const qty = parseSmartNumber(rawQty);
 
           if (rawCode && qty > 0) {
-            const matchedMaster = inventoryMap[rawCode.toLowerCase()];
+            const matchedMaster = inventoryMap[rawCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[rawCode.toLowerCase()]);
             let finalCode = rawCode.toUpperCase();
             let itemName = "";
             let itemUnit = "Cái";
+            let isNotFound = false;
 
             if (matchedMaster) {
               finalCode = matchedMaster.code;
               itemName = matchedMaster.name;
               itemUnit = matchedMaster.unit;
             } else {
-              if (isNhap) {
-                itemName = `Sản phẩm ${finalCode}`;
-                if (!newCodesFound.includes(finalCode)) newCodesFound.push(finalCode);
-              } else {
-                return;
-              }
+              isNotFound = true;
+              itemName = `Sản phẩm ${finalCode}`;
+              notFoundRows.push({ lineIndex: lineIdx + 1, code: finalCode, qty: qty });
+              if (!newCodesFound.includes(finalCode)) newCodesFound.push(finalCode);
             }
 
+            // Kể cả khi mã không tồn tại trong kho, VẪN THỰC HIỆN DÁN vào bảng
             parsedItems.push({
               code: finalCode,
               name: itemName,
               unit: itemUnit,
               quantity: qty,
               quality: 'TP',
-              note: ''
+              note: isNotFound ? '[Mã chưa có trong kho]' : ''
             });
           }
         }
       });
 
       if (parsedItems.length === 0) {
-        Swal.fire('Chú ý', isNhap ? 'Không thể bóc tách được dòng nào hợp lệ. Đảm bảo dữ liệu gồm 2 cột: Cột 1 là Mã, Cột 2 là Số lượng.' : 'Không thể bóc tách dòng hợp lệ hoặc các mã chưa có trong kho (Xuất kho không cho phép xuất mã mới).', 'warning');
+        Swal.fire('Chú ý', 'Không thể bóc tách được dòng nào hợp lệ. Đảm bảo dữ liệu gồm 2 cột: Cột 1 là Mã, Cột 2 là Số lượng > 0.', 'warning');
         return;
       }
 
@@ -13083,25 +13136,35 @@ window.google.script = {
       calculateVoucherSummary();
       voucherRows.forEach(r => updateRowPackCalc(r.id));
 
-      if (newCodesFound.length > 0) {
+      if (notFoundRows.length > 0) {
         Swal.fire({
-          title: 'Đã nạp thành công!',
+          title: 'Đã nạp dữ liệu vào phiếu!',
           html: `
-            <div class="text-left text-xs space-y-2">
-              <p>Đã hiển thị <b>${parsedItems.length}</b> mặt hàng vào phiếu!${skippedHeader ? ' (Đã tự động bỏ dòng tiêu đề)' : ''}</p>
-              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg">
-                <b>⚠️ Phát hiện ${newCodesFound.length} mã mới chưa có trong tồn kho:</b><br>
-                <span class="font-mono font-bold text-blue-700">${newCodesFound.join(', ')}</span><br>
-                Hệ thống sẽ <b>tự động khởi tạo</b> các mã này khi bạn bấm Lưu phiếu.
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <p>Đã dán thành công <b>${parsedItems.length}</b> mặt hàng vào phiếu!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}</p>
+              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
+                <div class="font-bold flex items-center space-x-1.5 text-amber-800 mb-1.5">
+                  <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+                  <span>Phát hiện <b>${notFoundRows.length} dòng</b> có mã CHƯA TỒN TẠI trong kho:</span>
+                </div>
+                <div class="max-h-40 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-white/70 p-2 rounded-lg border border-amber-200/60">
+                  ${notFoundRows.map(r => `<div>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold">[${escapeHtml(r.code)}]</span> (Số lượng: ${formatNumber(r.qty)})</div>`).join('')}
+                </div>
+                <div class="mt-2 text-[11px] text-amber-800 italic">
+                  ${isNhap 
+                    ? '👉 Hệ thống vẫn dán đầy đủ các dòng trên vào bảng. Khi bạn bấm Lưu phiếu Nhập kho, các mã mới này sẽ được tự động tạo.' 
+                    : '👉 Hệ thống vẫn dán đầy đủ các dòng trên vào bảng để bạn biết và kiểm tra lại mã hoặc chỉnh sửa trước khi lưu phiếu xuất!'}
+                </div>
               </div>
             </div>
           `,
-          icon: 'info',
-          confirmButtonColor: '#2563eb'
+          icon: 'warning',
+          confirmButtonColor: '#d97706',
+          confirmButtonText: 'Đã hiểu'
         });
       } else {
         Swal.fire({
-          title: 'Đang nạp thành công!',
+          title: 'Đã nạp thành công!',
           text: `Đã đọc và hiển thị ${parsedItems.length} mặt hàng vào phiếu!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}`,
           icon: 'success',
           confirmButtonColor: '#2563eb'
@@ -13421,11 +13484,59 @@ window.google.script = {
         if (noteEl) r.note = cleanNoteContent(noteEl.value);
       });
 
-      const validItems = nhaptraRows.filter(r => r.code.trim() !== '' && parseSmartNumber(r.quantity) > 0);
-      if (validItems.length === 0) {
-        Swal.fire('Chú ý', 'Vui lòng nhập ít nhất 1 mặt hàng hoàn trả hợp lệ!', 'warning');
+      if (!nhaptraRows || nhaptraRows.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Phiếu chưa có mặt hàng nào',
+          text: 'Vui lòng thêm ít nhất 1 dòng mặt hàng hoàn trả trước khi lưu!',
+          confirmButtonColor: '#0284c7'
+        });
         return;
       }
+
+      // KIỂM TRA CHẶT CHẼ: Không cho phép lưu khi có dòng trống hoặc thiếu mã/số lượng
+      const invalidNtErrors = [];
+      nhaptraRows.forEach((r, idx) => {
+        const rowNo = idx + 1;
+        const code = String(r.code || '').trim();
+        const rawQty = r.quantity;
+        const qty = parseSmartNumber(rawQty);
+        const hasCode = code !== '';
+        const hasQty = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qty) && qty > 0);
+
+        if (!hasCode && !hasQty) {
+          invalidNtErrors.push(`Dòng ${rowNo}: Chưa điền mã hàng và số lượng (dòng trống)`);
+        } else if (!hasCode && hasQty) {
+          invalidNtErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm (số lượng: ${qty})`);
+        } else if (hasCode && !hasQty) {
+          invalidNtErrors.push(`Dòng ${rowNo} [${code}]: Chưa điền số lượng hoặc số lượng phải lớn hơn 0`);
+        }
+      });
+
+      if (invalidNtErrors.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Chưa đủ thông tin mặt hàng hoàn trả',
+          html: `
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
+                Không thể lưu phiếu vì phát hiện <b>${invalidNtErrors.length} dòng</b> chưa điền đầy đủ Mã hàng hoặc Số lượng:
+              </div>
+              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidNtErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              </div>
+              <div class="text-slate-500 italic text-[11px] pt-1">
+                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng (> 0)</b>, hoặc bấm nút xóa (<i class="bi bi-x-circle text-rose-500"></i>) ở cuối dòng đối với các dòng thừa trước khi lưu phiếu.
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Đã hiểu & kiểm tra lại',
+          confirmButtonColor: '#0284c7'
+        });
+        return;
+      }
+
+      const validItems = nhaptraRows;
 
       const missingCodes = validItems.filter(r => !inventoryMap[r.code.toLowerCase()]);
       if (missingCodes.length > 0) {
@@ -18744,6 +18855,50 @@ window.google.script = {
         }
       });
 
+      // KIỂM TRA CHẶT CHẼ BẢNG BỔ SUNG THỦ CÔNG: Không cho phép dòng thiếu mã hoặc thiếu số lượng
+      const invalidDpErrors = [];
+      dispatchFormRows.forEach((r, idx) => {
+        const rowNo = idx + 1;
+        const code = String(r.code || '').trim();
+        const rawQty = r.quantity;
+        const qty = parseSmartNumber(rawQty);
+        const hasCode = code !== '';
+        const hasQty = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qty) && qty > 0);
+
+        if (!hasCode && !hasQty) {
+          if (dispatchFormRows.length > 1 || validFastList.length === 0) {
+            invalidDpErrors.push(`Bảng bổ sung - Dòng ${rowNo}: Chưa điền mã hàng và số lượng`);
+          }
+        } else if (!hasCode && hasQty) {
+          invalidDpErrors.push(`Bảng bổ sung - Dòng ${rowNo}: Chưa điền mã sản phẩm (số lượng: ${qty})`);
+        } else if (hasCode && !hasQty) {
+          invalidDpErrors.push(`Bảng bổ sung - Dòng ${rowNo} [${code}]: Chưa điền số lượng phát hoặc số lượng phải lớn hơn 0`);
+        }
+      });
+
+      if (invalidDpErrors.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Chưa đủ thông tin mặt hàng phát',
+          html: `
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
+                Không thể lưu phiếu vì phát hiện <b>${invalidDpErrors.length} dòng</b> chưa điền đầy đủ Mã hàng hoặc Số lượng:
+              </div>
+              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidDpErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              </div>
+              <div class="text-slate-500 italic text-[11px] pt-1">
+                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng (> 0)</b>, hoặc bấm nút xóa (thùng rác) đối với dòng thừa trước khi lưu phiếu!
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Đã hiểu & kiểm tra lại',
+          confirmButtonColor: '#0d9488'
+        });
+        return;
+      }
+
       const validManualRows = dispatchFormRows.filter(r => r.code && parseSmartNumber(r.quantity) > 0);
 
       // 3. Tổng hợp danh sách tất cả mặt hàng phát của xe
@@ -23591,9 +23746,10 @@ window.google.script = {
     function processDispatchQuickPasteData(rawText, overwrite) {
       const lines = rawText.split(/\r?\n/);
       const parsedItems = [];
+      const notFoundRows = [];
       let skippedHeader = false;
 
-      lines.forEach((line) => {
+      lines.forEach((line, lineIdx) => {
         const trimmed = line.trim();
         if (!trimmed) return;
 
@@ -23617,23 +23773,28 @@ window.google.script = {
           const qty = parseSmartNumber(rawQty);
 
           if (rawCode && qty > 0) {
-            const matchedMaster = inventoryMap[rawCode.toLowerCase()];
+            const matchedMaster = inventoryMap[rawCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[rawCode.toLowerCase()]);
             let finalCode = rawCode.toUpperCase();
             let itemName = `Sản phẩm ${finalCode}`;
             let itemUnit = 'Cái';
+            let isNotFound = false;
 
             if (matchedMaster) {
               finalCode = matchedMaster.code;
               itemName = matchedMaster.name;
               itemUnit = matchedMaster.unit;
+            } else {
+              isNotFound = true;
+              notFoundRows.push({ lineIndex: lineIdx + 1, code: finalCode, qty: qty });
             }
 
+            // Kể cả khi mã chưa tồn tại, VẪN THỰC HIỆN DÁN vào phiếu phát hàng
             parsedItems.push({
               code: finalCode,
               name: itemName,
               unit: itemUnit,
               quantity: qty,
-              note: rawNote
+              note: rawNote || (isNotFound ? '[Mã chưa có trong kho]' : '')
             });
           }
         }
@@ -23662,12 +23823,38 @@ window.google.script = {
 
       calculateDispatchFormSummary();
 
-      Swal.fire({
-        title: 'Đã nạp thành công!',
-        text: `Đã đọc và hiển thị ${parsedItems.length} mặt hàng vào phiếu phát hàng!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}`,
-        icon: 'success',
-        confirmButtonColor: '#0d9488'
-      });
+      if (notFoundRows.length > 0) {
+        Swal.fire({
+          title: 'Đã nạp dữ liệu phát hàng!',
+          html: `
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <p>Đã đọc và hiển thị <b>${parsedItems.length}</b> mặt hàng vào phiếu phát hàng!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}</p>
+              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
+                <div class="font-bold flex items-center space-x-1.5 text-amber-800 mb-1.5">
+                  <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+                  <span>Phát hiện <b>${notFoundRows.length} dòng</b> có mã CHƯA TỒN TẠI trong kho:</span>
+                </div>
+                <div class="max-h-40 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-white/70 p-2 rounded-lg border border-amber-200/60">
+                  ${notFoundRows.map(r => `<div>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold">[${escapeHtml(r.code)}]</span> (Số lượng: ${formatNumber(r.qty)})</div>`).join('')}
+                </div>
+                <div class="mt-2 text-[11px] text-amber-800 italic">
+                  👉 Hệ thống vẫn đã dán đầy đủ các dòng này vào bảng để bạn kiểm tra và đối soát.
+                </div>
+              </div>
+            </div>
+          `,
+          icon: 'warning',
+          confirmButtonColor: '#0d9488',
+          confirmButtonText: 'Đã hiểu'
+        });
+      } else {
+        Swal.fire({
+          title: 'Đã nạp thành công!',
+          text: `Đã đọc và hiển thị ${parsedItems.length} mặt hàng vào phiếu phát hàng!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}`,
+          icon: 'success',
+          confirmButtonColor: '#0d9488'
+        });
+      }
     }
 
     // ========================================================
@@ -29144,6 +29331,7 @@ window.google.script = {
 
       let matchedCount = 0;
       let newRowsCount = 0;
+      const notFoundRows = [];
 
       // Gom map các dòng đang có trên bảng
       const existingRowsMap = new Map();
@@ -29155,7 +29343,7 @@ window.google.script = {
         }
       });
 
-      lines.forEach(line => {
+      lines.forEach((line, lineIdx) => {
         // Hỗ trợ phân cách tab, phẩy, chấm phẩy hoặc nhiều khoảng trắng
         const parts = line.split(/[\t,;]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
         if (parts.length < 2) return;
@@ -29163,6 +29351,14 @@ window.google.script = {
         const code = parts[0].toUpperCase();
         const rawQty = parts[1];
         const qty = parseSmartNumber(rawQty);
+
+        const isHeader = ['mã', 'ma', 'mã hàng', 'mã số', 'mã sp', 'code', 'item'].includes(code.toLowerCase());
+        if (isHeader) return;
+
+        const invItem = (typeof getFullProductCatalogItem === 'function' ? getFullProductCatalogItem(code) : null) || inventoryMap[code.toLowerCase()] || (window.masterProductMap && window.masterProductMap[code.toLowerCase()]);
+        if (!invItem) {
+          notFoundRows.push({ lineIndex: lineIdx + 1, code: code, qty: qty });
+        }
 
         if (existingRowsMap.has(code)) {
           const tr = existingRowsMap.get(code);
@@ -29178,10 +29374,9 @@ window.google.script = {
             matchedCount++;
           }
         } else {
-          // Thêm dòng mới vào bảng
-          const invItem = getFullProductCatalogItem(code);
+          // Thêm dòng mới vào bảng (kể cả khi không tồn tại mã trong kho, vẫn dán vào!)
           const bookQty = invItem ? (Number(invItem.stock) || 0) : 0;
-          const price = getProductPrice(code);
+          const price = typeof getProductPrice === 'function' ? getProductPrice(code) : 0;
           addKiemKeRow({
             code: code,
             name: invItem ? invItem.name : `Sản phẩm ${code}`,
@@ -29189,7 +29384,7 @@ window.google.script = {
             book_qty: bookQty,
             actual_qty: qty,
             price: price,
-            note: ''
+            note: !invItem ? '[Mã chưa có trong kho]' : ''
           }, false);
           newRowsCount++;
         }
@@ -29198,13 +29393,39 @@ window.google.script = {
       closePasteKiemKeModal();
       calculateKiemKeSummary();
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Nạp dữ liệu kiểm kê thành công!',
-        html: `Đã cập nhật thực tế cho <b>${matchedCount} mã hàng có sẵn</b> và thêm mới <b>${newRowsCount} mã hàng</b> vào bảng.`,
-        timer: 2000,
-        showConfirmButton: false
-      });
+      if (notFoundRows.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Đã nạp dữ liệu kiểm kê!',
+          html: `
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <p>Đã cập nhật thực tế cho <b>${matchedCount} mã có sẵn</b> và thêm mới <b>${newRowsCount} mã hàng</b> vào bảng.</p>
+              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
+                <div class="font-bold flex items-center space-x-1.5 text-amber-800 mb-1.5">
+                  <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+                  <span>Phát hiện <b>${notFoundRows.length} dòng</b> có mã CHƯA TỒN TẠI trong kho:</span>
+                </div>
+                <div class="max-h-40 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-white/70 p-2 rounded-lg border border-amber-200/60">
+                  ${notFoundRows.map(r => `<div>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold">[${escapeHtml(r.code)}]</span> (Số lượng: ${formatNumber(r.qty)})</div>`).join('')}
+                </div>
+                <div class="mt-2 text-[11px] text-amber-800 italic">
+                  👉 Hệ thống vẫn đã dán đầy đủ các dòng này vào bảng kiểm kê để bạn biết và đối soát.
+                </div>
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Đã hiểu',
+          confirmButtonColor: '#7c3aed'
+        });
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: 'Nạp dữ liệu kiểm kê thành công!',
+          html: `Đã cập nhật thực tế cho <b>${matchedCount} mã hàng có sẵn</b> và thêm mới <b>${newRowsCount} mã hàng</b> vào bảng.`,
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
     }
 
     async function saveKiemKeVoucher(andPrint) {
@@ -29246,35 +29467,72 @@ window.google.script = {
       let totalSurplusAmount = 0;
       let totalDeficitAmount = 0;
 
-      rows.forEach(tr => {
+      const invalidKkErrors = [];
+
+      rows.forEach((tr, idx) => {
+        const rowNo = idx + 1;
         const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
         const name = tr.querySelector('.row-name')?.value.trim() || '';
         const unit = tr.querySelector('.row-unit')?.value.trim() || '';
         const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
-        const actualQty = actualVal === '' ? 0 : (Number(actualVal) || 0);
-        const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
-        let amount = actualQty * price;
-        if (Math.abs(amount) < 0.0001) amount = 0;
-        const note = tr.querySelector('.row-note')?.value.trim() || '';
+        const hasCode = code !== '';
+        const hasQty = (actualVal !== '' && actualVal !== undefined);
 
-        if (code) {
+        if (!hasCode && !hasQty) {
+          invalidKkErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm và số lượng kiểm kê`);
+        } else if (!hasCode && hasQty) {
+          invalidKkErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm`);
+        } else if (hasCode && !hasQty) {
+          invalidKkErrors.push(`Dòng ${rowNo} [${code}]: Chưa điền số lượng kiểm kê thực tế`);
+        }
+
+        if (hasCode && hasQty) {
+          const actualQty = Number(actualVal) || 0;
+          const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
+          let amount = actualQty * price;
+          if (Math.abs(amount) < 0.0001) amount = 0;
+          const note = tr.querySelector('.row-note')?.value.trim() || '';
+
           items.push({
             code,
             name,
             unit,
-            actual_qty: actualVal === '' ? null : actualQty,
+            actual_qty: actualQty,
             price: price,
             amount: amount,
             diff_amount: amount,
             note: note
           });
 
-          if (actualVal !== '') totalActualQty += actualQty;
+          totalActualQty += actualQty;
           totalAmount += amount;
           if (amount > 0) totalSurplusAmount += amount;
           else if (amount < 0) totalDeficitAmount += Math.abs(amount);
         }
       });
+
+      if (invalidKkErrors.length > 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Chưa đủ thông tin kiểm kê',
+          html: `
+            <div class="text-left text-xs space-y-2 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
+                Không thể lưu phiếu vì phát hiện <b>${invalidKkErrors.length} dòng</b> chưa điền đầy đủ Mã hoặc Số lượng kiểm kê:
+              </div>
+              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidKkErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              </div>
+              <div class="text-slate-500 italic text-[11px] pt-1">
+                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng kiểm kê</b>, hoặc bấm nút xóa (✖) đối với dòng thừa trước khi lưu phiếu.
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Đã hiểu & kiểm tra lại',
+          confirmButtonColor: '#d97706'
+        });
+        return;
+      }
 
       if (items.length === 0) {
         Swal.fire('Cảnh báo', 'Vui lòng nhập ít nhất 1 mã sản phẩm hợp lệ!', 'warning');
