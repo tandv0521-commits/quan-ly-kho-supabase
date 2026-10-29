@@ -13234,7 +13234,7 @@ window.google.script = {
               unit: itemUnit,
               quantity: qty,
               quality: 'TP',
-              note: isNotFound ? '[Mã chưa có trong kho]' : ''
+              note: ''
             });
           }
         }
@@ -24247,7 +24247,7 @@ window.google.script = {
               name: itemName,
               unit: itemUnit,
               quantity: qty,
-              note: rawNote || (isNotFound ? '[Mã chưa có trong kho]' : '')
+              note: rawNote || ''
             });
           }
         }
@@ -29347,7 +29347,7 @@ window.google.script = {
       }
 
       calculateKiemKeSummary();
-      if (typeof validateAndHighlightKiemKeRow === 'function') validateAndHighlightKiemKeRow(tr);
+      if (typeof validateAndHighlightKiemKeRow === 'function' && addedTr) validateAndHighlightKiemKeRow(addedTr);
     }
 
     function removeKiemKeRow(btn) {
@@ -29906,6 +29906,17 @@ window.google.script = {
       let newRowsCount = 0;
       const notFoundRows = [];
 
+      // Nếu bảng đang có 1 dòng khởi tạo trống duy nhất thì xóa đi để nạp toàn bộ danh sách mới vào
+      const currentRows = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
+      if (currentRows.length === 1) {
+        const firstCode = currentRows[0].querySelector('input.row-code')?.value.trim();
+        const firstQty = currentRows[0].querySelector('input.row-actual-qty')?.value.trim();
+        if (!firstCode && !firstQty) {
+          const tbody = document.getElementById('kiemke-items-tbody');
+          if (tbody) tbody.innerHTML = '';
+        }
+      }
+
       // Gom map các dòng đang có trên bảng
       const existingRowsMap = new Map();
       const trList = document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]');
@@ -29917,16 +29928,26 @@ window.google.script = {
       });
 
       lines.forEach((line, lineIdx) => {
-        // Hỗ trợ phân cách tab, phẩy, chấm phẩy hoặc nhiều khoảng trắng
-        const parts = line.split(/[\t,;]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        // Hỗ trợ phân cách tab, chấm phẩy, phẩy hoặc khoảng trắng linh hoạt
+        let parts = [];
+        if (trimmed.includes('\t')) parts = trimmed.split('\t');
+        else if (trimmed.includes(';')) parts = trimmed.split(';');
+        else if (trimmed.includes(',')) parts = trimmed.split(',');
+        else parts = trimmed.split(/\s+/);
+
+        parts = parts.map(p => p.trim()).filter(Boolean);
         if (parts.length < 2) return;
 
         const code = parts[0].toUpperCase();
         const rawQty = parts[1];
-        const qty = parseSmartNumber(rawQty);
-
         const isHeader = ['mã', 'ma', 'mã hàng', 'mã số', 'mã sp', 'code', 'item'].includes(code.toLowerCase());
         if (isHeader) return;
+
+        // Số lượng được phép âm hoặc dương
+        const qty = parseSmartNumber(rawQty);
 
         const invItem = (typeof getFullProductCatalogItem === 'function' ? getFullProductCatalogItem(code) : null) || inventoryMap[code.toLowerCase()] || (window.masterProductMap && window.masterProductMap[code.toLowerCase()]);
         if (!invItem) {
@@ -29947,7 +29968,7 @@ window.google.script = {
             matchedCount++;
           }
         } else {
-          // Thêm dòng mới vào bảng (kể cả khi không tồn tại mã trong kho, vẫn dán vào!)
+          // Thêm dòng mới vào bảng (kể cả khi không tồn tại mã trong kho, vẫn dán vào và để trống ghi chú)
           const bookQty = invItem ? (Number(invItem.stock) || 0) : 0;
           const price = typeof getProductPrice === 'function' ? getProductPrice(code) : 0;
           addKiemKeRow({
@@ -29957,8 +29978,13 @@ window.google.script = {
             book_qty: bookQty,
             actual_qty: qty,
             price: price,
-            note: !invItem ? '[Mã chưa có trong kho]' : ''
+            note: ''
           }, false);
+
+          const addedTr = document.getElementById('kiemke-items-tbody')?.lastElementChild;
+          if (addedTr) {
+            existingRowsMap.set(code, addedTr);
+          }
           newRowsCount++;
         }
       });
