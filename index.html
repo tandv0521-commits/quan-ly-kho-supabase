@@ -694,6 +694,22 @@
       background: #e2e8f0 !important;
       color: #1e293b !important;
     }
+
+    /* HIỆU ỨNG NHẬN DIỆN DÒNG VỪA DI CHUYỂN ĐẾN KHI THAO TÁC KHÁC */
+    tr.active-moved-row {
+      background-color: #fefce8 !important; /* Vàng hổ phách rất nhẹ, thanh lịch dịu mắt */
+      box-shadow: inset 4px 0 0 #eab308, 0 1px 3px rgba(0,0,0,0.06) !important;
+      position: relative;
+      z-index: 10;
+      transition: background-color 0.25s ease, box-shadow 0.25s ease !important;
+    }
+    tr.active-moved-row td {
+      background-color: #fefce8 !important;
+    }
+    tr.active-moved-row input:not(:focus), tr.active-moved-row select:not(:focus) {
+      background-color: #fffdf0 !important;
+      border-color: #fde047 !important;
+    }
   </style>
 
   <!-- ========================================================================= -->
@@ -12904,6 +12920,51 @@ window.google.script = {
       }, 50);
     }
 
+    // =========================================================================
+    // QUẢN LÝ ĐỔI MÀU NHẬN DIỆN DÒNG VỪA DI CHUYỂN (TỒN TẠI ĐẾN KHI THAO TÁC KHÁC)
+    // =========================================================================
+    let currentMovedRowEl = null;
+
+    function highlightMovedRow(tr) {
+      if (!tr) return;
+      clearMovedRowHighlight();
+      currentMovedRowEl = tr;
+      tr.classList.add('active-moved-row');
+    }
+
+    function clearMovedRowHighlight() {
+      if (currentMovedRowEl) {
+        currentMovedRowEl.classList.remove('active-moved-row');
+        currentMovedRowEl = null;
+      }
+      document.querySelectorAll('tr.active-moved-row').forEach(r => {
+        r.classList.remove('active-moved-row');
+      });
+    }
+
+    // Tự động xóa màu nhận diện khi người dùng thực hiện thao tác khác:
+    // 1. Click bên ngoài dòng vừa tác động
+    document.addEventListener('pointerdown', function(e) {
+      if (!currentMovedRowEl) return;
+      if (e.target && currentMovedRowEl.contains(e.target)) return;
+      clearMovedRowHighlight();
+    }, true);
+
+    // 2. Focus chuột/bàn phím sang ô của dòng khác hoặc nút khác
+    document.addEventListener('focusin', function(e) {
+      if (!currentMovedRowEl) return;
+      if (e.target && currentMovedRowEl.contains(e.target)) return;
+      clearMovedRowHighlight();
+    }, true);
+
+    // 3. Nhập liệu/gõ phím ở phần tử khác ngoài dòng đang chọn
+    document.addEventListener('keydown', function(e) {
+      if (!currentMovedRowEl) return;
+      if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) return;
+      if (e.target && currentMovedRowEl.contains(e.target)) return;
+      clearMovedRowHighlight();
+    }, true);
+
     // CHỨC NĂNG DI CHUYỂN DÒNG LÊN TRÊN VÀ XUỐNG DƯỚI (PHIẾU NHẬP / XUẤT KHO)
     function moveVoucherRowUp(rowId) {
       const idx = voucherRows.findIndex(r => r.id === rowId);
@@ -12916,8 +12977,7 @@ window.google.script = {
       const prevTr = tr ? tr.previousElementSibling : null;
       if (tr && prevTr) {
         tr.parentNode.insertBefore(tr, prevTr);
-        tr.classList.add('bg-blue-50/80');
-        setTimeout(() => tr.classList.remove('bg-blue-50/80'), 250);
+        highlightMovedRow(tr);
       }
       updateVoucherRowIndexes();
     }
@@ -12933,8 +12993,7 @@ window.google.script = {
       const nextTr = tr ? tr.nextElementSibling : null;
       if (tr && nextTr) {
         tr.parentNode.insertBefore(nextTr, tr);
-        tr.classList.add('bg-blue-50/80');
-        setTimeout(() => tr.classList.remove('bg-blue-50/80'), 250);
+        highlightMovedRow(tr);
       }
       updateVoucherRowIndexes();
     }
@@ -13941,8 +14000,7 @@ window.google.script = {
       const prevTr = tr ? tr.previousElementSibling : null;
       if (tr && prevTr) {
         tr.parentNode.insertBefore(tr, prevTr);
-        tr.classList.add('bg-purple-50/80');
-        setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+        highlightMovedRow(tr);
       }
       updateNhapTraRowIndexes();
     }
@@ -13958,8 +14016,7 @@ window.google.script = {
       const nextTr = tr ? tr.nextElementSibling : null;
       if (tr && nextTr) {
         tr.parentNode.insertBefore(nextTr, tr);
-        tr.classList.add('bg-purple-50/80');
-        setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+        highlightMovedRow(tr);
       }
       updateNhapTraRowIndexes();
     }
@@ -19406,8 +19463,7 @@ window.google.script = {
       const prevTr = tr ? tr.previousElementSibling : null;
       if (tr && prevTr) {
         tr.parentNode.insertBefore(tr, prevTr);
-        tr.classList.add('bg-teal-50/80');
-        setTimeout(() => tr.classList.remove('bg-teal-50/80'), 250);
+        highlightMovedRow(tr);
       }
       updateDispatchRowIndexes();
     }
@@ -19423,8 +19479,7 @@ window.google.script = {
       const nextTr = tr ? tr.nextElementSibling : null;
       if (tr && nextTr) {
         tr.parentNode.insertBefore(nextTr, tr);
-        tr.classList.add('bg-teal-50/80');
-        setTimeout(() => tr.classList.remove('bg-teal-50/80'), 250);
+        highlightMovedRow(tr);
       }
       updateDispatchRowIndexes();
     }
@@ -29953,8 +30008,7 @@ window.google.script = {
           if (sttEl) sttEl.innerText = i + 1;
         });
       }
-      tr.classList.add('bg-purple-50/80');
-      setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+      highlightMovedRow(tr);
     }
 
     function moveKiemKeRowDown(el) {
@@ -29973,8 +30027,7 @@ window.google.script = {
           if (sttEl) sttEl.innerText = i + 1;
         });
       }
-      tr.classList.add('bg-purple-50/80');
-      setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+      highlightMovedRow(tr);
     }
 
     function removeKiemKeRow(btn) {
