@@ -5282,11 +5282,36 @@ function cleanNoteContent_(val) {
   return s.replace(/^[\s\|\,\-]+|[\s\|\,\-]+$/g, "").trim();
 }
 
-async function checkVoucherExists_(voucherNo) {
+async function checkVoucherExists_(voucherNo, targetScope) {
   if (!voucherNo) return false;
   const cleanNo = String(voucherNo).trim();
-  const res = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id&limit=1`, "GET");
-  return res && res.length > 0;
+  const scope = targetScope || ((typeof getActiveWarehouseScope === 'function') ? getActiveWarehouseScope() : 'all');
+
+  // 1. Chế độ Standalone / Offline (LocalDB):
+  if (STORAGE_MODE !== 'CLOUD') {
+    const localTxs = (LocalDB.cache && LocalDB.cache['inventory_transactions']) || [];
+    return localTxs.some(t => {
+      if (String(t.voucher_no || '').trim().toLowerCase() !== cleanNo.toLowerCase()) return false;
+      if (scope === 'all') return true;
+      return (typeof isTransactionInCurrentWarehouse === 'function') ? isTransactionInCurrentWarehouse(t) : true;
+    });
+  }
+
+  // 2. Chế độ Cloud: Lấy các giao dịch có số chứng từ này để kiểm tra theo từng kho
+  const res = await callSupabaseSingle_(
+    `inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id,note,warehouse&limit=30`,
+    "GET"
+  ).catch(() => []);
+
+  if (!Array.isArray(res) || res.length === 0) return false;
+
+  // Nếu là tài khoản kho cụ thể (không phải 'all'):
+  // CHỈ COI LÀ TRÙNG NẾU ĐÃ CÓ PHIẾU CÙNG SỐ NẰM TRONG KHO HIỆN TẠI!
+  if (scope !== 'all') {
+    return res.some(t => (typeof isTransactionInCurrentWarehouse === 'function') ? isTransactionInCurrentWarehouse(t) : true);
+  }
+
+  return true;
 }
 
 async function logVoucherHistorySupabase_(action, voucherNo, type, voucherDate, items, note) {
@@ -5476,11 +5501,15 @@ const ClientBackend = {
       const regex = new RegExp(`^${prefix}-(\\d+)$`, 'i');
 
       const [res1, res2] = await Promise.all([
-        callSupabaseSingle_(`inventory_transactions?type=eq.${type}&select=voucher_no&order=id.desc&limit=100`, "GET").catch(() => []),
-        callSupabaseSingle_(`${dedicatedTable}?select=voucher_no&order=id.desc&limit=100`, "GET").catch(() => [])
+        callSupabaseSingle_(`inventory_transactions?type=eq.${type}&select=voucher_no,note,warehouse&order=id.desc&limit=250`, "GET").catch(() => []),
+        callSupabaseSingle_(`${dedicatedTable}?select=voucher_no,note,warehouse&order=id.desc&limit=250`, "GET").catch(() => [])
       ]);
 
       (res1 || []).concat(res2 || []).forEach(r => {
+        // QUAN TRỌNG: Chỉ lấy số phiếu của ĐÚNG KHO HIỆN TẠI để tính maxNum!
+        if (typeof isTransactionInCurrentWarehouse === 'function' && !isTransactionInCurrentWarehouse(r)) {
+          return;
+        }
         const m = String(r.voucher_no || "").trim().match(regex);
         if (m) {
           const num = parseInt(m[1], 10);
@@ -6088,6 +6117,7 @@ const ClientBackend = {
           old_stock: oldStock,
           new_stock: newStock,
           quality: it.quality || "TP",
+          warehouse: activeScope,
           note: fullNote
         });
 
@@ -6101,6 +6131,7 @@ const ClientBackend = {
           old_stock: oldStock,
           new_stock: newStock,
           quality: it.quality || "TP",
+          warehouse: activeScope,
           note: fullNote
         });
       });
@@ -6216,8 +6247,16 @@ const ClientBackend = {
   async getVoucherByNo(voucherNo) {
     try {
       const cleanNo = String(voucherNo || "").trim().toUpperCase();
-      const txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=id.asc&select=*`, "GET");
+      let txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&order=id.asc&select=*`, "GET");
       if (!txs || txs.length === 0) throw new Error(`Không tìm thấy chứng từ "${cleanNo}".`);
+
+      // LỌC CHÍNH XÁC PHIẾU CỦA KHO HIỆN TẠI (trường hợp nhiều kho dùng chung số phiếu)
+      if (Array.isArray(txs) && typeof isTransactionInCurrentWarehouse === 'function') {
+        const myTxs = txs.filter(t => isTransactionInCurrentWarehouse(t));
+        if (myTxs.length > 0) {
+          txs = myTxs;
+        }
+      }
 
       const first = txs[0];
       const cleanGeneralNote = cleanNoteContent_(first.note || "");
@@ -6260,7 +6299,15 @@ const ClientBackend = {
   async deleteVoucherGeneral(voucherNo, type, isForUpdate) {
     try {
       const cleanNo = String(voucherNo || "").trim().toUpperCase();
-      const txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=code,quantity,quality,voucher_date,note`, "GET");
+      let txs = await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id,code,quantity,quality,voucher_date,note,warehouse`, "GET");
+
+      // LỌC CHÍNH XÁC CÁC DÒNG GIAO DỊCH CỦA KHO HIỆN TẠI (tránh xóa nhầm phiếu trùng số của kho khác)
+      if (Array.isArray(txs) && typeof isTransactionInCurrentWarehouse === 'function') {
+        const myTxs = txs.filter(t => isTransactionInCurrentWarehouse(t));
+        if (myTxs.length > 0) {
+          txs = myTxs;
+        }
+      }
       
       if (!txs || txs.length === 0) {
         if (isForUpdate) {
@@ -6340,8 +6387,24 @@ const ClientBackend = {
         } catch(e) {}
       }
 
-      await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
-      try { await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE"); } catch(e) {}
+      // Chỉ xóa các giao dịch thuộc kho hiện tại theo ID
+      const myTxIds = (txs || []).map(t => t.id).filter(Boolean);
+      if (myTxIds.length > 0) {
+        await callSupabaseSingle_(`inventory_transactions?id=in.(${myTxIds.join(',')})`, "DELETE");
+      } else {
+        await callSupabaseSingle_(`inventory_transactions?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
+      }
+
+      // Xóa trong bảng chuyên biệt theo kho
+      try {
+        const dedicatedRows = await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}&select=id,note,warehouse`, "GET").catch(() => []);
+        const myDedicatedIds = (dedicatedRows || []).filter(r => (typeof isTransactionInCurrentWarehouse === 'function') ? isTransactionInCurrentWarehouse(r) : true).map(r => r.id).filter(Boolean);
+        if (myDedicatedIds.length > 0) {
+          await callSupabaseSingle_(`${dedicatedTable}?id=in.(${myDedicatedIds.join(',')})`, "DELETE");
+        } else {
+          await callSupabaseSingle_(`${dedicatedTable}?voucher_no=eq.${encodeURIComponent(cleanNo)}`, "DELETE");
+        }
+      } catch(e) {}
 
       if (!isForUpdate) {
         await logVoucherHistorySupabase_("XÓA PHIẾU", cleanNo, type, txs[0].voucher_date, txs, txs[0].note);
@@ -8314,7 +8377,8 @@ window.google.script = {
               },
               body: JSON.stringify({
                 p_username: username,
-                p_password_hash: hashedInput
+                p_password_hash: hashedInput,
+                p_plain_password: password
               })
             });
             if (rpcRes.ok) {
