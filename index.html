@@ -1616,7 +1616,7 @@
                     <th class="px-3 py-2 text-right w-28 col-num">Tồn kho</th>
                     <th class="px-3 py-2 text-right w-40 col-num">Số lượng</th>
                     <th class="px-3 py-2 text-left min-w-[160px]">Ghi chú dòng</th>
-                    <th class="px-3 py-2 text-center w-12 no-print">Xóa</th>
+                    <th class="px-2 py-2 text-center w-28 no-print">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="voucher-tbody" class="divide-y divide-slate-100 bg-white"></tbody>
@@ -1753,7 +1753,7 @@
                     <th class="px-3.5 py-2 text-right w-28 col-num">Tồn hiện tại</th>
                     <th class="px-3.5 py-2 text-right w-40 text-purple-800 font-bold col-num font-mono">SL Nhập trả</th>
                     <th class="px-3.5 py-2 text-left min-w-[160px]">Lý do / Ghi chú dòng</th>
-                    <th class="px-3.5 py-2 text-center w-12 no-print">Xóa</th>
+                    <th class="px-2 py-2 text-center w-28 no-print">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody id="nhaptra-tbody" class="divide-y divide-slate-100 bg-white"></tbody>
@@ -2318,7 +2318,7 @@
                       <th class="px-3 py-2.5 text-left col-item-name">Tên mặt hàng phát</th>
                       <th class="px-3 py-2.5 text-center w-20 col-center">ĐVT</th>
                       <th class="px-3 py-2.5 text-right w-36 col-num font-mono text-slate-700">Số lượng phát <span class="text-rose-500">*</span></th>
-                      <th class="px-3 py-2.5 text-center w-14 no-print">Xóa</th>
+                      <th class="px-2 py-2.5 text-center w-28 no-print">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="dispatch-form-tbody" class="divide-y divide-slate-100 bg-white">
@@ -2639,7 +2639,7 @@
                       <th class="px-3 py-2.5 text-right w-28 font-mono text-slate-700">Đơn Giá</th>
                       <th class="px-3 py-2.5 text-right w-32 font-mono font-bold text-emerald-800">Thành Tiền</th>
                       <th class="px-3 py-2.5 text-left min-w-[160px]">Ghi Chú</th>
-                      <th class="px-2 py-2.5 text-center w-12 no-print">Xóa</th>
+                      <th class="px-2 py-2.5 text-center w-28 no-print">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="kiemke-items-tbody" class="divide-y divide-slate-100 bg-white">
@@ -4170,6 +4170,15 @@
               <span class="text-slate-700 font-medium">Chèn 1 dòng lên trên dòng hiện tại</span>
             </div>
             <span class="text-slate-400 text-[11px]">Chèn dòng</span>
+          </div>
+          <div class="py-2 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <kbd class="px-2 py-1 bg-white border border-slate-300 rounded font-mono font-bold text-emerald-700 shadow-2xs">Alt + ↑</kbd>
+              <span class="text-slate-400 font-normal">/</span>
+              <kbd class="px-2 py-1 bg-white border border-slate-300 rounded font-mono font-bold text-emerald-700 shadow-2xs">Alt + ↓</kbd>
+              <span class="text-slate-700 font-medium">Di chuyển dòng lên trên / xuống dưới</span>
+            </div>
+            <span class="text-slate-400 text-[11px]">Di chuyển dòng</span>
           </div>
           <div class="py-2 flex items-center justify-between">
             <div class="flex items-center space-x-2">
@@ -9256,6 +9265,56 @@ window.google.script = {
       initAutoRefresh();
 
       document.addEventListener('keydown', function(e) {
+        // Phím Alt + ArrowUp / Alt + ArrowDown: Di chuyển dòng lên trên hoặc xuống dưới
+        if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+          const isUp = (e.key === 'ArrowUp');
+          const activeEl = document.activeElement;
+          if (activeEl) {
+            // 1. Phiếu Nhập / Xuất kho
+            const voucherTr = activeEl.closest('#voucher-tbody tr');
+            if (voucherTr && voucherTr.id && voucherTr.id.startsWith('tr_')) {
+              e.preventDefault();
+              const rowId = voucherTr.id.replace('tr_', '');
+              if (isUp) moveVoucherRowUp(rowId);
+              else moveVoucherRowDown(rowId);
+              activeEl.focus();
+              return;
+            }
+
+            // 2. Phiếu Hàng Nhập Trả
+            const nhapTraTr = activeEl.closest('#nhaptra-tbody tr');
+            if (nhapTraTr && nhapTraTr.id && nhapTraTr.id.startsWith('nt_tr_')) {
+              e.preventDefault();
+              const rowId = nhapTraTr.id.replace('nt_tr_', '');
+              if (isUp) moveNhapTraRowUp(rowId);
+              else moveNhapTraRowDown(rowId);
+              activeEl.focus();
+              return;
+            }
+
+            // 3. Phiếu Phát Hàng
+            const dispatchTr = activeEl.closest('#dispatch-form-tbody tr');
+            if (dispatchTr && dispatchTr.id && dispatchTr.id.startsWith('tr_')) {
+              e.preventDefault();
+              const rowId = dispatchTr.id.replace('tr_', '');
+              if (isUp) moveDispatchFormRowUp(rowId);
+              else moveDispatchFormRowDown(rowId);
+              activeEl.focus();
+              return;
+            }
+
+            // 4. Phiếu Kiểm Kê
+            const kiemKeTr = activeEl.closest('#kiemke-items-tbody tr[data-kiemke-row]');
+            if (kiemKeTr) {
+              e.preventDefault();
+              if (isUp) moveKiemKeRowUp(kiemKeTr);
+              else moveKiemKeRowDown(kiemKeTr);
+              activeEl.focus();
+              return;
+            }
+          }
+        }
+
         // Phím Insert hoặc Shift+Enter: Chèn 1 dòng lên trên dòng đang chọn
         if (e.key === 'Insert' || (e.key === 'Enter' && e.shiftKey)) {
           const activeEl = document.activeElement;
@@ -12738,13 +12797,19 @@ window.google.script = {
                  placeholder="Ghi chú dòng..." 
                  class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs">
         </td>
-        <td class="px-3 py-2 text-center no-print">
-          <div class="flex items-center justify-center space-x-1">
+        <td class="px-2 py-2 text-center no-print">
+          <div class="flex items-center justify-center space-x-0.5">
+            <button type="button" onclick="moveVoucherRowUp('${rowId}')" title="Di chuyển dòng lên trên (Alt + ↑)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer">
+              <i class="bi bi-chevron-up text-xs font-bold"></i>
+            </button>
+            <button type="button" onclick="moveVoucherRowDown('${rowId}')" title="Di chuyển dòng xuống dưới (Alt + ↓)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer">
+              <i class="bi bi-chevron-down text-xs font-bold"></i>
+            </button>
             <button type="button" onclick="insertVoucherRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer">
-              <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+              <i class="bi bi-arrow-bar-up text-xs font-bold"></i>
             </button>
             <button type="button" onclick="removeVoucherRow('${rowId}')" title="Xóa dòng này" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer">
-              <i class="bi bi-x-circle text-base"></i>
+              <i class="bi bi-x-circle text-sm"></i>
             </button>
           </div>
         </td>
@@ -12837,6 +12902,41 @@ window.google.script = {
           codeInp.select();
         }
       }, 50);
+    }
+
+    // CHỨC NĂNG DI CHUYỂN DÒNG LÊN TRÊN VÀ XUỐNG DƯỚI (PHIẾU NHẬP / XUẤT KHO)
+    function moveVoucherRowUp(rowId) {
+      const idx = voucherRows.findIndex(r => r.id === rowId);
+      if (idx <= 0) return;
+      const temp = voucherRows[idx];
+      voucherRows[idx] = voucherRows[idx - 1];
+      voucherRows[idx - 1] = temp;
+
+      const tr = document.getElementById(`tr_${rowId}`);
+      const prevTr = tr ? tr.previousElementSibling : null;
+      if (tr && prevTr) {
+        tr.parentNode.insertBefore(tr, prevTr);
+        tr.classList.add('bg-blue-50/80');
+        setTimeout(() => tr.classList.remove('bg-blue-50/80'), 250);
+      }
+      updateVoucherRowIndexes();
+    }
+
+    function moveVoucherRowDown(rowId) {
+      const idx = voucherRows.findIndex(r => r.id === rowId);
+      if (idx === -1 || idx >= voucherRows.length - 1) return;
+      const temp = voucherRows[idx];
+      voucherRows[idx] = voucherRows[idx + 1];
+      voucherRows[idx + 1] = temp;
+
+      const tr = document.getElementById(`tr_${rowId}`);
+      const nextTr = tr ? tr.nextElementSibling : null;
+      if (tr && nextTr) {
+        tr.parentNode.insertBefore(nextTr, tr);
+        tr.classList.add('bg-blue-50/80');
+        setTimeout(() => tr.classList.remove('bg-blue-50/80'), 250);
+      }
+      updateVoucherRowIndexes();
     }
 
     function removeVoucherRow(rowId) {
@@ -13726,13 +13826,19 @@ window.google.script = {
                  placeholder="Lý do hoàn trả..." 
                  class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-xs">
         </td>
-        <td class="px-3 py-2 text-center no-print">
-          <div class="flex items-center justify-center space-x-1">
+        <td class="px-2 py-2 text-center no-print">
+          <div class="flex items-center justify-center space-x-0.5">
+            <button type="button" onclick="moveNhapTraRowUp('${rowId}')" title="Di chuyển dòng lên trên (Alt + ↑)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+              <i class="bi bi-chevron-up text-xs font-bold"></i>
+            </button>
+            <button type="button" onclick="moveNhapTraRowDown('${rowId}')" title="Di chuyển dòng xuống dưới (Alt + ↓)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+              <i class="bi bi-chevron-down text-xs font-bold"></i>
+            </button>
             <button type="button" onclick="insertNhapTraRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
-              <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+              <i class="bi bi-arrow-bar-up text-xs font-bold"></i>
             </button>
             <button type="button" onclick="removeNhapTraRow('${rowId}')" title="Xóa dòng này" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer">
-              <i class="bi bi-x-circle text-base"></i>
+              <i class="bi bi-x-circle text-sm"></i>
             </button>
           </div>
         </td>
@@ -13821,6 +13927,41 @@ window.google.script = {
           codeInp.select();
         }
       }, 50);
+    }
+
+    // CHỨC NĂNG DI CHUYỂN DÒNG LÊN TRÊN VÀ XUỐNG DƯỚI (PHIẾU HÀNG NHẬP TRẢ)
+    function moveNhapTraRowUp(rowId) {
+      const idx = nhaptraRows.findIndex(r => r.id === rowId);
+      if (idx <= 0) return;
+      const temp = nhaptraRows[idx];
+      nhaptraRows[idx] = nhaptraRows[idx - 1];
+      nhaptraRows[idx - 1] = temp;
+
+      const tr = document.getElementById(`nt_tr_${rowId}`);
+      const prevTr = tr ? tr.previousElementSibling : null;
+      if (tr && prevTr) {
+        tr.parentNode.insertBefore(tr, prevTr);
+        tr.classList.add('bg-purple-50/80');
+        setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+      }
+      updateNhapTraRowIndexes();
+    }
+
+    function moveNhapTraRowDown(rowId) {
+      const idx = nhaptraRows.findIndex(r => r.id === rowId);
+      if (idx === -1 || idx >= nhaptraRows.length - 1) return;
+      const temp = nhaptraRows[idx];
+      nhaptraRows[idx] = nhaptraRows[idx + 1];
+      nhaptraRows[idx + 1] = temp;
+
+      const tr = document.getElementById(`nt_tr_${rowId}`);
+      const nextTr = tr ? tr.nextElementSibling : null;
+      if (tr && nextTr) {
+        tr.parentNode.insertBefore(nextTr, tr);
+        tr.classList.add('bg-purple-50/80');
+        setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+      }
+      updateNhapTraRowIndexes();
     }
 
     function removeNhapTraRow(rowId) {
@@ -19157,12 +19298,18 @@ window.google.script = {
                  placeholder="SL phát"
                  class="w-full px-2.5 py-1.5 border-2 border-teal-400 rounded-lg text-right font-black text-teal-900 focus:ring-2 focus:ring-teal-500 text-xs font-mono bg-teal-50/40">
         </td>
-        <td class="px-3 py-2 text-center no-print">
-          <div class="flex items-center justify-center space-x-1">
-            <button type="button" onclick="insertDispatchFormRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition cursor-pointer">
-              <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+        <td class="px-2 py-2 text-center no-print">
+          <div class="flex items-center justify-center space-x-0.5">
+            <button type="button" onclick="moveDispatchFormRowUp('${rowId}')" title="Di chuyển dòng lên trên (Alt + ↑)" class="p-1 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded transition cursor-pointer">
+              <i class="bi bi-chevron-up text-xs font-bold"></i>
             </button>
-            <button type="button" onclick="removeDispatchFormRow('${rowId}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer" title="Xóa dòng này">
+            <button type="button" onclick="moveDispatchFormRowDown('${rowId}')" title="Di chuyển dòng xuống dưới (Alt + ↓)" class="p-1 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded transition cursor-pointer">
+              <i class="bi bi-chevron-down text-xs font-bold"></i>
+            </button>
+            <button type="button" onclick="insertDispatchFormRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded transition cursor-pointer">
+              <i class="bi bi-arrow-bar-up text-xs font-bold"></i>
+            </button>
+            <button type="button" onclick="removeDispatchFormRow('${rowId}')" class="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition cursor-pointer" title="Xóa dòng này">
               <i class="bi bi-trash3 text-sm"></i>
             </button>
           </div>
@@ -19245,6 +19392,41 @@ window.google.script = {
           codeInp.select();
         }
       }, 50);
+    }
+
+    // CHỨC NĂNG DI CHUYỂN DÒNG LÊN TRÊN VÀ XUỐNG DƯỚI (PHIẾU PHÁT HÀNG)
+    function moveDispatchFormRowUp(rowId) {
+      const idx = dispatchFormRows.findIndex(r => r.id === rowId);
+      if (idx <= 0) return;
+      const temp = dispatchFormRows[idx];
+      dispatchFormRows[idx] = dispatchFormRows[idx - 1];
+      dispatchFormRows[idx - 1] = temp;
+
+      const tr = document.getElementById(`tr_${rowId}`);
+      const prevTr = tr ? tr.previousElementSibling : null;
+      if (tr && prevTr) {
+        tr.parentNode.insertBefore(tr, prevTr);
+        tr.classList.add('bg-teal-50/80');
+        setTimeout(() => tr.classList.remove('bg-teal-50/80'), 250);
+      }
+      updateDispatchRowIndexes();
+    }
+
+    function moveDispatchFormRowDown(rowId) {
+      const idx = dispatchFormRows.findIndex(r => r.id === rowId);
+      if (idx === -1 || idx >= dispatchFormRows.length - 1) return;
+      const temp = dispatchFormRows[idx];
+      dispatchFormRows[idx] = dispatchFormRows[idx + 1];
+      dispatchFormRows[idx + 1] = temp;
+
+      const tr = document.getElementById(`tr_${rowId}`);
+      const nextTr = tr ? tr.nextElementSibling : null;
+      if (tr && nextTr) {
+        tr.parentNode.insertBefore(nextTr, tr);
+        tr.classList.add('bg-teal-50/80');
+        setTimeout(() => tr.classList.remove('bg-teal-50/80'), 250);
+      }
+      updateDispatchRowIndexes();
     }
 
     function removeDispatchFormRow(rowId) {
@@ -29654,13 +29836,19 @@ window.google.script = {
                    class="row-note w-full px-2.5 py-1 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 rounded-lg bg-white/90 transition placeholder:text-slate-300 placeholder:italic placeholder:text-[11px]">
           </td>
 
-          <!-- 9. THAO TÁC (CHÈN / XÓA) -->
+          <!-- 9. THAO TÁC (DI CHUYỂN / CHÈN / XÓA) -->
           <td class="px-2 py-2 text-center align-middle no-print">
-            <div class="flex items-center justify-center space-x-1">
-              <button type="button" onclick="insertKiemKeRowBefore(this)" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1.5 text-slate-300 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition cursor-pointer">
-                <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+            <div class="flex items-center justify-center space-x-0.5">
+              <button type="button" onclick="moveKiemKeRowUp(this)" title="Di chuyển dòng lên trên (Alt + ↑)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+                <i class="bi bi-chevron-up text-xs font-bold"></i>
               </button>
-              <button type="button" onclick="removeKiemKeRow(this)" class="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Xóa dòng này">
+              <button type="button" onclick="moveKiemKeRowDown(this)" title="Di chuyển dòng xuống dưới (Alt + ↓)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+                <i class="bi bi-chevron-down text-xs font-bold"></i>
+              </button>
+              <button type="button" onclick="insertKiemKeRowBefore(this)" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+                <i class="bi bi-arrow-bar-up text-xs font-bold"></i>
+              </button>
+              <button type="button" onclick="removeKiemKeRow(this)" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer" title="Xóa dòng này">
                 <i class="bi bi-trash3 text-sm"></i>
               </button>
             </div>
@@ -29746,6 +29934,47 @@ window.google.script = {
           }
         }
       }, 50);
+    }
+
+    // CHỨC NĂNG DI CHUYỂN DÒNG LÊN TRÊN VÀ XUỐNG DƯỚI (PHIẾU KIỂM KÊ)
+    function moveKiemKeRowUp(el) {
+      const tr = el.closest ? el.closest('tr') : el;
+      if (!tr) return;
+      const prevTr = tr.previousElementSibling;
+      if (!prevTr || !prevTr.hasAttribute('data-kiemke-row')) return;
+
+      tr.parentNode.insertBefore(tr, prevTr);
+
+      const tbody = document.getElementById('kiemke-items-tbody');
+      if (tbody) {
+        const rows = tbody.querySelectorAll('tr[data-kiemke-row]');
+        rows.forEach((r, i) => {
+          const sttEl = r.querySelector('.row-stt');
+          if (sttEl) sttEl.innerText = i + 1;
+        });
+      }
+      tr.classList.add('bg-purple-50/80');
+      setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
+    }
+
+    function moveKiemKeRowDown(el) {
+      const tr = el.closest ? el.closest('tr') : el;
+      if (!tr) return;
+      const nextTr = tr.nextElementSibling;
+      if (!nextTr || !nextTr.hasAttribute('data-kiemke-row')) return;
+
+      tr.parentNode.insertBefore(nextTr, tr);
+
+      const tbody = document.getElementById('kiemke-items-tbody');
+      if (tbody) {
+        const rows = tbody.querySelectorAll('tr[data-kiemke-row]');
+        rows.forEach((r, i) => {
+          const sttEl = r.querySelector('.row-stt');
+          if (sttEl) sttEl.innerText = i + 1;
+        });
+      }
+      tr.classList.add('bg-purple-50/80');
+      setTimeout(() => tr.classList.remove('bg-purple-50/80'), 250);
     }
 
     function removeKiemKeRow(btn) {
