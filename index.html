@@ -4117,6 +4117,15 @@
           </div>
           <div class="py-2 flex items-center justify-between">
             <div class="flex items-center space-x-2">
+              <kbd class="px-2 py-1 bg-white border border-slate-300 rounded font-mono font-bold text-indigo-700 shadow-2xs">Insert</kbd>
+              <span class="text-slate-400 font-normal">/</span>
+              <kbd class="px-2 py-1 bg-white border border-slate-300 rounded font-mono font-bold text-indigo-700 shadow-2xs">Shift+Enter</kbd>
+              <span class="text-slate-700 font-medium">Chèn 1 dòng lên trên dòng hiện tại</span>
+            </div>
+            <span class="text-slate-400 text-[11px]">Chèn dòng</span>
+          </div>
+          <div class="py-2 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
               <kbd class="px-2 py-1 bg-white border border-slate-300 rounded font-mono font-bold text-emerald-700 shadow-2xs">F5</kbd>
               <span class="text-slate-700 font-medium">Nạp lại dữ liệu tức thì (Không nháy trang)</span>
             </div>
@@ -9106,6 +9115,47 @@ window.google.script = {
       initAutoRefresh();
 
       document.addEventListener('keydown', function(e) {
+        // Phím Insert hoặc Shift+Enter: Chèn 1 dòng lên trên dòng đang chọn
+        if (e.key === 'Insert' || (e.key === 'Enter' && e.shiftKey)) {
+          const activeEl = document.activeElement;
+          if (activeEl) {
+            // 1. Kiểm tra Phiếu Nhập / Xuất kho
+            const voucherTr = activeEl.closest('#voucher-tbody tr');
+            if (voucherTr && voucherTr.id && voucherTr.id.startsWith('tr_')) {
+              e.preventDefault();
+              const rowId = voucherTr.id.replace('tr_', '');
+              insertVoucherRowBefore(rowId);
+              return;
+            }
+
+            // 2. Kiểm tra Phiếu Hàng Nhập Trả
+            const nhapTraTr = activeEl.closest('#nhaptra-tbody tr');
+            if (nhapTraTr && nhapTraTr.id && nhapTraTr.id.startsWith('nt_tr_')) {
+              e.preventDefault();
+              const rowId = nhapTraTr.id.replace('nt_tr_', '');
+              insertNhapTraRowBefore(rowId);
+              return;
+            }
+
+            // 3. Kiểm tra Phiếu Phát Hàng
+            const dispatchTr = activeEl.closest('#dispatch-form-tbody tr');
+            if (dispatchTr && dispatchTr.id && dispatchTr.id.startsWith('tr_')) {
+              e.preventDefault();
+              const rowId = dispatchTr.id.replace('tr_', '');
+              insertDispatchFormRowBefore(rowId);
+              return;
+            }
+
+            // 4. Kiểm tra Phiếu Kiểm Kê / Tính tiền chênh lệch
+            const kiemKeTr = activeEl.closest('#kiemke-items-tbody tr[data-kiemke-row]');
+            if (kiemKeTr) {
+              e.preventDefault();
+              insertKiemKeRowBefore(kiemKeTr);
+              return;
+            }
+          }
+        }
+
         // F1: Trợ giúp phím tắt
         if (e.key === 'F1') {
           e.preventDefault();
@@ -12504,33 +12554,8 @@ window.google.script = {
       if (!editingVoucherNo) generateVoucherNo(currentVoucherType);
     }
 
-    function addRowToVoucher(prefillData, autoFocus = false) {
-      const rowId = 'row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-      const parsedInitialQty = prefillData ? parseSmartNumber(prefillData.quantity) : '';
-      const initialQuality = prefillData && prefillData.quality ? prefillData.quality : 'TP';
-      const isPP = (initialQuality === 'PP');
-
-      const rowObj = {
-        id: rowId,
-        code: prefillData ? prefillData.code : '',
-        name: prefillData ? prefillData.name : '',
-        unit: prefillData ? prefillData.unit : '',
-        quantity: parsedInitialQty,
-        quality: initialQuality,
-        note: prefillData ? cleanNoteContent(prefillData.note) : ''
-      };
-      voucherRows.push(rowObj);
-
-      const tbody = document.getElementById('voucher-tbody');
-      const tr = document.createElement('tr');
-      tr.id = `tr_${rowId}`;
-      tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-
-      const qualityClass = isPP 
-        ? "bg-amber-50 text-amber-800 border-amber-300 focus:ring-amber-500" 
-        : "bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-500";
-
-      tr.innerHTML = `
+    function buildVoucherRowInnerHtml(rowId, rowObj, isPP, qualityClass) {
+      return `
         <td class="px-3 py-2 text-center text-slate-400 font-mono row-index col-center">${voucherRows.length}</td>
         <td class="px-3 py-2">
           <div class="relative autocomplete-container">
@@ -12568,16 +12593,50 @@ window.google.script = {
         <td class="px-3 py-2">
           <input type="text" id="input_note_${rowId}" value="${rowObj.note}"
                  oninput="onRowNoteChange('${rowId}', this.value)"
-                 onkeydown="if(event.key==='Enter'){event.preventDefault(); addRowToVoucher(null, true);}"
+                 onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addRowToVoucher(null, true);}"
                  placeholder="Ghi chú dòng..." 
                  class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs">
         </td>
         <td class="px-3 py-2 text-center no-print">
-          <button onclick="removeVoucherRow('${rowId}')" class="p-1 text-slate-400 hover:text-rose-600 rounded transition">
-            <i class="bi bi-x-circle text-base"></i>
-          </button>
+          <div class="flex items-center justify-center space-x-1">
+            <button type="button" onclick="insertVoucherRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer">
+              <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+            </button>
+            <button type="button" onclick="removeVoucherRow('${rowId}')" title="Xóa dòng này" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer">
+              <i class="bi bi-x-circle text-base"></i>
+            </button>
+          </div>
         </td>
       `;
+    }
+
+    function addRowToVoucher(prefillData, autoFocus = false) {
+      const rowId = 'row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const parsedInitialQty = prefillData ? parseSmartNumber(prefillData.quantity) : '';
+      const initialQuality = prefillData && prefillData.quality ? prefillData.quality : 'TP';
+      const isPP = (initialQuality === 'PP');
+
+      const rowObj = {
+        id: rowId,
+        code: prefillData ? prefillData.code : '',
+        name: prefillData ? prefillData.name : '',
+        unit: prefillData ? prefillData.unit : '',
+        quantity: parsedInitialQty,
+        quality: initialQuality,
+        note: prefillData ? cleanNoteContent(prefillData.note) : ''
+      };
+      voucherRows.push(rowObj);
+
+      const tbody = document.getElementById('voucher-tbody');
+      const tr = document.createElement('tr');
+      tr.id = `tr_${rowId}`;
+      tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+      const qualityClass = isPP 
+        ? "bg-amber-50 text-amber-800 border-amber-300 focus:ring-amber-500" 
+        : "bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-500";
+
+      tr.innerHTML = buildVoucherRowInnerHtml(rowId, rowObj, isPP, qualityClass);
 
       tbody.appendChild(tr);
       updateVoucherRowIndexes();
@@ -12592,6 +12651,51 @@ window.google.script = {
           if (el) el.focus();
         }, 50);
       }
+    }
+
+    // CHỨC NĂNG CHÈN DÒNG LÊN TRÊN VỊ TRÍ CHỌN TRONG PHIẾU NHẬP / XUẤT KHO
+    function insertVoucherRowBefore(targetRowId) {
+      const targetIdx = voucherRows.findIndex(r => r.id === targetRowId);
+      if (targetIdx === -1) {
+        addRowToVoucher(null, true);
+        return;
+      }
+
+      const rowId = 'row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const rowObj = {
+        id: rowId,
+        code: '',
+        name: '',
+        unit: '',
+        quantity: '',
+        quality: 'TP',
+        note: ''
+      };
+
+      voucherRows.splice(targetIdx, 0, rowObj);
+
+      const targetTr = document.getElementById(`tr_${targetRowId}`);
+      const tbody = document.getElementById('voucher-tbody');
+      if (!targetTr || !tbody) return;
+
+      const tr = document.createElement('tr');
+      tr.id = `tr_${rowId}`;
+      tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+      const qualityClass = "bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-500";
+      tr.innerHTML = buildVoucherRowInnerHtml(rowId, rowObj, false, qualityClass);
+
+      targetTr.parentNode.insertBefore(tr, targetTr);
+      updateVoucherRowIndexes();
+      calculateVoucherSummary();
+      if (typeof validateAndHighlightVoucherRow === 'function') validateAndHighlightVoucherRow(rowId);
+
+      setTimeout(() => {
+        const codeInp = document.getElementById(`input_code_${rowId}`);
+        if (codeInp) {
+          codeInp.focus();
+          codeInp.select();
+        }
+      }, 50);
     }
 
     function removeVoucherRow(rowId) {
@@ -13438,31 +13542,8 @@ window.google.script = {
       generateNhapTraVoucherNo();
     }
 
-    function addNhapTraRow(prefillData, autoFocus = false) {
-      const rowId = 'nt_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-      const parsedInitialQty = prefillData ? parseSmartNumber(prefillData.quantity) : '';
-      const initialQuality = prefillData && prefillData.quality ? prefillData.quality : 'TP';
-      const isPP = (initialQuality === 'PP');
-
-      const rowObj = {
-        id: rowId,
-        code: prefillData ? prefillData.code : '',
-        quantity: parsedInitialQty,
-        quality: initialQuality,
-        note: prefillData ? cleanNoteContent(prefillData.note) : ''
-      };
-      nhaptraRows.push(rowObj);
-
-      const tbody = document.getElementById('nhaptra-tbody');
-      const tr = document.createElement('tr');
-      tr.id = `nt_tr_${rowId}`;
-      tr.className = "hover:bg-purple-50/50 transition border-b border-slate-100";
-
-      const qualityClass = isPP 
-        ? "bg-amber-50 text-amber-800 border-amber-300 focus:ring-amber-500" 
-        : "bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-500";
-
-      tr.innerHTML = `
+    function buildNhapTraRowInnerHtml(rowId, rowObj, isPP, qualityClass) {
+      return `
         <td class="px-3 py-2 text-center text-slate-400 font-mono nt-row-index col-center">${nhaptraRows.length}</td>
         <td class="px-3 py-2">
           <div class="relative autocomplete-container">
@@ -13500,16 +13581,48 @@ window.google.script = {
         <td class="px-3 py-2">
           <input type="text" id="input_nt_note_${rowId}" value="${rowObj.note}"
                  oninput="onNhapTraNoteChange('${rowId}', this.value)"
-                 onkeydown="if(event.key==='Enter'){event.preventDefault(); addNhapTraRow(null, true);}"
+                 onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addNhapTraRow(null, true);}"
                  placeholder="Lý do hoàn trả..." 
                  class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-xs">
         </td>
         <td class="px-3 py-2 text-center no-print">
-          <button onclick="removeNhapTraRow('${rowId}')" class="p-1 text-slate-400 hover:text-rose-600 rounded transition">
-            <i class="bi bi-x-circle text-base"></i>
-          </button>
+          <div class="flex items-center justify-center space-x-1">
+            <button type="button" onclick="insertNhapTraRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+              <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+            </button>
+            <button type="button" onclick="removeNhapTraRow('${rowId}')" title="Xóa dòng này" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer">
+              <i class="bi bi-x-circle text-base"></i>
+            </button>
+          </div>
         </td>
       `;
+    }
+
+    function addNhapTraRow(prefillData, autoFocus = false) {
+      const rowId = 'nt_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const parsedInitialQty = prefillData ? parseSmartNumber(prefillData.quantity) : '';
+      const initialQuality = prefillData && prefillData.quality ? prefillData.quality : 'TP';
+      const isPP = (initialQuality === 'PP');
+
+      const rowObj = {
+        id: rowId,
+        code: prefillData ? prefillData.code : '',
+        quantity: parsedInitialQty,
+        quality: initialQuality,
+        note: prefillData ? cleanNoteContent(prefillData.note) : ''
+      };
+      nhaptraRows.push(rowObj);
+
+      const tbody = document.getElementById('nhaptra-tbody');
+      const tr = document.createElement('tr');
+      tr.id = `nt_tr_${rowId}`;
+      tr.className = "hover:bg-purple-50/50 transition border-b border-slate-100";
+
+      const qualityClass = isPP 
+        ? "bg-amber-50 text-amber-800 border-amber-300 focus:ring-amber-500" 
+        : "bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-500";
+
+      tr.innerHTML = buildNhapTraRowInnerHtml(rowId, rowObj, isPP, qualityClass);
 
       tbody.appendChild(tr);
       updateNhapTraRowIndexes();
@@ -13524,6 +13637,49 @@ window.google.script = {
           if (el) el.focus();
         }, 50);
       }
+    }
+
+    // CHỨC NĂNG CHÈN DÒNG LÊN TRÊN VỊ TRÍ CHỌN TRONG PHIẾU HÀNG NHẬP TRẢ
+    function insertNhapTraRowBefore(targetRowId) {
+      const targetIdx = nhaptraRows.findIndex(r => r.id === targetRowId);
+      if (targetIdx === -1) {
+        addNhapTraRow(null, true);
+        return;
+      }
+
+      const rowId = 'nt_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const rowObj = {
+        id: rowId,
+        code: '',
+        quantity: '',
+        quality: 'TP',
+        note: ''
+      };
+
+      nhaptraRows.splice(targetIdx, 0, rowObj);
+
+      const targetTr = document.getElementById(`nt_tr_${targetRowId}`);
+      const tbody = document.getElementById('nhaptra-tbody');
+      if (!targetTr || !tbody) return;
+
+      const tr = document.createElement('tr');
+      tr.id = `nt_tr_${rowId}`;
+      tr.className = "hover:bg-purple-50/50 transition border-b border-slate-100";
+      const qualityClass = "bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-500";
+      tr.innerHTML = buildNhapTraRowInnerHtml(rowId, rowObj, false, qualityClass);
+
+      targetTr.parentNode.insertBefore(tr, targetTr);
+      updateNhapTraRowIndexes();
+      calculateNhapTraSummary();
+      if (typeof validateAndHighlightNhapTraRow === 'function') validateAndHighlightNhapTraRow(rowId);
+
+      setTimeout(() => {
+        const codeInp = document.getElementById(`input_nt_code_${rowId}`);
+        if (codeInp) {
+          codeInp.focus();
+          codeInp.select();
+        }
+      }, 50);
     }
 
     function removeNhapTraRow(rowId) {
@@ -18834,24 +18990,8 @@ window.google.script = {
       return vNo;
     }
 
-    function addDispatchFormRow(prefillData = null, autoFocus = false) {
-      const rowId = 'dp_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-      const rowObj = {
-        id: rowId,
-        code: prefillData ? prefillData.code : '',
-        name: prefillData ? prefillData.name : '',
-        unit: prefillData ? prefillData.unit : '',
-        quantity: prefillData ? parseSmartNumber(prefillData.quantity) : '',
-        note: prefillData ? (prefillData.note || '') : ''
-      };
-      dispatchFormRows.push(rowObj);
-
-      const tbody = document.getElementById('dispatch-form-tbody');
-      const tr = document.createElement('tr');
-      tr.id = `tr_${rowId}`;
-      tr.className = "hover:bg-teal-50/30 transition border-b border-slate-100";
-
-      tr.innerHTML = `
+    function buildDispatchRowInnerHtml(rowId, rowObj) {
+      return `
         <td class="px-3 py-2 text-center text-slate-400 font-mono dp-row-index col-center">${dispatchFormRows.length}</td>
         <td class="px-3 py-2">
           <div class="relative autocomplete-container">
@@ -18872,16 +19012,41 @@ window.google.script = {
                  oninput="onDispatchQtyInput('${rowId}', this)"
                  onblur="onDispatchQtyBlur('${rowId}', this)"
                  onfocus="onDispatchQtyFocus('${rowId}', this)"
-                 onkeydown="if(event.key==='Enter'){event.preventDefault(); addDispatchFormRow(null, true);}"
+                 onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addDispatchFormRow(null, true);}"
                  placeholder="SL phát"
                  class="w-full px-2.5 py-1.5 border-2 border-teal-400 rounded-lg text-right font-black text-teal-900 focus:ring-2 focus:ring-teal-500 text-xs font-mono bg-teal-50/40">
         </td>
         <td class="px-3 py-2 text-center no-print">
-          <button type="button" onclick="removeDispatchFormRow('${rowId}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer" title="Xóa dòng này">
-            <i class="bi bi-trash3 text-sm"></i>
-          </button>
+          <div class="flex items-center justify-center space-x-1">
+            <button type="button" onclick="insertDispatchFormRowBefore('${rowId}')" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition cursor-pointer">
+              <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+            </button>
+            <button type="button" onclick="removeDispatchFormRow('${rowId}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer" title="Xóa dòng này">
+              <i class="bi bi-trash3 text-sm"></i>
+            </button>
+          </div>
         </td>
       `;
+    }
+
+    function addDispatchFormRow(prefillData = null, autoFocus = false) {
+      const rowId = 'dp_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const rowObj = {
+        id: rowId,
+        code: prefillData ? prefillData.code : '',
+        name: prefillData ? prefillData.name : '',
+        unit: prefillData ? prefillData.unit : '',
+        quantity: prefillData ? parseSmartNumber(prefillData.quantity) : '',
+        note: prefillData ? (prefillData.note || '') : ''
+      };
+      dispatchFormRows.push(rowObj);
+
+      const tbody = document.getElementById('dispatch-form-tbody');
+      const tr = document.createElement('tr');
+      tr.id = `tr_${rowId}`;
+      tr.className = "hover:bg-teal-50/30 transition border-b border-slate-100";
+
+      tr.innerHTML = buildDispatchRowInnerHtml(rowId, rowObj);
 
       tbody.appendChild(tr);
       updateDispatchRowIndexes();
@@ -18896,6 +19061,49 @@ window.google.script = {
         }, 50);
       }
       return rowId;
+    }
+
+    // CHỨC NĂNG CHÈN DÒNG LÊN TRÊN VỊ TRÍ CHỌN TRONG PHIẾU PHÁT HÀNG
+    function insertDispatchFormRowBefore(targetRowId) {
+      const targetIdx = dispatchFormRows.findIndex(r => r.id === targetRowId);
+      if (targetIdx === -1) {
+        addDispatchFormRow(null, true);
+        return;
+      }
+
+      const rowId = 'dp_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      const rowObj = {
+        id: rowId,
+        code: '',
+        name: '',
+        unit: '',
+        quantity: '',
+        note: ''
+      };
+
+      dispatchFormRows.splice(targetIdx, 0, rowObj);
+
+      const targetTr = document.getElementById(`tr_${targetRowId}`);
+      const tbody = document.getElementById('dispatch-form-tbody');
+      if (!targetTr || !tbody) return;
+
+      const tr = document.createElement('tr');
+      tr.id = `tr_${rowId}`;
+      tr.className = "hover:bg-teal-50/30 transition border-b border-slate-100";
+      tr.innerHTML = buildDispatchRowInnerHtml(rowId, rowObj);
+
+      targetTr.parentNode.insertBefore(tr, targetTr);
+      updateDispatchRowIndexes();
+      calculateDispatchFormSummary();
+      if (typeof validateAndHighlightDispatchRow === 'function') validateAndHighlightDispatchRow(rowId);
+
+      setTimeout(() => {
+        const codeInp = document.getElementById(`input_dp_code_${rowId}`);
+        if (codeInp) {
+          codeInp.focus();
+          codeInp.select();
+        }
+      }, 50);
     }
 
     function removeDispatchFormRow(rowId) {
@@ -29305,11 +29513,16 @@ window.google.script = {
                    class="row-note w-full px-2.5 py-1 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 rounded-lg bg-white/90 transition placeholder:text-slate-300 placeholder:italic placeholder:text-[11px]">
           </td>
 
-          <!-- 9. XÓA -->
+          <!-- 9. THAO TÁC (CHÈN / XÓA) -->
           <td class="px-2 py-2 text-center align-middle no-print">
-            <button type="button" onclick="removeKiemKeRow(this)" class="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Xóa dòng này">
-              <i class="bi bi-trash3 text-sm"></i>
-            </button>
+            <div class="flex items-center justify-center space-x-1">
+              <button type="button" onclick="insertKiemKeRowBefore(this)" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1.5 text-slate-300 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition cursor-pointer">
+                <i class="bi bi-arrow-bar-up text-sm font-bold"></i>
+              </button>
+              <button type="button" onclick="removeKiemKeRow(this)" class="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Xóa dòng này">
+                <i class="bi bi-trash3 text-sm"></i>
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -29348,6 +29561,50 @@ window.google.script = {
 
       calculateKiemKeSummary();
       if (typeof validateAndHighlightKiemKeRow === 'function' && addedTr) validateAndHighlightKiemKeRow(addedTr);
+    }
+
+    // CHỨC NĂNG CHÈN DÒNG LÊN TRÊN VỊ TRÍ CHỌN TRONG PHIẾU KIỂM KÊ / TÍNH TIỀN CHÊNH LỆCH
+    function insertKiemKeRowBefore(targetEl) {
+      const targetTr = targetEl.closest ? targetEl.closest('tr') : targetEl;
+      if (!targetTr) return;
+
+      const tbody = document.getElementById('kiemke-items-tbody');
+      if (!tbody) return;
+
+      const defaultData = {
+        code: '',
+        name: '',
+        unit: 'Cái',
+        book_qty: 0,
+        actual_qty: '',
+        price: 0,
+        note: ''
+      };
+
+      const rowHtml = buildKiemKeRowHtml(defaultData, 1);
+      targetTr.insertAdjacentHTML('beforebegin', rowHtml);
+
+      const newTr = targetTr.previousElementSibling;
+
+      // Cập nhật lại STT của tất cả các dòng
+      const rows = tbody.querySelectorAll('tr[data-kiemke-row]');
+      rows.forEach((r, i) => {
+        const sttEl = r.querySelector('.row-stt');
+        if (sttEl) sttEl.innerText = i + 1;
+      });
+
+      calculateKiemKeSummary();
+      if (typeof validateAndHighlightKiemKeRow === 'function' && newTr) validateAndHighlightKiemKeRow(newTr);
+
+      setTimeout(() => {
+        if (newTr) {
+          const codeInp = newTr.querySelector('.row-code');
+          if (codeInp) {
+            codeInp.focus();
+            codeInp.select();
+          }
+        }
+      }, 50);
     }
 
     function removeKiemKeRow(btn) {
