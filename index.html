@@ -695,6 +695,53 @@
       color: #1e293b !important;
     }
   </style>
+
+  <!-- ========================================================================= -->
+  <!-- BẢO MẬT GIAO DIỆN: CHẶN F12, MENU CHUỘT PHẢI & TỔ HỢP PHÍM SOI MÃ NGUỒN   -->
+  <!-- ========================================================================= -->
+  <script>
+    (function() {
+      // 1. Chặn menu chuột phải (Vẫn cho phép chuột phải trên ô nhập liệu để dán/copy văn bản)
+      document.addEventListener('contextmenu', function(e) {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        return false;
+      }, true);
+
+      // 2. Chặn các phím tắt mở DevTools & soi mã nguồn
+      document.addEventListener('keydown', function(e) {
+        // Chặn phím F12
+        if (e.key === 'F12' || e.keyCode === 123) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+
+        // Chặn Ctrl + Shift + I (Inspect), Ctrl + Shift + J (Console), Ctrl + Shift + C (Element), Ctrl + Shift + K
+        if (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c', 'K', 'k'].includes(e.key)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+
+        // Chặn Ctrl + U (Xem mã nguồn trang HTML)
+        if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+
+        // Chặn Ctrl + S (Không cho tải file HTML về máy)
+        if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+    })();
+  </script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
@@ -8254,20 +8301,49 @@ window.google.script = {
       try {
         const hashedInput = await sha256Hex(password);
 
-        // Lấy danh sách tài khoản
-        let users = [];
-        try {
-          users = await callSupabaseSingle_('app_users', 'GET');
-        } catch (e) {
-          console.warn("Lấy từ DB thất bại, dùng LocalDB:", e);
+        // 1. Ưu tiên xác thực bảo mật qua Supabase Cloud RPC (tránh lộ danh sách app_users)
+        let matched = null;
+        if (STORAGE_MODE === 'CLOUD') {
+          try {
+            const rpcRes = await fetch(`${SUPABASE_CLOUD_URL}/rest/v1/rpc/verify_user_login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+              },
+              body: JSON.stringify({
+                p_username: username,
+                p_password_hash: hashedInput
+              })
+            });
+            if (rpcRes.ok) {
+              const rpcData = await rpcRes.json();
+              if (Array.isArray(rpcData) && rpcData.length > 0) {
+                matched = rpcData[0];
+                matched.isRpcVerified = true;
+              }
+            }
+          } catch (rpcErr) {
+            console.warn("Xác thực Cloud RPC chưa sẵn sàng, dùng phương thức dự phòng:", rpcErr);
+          }
         }
 
-        if (!users || users.length === 0) {
-          users = LocalDB.cache['app_users'] || DEFAULT_APP_USERS;
-        }
+        // 2. Dự phòng: Nếu chưa cấu hình RPC hoặc chạy LocalDB
+        if (!matched) {
+          let users = [];
+          try {
+            users = await callSupabaseSingle_('app_users', 'GET');
+          } catch (e) {
+            console.warn("Lấy từ DB thất bại, dùng LocalDB:", e);
+          }
 
-        // Tìm tài khoản khớp username
-        const matched = users.find(u => String(u.username || '').toLowerCase() === username);
+          if (!users || users.length === 0) {
+            users = LocalDB.cache['app_users'] || DEFAULT_APP_USERS;
+          }
+
+          matched = users.find(u => String(u.username || '').toLowerCase() === username);
+        }
 
         if (!matched) {
           if (errBox && errText) {
@@ -8288,7 +8364,8 @@ window.google.script = {
         }
 
         // Kiểm tra mật khẩu (hash SHA-256 hoặc chuỗi plain text)
-        const isPasswordCorrect = (matched.password_hash === hashedInput) ||
+        const isPasswordCorrect = matched.isRpcVerified ||
+                                  (matched.password_hash === hashedInput) ||
                                   (matched.password_hash === password) ||
                                   (matched.password === password);
 
