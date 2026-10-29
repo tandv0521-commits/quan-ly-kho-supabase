@@ -7220,6 +7220,7 @@ window.google.script = {
       const num = parseSmartNumber(raw);
       onRowQtyChange(rowId, num);
       updateRowPackCalc(rowId);
+      if (typeof validateAndHighlightVoucherRow === 'function') validateAndHighlightVoucherRow(rowId);
     }
 
     function onRowQtyBlur(rowId, el) {
@@ -7227,6 +7228,7 @@ window.google.script = {
       el.value = num > 0 ? formatNumber(num) : '';
       onRowQtyChange(rowId, num);
       updateRowPackCalc(rowId);
+      if (typeof validateAndHighlightVoucherRow === 'function') validateAndHighlightVoucherRow(rowId);
     }
 
     function onRowQtyFocus(rowId, el) {
@@ -7245,6 +7247,7 @@ window.google.script = {
       const num = parseSmartNumber(raw);
       onNhapTraQtyChange(rowId, num);
       updateNhapTraRowPackCalc(rowId);
+      if (typeof validateAndHighlightNhapTraRow === 'function') validateAndHighlightNhapTraRow(rowId);
     }
 
     function onNhapTraQtyBlur(rowId, el) {
@@ -7252,6 +7255,7 @@ window.google.script = {
       el.value = num > 0 ? formatNumber(num) : '';
       onNhapTraQtyChange(rowId, num);
       updateNhapTraRowPackCalc(rowId);
+      if (typeof validateAndHighlightNhapTraRow === 'function') validateAndHighlightNhapTraRow(rowId);
     }
 
     function onNhapTraQtyFocus(rowId, el) {
@@ -12533,6 +12537,7 @@ window.google.script = {
             <input type="text" id="input_code_${rowId}" value="${rowObj.code}" autocomplete="off"
                    oninput="handleCodeInput('${rowId}', this.value)"
                    onfocus="handleCodeInput('${rowId}', this.value)"
+                   onblur="onRowCodeBlur('${rowId}', this.value)"
                    onkeydown="handleCodeKeydown(event, '${rowId}')"
                    placeholder="Nhập mã..." 
                    class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono font-bold text-xs uppercase">
@@ -12579,6 +12584,7 @@ window.google.script = {
 
       if (rowObj.code) onRowCodeSelect(rowId, rowObj.code, false);
       updateRowPackCalc(rowId);
+      if (typeof validateAndHighlightVoucherRow === 'function') validateAndHighlightVoucherRow(rowId);
 
       if (autoFocus) {
         setTimeout(() => {
@@ -12605,10 +12611,144 @@ window.google.script = {
       rows.forEach((td, idx) => { td.innerText = idx + 1; });
     }
 
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU NHẬP / XUẤT KHO
+    function validateAndHighlightVoucherRow(rowId) {
+      const tr = document.getElementById(`tr_${rowId}`);
+      if (!tr) return null;
+
+      const codeInp = document.getElementById(`input_code_${rowId}`);
+      const qtyInp = document.getElementById(`input_qty_${rowId}`);
+      const nameEl = document.getElementById(`name_${rowId}`);
+      const unitEl = document.getElementById(`unit_${rowId}`);
+      const stockEl = document.getElementById(`stock_${rowId}`);
+
+      const codeVal = (codeInp ? codeInp.value : '').trim();
+      const rawQty = qtyInp ? qtyInp.value : '';
+      const qtyVal = parseSmartNumber(rawQty);
+
+      const hasCode = codeVal !== '';
+      const itemInMap = hasCode ? (inventoryMap[codeVal.toLowerCase()] || (window.masterProductMap && window.masterProductMap[codeVal.toLowerCase()])) : null;
+      const isCodeValid = !!itemInMap;
+      const isQtyValid = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qtyVal) && qtyVal > 0);
+
+      let isError = false;
+      let errorMsg = '';
+      let isCodeError = false;
+      let isQtyError = false;
+
+      if (!hasCode && !isQtyValid) {
+        isError = true;
+        errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
+        isCodeError = true;
+        isQtyError = true;
+      } else if (!hasCode && isQtyValid) {
+        isError = true;
+        errorMsg = 'Chưa điền mã sản phẩm';
+        isCodeError = true;
+      } else if (hasCode && !isCodeValid) {
+        isError = true;
+        errorMsg = `Mã [${codeVal.toUpperCase()}] chưa có trong kho`;
+        isCodeError = true;
+      } else if (hasCode && isCodeValid && !isQtyValid) {
+        isError = true;
+        errorMsg = 'Chưa điền số lượng hoặc số lượng phải lớn hơn 0';
+        isQtyError = true;
+      }
+
+      if (isError) {
+        tr.style.setProperty('background-color', '#fff1f2', 'important');
+        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
+        tr.setAttribute('data-has-error', 'true');
+        tr.setAttribute('data-error-msg', errorMsg);
+
+        if (codeInp) {
+          if (isCodeError) {
+            codeInp.style.setProperty('border-color', '#e11d48', 'important');
+            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
+            codeInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            codeInp.style.removeProperty('border-color');
+            codeInp.style.removeProperty('background-color');
+            codeInp.style.removeProperty('color');
+          }
+        }
+
+        if (qtyInp) {
+          if (isQtyError) {
+            qtyInp.style.setProperty('border-color', '#e11d48', 'important');
+            qtyInp.style.setProperty('background-color', '#fff1f2', 'important');
+            qtyInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            qtyInp.style.removeProperty('border-color');
+            qtyInp.style.removeProperty('background-color');
+            qtyInp.style.removeProperty('color');
+          }
+        }
+
+        if (nameEl) {
+          if (hasCode && !isCodeValid) {
+            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          } else if (!hasCode) {
+            nameEl.innerHTML = '<span class="text-rose-500 italic text-xs">⚠️ Chưa chọn mã</span>';
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          }
+        }
+
+        return { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError };
+      } else {
+        // Hợp lệ -> Khôi phục style bình thường
+        tr.style.removeProperty('background-color');
+        tr.style.removeProperty('box-shadow');
+        tr.removeAttribute('data-has-error');
+        tr.removeAttribute('data-error-msg');
+
+        if (codeInp) {
+          codeInp.style.removeProperty('border-color');
+          codeInp.style.removeProperty('background-color');
+          codeInp.style.removeProperty('color');
+        }
+        if (qtyInp) {
+          qtyInp.style.removeProperty('border-color');
+          qtyInp.style.removeProperty('background-color');
+          qtyInp.style.removeProperty('color');
+        }
+        if (nameEl && itemInMap) {
+          nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
+          if (unitEl) unitEl.innerText = itemInMap.unit || '-';
+          if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
+        }
+        return null;
+      }
+    }
+
+    function onRowCodeBlur(rowId, val) {
+      setTimeout(() => {
+        const cleanCode = String(val || '').trim();
+        if (cleanCode) {
+          const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
+          if (item) {
+            onRowCodeSelect(rowId, item.code, false);
+          } else {
+            const r = voucherRows.find(x => x.id === rowId);
+            if (r) r.code = cleanCode.toUpperCase();
+            const inp = document.getElementById(`input_code_${rowId}`);
+            if (inp) inp.value = cleanCode.toUpperCase();
+            validateAndHighlightVoucherRow(rowId);
+            calculateVoucherSummary();
+          }
+        } else {
+          validateAndHighlightVoucherRow(rowId);
+          calculateVoucherSummary();
+        }
+      }, 180);
+    }
+
     function onRowCodeSelect(rowId, code, shouldValidate = true) {
       const cleanCode = String(code || "").trim();
       const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
-      const isNhap = (currentVoucherType === 'NHAP');
 
       const finalCode = item ? item.code : cleanCode.toUpperCase();
 
@@ -12616,44 +12756,25 @@ window.google.script = {
       if (input) input.value = finalCode;
 
       const r = voucherRows.find(x => x.id === rowId);
-      if (r) r.code = finalCode;
+      if (r) {
+        r.code = finalCode;
+        r.name = item ? item.name : `Sản phẩm ${finalCode}`;
+        r.unit = item ? item.unit : 'Cái';
+      }
 
       const nameEl = document.getElementById(`name_${rowId}`);
       const unitEl = document.getElementById(`unit_${rowId}`);
       const stockEl = document.getElementById(`stock_${rowId}`);
 
       if (item) {
-        if (nameEl) nameEl.innerHTML = `<span class="text-slate-900 font-medium">${item.name}</span>`;
+        if (nameEl) nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(item.name)}</span>`;
         if (unitEl) unitEl.innerText = item.unit || '-';
         if (stockEl) stockEl.innerText = formatNumber(item.stock);
-        if (r) { r.name = item.name; r.unit = item.unit; }
       } else {
         if (cleanCode) {
-          if (isNhap) {
-            const defaultName = r && r.name && !r.name.includes("Mã mới") ? r.name : `Sản phẩm ${finalCode}`;
-            const defaultUnit = r && r.unit ? r.unit : 'Cái';
-            if (r) { r.name = defaultName; r.unit = defaultUnit; }
-
-            if (nameEl) nameEl.innerHTML = `
-              <div class="flex items-center space-x-1">
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 shrink-0">MÃ MỚI</span>
-                <input type="text" id="input_name_${rowId}" value="${defaultName}" 
-                       oninput="onRowNameChange('${rowId}', this.value)" 
-                       placeholder="Nhập tên sản phẩm..." 
-                       class="w-full px-2 py-0.5 text-xs border border-amber-300 rounded font-semibold text-slate-800 bg-amber-50/40 focus:ring-1 focus:ring-amber-500">
-              </div>
-            `;
-            if (unitEl) unitEl.innerHTML = `
-              <input type="text" id="input_unit_${rowId}" value="${defaultUnit}" 
-                     oninput="onRowUnitChange('${rowId}', this.value)" 
-                     class="w-14 px-1 py-0.5 text-xs text-center border border-amber-300 rounded font-semibold text-slate-800 bg-amber-50/40 focus:ring-1 focus:ring-amber-500">
-            `;
-            if (stockEl) stockEl.innerText = '0 (Mới)';
-          } else {
-            if (nameEl) nameEl.innerHTML = '<span class="text-rose-600 font-bold">⚠️ Mã chưa có trong kho</span>';
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          }
+          if (nameEl) nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+          if (unitEl) unitEl.innerText = '-';
+          if (stockEl) stockEl.innerText = '-';
         } else {
           if (nameEl) nameEl.innerText = '-';
           if (unitEl) unitEl.innerText = '-';
@@ -12663,6 +12784,7 @@ window.google.script = {
 
       closeAllDropdowns();
       updateRowPackCalc(rowId);
+      validateAndHighlightVoucherRow(rowId);
       if (shouldValidate) calculateVoucherSummary();
     }
 
@@ -12739,18 +12861,16 @@ window.google.script = {
 
       voucherRows.forEach(r => {
         const codeEl = document.getElementById(`input_code_${r.id}`);
-        const nameEl = document.getElementById(`input_name_${r.id}`);
-        const unitEl = document.getElementById(`input_unit_${r.id}`);
         const qtyEl = document.getElementById(`input_qty_${r.id}`);
         const qlEl = document.getElementById(`input_quality_${r.id}`);
         const noteEl = document.getElementById(`input_note_${r.id}`);
         
         const inputVal = codeEl ? codeEl.value.trim() : r.code;
-        const item = inventoryMap[inputVal.toLowerCase()];
+        const item = inventoryMap[inputVal.toLowerCase()] || (window.masterProductMap && window.masterProductMap[inputVal.toLowerCase()]);
         
         r.code = item ? item.code : inputVal.toUpperCase();
-        r.name = nameEl ? nameEl.value.trim() : (item ? item.name : (r.name || `Sản phẩm ${r.code}`));
-        r.unit = unitEl ? unitEl.value.trim() : (item ? item.unit : (r.unit || 'Cái'));
+        r.name = item ? item.name : (r.name || `Sản phẩm ${r.code}`);
+        r.unit = item ? item.unit : (r.unit || 'Cái');
 
         if (codeEl) codeEl.value = r.code;
         if (qtyEl) r.quantity = parseSmartNumber(qtyEl.value);
@@ -12768,57 +12888,63 @@ window.google.script = {
         return;
       }
 
-      // KIỂM TRA CHẶT CHẼ: Không cho phép lưu khi có dòng trống hoặc thiếu mã/số lượng
+      // KIỂM TRA CHẶT CHẼ TOÀN BỘ VÀ ĐÁNH DẤU CẢNH BÁO ĐỎ TẤT CẢ CÁC DÒNG LỖI:
+      // BẮT BUỘC 100% MÃ PHẢI TỒN TẠI TRONG KHO VÀ SỐ LƯỢNG > 0
       const invalidRowErrors = [];
       voucherRows.forEach((r, idx) => {
-        const rowNo = idx + 1;
-        const code = String(r.code || '').trim();
-        const rawQty = r.quantity;
-        const qty = parseSmartNumber(rawQty);
-        const hasCode = code !== '';
-        const hasQty = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qty) && qty > 0);
-
-        if (!hasCode && !hasQty) {
-          invalidRowErrors.push(`Dòng ${rowNo}: Chưa điền mã hàng và số lượng (dòng trống)`);
-        } else if (!hasCode && hasQty) {
-          invalidRowErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm (số lượng: ${qty})`);
-        } else if (hasCode && !hasQty) {
-          invalidRowErrors.push(`Dòng ${rowNo} [${code}]: Chưa điền số lượng hoặc số lượng phải lớn hơn 0`);
+        const err = validateAndHighlightVoucherRow(r.id);
+        if (err) {
+          invalidRowErrors.push({
+            rowIndex: idx + 1,
+            rowId: r.id,
+            code: err.codeVal,
+            qty: err.qtyVal,
+            msg: err.errorMsg,
+            isCodeError: err.isCodeError,
+            isQtyError: err.isQtyError
+          });
         }
       });
 
       if (invalidRowErrors.length > 0) {
+        // Tự động cuộn đến dòng lỗi đầu tiên và focus
+        const firstErrTr = document.getElementById(`tr_${invalidRowErrors[0].rowId}`);
+        if (firstErrTr) {
+          firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const targetInput = invalidRowErrors[0].isCodeError 
+            ? document.getElementById(`input_code_${invalidRowErrors[0].rowId}`)
+            : document.getElementById(`input_qty_${invalidRowErrors[0].rowId}`);
+          if (targetInput) setTimeout(() => targetInput.focus(), 300);
+        }
+
         Swal.fire({
-          icon: 'warning',
-          title: 'Chưa đủ thông tin mặt hàng',
+          icon: 'error',
+          title: 'Không thể lưu phiếu!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
               <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
-                Không thể lưu phiếu vì phát hiện <b>${invalidRowErrors.length} dòng</b> chưa điền đầy đủ Mã hàng hoặc Số lượng:
+                Không thể lưu phiếu vì phát hiện <b>${invalidRowErrors.length} dòng</b> không hợp lệ. Các dòng này đã được <span class="text-rose-600 underline font-bold">tô cảnh báo ĐỎ</span> trên bảng để bạn dễ dàng tìm thấy:
               </div>
-              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
-                ${invalidRowErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              <div class="max-h-52 overflow-y-auto custom-scroll bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidRowErrors.map(e => `
+                  <div class="py-1 border-b border-slate-200/60 last:border-0 flex items-start space-x-1.5 text-rose-700">
+                    <span class="font-bold shrink-0">• Dòng ${e.rowIndex}:</span>
+                    <span>${e.code ? `Mã <b class="bg-rose-100 px-1 py-0.5 rounded border border-rose-200">[${escapeHtml(e.code)}]</b> (SL: ${formatNumber(e.qty || 0)})` : '<b>Chưa điền mã</b>'} - <span>${escapeHtml(e.msg)}</span></span>
+                  </div>
+                `).join('')}
               </div>
-              <div class="text-slate-500 italic text-[11px] pt-1">
-                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng (> 0)</b>, hoặc bấm nút xóa (<i class="bi bi-x-circle text-rose-500"></i>) ở cuối dòng đối với các dòng thừa trước khi lưu phiếu.
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 font-medium">
+                ⚠️ <b>Bắt buộc:</b> Phải sửa và thay đổi mã khớp với danh mục kho và điền số lượng > 0 cho tất cả các dòng thì mới được lưu phiếu.
               </div>
             </div>
           `,
-          confirmButtonText: 'Đã hiểu & kiểm tra lại',
-          confirmButtonColor: '#0284c7'
+          confirmButtonText: 'Đã hiểu & quay lại sửa',
+          confirmButtonColor: '#e11d48'
         });
         return;
       }
 
       const validItems = voucherRows;
-
-      if (!isNhap) {
-        const missingCodes = validItems.filter(r => !inventoryMap[r.code.toLowerCase()]);
-        if (missingCodes.length > 0) {
-          Swal.fire('Lỗi xuất kho', `Các mã sau chưa có trong bảng tồn kho: <b>${missingCodes.map(x=>x.code).join(', ')}</b>. Bạn không thể xuất mặt hàng chưa có trong kho!`, 'error');
-          return;
-        }
-      }
 
       const isEditing = !!editingVoucherNo;
       const isConverting = !!convertingFromNhapTraNo;
@@ -13134,33 +13260,46 @@ window.google.script = {
       });
 
       calculateVoucherSummary();
-      voucherRows.forEach(r => updateRowPackCalc(r.id));
+      voucherRows.forEach(r => {
+        updateRowPackCalc(r.id);
+        validateAndHighlightVoucherRow(r.id);
+      });
 
       if (notFoundRows.length > 0) {
         Swal.fire({
-          title: 'Đã nạp dữ liệu vào phiếu!',
+          icon: 'warning',
+          title: 'Phát hiện mã chưa có trong kho!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
-              <p>Đã dán thành công <b>${parsedItems.length}</b> mặt hàng vào phiếu!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}</p>
-              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
-                <div class="font-bold flex items-center space-x-1.5 text-amber-800 mb-1.5">
-                  <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 text-rose-900 rounded-xl">
+                <div class="font-bold flex items-center space-x-1.5 text-rose-700 mb-1">
+                  <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i>
                   <span>Phát hiện <b>${notFoundRows.length} dòng</b> có mã CHƯA TỒN TẠI trong kho:</span>
                 </div>
-                <div class="max-h-40 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-white/70 p-2 rounded-lg border border-amber-200/60">
-                  ${notFoundRows.map(r => `<div>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold">[${escapeHtml(r.code)}]</span> (Số lượng: ${formatNumber(r.qty)})</div>`).join('')}
-                </div>
-                <div class="mt-2 text-[11px] text-amber-800 italic">
-                  ${isNhap 
-                    ? '👉 Hệ thống vẫn dán đầy đủ các dòng trên vào bảng. Khi bạn bấm Lưu phiếu Nhập kho, các mã mới này sẽ được tự động tạo.' 
-                    : '👉 Hệ thống vẫn dán đầy đủ các dòng trên vào bảng để bạn biết và kiểm tra lại mã hoặc chỉnh sửa trước khi lưu phiếu xuất!'}
-                </div>
+                <p class="text-[11px] text-rose-800">Hệ thống đã dán toàn bộ <b>${parsedItems.length} mặt hàng</b> vào phiếu. Các dòng có mã chưa có trong kho đã được <b>đánh dấu CẢNH BÁO ĐỎ</b> trên bảng để bạn dễ tìm kiếm:</p>
+              </div>
+              <div class="max-h-48 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                ${notFoundRows.map(r => `
+                  <div class="flex items-center justify-between py-1 border-b border-slate-200/60 last:border-0">
+                    <span>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200">[${escapeHtml(r.code)}]</span></span>
+                    <span class="font-bold text-slate-700">Số lượng: ${formatNumber(r.qty)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 leading-relaxed font-medium">
+                ⚠️ <b>Bắt buộc:</b> Bạn phải sửa và thay đổi các mã này khớp với mã trong danh mục tồn kho mới được lưu phiếu!
               </div>
             </div>
           `,
-          icon: 'warning',
-          confirmButtonColor: '#d97706',
-          confirmButtonText: 'Đã hiểu'
+          confirmButtonText: 'Đã hiểu, tôi sẽ sửa lại mã',
+          confirmButtonColor: '#e11d48'
+        }).then(() => {
+          const firstErrTr = document.querySelector('#voucher-tbody tr[data-has-error="true"]');
+          if (firstErrTr) {
+            firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const inp = firstErrTr.querySelector('input');
+            if (inp) setTimeout(() => inp.focus(), 250);
+          }
         });
       } else {
         Swal.fire({
@@ -13330,6 +13469,7 @@ window.google.script = {
             <input type="text" id="input_nt_code_${rowId}" value="${rowObj.code}" autocomplete="off"
                    oninput="handleNhapTraCodeInput('${rowId}', this.value)"
                    onfocus="handleNhapTraCodeInput('${rowId}', this.value)"
+                   onblur="onNhapTraCodeBlur('${rowId}', this.value)"
                    onkeydown="handleNhapTraCodeKeydown(event, '${rowId}')"
                    placeholder="Nhập mã hàng..." 
                    class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono font-bold text-xs uppercase text-purple-900">
@@ -13376,6 +13516,7 @@ window.google.script = {
 
       if (rowObj.code) onNhapTraCodeSelect(rowId, rowObj.code, false);
       updateNhapTraRowPackCalc(rowId);
+      if (typeof validateAndHighlightNhapTraRow === 'function') validateAndHighlightNhapTraRow(rowId);
 
       if (autoFocus) {
         setTimeout(() => {
@@ -13402,33 +13543,178 @@ window.google.script = {
       rows.forEach((td, idx) => { td.innerText = idx + 1; });
     }
 
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU HÀNG NHẬP TRẢ
+    function validateAndHighlightNhapTraRow(rowId) {
+      const tr = document.getElementById(`nt_tr_${rowId}`);
+      if (!tr) return null;
+
+      const codeInp = document.getElementById(`input_nt_code_${rowId}`);
+      const qtyInp = document.getElementById(`input_nt_qty_${rowId}`);
+      const nameEl = document.getElementById(`nt_name_${rowId}`);
+      const unitEl = document.getElementById(`nt_unit_${rowId}`);
+      const stockEl = document.getElementById(`nt_stock_${rowId}`);
+
+      const codeVal = (codeInp ? codeInp.value : '').trim();
+      const rawQty = qtyInp ? qtyInp.value : '';
+      const qtyVal = parseSmartNumber(rawQty);
+
+      const hasCode = codeVal !== '';
+      const itemInMap = hasCode ? (inventoryMap[codeVal.toLowerCase()] || (window.masterProductMap && window.masterProductMap[codeVal.toLowerCase()])) : null;
+      const isCodeValid = !!itemInMap;
+      const isQtyValid = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qtyVal) && qtyVal > 0);
+
+      let isError = false;
+      let errorMsg = '';
+      let isCodeError = false;
+      let isQtyError = false;
+
+      if (!hasCode && !isQtyValid) {
+        isError = true;
+        errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
+        isCodeError = true;
+        isQtyError = true;
+      } else if (!hasCode && isQtyValid) {
+        isError = true;
+        errorMsg = 'Chưa điền mã sản phẩm';
+        isCodeError = true;
+      } else if (hasCode && !isCodeValid) {
+        isError = true;
+        errorMsg = `Mã [${codeVal.toUpperCase()}] chưa có trong kho`;
+        isCodeError = true;
+      } else if (hasCode && isCodeValid && !isQtyValid) {
+        isError = true;
+        errorMsg = 'Chưa điền số lượng hoặc số lượng phải lớn hơn 0';
+        isQtyError = true;
+      }
+
+      if (isError) {
+        tr.style.setProperty('background-color', '#fff1f2', 'important');
+        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
+        tr.setAttribute('data-has-error', 'true');
+        tr.setAttribute('data-error-msg', errorMsg);
+
+        if (codeInp) {
+          if (isCodeError) {
+            codeInp.style.setProperty('border-color', '#e11d48', 'important');
+            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
+            codeInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            codeInp.style.removeProperty('border-color');
+            codeInp.style.removeProperty('background-color');
+            codeInp.style.removeProperty('color');
+          }
+        }
+
+        if (qtyInp) {
+          if (isQtyError) {
+            qtyInp.style.setProperty('border-color', '#e11d48', 'important');
+            qtyInp.style.setProperty('background-color', '#fff1f2', 'important');
+            qtyInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            qtyInp.style.removeProperty('border-color');
+            qtyInp.style.removeProperty('background-color');
+            qtyInp.style.removeProperty('color');
+          }
+        }
+
+        if (nameEl) {
+          if (hasCode && !isCodeValid) {
+            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          } else if (!hasCode) {
+            nameEl.innerHTML = '<span class="text-rose-500 italic text-xs">⚠️ Chưa chọn mã</span>';
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          }
+        }
+
+        return { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError };
+      } else {
+        tr.style.removeProperty('background-color');
+        tr.style.removeProperty('box-shadow');
+        tr.removeAttribute('data-has-error');
+        tr.removeAttribute('data-error-msg');
+
+        if (codeInp) {
+          codeInp.style.removeProperty('border-color');
+          codeInp.style.removeProperty('background-color');
+          codeInp.style.removeProperty('color');
+        }
+        if (qtyInp) {
+          qtyInp.style.removeProperty('border-color');
+          qtyInp.style.removeProperty('background-color');
+          qtyInp.style.removeProperty('color');
+        }
+        if (nameEl && itemInMap) {
+          nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
+          if (unitEl) unitEl.innerText = itemInMap.unit || '-';
+          if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
+        }
+        return null;
+      }
+    }
+
+    function onNhapTraCodeBlur(rowId, val) {
+      setTimeout(() => {
+        const cleanCode = String(val || '').trim();
+        if (cleanCode) {
+          const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
+          if (item) {
+            onNhapTraCodeSelect(rowId, item.code, false);
+          } else {
+            const r = nhaptraRows.find(x => x.id === rowId);
+            if (r) r.code = cleanCode.toUpperCase();
+            const inp = document.getElementById(`input_nt_code_${rowId}`);
+            if (inp) inp.value = cleanCode.toUpperCase();
+            validateAndHighlightNhapTraRow(rowId);
+            calculateNhapTraSummary();
+          }
+        } else {
+          validateAndHighlightNhapTraRow(rowId);
+          calculateNhapTraSummary();
+        }
+      }, 180);
+    }
+
     function onNhapTraCodeSelect(rowId, code, shouldValidate = true) {
       const cleanCode = String(code || "").trim();
-      const item = inventoryMap[cleanCode.toLowerCase()];
+      const item = inventoryMap[cleanCode.toLowerCase()] || (window.masterProductMap && window.masterProductMap[cleanCode.toLowerCase()]);
       const finalCode = item ? item.code : cleanCode.toUpperCase();
 
       const input = document.getElementById(`input_nt_code_${rowId}`);
       if (input) input.value = finalCode;
 
       const r = nhaptraRows.find(x => x.id === rowId);
-      if (r) r.code = finalCode;
+      if (r) {
+        r.code = finalCode;
+        r.name = item ? item.name : `Sản phẩm ${finalCode}`;
+        r.unit = item ? item.unit : 'Cái';
+      }
 
       const nameEl = document.getElementById(`nt_name_${rowId}`);
       const unitEl = document.getElementById(`nt_unit_${rowId}`);
       const stockEl = document.getElementById(`nt_stock_${rowId}`);
 
       if (item) {
-        if (nameEl) nameEl.innerText = item.name;
+        if (nameEl) nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(item.name)}</span>`;
         if (unitEl) unitEl.innerText = item.unit || '-';
         if (stockEl) stockEl.innerText = formatNumber(item.stock);
       } else {
-        if (nameEl) nameEl.innerText = cleanCode ? '⚠️ Không có trong danh mục' : '-';
-        if (unitEl) unitEl.innerText = '-';
-        if (stockEl) stockEl.innerText = '-';
+        if (cleanCode) {
+          if (nameEl) nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+          if (unitEl) unitEl.innerText = '-';
+          if (stockEl) stockEl.innerText = '-';
+        } else {
+          if (nameEl) nameEl.innerText = '-';
+          if (unitEl) unitEl.innerText = '-';
+          if (stockEl) stockEl.innerText = '-';
+        }
       }
 
       closeAllDropdowns();
       updateNhapTraRowPackCalc(rowId);
+      validateAndHighlightNhapTraRow(rowId);
       if (shouldValidate) calculateNhapTraSummary();
     }
 
@@ -13494,55 +13780,63 @@ window.google.script = {
         return;
       }
 
-      // KIỂM TRA CHẶT CHẼ: Không cho phép lưu khi có dòng trống hoặc thiếu mã/số lượng
+      // KIỂM TRA CHẶT CHẼ TOÀN BỘ VÀ ĐÁNH DẤU CẢNH BÁO ĐỎ TẤT CẢ CÁC DÒNG LỖI:
+      // BẮT BUỘC 100% MÃ PHẢI TỒN TẠI TRONG KHO VÀ SỐ LƯỢNG > 0
       const invalidNtErrors = [];
       nhaptraRows.forEach((r, idx) => {
-        const rowNo = idx + 1;
-        const code = String(r.code || '').trim();
-        const rawQty = r.quantity;
-        const qty = parseSmartNumber(rawQty);
-        const hasCode = code !== '';
-        const hasQty = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qty) && qty > 0);
-
-        if (!hasCode && !hasQty) {
-          invalidNtErrors.push(`Dòng ${rowNo}: Chưa điền mã hàng và số lượng (dòng trống)`);
-        } else if (!hasCode && hasQty) {
-          invalidNtErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm (số lượng: ${qty})`);
-        } else if (hasCode && !hasQty) {
-          invalidNtErrors.push(`Dòng ${rowNo} [${code}]: Chưa điền số lượng hoặc số lượng phải lớn hơn 0`);
+        const err = validateAndHighlightNhapTraRow(r.id);
+        if (err) {
+          invalidNtErrors.push({
+            rowIndex: idx + 1,
+            rowId: r.id,
+            code: err.codeVal,
+            qty: err.qtyVal,
+            msg: err.errorMsg,
+            isCodeError: err.isCodeError,
+            isQtyError: err.isQtyError
+          });
         }
       });
 
       if (invalidNtErrors.length > 0) {
+        // Tự động cuộn đến dòng lỗi đầu tiên và focus
+        const firstErrTr = document.getElementById(`nt_tr_${invalidNtErrors[0].rowId}`);
+        if (firstErrTr) {
+          firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const targetInput = invalidNtErrors[0].isCodeError 
+            ? document.getElementById(`input_nt_code_${invalidNtErrors[0].rowId}`)
+            : document.getElementById(`input_nt_qty_${invalidNtErrors[0].rowId}`);
+          if (targetInput) setTimeout(() => targetInput.focus(), 300);
+        }
+
         Swal.fire({
-          icon: 'warning',
-          title: 'Chưa đủ thông tin mặt hàng hoàn trả',
+          icon: 'error',
+          title: 'Không thể lưu phiếu nhập trả!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
               <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
-                Không thể lưu phiếu vì phát hiện <b>${invalidNtErrors.length} dòng</b> chưa điền đầy đủ Mã hàng hoặc Số lượng:
+                Không thể lưu phiếu vì phát hiện <b>${invalidNtErrors.length} dòng</b> không hợp lệ. Các dòng này đã được <span class="text-rose-600 underline font-bold">tô cảnh báo ĐỎ</span> trên bảng:
               </div>
-              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
-                ${invalidNtErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              <div class="max-h-52 overflow-y-auto custom-scroll bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidNtErrors.map(e => `
+                  <div class="py-1 border-b border-slate-200/60 last:border-0 flex items-start space-x-1.5 text-rose-700">
+                    <span class="font-bold shrink-0">• Dòng ${e.rowIndex}:</span>
+                    <span>${e.code ? `Mã <b class="bg-rose-100 px-1 py-0.5 rounded border border-rose-200">[${escapeHtml(e.code)}]</b> (SL: ${formatNumber(e.qty || 0)})` : '<b>Chưa điền mã</b>'} - <span>${escapeHtml(e.msg)}</span></span>
+                  </div>
+                `).join('')}
               </div>
-              <div class="text-slate-500 italic text-[11px] pt-1">
-                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng (> 0)</b>, hoặc bấm nút xóa (<i class="bi bi-x-circle text-rose-500"></i>) ở cuối dòng đối với các dòng thừa trước khi lưu phiếu.
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 font-medium">
+                ⚠️ <b>Bắt buộc:</b> Phải sửa và thay đổi mã khớp với danh mục kho và điền số lượng > 0 cho tất cả các dòng thì mới được lưu phiếu.
               </div>
             </div>
           `,
-          confirmButtonText: 'Đã hiểu & kiểm tra lại',
-          confirmButtonColor: '#0284c7'
+          confirmButtonText: 'Đã hiểu & quay lại sửa',
+          confirmButtonColor: '#e11d48'
         });
         return;
       }
 
       const validItems = nhaptraRows;
-
-      const missingCodes = validItems.filter(r => !inventoryMap[r.code.toLowerCase()]);
-      if (missingCodes.length > 0) {
-        Swal.fire('Lỗi', `Các mã sau chưa có trong danh mục kho: <b>${missingCodes.map(x=>x.code).join(', ')}</b>. Không thể nhận trả mặt hàng chưa từng tồn tại!`, 'error');
-        return;
-      }
 
       const isEditing = !!editingNhapTraNo;
       Swal.fire({
@@ -18564,6 +18858,7 @@ window.google.script = {
             <input type="text" id="input_dp_code_${rowId}" value="${rowObj.code}" autocomplete="off"
                    oninput="handleDispatchCodeInput('${rowId}', this.value)"
                    onfocus="handleDispatchCodeInput('${rowId}', this.value)"
+                   onblur="onDispatchCodeBlur('${rowId}', this.value)"
                    onkeydown="handleDispatchCodeKeydown(event, '${rowId}')"
                    placeholder="Nhập mã hàng..." 
                    class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono font-bold text-xs uppercase text-teal-900 bg-white">
@@ -18592,6 +18887,7 @@ window.google.script = {
       updateDispatchRowIndexes();
 
       if (rowObj.code) onDispatchRowCodeSelect(rowId, rowObj.code, false);
+      if (typeof validateAndHighlightDispatchRow === 'function') validateAndHighlightDispatchRow(rowId);
 
       if (autoFocus) {
         setTimeout(() => {
@@ -18635,6 +18931,140 @@ window.google.script = {
       if (rowBadge) rowBadge.innerText = `${dispatchFormRows.length} dòng`;
     }
 
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU PHÁT HÀNG
+    function validateAndHighlightDispatchRow(rowId) {
+      const tr = document.getElementById(`tr_${rowId}`);
+      if (!tr) return null;
+
+      const codeInp = document.getElementById(`input_dp_code_${rowId}`);
+      const qtyInp = document.getElementById(`input_dp_qty_${rowId}`);
+      const nameEl = document.getElementById(`dp_name_${rowId}`);
+      const unitEl = document.getElementById(`dp_unit_${rowId}`);
+      const stockEl = document.getElementById(`dp_stock_${rowId}`);
+
+      const codeVal = (codeInp ? codeInp.value : '').trim();
+      const rawQty = qtyInp ? qtyInp.value : '';
+      const qtyVal = parseSmartNumber(rawQty);
+
+      const hasCode = codeVal !== '';
+      const itemInMap = hasCode ? getFullProductCatalogItem(codeVal) : null;
+      const isCodeValid = !!itemInMap;
+      const isQtyValid = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qtyVal) && qtyVal > 0);
+
+      let isError = false;
+      let errorMsg = '';
+      let isCodeError = false;
+      let isQtyError = false;
+
+      if (!hasCode && !isQtyValid) {
+        isError = true;
+        errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
+        isCodeError = true;
+        isQtyError = true;
+      } else if (!hasCode && isQtyValid) {
+        isError = true;
+        errorMsg = 'Chưa điền mã sản phẩm';
+        isCodeError = true;
+      } else if (hasCode && !isCodeValid) {
+        isError = true;
+        errorMsg = `Mã [${codeVal.toUpperCase()}] chưa có trong kho`;
+        isCodeError = true;
+      } else if (hasCode && isCodeValid && !isQtyValid) {
+        isError = true;
+        errorMsg = 'Chưa điền số lượng phát hoặc số lượng phải lớn hơn 0';
+        isQtyError = true;
+      }
+
+      if (isError) {
+        tr.style.setProperty('background-color', '#fff1f2', 'important');
+        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
+        tr.setAttribute('data-has-error', 'true');
+        tr.setAttribute('data-error-msg', errorMsg);
+
+        if (codeInp) {
+          if (isCodeError) {
+            codeInp.style.setProperty('border-color', '#e11d48', 'important');
+            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
+            codeInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            codeInp.style.removeProperty('border-color');
+            codeInp.style.removeProperty('background-color');
+            codeInp.style.removeProperty('color');
+          }
+        }
+
+        if (qtyInp) {
+          if (isQtyError) {
+            qtyInp.style.setProperty('border-color', '#e11d48', 'important');
+            qtyInp.style.setProperty('background-color', '#fff1f2', 'important');
+            qtyInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            qtyInp.style.removeProperty('border-color');
+            qtyInp.style.removeProperty('background-color');
+            qtyInp.style.removeProperty('color');
+          }
+        }
+
+        if (nameEl) {
+          if (hasCode && !isCodeValid) {
+            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          } else if (!hasCode) {
+            nameEl.innerHTML = '<span class="text-rose-500 italic text-xs">⚠️ Chưa chọn mã</span>';
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          }
+        }
+
+        return { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError };
+      } else {
+        tr.style.removeProperty('background-color');
+        tr.style.removeProperty('box-shadow');
+        tr.removeAttribute('data-has-error');
+        tr.removeAttribute('data-error-msg');
+
+        if (codeInp) {
+          codeInp.style.removeProperty('border-color');
+          codeInp.style.removeProperty('background-color');
+          codeInp.style.removeProperty('color');
+        }
+        if (qtyInp) {
+          qtyInp.style.removeProperty('border-color');
+          qtyInp.style.removeProperty('background-color');
+          qtyInp.style.removeProperty('color');
+        }
+        if (nameEl && itemInMap) {
+          nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
+          if (unitEl) unitEl.innerText = itemInMap.unit || '-';
+          if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
+        }
+        return null;
+      }
+    }
+
+    function onDispatchCodeBlur(rowId, val) {
+      setTimeout(() => {
+        const cleanCode = String(val || '').trim();
+        if (cleanCode) {
+          const item = getFullProductCatalogItem(cleanCode);
+          if (item) {
+            onDispatchRowCodeSelect(rowId, item.code, false);
+          } else {
+            const r = dispatchFormRows.find(x => x.id === rowId);
+            if (r) r.code = cleanCode.toUpperCase();
+            const inp = document.getElementById(`input_dp_code_${rowId}`);
+            if (inp) inp.value = cleanCode.toUpperCase();
+            validateAndHighlightDispatchRow(rowId);
+            calculateDispatchFormSummary();
+          }
+        } else {
+          validateAndHighlightDispatchRow(rowId);
+          calculateDispatchFormSummary();
+        }
+      }, 180);
+    }
+
     function onDispatchRowCodeSelect(rowId, code, shouldValidate = true) {
       const cleanCode = String(code || "").trim();
       const item = getFullProductCatalogItem(cleanCode);
@@ -18644,27 +19074,34 @@ window.google.script = {
       if (input) input.value = finalCode;
 
       const r = dispatchFormRows.find(x => x.id === rowId);
-      if (r) r.code = finalCode;
+      if (r) {
+        r.code = finalCode;
+        r.name = item ? item.name : `Sản phẩm ${finalCode}`;
+        r.unit = item ? item.unit : 'Cái';
+      }
 
       const nameEl = document.getElementById(`dp_name_${rowId}`);
       const unitEl = document.getElementById(`dp_unit_${rowId}`);
       const stockEl = document.getElementById(`dp_stock_${rowId}`);
 
       if (item) {
-        if (nameEl) nameEl.innerHTML = `<span class="text-slate-900 font-medium">${item.name}</span>`;
+        if (nameEl) nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(item.name)}</span>`;
         if (unitEl) unitEl.innerText = item.unit || '-';
         if (stockEl) stockEl.innerText = formatNumber(item.stock);
-        if (r) { r.name = item.name; r.unit = item.unit; }
       } else {
-        const defaultName = (r && r.name) ? r.name : (cleanCode ? `Sản phẩm ${finalCode}` : '');
-        const defaultUnit = (r && r.unit) ? r.unit : 'Cái';
-        if (nameEl) nameEl.innerHTML = `<span class="text-slate-700 font-semibold">${defaultName || (cleanCode ? 'Mã ngoài danh mục' : '-')}</span>`;
-        if (unitEl) unitEl.innerText = defaultUnit || '-';
-        if (stockEl) stockEl.innerText = '-';
-        if (r) { r.name = defaultName; r.unit = defaultUnit; }
+        if (cleanCode) {
+          if (nameEl) nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+          if (unitEl) unitEl.innerText = '-';
+          if (stockEl) stockEl.innerText = '-';
+        } else {
+          if (nameEl) nameEl.innerText = '-';
+          if (unitEl) unitEl.innerText = '-';
+          if (stockEl) stockEl.innerText = '-';
+        }
       }
 
       closeAllDropdowns();
+      validateAndHighlightDispatchRow(rowId);
       if (shouldValidate) calculateDispatchFormSummary();
     }
 
@@ -18672,6 +19109,7 @@ window.google.script = {
       const r = dispatchFormRows.find(x => x.id === rowId);
       if (r) r.quantity = parseSmartNumber(inputEl.value);
       calculateDispatchFormSummary();
+      if (typeof validateAndHighlightDispatchRow === 'function') validateAndHighlightDispatchRow(rowId);
     }
 
     function onDispatchQtyFocus(rowId, inputEl) {
@@ -18683,6 +19121,7 @@ window.google.script = {
       if (val > 0) inputEl.value = formatNumber(val);
       else inputEl.value = '';
       calculateDispatchFormSummary();
+      if (typeof validateAndHighlightDispatchRow === 'function') validateAndHighlightDispatchRow(rowId);
     }
 
     function onDispatchNoteChange(rowId, val) {
@@ -18855,46 +19294,60 @@ window.google.script = {
         }
       });
 
-      // KIỂM TRA CHẶT CHẼ BẢNG BỔ SUNG THỦ CÔNG: Không cho phép dòng thiếu mã hoặc thiếu số lượng
+      // KIỂM TRA CHẶT CHẼ BẢNG BỔ SUNG: BẮT BUỘC MÃ PHẢI TỒN TẠI TRONG KHO VÀ SỐ LƯỢNG > 0
       const invalidDpErrors = [];
       dispatchFormRows.forEach((r, idx) => {
-        const rowNo = idx + 1;
-        const code = String(r.code || '').trim();
-        const rawQty = r.quantity;
-        const qty = parseSmartNumber(rawQty);
-        const hasCode = code !== '';
-        const hasQty = (rawQty !== '' && rawQty !== null && rawQty !== undefined && !isNaN(qty) && qty > 0);
-
-        if (!hasCode && !hasQty) {
-          if (dispatchFormRows.length > 1 || validFastList.length === 0) {
-            invalidDpErrors.push(`Bảng bổ sung - Dòng ${rowNo}: Chưa điền mã hàng và số lượng`);
-          }
-        } else if (!hasCode && hasQty) {
-          invalidDpErrors.push(`Bảng bổ sung - Dòng ${rowNo}: Chưa điền mã sản phẩm (số lượng: ${qty})`);
-        } else if (hasCode && !hasQty) {
-          invalidDpErrors.push(`Bảng bổ sung - Dòng ${rowNo} [${code}]: Chưa điền số lượng phát hoặc số lượng phải lớn hơn 0`);
+        // Nếu chỉ có 1 dòng duy nhất và hoàn toàn trống thì chỉ bỏ qua nếu đã có hàng ở bảng nhanh
+        if (dispatchFormRows.length === 1 && !r.code && (!r.quantity || r.quantity <= 0) && validFastList.length > 0) {
+          return;
+        }
+        const err = validateAndHighlightDispatchRow(r.id);
+        if (err) {
+          invalidDpErrors.push({
+            rowIndex: idx + 1,
+            rowId: r.id,
+            code: err.codeVal,
+            qty: err.qtyVal,
+            msg: err.errorMsg,
+            isCodeError: err.isCodeError,
+            isQtyError: err.isQtyError
+          });
         }
       });
 
       if (invalidDpErrors.length > 0) {
+        const firstErrTr = document.getElementById(`tr_${invalidDpErrors[0].rowId}`);
+        if (firstErrTr) {
+          firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const targetInput = invalidDpErrors[0].isCodeError 
+            ? document.getElementById(`input_dp_code_${invalidDpErrors[0].rowId}`)
+            : document.getElementById(`input_dp_qty_${invalidDpErrors[0].rowId}`);
+          if (targetInput) setTimeout(() => targetInput.focus(), 300);
+        }
+
         Swal.fire({
-          icon: 'warning',
-          title: 'Chưa đủ thông tin mặt hàng phát',
+          icon: 'error',
+          title: 'Không thể lưu phiếu phát hàng!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
               <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
-                Không thể lưu phiếu vì phát hiện <b>${invalidDpErrors.length} dòng</b> chưa điền đầy đủ Mã hàng hoặc Số lượng:
+                Không thể lưu phiếu vì phát hiện <b>${invalidDpErrors.length} dòng</b> không hợp lệ. Các dòng này đã được <span class="text-rose-600 underline font-bold">tô cảnh báo ĐỎ</span> trên bảng:
               </div>
-              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
-                ${invalidDpErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              <div class="max-h-52 overflow-y-auto custom-scroll bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidDpErrors.map(e => `
+                  <div class="py-1 border-b border-slate-200/60 last:border-0 flex items-start space-x-1.5 text-rose-700">
+                    <span class="font-bold shrink-0">• Dòng ${e.rowIndex}:</span>
+                    <span>${e.code ? `Mã <b class="bg-rose-100 px-1 py-0.5 rounded border border-rose-200">[${escapeHtml(e.code)}]</b> (SL: ${formatNumber(e.qty || 0)})` : '<b>Chưa điền mã</b>'} - <span>${escapeHtml(e.msg)}</span></span>
+                  </div>
+                `).join('')}
               </div>
-              <div class="text-slate-500 italic text-[11px] pt-1">
-                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng (> 0)</b>, hoặc bấm nút xóa (thùng rác) đối với dòng thừa trước khi lưu phiếu!
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 font-medium">
+                ⚠️ <b>Bắt buộc:</b> Phải sửa và thay đổi mã khớp với danh mục kho và điền số lượng phát > 0 thì mới được lưu phiếu.
               </div>
             </div>
           `,
-          confirmButtonText: 'Đã hiểu & kiểm tra lại',
-          confirmButtonColor: '#0d9488'
+          confirmButtonText: 'Đã hiểu & quay lại sửa',
+          confirmButtonColor: '#e11d48'
         });
         return;
       }
@@ -23822,30 +24275,45 @@ window.google.script = {
       });
 
       calculateDispatchFormSummary();
+      dispatchFormRows.forEach(r => {
+        validateAndHighlightDispatchRow(r.id);
+      });
 
       if (notFoundRows.length > 0) {
         Swal.fire({
-          title: 'Đã nạp dữ liệu phát hàng!',
+          icon: 'warning',
+          title: 'Phát hiện mã chưa có trong kho!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
-              <p>Đã đọc và hiển thị <b>${parsedItems.length}</b> mặt hàng vào phiếu phát hàng!${skippedHeader ? ' (Đã tự động loại bỏ dòng tiêu đề)' : ''}</p>
-              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
-                <div class="font-bold flex items-center space-x-1.5 text-amber-800 mb-1.5">
-                  <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 text-rose-900 rounded-xl">
+                <div class="font-bold flex items-center space-x-1.5 text-rose-700 mb-1">
+                  <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i>
                   <span>Phát hiện <b>${notFoundRows.length} dòng</b> có mã CHƯA TỒN TẠI trong kho:</span>
                 </div>
-                <div class="max-h-40 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-white/70 p-2 rounded-lg border border-amber-200/60">
-                  ${notFoundRows.map(r => `<div>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold">[${escapeHtml(r.code)}]</span> (Số lượng: ${formatNumber(r.qty)})</div>`).join('')}
-                </div>
-                <div class="mt-2 text-[11px] text-amber-800 italic">
-                  👉 Hệ thống vẫn đã dán đầy đủ các dòng này vào bảng để bạn kiểm tra và đối soát.
-                </div>
+                <p class="text-[11px] text-rose-800">Đã dán thành công <b>${parsedItems.length}</b> mặt hàng vào phiếu phát hàng. Các dòng có mã chưa có trong kho đã được <b>đánh dấu CẢNH BÁO ĐỎ</b> trên bảng:</p>
+              </div>
+              <div class="max-h-48 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                ${notFoundRows.map(r => `
+                  <div class="flex items-center justify-between py-1 border-b border-slate-200/60 last:border-0">
+                    <span>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200">[${escapeHtml(r.code)}]</span></span>
+                    <span class="font-bold text-slate-700">Số lượng: ${formatNumber(r.qty)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 leading-relaxed font-medium">
+                ⚠️ <b>Bắt buộc:</b> Phải sửa và thay đổi các mã này khớp với danh mục kho mới cho phép lưu phiếu phát hàng!
               </div>
             </div>
           `,
-          icon: 'warning',
-          confirmButtonColor: '#0d9488',
-          confirmButtonText: 'Đã hiểu'
+          confirmButtonText: 'Đã hiểu, tôi sẽ sửa lại mã',
+          confirmButtonColor: '#e11d48'
+        }).then(() => {
+          const firstErrTr = document.querySelector('#dispatch-form-tbody tr[data-has-error="true"]');
+          if (firstErrTr) {
+            firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const inp = firstErrTr.querySelector('input');
+            if (inp) setTimeout(() => inp.focus(), 250);
+          }
         });
       } else {
         Swal.fire({
@@ -28879,6 +29347,7 @@ window.google.script = {
       }
 
       calculateKiemKeSummary();
+      if (typeof validateAndHighlightKiemKeRow === 'function') validateAndHighlightKiemKeRow(tr);
     }
 
     function removeKiemKeRow(btn) {
@@ -29011,6 +29480,107 @@ window.google.script = {
       }
     }
 
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU KIỂM KÊ
+    function validateAndHighlightKiemKeRow(tr) {
+      if (!tr) return null;
+
+      const codeInp = tr.querySelector('.row-code');
+      const actualInp = tr.querySelector('.row-actual-qty');
+      const nameDisp = tr.querySelector('.row-name-display');
+
+      const codeVal = (codeInp ? codeInp.value : '').trim().toUpperCase();
+      const rawActual = actualInp ? actualInp.value.trim() : '';
+      const actualVal = rawActual !== '' ? Number(rawActual) : NaN;
+
+      const hasCode = codeVal !== '';
+      const itemInMap = hasCode ? getFullProductCatalogItem(codeVal) : null;
+      const isCodeValid = !!itemInMap;
+      const hasQty = (rawActual !== '' && !isNaN(actualVal));
+
+      let isError = false;
+      let errorMsg = '';
+      let isCodeError = false;
+      let isQtyError = false;
+
+      if (!hasCode && !hasQty) {
+        isError = true;
+        errorMsg = 'Dòng trống (chưa điền mã và số lượng kiểm kê)';
+        isCodeError = true;
+        isQtyError = true;
+      } else if (!hasCode && hasQty) {
+        isError = true;
+        errorMsg = 'Chưa điền mã sản phẩm kiểm kê';
+        isCodeError = true;
+      } else if (hasCode && !isCodeValid) {
+        isError = true;
+        errorMsg = `Mã [${codeVal}] chưa có trong kho`;
+        isCodeError = true;
+      } else if (hasCode && isCodeValid && !hasQty) {
+        isError = true;
+        errorMsg = 'Chưa điền số lượng kiểm kê thực tế';
+        isQtyError = true;
+      }
+
+      if (isError) {
+        tr.style.setProperty('background-color', '#fff1f2', 'important');
+        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
+        tr.setAttribute('data-has-error', 'true');
+        tr.setAttribute('data-error-msg', errorMsg);
+
+        if (codeInp) {
+          if (isCodeError) {
+            codeInp.style.setProperty('border-color', '#e11d48', 'important');
+            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
+            codeInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            codeInp.style.removeProperty('border-color');
+            codeInp.style.removeProperty('background-color');
+            codeInp.style.removeProperty('color');
+          }
+        }
+
+        if (actualInp) {
+          if (isQtyError) {
+            actualInp.style.setProperty('border-color', '#e11d48', 'important');
+            actualInp.style.setProperty('background-color', '#fff1f2', 'important');
+            actualInp.style.setProperty('color', '#be123c', 'important');
+          } else {
+            actualInp.style.removeProperty('border-color');
+            actualInp.style.removeProperty('background-color');
+            actualInp.style.removeProperty('color');
+          }
+        }
+
+        if (nameDisp && hasCode && !isCodeValid) {
+          nameDisp.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+        }
+
+        return { tr, codeVal, actualVal, errorMsg, isCodeError, isQtyError };
+      } else {
+        tr.style.removeProperty('background-color');
+        tr.style.removeProperty('box-shadow');
+        tr.removeAttribute('data-has-error');
+        tr.removeAttribute('data-error-msg');
+
+        if (codeInp) {
+          codeInp.style.removeProperty('border-color');
+          codeInp.style.removeProperty('background-color');
+          codeInp.style.removeProperty('color');
+        }
+        if (actualInp) {
+          actualInp.style.removeProperty('border-color');
+          actualInp.style.removeProperty('background-color');
+          actualInp.style.removeProperty('color');
+        }
+        if (nameDisp && itemInMap) {
+          nameDisp.innerText = itemInMap.name || '-';
+          nameDisp.title = itemInMap.name;
+          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[340px] select-text row-name-display";
+        }
+        return null;
+      }
+    }
+
     function onKiemKeRowCodeSelect(rowId, code) {
       const cleanCode = String(code || '').trim();
       const item = getFullProductCatalogItem(cleanCode);
@@ -29042,7 +29612,7 @@ window.google.script = {
         if (nameDisp) {
           nameDisp.innerText = prodName || '-';
           nameDisp.title = prodName;
-          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[340px] select-text";
+          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[340px] select-text row-name-display";
         }
         if (unitDisp) {
           unitDisp.innerText = prodUnit;
@@ -29059,7 +29629,7 @@ window.google.script = {
         if (priceInp) priceInp.value = 0;
 
         if (nameDisp) {
-          nameDisp.innerHTML = '<span class="text-rose-500 italic text-[11px] font-normal">Mã mới (chưa có trong danh mục)</span>';
+          nameDisp.innerHTML = '<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>';
           nameDisp.title = finalCode;
         }
         if (unitDisp) {
@@ -29073,7 +29643,10 @@ window.google.script = {
       }
 
       closeAllDropdowns();
-      if (tr) updateKiemKeRowCalculations(tr);
+      if (tr) {
+        updateKiemKeRowCalculations(tr);
+        validateAndHighlightKiemKeRow(tr);
+      }
 
       const qtyInp = document.getElementById(`input_kk_qty_${rowId}`);
       if (qtyInp) {
@@ -29089,12 +29662,12 @@ window.google.script = {
         if (activeDropdownType === 'kiemke' && activeDropdownRowId === rowId) {
           closeAllDropdowns();
         }
-        // Đồng bộ tự động nếu người dùng gõ mã rồi chuyển ô mà chưa nhấn Enter
         const codeInp = document.getElementById(`input_kk_code_${rowId}`);
-        const nameInp = document.getElementById(`input_kk_name_${rowId}`);
-        if (codeInp && codeInp.value.trim() && (!nameInp || !nameInp.value.trim())) {
+        if (codeInp && codeInp.value.trim()) {
           onKiemKeRowCodeSelect(rowId, codeInp.value.trim());
         }
+        const tr = codeInp ? codeInp.closest('tr') : null;
+        if (tr) validateAndHighlightKiemKeRow(tr);
       }, 250);
     }
 
@@ -29393,29 +29966,46 @@ window.google.script = {
       closePasteKiemKeModal();
       calculateKiemKeSummary();
 
+      // Highlight đỏ ngay các dòng lỗi trên bảng kiểm kê
+      document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]').forEach(tr => {
+        validateAndHighlightKiemKeRow(tr);
+      });
+
       if (notFoundRows.length > 0) {
         Swal.fire({
           icon: 'warning',
-          title: 'Đã nạp dữ liệu kiểm kê!',
+          title: 'Phát hiện mã chưa có trong kho!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
-              <p>Đã cập nhật thực tế cho <b>${matchedCount} mã có sẵn</b> và thêm mới <b>${newRowsCount} mã hàng</b> vào bảng.</p>
-              <div class="p-2.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl">
-                <div class="font-bold flex items-center space-x-1.5 text-amber-800 mb-1.5">
-                  <i class="bi bi-exclamation-triangle-fill text-amber-600"></i>
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
+              <div class="p-2.5 bg-rose-50 border border-rose-200 text-rose-900 rounded-xl">
+                <div class="font-bold flex items-center space-x-1.5 text-rose-700 mb-1">
+                  <i class="bi bi-exclamation-triangle-fill text-rose-600 text-sm"></i>
                   <span>Phát hiện <b>${notFoundRows.length} dòng</b> có mã CHƯA TỒN TẠI trong kho:</span>
                 </div>
-                <div class="max-h-40 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-white/70 p-2 rounded-lg border border-amber-200/60">
-                  ${notFoundRows.map(r => `<div>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold">[${escapeHtml(r.code)}]</span> (Số lượng: ${formatNumber(r.qty)})</div>`).join('')}
-                </div>
-                <div class="mt-2 text-[11px] text-amber-800 italic">
-                  👉 Hệ thống vẫn đã dán đầy đủ các dòng này vào bảng kiểm kê để bạn biết và đối soát.
-                </div>
+                <p class="text-[11px] text-rose-800">Đã cập nhật thực tế cho <b>${matchedCount} mã có sẵn</b> và thêm <b>${newRowsCount} mã hàng</b> vào bảng. Các dòng có mã chưa có trong kho đã được <b>đánh dấu CẢNH BÁO ĐỎ</b> trên bảng:</p>
+              </div>
+              <div class="max-h-48 overflow-y-auto custom-scroll space-y-1 font-mono text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                ${notFoundRows.map(r => `
+                  <div class="flex items-center justify-between py-1 border-b border-slate-200/60 last:border-0">
+                    <span>• <b>Dòng ${r.lineIndex}:</b> Mã <span class="text-rose-600 font-bold bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200">[${escapeHtml(r.code)}]</span></span>
+                    <span class="font-bold text-slate-700">Số lượng: ${formatNumber(r.qty)}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 leading-relaxed font-medium">
+                ⚠️ <b>Bắt buộc:</b> Phải sửa và thay đổi các mã này khớp với danh mục kho mới cho phép lưu phiếu kiểm kê!
               </div>
             </div>
           `,
-          confirmButtonText: 'Đã hiểu',
-          confirmButtonColor: '#7c3aed'
+          confirmButtonText: 'Đã hiểu, tôi sẽ sửa lại mã',
+          confirmButtonColor: '#e11d48'
+        }).then(() => {
+          const firstErrTr = document.querySelector('#kiemke-items-tbody tr[data-has-error="true"]');
+          if (firstErrTr) {
+            firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const inp = firstErrTr.querySelector('input');
+            if (inp) setTimeout(() => inp.focus(), 250);
+          }
         });
       } else {
         Swal.fire({
@@ -29470,23 +30060,22 @@ window.google.script = {
       const invalidKkErrors = [];
 
       rows.forEach((tr, idx) => {
-        const rowNo = idx + 1;
-        const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
-        const name = tr.querySelector('.row-name')?.value.trim() || '';
-        const unit = tr.querySelector('.row-unit')?.value.trim() || '';
-        const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
-        const hasCode = code !== '';
-        const hasQty = (actualVal !== '' && actualVal !== undefined);
-
-        if (!hasCode && !hasQty) {
-          invalidKkErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm và số lượng kiểm kê`);
-        } else if (!hasCode && hasQty) {
-          invalidKkErrors.push(`Dòng ${rowNo}: Chưa điền mã sản phẩm`);
-        } else if (hasCode && !hasQty) {
-          invalidKkErrors.push(`Dòng ${rowNo} [${code}]: Chưa điền số lượng kiểm kê thực tế`);
-        }
-
-        if (hasCode && hasQty) {
+        const err = validateAndHighlightKiemKeRow(tr);
+        if (err) {
+          invalidKkErrors.push({
+            rowIndex: idx + 1,
+            tr: tr,
+            code: err.codeVal,
+            qty: err.actualVal,
+            msg: err.errorMsg,
+            isCodeError: err.isCodeError,
+            isQtyError: err.isQtyError
+          });
+        } else {
+          const code = tr.querySelector('.row-code')?.value.trim().toUpperCase() || '';
+          const name = tr.querySelector('.row-name')?.value.trim() || tr.querySelector('.row-name-display')?.innerText.trim() || '';
+          const unit = tr.querySelector('.row-unit')?.value.trim() || 'Cái';
+          const actualVal = tr.querySelector('.row-actual-qty')?.value.trim();
           const actualQty = Number(actualVal) || 0;
           const price = Math.max(0, Number(tr.querySelector('.row-price')?.value) || 0);
           let amount = actualQty * price;
@@ -29512,24 +30101,38 @@ window.google.script = {
       });
 
       if (invalidKkErrors.length > 0) {
+        const firstErrTr = invalidKkErrors[0].tr;
+        if (firstErrTr) {
+          firstErrTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const targetInput = invalidKkErrors[0].isCodeError 
+            ? firstErrTr.querySelector('.row-code')
+            : firstErrTr.querySelector('.row-actual-qty');
+          if (targetInput) setTimeout(() => targetInput.focus(), 300);
+        }
+
         Swal.fire({
-          icon: 'warning',
-          title: 'Chưa đủ thông tin kiểm kê',
+          icon: 'error',
+          title: 'Không thể lưu phiếu kiểm kê!',
           html: `
-            <div class="text-left text-xs space-y-2 text-slate-700">
+            <div class="text-left text-xs space-y-2.5 text-slate-700">
               <div class="p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 font-semibold">
-                Không thể lưu phiếu vì phát hiện <b>${invalidKkErrors.length} dòng</b> chưa điền đầy đủ Mã hoặc Số lượng kiểm kê:
+                Không thể lưu phiếu vì phát hiện <b>${invalidKkErrors.length} dòng</b> không hợp lệ. Các dòng này đã được <span class="text-rose-600 underline font-bold">tô cảnh báo ĐỎ</span> trên bảng:
               </div>
-              <div class="max-h-48 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
-                ${invalidKkErrors.map(e => `<div class="text-rose-600 flex items-start space-x-1.5"><i class="bi bi-exclamation-triangle-fill shrink-0 text-amber-500"></i><span>${escapeHtml(e)}</span></div>`).join('')}
+              <div class="max-h-52 overflow-y-auto custom-scroll bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1 font-mono text-[11px]">
+                ${invalidKkErrors.map(e => `
+                  <div class="py-1 border-b border-slate-200/60 last:border-0 flex items-start space-x-1.5 text-rose-700">
+                    <span class="font-bold shrink-0">• Dòng ${e.rowIndex}:</span>
+                    <span>${e.code ? `Mã <b class="bg-rose-100 px-1 py-0.5 rounded border border-rose-200">[${escapeHtml(e.code)}]</b> (SL: ${!isNaN(e.qty) ? formatNumber(e.qty) : 'Chưa nhập'})` : '<b>Chưa điền mã</b>'} - <span>${escapeHtml(e.msg)}</span></span>
+                  </div>
+                `).join('')}
               </div>
-              <div class="text-slate-500 italic text-[11px] pt-1">
-                👉 Vui lòng điền đầy đủ <b>Mã sản phẩm</b> và <b>Số lượng kiểm kê</b>, hoặc bấm nút xóa (✖) đối với dòng thừa trước khi lưu phiếu.
+              <div class="p-2.5 bg-amber-50 border border-amber-300 rounded-xl text-[11px] text-amber-900 font-medium">
+                ⚠️ <b>Bắt buộc:</b> Phải sửa và thay đổi mã khớp với danh mục kho và điền số lượng kiểm kê thì mới được lưu phiếu.
               </div>
             </div>
           `,
-          confirmButtonText: 'Đã hiểu & kiểm tra lại',
-          confirmButtonColor: '#d97706'
+          confirmButtonText: 'Đã hiểu & quay lại sửa',
+          confirmButtonColor: '#e11d48'
         });
         return;
       }
