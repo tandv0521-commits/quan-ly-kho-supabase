@@ -3473,7 +3473,7 @@
       <!-- Modal Footer -->
       <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
         <div class="text-[11px] text-slate-500 italic">
-          <i class="bi bi-info-circle mr-1"></i> Mã máy được tạo tự động và lưu cố định trên từng thiết bị để nhận diện máy đăng nhập.
+          <i class="bi bi-info-circle mr-1"></i> Hệ thống tự động nhận diện cả IP nội bộ (LAN), IP mạng ngoài (WAN) và Mã máy để đối chiếu chính xác từng thiết bị đăng nhập.
         </div>
         <button type="button" onclick="closeLoginHistoryModal()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg text-xs transition cursor-pointer">
           Đóng cửa sổ
@@ -9545,7 +9545,68 @@ window.google.script = {
       };
     }
 
-    // 3. Lấy địa chỉ IP thực tế của máy đăng nhập (có cache và timeout an toàn 2 giây)
+    // 3.1. Lấy địa chỉ IP nội bộ (LAN: 192.168.x.x, 10.x.x.x...) qua WebRTC
+    async function fetchClientLocalIP() {
+      return new Promise((resolve) => {
+        try {
+          const RTCPeerConn = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+          if (!RTCPeerConn) {
+            resolve(null);
+            return;
+          }
+
+          let isDone = false;
+          let bestCandidate = null;
+
+          const tid = setTimeout(() => {
+            if (!isDone) {
+              isDone = true;
+              try { pc.close(); } catch(e){}
+              resolve(bestCandidate);
+            }
+          }, 1200);
+
+          const pc = new RTCPeerConn({ iceServers: [] });
+          pc.createDataChannel('local-ip-scan');
+
+          pc.onicecandidate = (event) => {
+            if (!event || !event.candidate || !event.candidate.candidate) return;
+            const candStr = event.candidate.candidate;
+            const parts = candStr.split(' ');
+            const candIp = parts[4] || '';
+
+            // Nhận diện IPv4 nội bộ: 192.168.x.x, 10.x.x.x, 172.16-31.x.x, 169.254.x.x
+            const isPrivateIpv4 = /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|169\.254\.)\d{1,3}\.\d{1,3}$/.test(candIp);
+            if (isPrivateIpv4) {
+              bestCandidate = candIp;
+              if (!isDone) {
+                isDone = true;
+                clearTimeout(tid);
+                try { pc.close(); } catch(e){}
+                resolve(bestCandidate);
+              }
+            } else if (candIp.endsWith('.local') && !bestCandidate) {
+              bestCandidate = candIp;
+            }
+          };
+
+          pc.createOffer()
+            .then(offer => pc.setLocalDescription(offer))
+            .catch(() => {
+              if (!isDone) {
+                isDone = true;
+                clearTimeout(tid);
+                try { pc.close(); } catch(e){}
+                resolve(null);
+              }
+            });
+        } catch (err) {
+          resolve(null);
+        }
+      });
+    }
+
+    // 3.2. Lấy địa chỉ IP công cộng (WAN / Internet)
     async function fetchClientPublicIP() {
       if (cachedPublicIp_) return cachedPublicIp_;
       try {
@@ -9585,6 +9646,21 @@ window.google.script = {
       return '127.0.0.1 (Nội bộ / Offline)';
     }
 
+    // 3.3. Kết hợp thu thập cả IP nội bộ (LAN) và IP công cộng (WAN)
+    async function fetchClientFullIPString() {
+      const [localIp, publicIp] = await Promise.all([
+        fetchClientLocalIP().catch(() => null),
+        fetchClientPublicIP().catch(() => '127.0.0.1')
+      ]);
+
+      if (localIp && publicIp && localIp !== publicIp) {
+        return `${localIp} (LAN) • ${publicIp} (WAN)`;
+      } else if (localIp) {
+        return `${localIp} (LAN)`;
+      }
+      return publicIp ? `${publicIp} (WAN)` : '127.0.0.1 (Nội bộ)';
+    }
+
     // 4. Ghi nhận lịch sử đăng nhập vào cơ sở dữ liệu
     async function recordLoginHistory(user, loginMethod = 'Đăng nhập') {
       if (!user || !user.username) return;
@@ -9593,7 +9669,7 @@ window.google.script = {
         try {
           const machineId = getOrCreateMachineId();
           const devInfo = detectClientDeviceAndBrowser();
-          const ip = await fetchClientPublicIP();
+          const ip = await fetchClientFullIPString();
           const now = new Date();
           const nowIso = now.toISOString();
 
@@ -9927,12 +10003,38 @@ window.google.script = {
         const devSummary = escapeHtmlSafe(item.device_info || item.user_agent || 'Trình duyệt Web');
         const parsedDev = detectClientDeviceAndBrowser(item.user_agent || devSummary);
 
-        // Địa chỉ IP
-        const ip = escapeHtmlSafe(item.ip_address || '127.0.0.1');
-        const isLocalIp = ip.includes('127.0.0.1') || ip.includes('localhost') || ip.includes('Nội bộ');
-        const ipBadge = isLocalIp
-          ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"><i class="bi bi-hdd-network text-slate-400"></i>${ip}</span>`
-          : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200"><i class="bi bi-globe2 text-sky-600"></i>${ip}</span>`;
+        // Địa chỉ IP (Hiển thị chuyên nghiệp cả IP nội bộ LAN và IP mạng ngoài WAN)
+        const rawIp = item.ip_address || '127.0.0.1';
+        let ipBadge = '';
+
+        if (rawIp.includes('(LAN)') && rawIp.includes('(WAN)')) {
+          const parts = rawIp.split('•');
+          const lanVal = escapeHtmlSafe((parts[0] || '').replace('(LAN)', '').trim());
+          const wanVal = escapeHtmlSafe((parts[1] || '').replace('(WAN)', '').trim());
+          ipBadge = `
+            <div class="flex flex-col items-center gap-1">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[10.5px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs" title="Địa chỉ IP mạng nội bộ (LAN)">
+                <i class="bi bi-hdd-network text-purple-600"></i> LAN: ${lanVal}
+              </span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[10.5px] font-bold bg-sky-50 text-sky-800 border border-sky-200 shadow-2xs" title="Địa chỉ IP mạng ngoài Internet (WAN)">
+                <i class="bi bi-globe2 text-sky-600"></i> WAN: ${wanVal}
+              </span>
+            </div>
+          `;
+        } else if (rawIp.includes('(LAN)') || rawIp.startsWith('192.168.') || rawIp.startsWith('10.') || rawIp.startsWith('172.')) {
+          const cleanLan = escapeHtmlSafe(rawIp.replace('(LAN)', '').trim());
+          ipBadge = `
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs" title="Địa chỉ IP mạng nội bộ (LAN)">
+              <i class="bi bi-hdd-network text-purple-600"></i> LAN: ${cleanLan}
+            </span>
+          `;
+        } else {
+          const isLocal = rawIp.includes('127.0.0.1') || rawIp.includes('localhost') || rawIp.includes('Nội bộ');
+          const cleanWan = escapeHtmlSafe(rawIp.replace('(WAN)', '').trim());
+          ipBadge = isLocal
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200"><i class="bi bi-hdd-network text-slate-400"></i> ${cleanWan}</span>`
+            : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200 shadow-2xs" title="Địa chỉ IP mạng ngoài Internet (WAN)"><i class="bi bi-globe2 text-sky-600"></i> WAN: ${cleanWan}</span>`;
+        }
 
         html += `
           <tr class="hover:bg-slate-50/80 transition-colors">
