@@ -3456,11 +3456,12 @@
                   <th class="px-3 py-2.5 text-center w-44 bg-slate-100">Mã Máy</th>
                   <th class="px-3 py-2.5 text-left min-w-[220px] bg-slate-100">Thiết Bị (Trình Duyệt)</th>
                   <th class="px-3 py-2.5 text-center min-w-[170px] bg-slate-100">Địa Chỉ IP</th>
+                  <th class="px-2.5 py-2.5 text-center w-14 bg-slate-100">Xóa</th>
                 </tr>
               </thead>
               <tbody id="login-hist-tbody" class="divide-y divide-slate-100 bg-white">
                 <tr>
-                  <td colspan="6" class="text-center py-8 text-slate-400 italic">
+                  <td colspan="7" class="text-center py-8 text-slate-400 italic">
                     <i class="bi bi-arrow-repeat animate-spin text-base mr-1"></i> Đang tải lịch sử đăng nhập...
                   </td>
                 </tr>
@@ -9897,21 +9898,24 @@ window.google.script = {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400 italic"><i class="bi bi-arrow-repeat animate-spin text-base mr-1"></i> Đang tải dữ liệu lịch sử đăng nhập...</td></tr>';
       }
 
-      let list = [];
+      let list = null; // null để phân biệt giữa 'chưa nạp/lỗi' và 'kết quả rỗng []'
       if (STORAGE_MODE === 'CLOUD') {
         try {
           const res = await callSupabaseSingle_('app_login_history?order=id.desc&limit=500', 'GET');
           if (Array.isArray(res)) {
-            list = res;
+            list = res; // Đã lấy thành công từ Cloud (kể cả khi mảng rỗng [])
           }
         } catch (err) {
           console.warn('Lấy lịch sử đăng nhập từ Cloud không thành công, dùng LocalDB:', err);
         }
       }
 
-      if (!list || list.length === 0) {
+      // CHỈ fallback về LocalDB khi Cloud bị lỗi hoặc đang ở chế độ STANDALONE (list === null)
+      if (list === null) {
         if (typeof LocalDB !== 'undefined' && LocalDB.cache && LocalDB.cache['app_login_history']) {
           list = [...LocalDB.cache['app_login_history']];
+        } else {
+          list = [];
         }
       }
 
@@ -10023,7 +10027,7 @@ window.google.script = {
       if (!tbody) return;
 
       if (!list || list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-slate-400 italic"><i class="bi bi-inbox text-2xl block mb-1 text-slate-300"></i> Không tìm thấy lịch sử đăng nhập nào phù hợp</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-400 italic"><i class="bi bi-inbox text-2xl block mb-1 text-slate-300"></i> Không tìm thấy lịch sử đăng nhập nào phù hợp</td></tr>';
         return;
       }
 
@@ -10153,6 +10157,11 @@ window.google.script = {
             <td class="px-3 py-2.5 text-center whitespace-nowrap">
               ${ipBadge}
             </td>
+            <td class="px-2.5 py-2.5 text-center whitespace-nowrap">
+              <button type="button" onclick="deleteSingleLoginHistoryRow(${item.id})" class="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition cursor-pointer" title="Xóa lượt đăng nhập này">
+                <i class="bi bi-trash3 text-xs"></i>
+              </button>
+            </td>
           </tr>
         `;
       });
@@ -10247,30 +10256,47 @@ window.google.script = {
       }
     }
 
-    // 14. Dọn dẹp nhật ký đăng nhập cũ
+    // 14. Dọn dẹp nhật ký đăng nhập (Nâng cấp chuẩn xác 100%, có phản hồi số lượng bản ghi đã xóa)
     async function clearLoginHistoryPrompt() {
       if (!isUserAdmin()) return;
+
+      const totalCached = (loginHistoryListCached || []).length;
 
       const { value: formValues } = await Swal.fire({
         title: 'Dọn dẹp lịch sử đăng nhập',
         html: `
           <div class="text-left text-xs space-y-3 pt-2">
+            <div class="p-2.5 bg-blue-50/80 border border-blue-200/80 rounded-xl text-blue-900 flex items-center justify-between">
+              <div class="font-bold flex items-center gap-1.5">
+                <i class="bi bi-shield-check text-blue-600 text-sm"></i>
+                <span>Nhật ký hiện có:</span>
+              </div>
+              <span class="font-mono font-black text-blue-700 text-sm bg-white px-2 py-0.5 rounded-md border border-blue-200">${totalCached.toLocaleString('vi-VN')} lượt</span>
+            </div>
+
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Tùy chọn dọn dẹp:</label>
-              <select id="swal-clear-opt" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-semibold">
-                <option value="30">Chỉ xóa các bản ghi cũ hơn 30 ngày</option>
-                <option value="60">Chỉ xóa các bản ghi cũ hơn 60 ngày</option>
-                <option value="ALL">Xóa toàn bộ lịch sử đăng nhập</option>
+              <label class="block font-bold text-slate-700 mb-1">Chọn phạm vi dọn dẹp:</label>
+              <select id="swal-clear-opt" class="w-full px-2.5 py-2 border border-slate-300 rounded-lg bg-white font-bold text-xs text-slate-800 focus:ring-2 focus:ring-blue-500">
+                <option value="ALL" selected>🗑️ Xóa toàn bộ lịch sử đăng nhập (Làm sạch 100%)</option>
+                <option value="TODAY">📅 Xóa các bản ghi đăng nhập trong hôm nay</option>
+                <option value="7">⏱️ Chỉ xóa các bản ghi cũ hơn 7 ngày</option>
+                <option value="30">⏱️ Chỉ xóa các bản ghi cũ hơn 30 ngày</option>
+                <option value="60">⏱️ Chỉ xóa các bản ghi cũ hơn 60 ngày</option>
               </select>
             </div>
+
             <div>
-              <label class="block font-bold text-slate-700 mb-1">Nhập mật khẩu Admin để xác nhận:</label>
-              <input type="password" id="swal-clear-pwd" placeholder="Nhập mật khẩu quản trị..." class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg">
+              <label class="block font-bold text-slate-700 mb-1">Mật khẩu tài khoản Quản trị viên (Admin):</label>
+              <input type="password" id="swal-clear-pwd" placeholder="Nhập mật khẩu Admin để xác nhận..." class="w-full px-2.5 py-2 border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-rose-500 bg-white">
+            </div>
+
+            <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800">
+              ⚠️ <b>Lưu ý:</b> Dữ liệu nhật ký sau khi xóa sẽ không thể phục hồi. Vui lòng kiểm tra kỹ trước khi xác nhận.
             </div>
           </div>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Đồng ý dọn dẹp',
+        confirmButtonText: 'Xác nhận xóa',
         cancelButtonText: 'Hủy bỏ',
         confirmButtonColor: '#e11d48',
         focusConfirm: false,
@@ -10288,54 +10314,162 @@ window.google.script = {
       if (!formValues) return;
 
       try {
-        // Kiểm tra mật khẩu Admin
+        // 1. Xác thực mật khẩu Admin
         const hash = await sha256Hex(formValues.pwd);
-        let adminUsers = await callSupabaseSingle_(`app_users?id=eq.${currentAppUser.id}`, 'GET');
-        if (!adminUsers || adminUsers.length === 0) {
-          adminUsers = (LocalDB.cache['app_users'] || []).filter(u => u.id === currentAppUser.id);
+        let adminRec = null;
+
+        if (typeof currentAppUser !== 'undefined' && currentAppUser) {
+          if (currentAppUser.id) {
+            const res = await callSupabaseSingle_(`app_users?id=eq.${currentAppUser.id}`, 'GET').catch(() => null);
+            if (Array.isArray(res) && res.length > 0) adminRec = res[0];
+          }
+          if (!adminRec && currentAppUser.username) {
+            const res = await callSupabaseSingle_(`app_users?username=eq.${currentAppUser.username}`, 'GET').catch(() => null);
+            if (Array.isArray(res) && res.length > 0) adminRec = res[0];
+          }
         }
-        const adminRec = adminUsers[0];
+
+        if (!adminRec && typeof LocalDB !== 'undefined' && LocalDB.cache && LocalDB.cache['app_users']) {
+          adminRec = LocalDB.cache['app_users'].find(u => (currentAppUser && (u.id === currentAppUser.id || u.username === currentAppUser.username)) || u.role === 'admin');
+        }
+
         const isMatch = adminRec && ((adminRec.password_hash === hash) || (adminRec.password_hash === formValues.pwd) || (adminRec.password === formValues.pwd));
         if (!isMatch) {
           Swal.fire('Sai mật khẩu', 'Mật khẩu quản trị viên không chính xác!', 'error');
           return;
         }
 
-        // Tiến hành xóa
+        // 2. Xây dựng điều kiện xóa dữ liệu
+        let endpoint = '';
+        let localFilter = null;
+        let optDesc = '';
+
         if (formValues.opt === 'ALL') {
-          if (STORAGE_MODE === 'CLOUD') {
-            try { await callSupabaseSingle_('app_login_history?id=gt.0', 'DELETE'); } catch(e){}
-          }
-          if (typeof LocalDB !== 'undefined') {
-            LocalDB.cache['app_login_history'] = [];
-            LocalDB.persist('app_login_history');
-          }
+          endpoint = 'app_login_history?id=gt.0';
+          localFilter = () => false; // Xóa sạch toàn bộ
+          optDesc = 'toàn bộ lịch sử đăng nhập';
+        } else if (formValues.opt === 'TODAY') {
+          const todayStart = new Date();
+          todayStart.setHours(0, 0, 0, 0);
+          endpoint = `app_login_history?logged_in_at=gte.${todayStart.toISOString()}`;
+          localFilter = (x) => new Date(x.logged_in_at || x.created_at || 0) < todayStart;
+          optDesc = 'các bản ghi trong hôm nay';
         } else {
-          const days = parseInt(formValues.opt, 10);
+          const days = parseInt(formValues.opt, 10) || 30;
           const cutoff = new Date();
           cutoff.setDate(cutoff.getDate() - days);
-          const cutoffIso = cutoff.toISOString();
+          endpoint = `app_login_history?logged_in_at=lt.${cutoff.toISOString()}`;
+          localFilter = (x) => new Date(x.logged_in_at || x.created_at || 0) >= cutoff;
+          optDesc = `các bản ghi cũ hơn ${days} ngày`;
+        }
 
-          if (STORAGE_MODE === 'CLOUD') {
-            try { await callSupabaseSingle_(`app_login_history?logged_in_at=lt.${encodeURIComponent(cutoffIso)}`, 'DELETE'); } catch(e){}
-          }
-          if (typeof LocalDB !== 'undefined' && LocalDB.cache['app_login_history']) {
-            LocalDB.cache['app_login_history'] = LocalDB.cache['app_login_history'].filter(x => {
-              const d = new Date(x.logged_in_at || x.created_at || 0);
-              return d >= cutoff;
-            });
-            LocalDB.persist('app_login_history');
+        Swal.fire({
+          title: 'Đang tiến hành dọn dẹp...',
+          text: 'Hệ thống đang đồng bộ xóa dữ liệu, vui lòng chờ...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        // 3. Thực thi xóa trên Supabase Cloud (với Prefer return=representation để nhận chính xác số dòng đã xóa)
+        let deletedCount = 0;
+        let cloudDeleteSuccess = false;
+
+        if (STORAGE_MODE === 'CLOUD') {
+          try {
+            const res = await callSupabaseSingle_(endpoint, 'DELETE', null, { 'Prefer': 'return=representation' });
+            cloudDeleteSuccess = true;
+            if (Array.isArray(res)) {
+              deletedCount = res.length;
+            }
+          } catch (delErr) {
+            console.error('Lỗi khi xóa trên Supabase Cloud:', delErr);
+            throw new Error('Lỗi máy chủ khi xóa dữ liệu: ' + delErr.message);
           }
         }
 
-        Swal.fire('Thành công', 'Đã dọn dẹp lịch sử đăng nhập theo yêu cầu!', 'success');
+        // 4. Đồng bộ xóa trên LocalDB / IndexedDB
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache && LocalDB.cache['app_login_history']) {
+          const beforeCount = LocalDB.cache['app_login_history'].length;
+          LocalDB.cache['app_login_history'] = LocalDB.cache['app_login_history'].filter(localFilter);
+          const localDeleted = beforeCount - LocalDB.cache['app_login_history'].length;
+          if (STORAGE_MODE !== 'CLOUD' || !cloudDeleteSuccess) {
+            deletedCount = Math.max(deletedCount, localDeleted);
+          }
+          await LocalDB.persist('app_login_history');
+        }
+
+        // 5. Nạp lại bảng dữ liệu
         await loadLoginHistoryList();
 
+        // 6. Thông báo kết quả minh bạch, rõ ràng cho người dùng
+        if (deletedCount === 0) {
+          Swal.fire({
+            icon: 'info',
+            title: 'Không có bản ghi phù hợp để xóa',
+            html: `
+              <div class="text-xs text-slate-600 text-left space-y-2">
+                <p>Không tìm thấy lượt đăng nhập nào thỏa mãn điều kiện: <b>${optDesc}</b>.</p>
+                <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
+                  💡 <b>Lý do:</b> Toàn bộ các lượt đăng nhập hiện tại đều mới được tạo gần đây.<br>
+                  👉 Hãy chọn <b>"Xóa toàn bộ lịch sử đăng nhập"</b> nếu bạn muốn dọn sạch toàn bộ dữ liệu thử nghiệm!
+                </div>
+              </div>
+            `
+          });
+        } else {
+          Swal.fire({
+            icon: 'success',
+            title: 'Dọn dẹp thành công!',
+            text: `Đã xóa sạch hoàn toàn ${deletedCount} lượt đăng nhập khỏi hệ thống.`,
+            timer: 2000,
+            showConfirmButton: true
+          });
+        }
+
+      } catch (err) {
+        Swal.fire('Lỗi dọn dẹp', err.message, 'error');
+      }
+    }
+
+    // 15. Xóa đơn lẻ 1 dòng lịch sử đăng nhập cụ thể
+    async function deleteSingleLoginHistoryRow(id) {
+      if (!isUserAdmin() || !id) return;
+
+      const result = await Swal.fire({
+        title: 'Xóa lượt đăng nhập này?',
+        text: `Bạn có chắc chắn muốn xóa bản ghi lịch sử đăng nhập mã #${id} không?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Đồng ý xóa',
+        cancelButtonText: 'Hủy bỏ',
+        confirmButtonColor: '#e11d48'
+      });
+
+      if (!result.isConfirmed) return;
+
+      try {
+        if (STORAGE_MODE === 'CLOUD') {
+          await callSupabaseSingle_(`app_login_history?id=eq.${id}`, 'DELETE');
+        }
+        if (typeof LocalDB !== 'undefined' && LocalDB.cache && LocalDB.cache['app_login_history']) {
+          LocalDB.cache['app_login_history'] = LocalDB.cache['app_login_history'].filter(x => Number(x.id) !== Number(id));
+          await LocalDB.persist('app_login_history');
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Đã xóa bản ghi!',
+          timer: 1200,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+
+        await loadLoginHistoryList();
       } catch (err) {
         Swal.fire('Lỗi', err.message, 'error');
       }
     }
-
 
     function initApp() {
       initColumnPreferences();
