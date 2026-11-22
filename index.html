@@ -129,6 +129,13 @@
       outline: none !important;
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
     }
+    .kk-qty-box input:focus {
+      box-shadow: none !important;
+    }
+    .kk-qty-box:focus-within {
+      box-shadow: 0 0 0 2.5px rgba(37, 99, 235, 0.22) !important;
+      border-color: #3b82f6 !important;
+    }
     button:active { transform: translateY(1px); }
     
     /* HIỆU ỨNG THẺ SẢN PHẨM PHÁT NHANH TỐI ƯU HIỆU NĂNG 60FPS */
@@ -214,7 +221,7 @@
     }
 
     tbody tr { transition: background-color 0.15s ease-in-out; }
-    tbody tr:hover { background-color: #f8fafc !important; }
+    tbody tr:not(.row-kk-positive):not(.row-kk-negative):not(.row-kk-error):not(.row-error-highlight):not(.active-moved-row):hover { background-color: #f8fafc !important; }
     body.compact-mode td, body.compact-mode th { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; font-size: 11.5px !important; }
 
     .voucher-badge {
@@ -337,6 +344,7 @@
       #global-autocomplete-dropdown,
       #sticky-voucher-bar,
       #sticky-dispatch-bar,
+      #sticky-kiemke-bar,
       #app-status-bar,
       .swal2-container,
       .swal2-backdrop,
@@ -698,7 +706,7 @@
     /* HIỆU ỨNG NHẬN DIỆN DÒNG VỪA DI CHUYỂN ĐẾN KHI THAO TÁC KHÁC */
     tr.active-moved-row {
       background-color: #fefce8 !important; /* Vàng hổ phách rất nhẹ, thanh lịch dịu mắt */
-      box-shadow: inset 4px 0 0 #eab308, 0 1px 3px rgba(0,0,0,0.06) !important;
+      box-shadow: inset 0 0 0 1px #eab308, 0 1px 3px rgba(0,0,0,0.06) !important;
       position: relative;
       z-index: 10;
       transition: background-color 0.25s ease, box-shadow 0.25s ease !important;
@@ -709,6 +717,35 @@
     tr.active-moved-row input:not(:focus), tr.active-moved-row select:not(:focus) {
       background-color: #fffdf0 !important;
       border-color: #fde047 !important;
+    }
+
+    /* TRẠNG THÁI PHÂN BIỆT RÕ RÀNG DÒNG SỐ LƯỢNG DƯƠNG (THỪA) / ÂM (THIẾU) / LỖI */
+    tr.row-kk-positive {
+      background-color: rgba(236, 253, 245, 0.56) !important;
+    }
+    tr.row-kk-positive:hover {
+      background-color: rgba(209, 250, 229, 0.65) !important;
+    }
+    tr.row-kk-negative {
+      background-color: rgba(255, 241, 242, 0.6) !important;
+    }
+    tr.row-kk-negative:hover {
+      background-color: rgba(255, 228, 230, 0.72) !important;
+    }
+    tr.row-kk-error, tr.row-error-highlight {
+      background-color: rgba(255, 241, 242, 0.84) !important;
+      box-shadow: inset 0 0 0 1px #fda4af !important;
+    }
+    tr.row-kk-error:hover, tr.row-error-highlight:hover {
+      background-color: rgba(255, 228, 230, 0.88) !important;
+    }
+    input.no-spinners::-webkit-outer-spin-button,
+    input.no-spinners::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input.no-spinners {
+      -moz-appearance: textfield;
     }
   </style>
 
@@ -1008,7 +1045,7 @@
         </div>
       </header>
 
-      <main class="p-3 sm:p-5 w-full mx-auto space-y-4 pb-12">
+      <main class="p-3 sm:p-5 w-full min-w-0 mx-auto space-y-4 pb-12 overflow-x-hidden">
 
         <!-- 1. BẢNG TỒN KHO (TỐI ƯU CHIỀU NGANG VỪA MÀN HÌNH) -->
         <section id="tab-inventory" class="space-y-3.5">
@@ -1563,90 +1600,106 @@
         </section>
 
         <!-- 4. LẬP PHIẾU NHẬP / XUẤT -->
-        <section id="tab-voucher" class="hidden space-y-4">
-          <div id="voucher-card" class="bg-white rounded-2xl shadow-xs border-2 border-emerald-500/80 p-4 sm:p-5 space-y-4 transition-all">
+        <section id="tab-voucher" class="hidden space-y-3.5 pb-24">
+          <div id="voucher-card" class="bg-white rounded-2xl shadow-xs border border-emerald-300/90 p-4 sm:p-5 space-y-4 transition-all">
             <div id="voucher-edit-banner" class="hidden p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between text-xs text-amber-900">
               <div class="flex items-center space-x-2">
                 <i class="bi bi-pencil-square text-base text-amber-600"></i>
                 <span>Đang sửa chứng từ: <b id="voucher-edit-banner-no" class="font-mono text-sm">...</b></span>
               </div>
-              <button onclick="cancelVoucherEditMode()" class="px-2.5 py-1 bg-white border border-amber-300 text-amber-800 rounded-lg font-bold">Hủy sửa</button>
+              <button onclick="cancelVoucherEditMode()" class="px-2.5 py-1 bg-white border border-amber-300 text-amber-800 rounded-lg font-bold cursor-pointer">Hủy sửa</button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-3 border-b border-slate-100">
-              <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Loại Nghiệp Vụ</label>
-                <div class="grid grid-cols-2 gap-2">
-                  <label id="theme-btn-nhap" class="flex items-center justify-center py-2 px-3 border-2 border-emerald-600 bg-emerald-50 text-emerald-800 rounded-xl cursor-pointer text-xs font-black transition">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 pb-3.5 border-b border-slate-100">
+              <div class="lg:col-span-3">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Loại Nghiệp Vụ</label>
+                <div class="grid grid-cols-2 gap-1.5 h-[38px]">
+                  <label id="theme-btn-nhap" class="flex items-center justify-center px-2.5 h-full border border-emerald-600 bg-emerald-50 text-emerald-800 rounded-xl cursor-pointer text-xs font-black transition">
                     <input type="radio" name="voucherType" value="NHAP" checked onchange="onVoucherTypeChange()" class="hidden">
                     <i class="bi bi-box-arrow-in-down mr-1 text-sm"></i> NHẬP KHO
                   </label>
-                  <label id="theme-btn-xuat" class="flex items-center justify-center py-2 px-3 border border-slate-200 text-slate-600 rounded-xl cursor-pointer text-xs font-bold hover:bg-slate-50 transition">
+                  <label id="theme-btn-xuat" class="flex items-center justify-center px-2.5 h-full border border-slate-200 text-slate-600 rounded-xl cursor-pointer text-xs font-bold hover:bg-slate-50 transition">
                     <input type="radio" name="voucherType" value="XUAT" onchange="onVoucherTypeChange()" class="hidden">
                     <i class="bi bi-box-arrow-up mr-1 text-sm"></i> XUẤT KHO
                   </label>
                 </div>
               </div>
 
-              <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Số Chứng Từ</label>
-                <input type="text" id="voucher-no" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-semibold font-mono">
+              <div class="lg:col-span-3">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Số Chứng Từ <span class="text-rose-500">*</span></label>
+                <input type="text" id="voucher-no" class="w-full h-[38px] px-3 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-semibold font-mono text-slate-800 bg-white">
               </div>
 
-              <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Ngày Chứng Từ</label>
-                <input type="date" id="voucher-date" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-semibold font-mono">
+              <div class="lg:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Ngày Chứng Từ <span class="text-rose-500">*</span></label>
+                <input type="date" id="voucher-date" class="w-full h-[38px] px-3 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 font-semibold font-mono text-slate-800 bg-white">
               </div>
 
-              <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Đối tác / Ghi Chú Chung</label>
-                <input type="text" id="voucher-note" placeholder="Nhà cung cấp / Khách hàng..." class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500">
+              <div class="lg:col-span-4">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Đối tác / Ghi Chú Chung</label>
+                <input type="text" id="voucher-note" placeholder="Nhà cung cấp / Khách hàng..." class="w-full h-[38px] px-3 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-800 bg-white placeholder:text-slate-400">
               </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-              <div class="flex items-center space-x-3">
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="barcode-mode-toggle" class="sr-only peer">
-                  <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-                <span class="font-bold text-slate-700 flex items-center space-x-1.5">
-                  <i class="bi bi-upc-scan text-sm text-blue-600"></i>
-                  <span>Quét Barcode (Tự SL = 1)</span>
-                </span>
+            <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
+              <div class="px-3.5 py-2.5 bg-slate-50/80 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+                <div class="flex items-center space-x-3">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="barcode-mode-toggle" class="sr-only peer">
+                    <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span class="font-bold text-slate-700 flex items-center space-x-1.5">
+                    <i class="bi bi-upc-scan text-sm text-blue-600"></i>
+                    <span>Quét Barcode (Tự SL = 1)</span>
+                  </span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <input type="file" id="voucher-excel-file" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleVoucherExcelUpload(event)">
+                  <button type="button" onclick="downloadVoucherTemplate()" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold border border-slate-200 shadow-2xs transition flex items-center space-x-1.5 cursor-pointer">
+                    <i class="bi bi-file-earmark-arrow-down text-slate-500"></i>
+                    <span>Tải mẫu</span>
+                  </button>
+                  <button type="button" onclick="document.getElementById('voucher-excel-file').click()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-2xs transition flex items-center space-x-1.5 cursor-pointer">
+                    <i class="bi bi-file-earmark-excel"></i>
+                    <span>Import Excel</span>
+                  </button>
+                  <button type="button" onclick="openQuickPasteModal()" class="px-3 py-1.5 bg-white hover:bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold shadow-2xs flex items-center space-x-1.5 transition cursor-pointer">
+                    <i class="bi bi-clipboard-data text-amber-600"></i>
+                    <span>Dán nhanh (Mã - SL)</span>
+                  </button>
+                  <button type="button" onclick="addRowToVoucher(null, true)" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs flex items-center space-x-1.5 transition cursor-pointer">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Thêm dòng (F2)</span>
+                  </button>
+                </div>
               </div>
 
-              <div class="flex items-center space-x-2">
-                <input type="file" id="voucher-excel-file" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleVoucherExcelUpload(event)">
-                <button onclick="downloadVoucherTemplate()" class="px-3 py-1 bg-white text-slate-700 rounded-lg text-xs font-semibold border border-slate-200 shadow-2xs">Tải mẫu</button>
-                <button onclick="document.getElementById('voucher-excel-file').click()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs">Import Excel</button>
-                
-                <button onclick="openQuickPasteModal()" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center space-x-1.5 transition">
-                  <i class="bi bi-clipboard-data"></i>
-                  <span>Dán nhanh (Mã - SL)</span>
+              <div class="overflow-x-auto w-full">
+                <table class="min-w-full divide-y divide-slate-200 text-xs">
+                  <thead class="bg-slate-100/90 text-slate-600 font-bold uppercase tracking-wider text-[11px] sticky top-0 z-10 border-b border-slate-200">
+                    <tr>
+                      <th class="px-3 py-2.5 text-center w-12 col-center">STT</th>
+                      <th class="px-3 py-2.5 text-left w-44">Mã hàng <span class="text-rose-500">*</span></th>
+                      <th class="px-3 py-2.5 text-left min-w-[300px] col-item-name">Tên mặt hàng</th>
+                      <th class="px-3 py-2.5 text-center w-20 col-center">ĐVT</th>
+                      <th class="px-3 py-2.5 text-center w-36 col-center">Phân loại hàng</th>
+                      <th class="px-3 py-2.5 text-right w-28 col-num">Tồn kho</th>
+                      <th class="px-3 py-2.5 text-right w-40 col-num">Số lượng <span class="text-rose-500">*</span></th>
+                      <th class="px-3 py-2.5 text-left min-w-[160px]">Ghi chú dòng</th>
+                      <th class="px-2 py-2.5 text-center w-28 no-print">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="voucher-tbody" class="divide-y divide-slate-100 bg-white"></tbody>
+                </table>
+              </div>
+
+              <div class="p-2.5 bg-slate-50/40 border-t border-slate-100 no-print">
+                <button type="button" onclick="addRowToVoucher(null, true)" class="w-full py-2 px-3 border border-dashed border-slate-300 hover:border-blue-500 rounded-xl bg-white/70 hover:bg-blue-50/40 text-slate-600 hover:text-blue-700 font-semibold text-xs transition flex items-center justify-center space-x-1.5 cursor-pointer">
+                  <i class="bi bi-plus-circle text-blue-600"></i>
+                  <span>Thêm dòng mặt hàng mới (F2)</span>
                 </button>
-                
-                <button onclick="addRowToVoucher(null, true)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs">Thêm dòng (F2)</button>
               </div>
-            </div>
-
-            <div class="border border-slate-200 rounded-xl overflow-x-auto w-full">
-              <table class="min-w-full divide-y divide-slate-200 text-xs">
-                <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0 z-10">
-                  <tr>
-                    <th class="px-3 py-2 text-center w-12 col-center">STT</th>
-                    <th class="px-3 py-2 text-left w-44">Mã hàng</th>
-                    <th class="px-3 py-2 text-left min-w-[320px] col-item-name">Tên mặt hàng</th>
-                    <th class="px-3 py-2 text-center w-20 col-center">ĐVT</th>
-                    <th class="px-3 py-2 text-center w-36 col-center">Phân loại hàng</th>
-                    <th class="px-3 py-2 text-right w-28 col-num">Tồn kho</th>
-                    <th class="px-3 py-2 text-right w-40 col-num">Số lượng</th>
-                    <th class="px-3 py-2 text-left min-w-[160px]">Ghi chú dòng</th>
-                    <th class="px-2 py-2 text-center w-28 no-print">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="voucher-tbody" class="divide-y divide-slate-100 bg-white"></tbody>
-              </table>
             </div>
           </div>
 
@@ -1711,88 +1764,99 @@
           </div>
 
           <!-- FORM TẠO / SỬA PHIẾU NHẬP TRẢ -->
-          <div id="nhaptra-create-view" class="hidden bg-white rounded-2xl shadow-xs border-2 border-purple-500/80 p-4 sm:p-5 space-y-4 transition-all">
+          <div id="nhaptra-create-view" class="hidden bg-white rounded-2xl shadow-xs border border-slate-200/90 p-4 sm:p-5 space-y-4 transition-all">
             <div id="nhaptra-edit-banner" class="hidden p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between text-xs text-amber-900">
               <div class="flex items-center space-x-2">
                 <i class="bi bi-pencil-square text-base text-amber-600"></i>
                 <span>Đang sửa phiếu hàng nhập trả: <b id="nhaptra-edit-banner-no" class="font-mono text-sm">...</b></span>
               </div>
-              <button onclick="cancelNhapTraEditMode()" class="px-2.5 py-1 bg-white border border-amber-300 text-amber-800 rounded-lg font-bold">Hủy sửa</button>
+              <button onclick="cancelNhapTraEditMode()" class="px-2.5 py-1 bg-white border border-amber-300 text-amber-800 rounded-lg font-bold cursor-pointer">Hủy sửa</button>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-              <div>
-                <h2 class="text-base font-black text-purple-900 flex items-center space-x-2 uppercase">
-                  <i class="bi bi-file-earmark-plus text-purple-600"></i>
-                  <span id="nhaptra-form-title">LẬP PHIẾU HÀNG NHẬP TRẢ LẠI KHO</span>
-                </h2>
-                <p class="text-[11px] text-slate-500 mt-0.5">Số lượng trả sẽ tự động cộng hoàn lại vào tổng tồn trong hệ thống.</p>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center font-bold shrink-0">
+                  <i class="bi bi-file-earmark-plus text-base"></i>
+                </div>
+                <div>
+                  <h2 id="nhaptra-form-title" class="text-sm sm:text-base font-extrabold text-slate-800 uppercase tracking-tight">LẬP PHIẾU HÀNG NHẬP TRẢ LẠI KHO</h2>
+                  <p class="text-[11px] text-slate-500 mt-0.5">Số lượng trả sẽ tự động cộng hoàn lại vào tổng tồn trong hệ thống.</p>
+                </div>
               </div>
               <div class="flex items-center space-x-2">
-                <button onclick="closeCreateNhapTraForm()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs transition">
+                <button type="button" onclick="closeCreateNhapTraForm()" class="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-semibold rounded-xl text-xs transition cursor-pointer">
                   <i class="bi bi-arrow-left mr-1"></i> Quay lại
                 </button>
-                <button onclick="generateNhapTraVoucherNo()" id="btn-nhaptra-new-no" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-lg text-xs transition flex items-center space-x-1">
+                <button type="button" onclick="generateNhapTraVoucherNo()" id="btn-nhaptra-new-no" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-bold rounded-xl text-xs transition flex items-center space-x-1 cursor-pointer">
                   <i class="bi bi-arrow-repeat"></i>
                   <span>Số mới</span>
                 </button>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-3 border-b border-slate-100 text-xs">
-              <div>
-                <label class="block font-bold text-slate-600 uppercase mb-1">Số Chứng Từ Nhập Trả</label>
-                <input type="text" id="nhaptra-voucher-no" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-semibold font-mono text-purple-800">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 text-xs">
+              <div class="sm:col-span-4">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Số Chứng Từ Nhập Trả <span class="text-rose-500">*</span></label>
+                <input type="text" id="nhaptra-voucher-no" class="w-full h-[38px] px-3 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 font-semibold font-mono text-purple-800 bg-white">
               </div>
 
-              <div>
-                <label class="block font-bold text-slate-600 uppercase mb-1">Ngày Chứng Từ</label>
-                <input type="date" id="nhaptra-voucher-date" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-semibold font-mono">
+              <div class="sm:col-span-3">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Ngày Chứng Từ <span class="text-rose-500">*</span></label>
+                <input type="date" id="nhaptra-voucher-date" class="w-full h-[38px] px-3 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 font-semibold font-mono text-slate-800 bg-white">
               </div>
 
-              <div>
-                <label class="block font-bold text-slate-600 uppercase mb-1">Khách hàng / Lý do trả chung</label>
-                <input type="text" id="nhaptra-voucher-note" placeholder="VD: Khách trả thừa công trình..." class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-medium">
+              <div class="sm:col-span-5">
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Khách hàng / Lý do trả chung</label>
+                <input type="text" id="nhaptra-voucher-note" placeholder="VD: Khách trả thừa công trình..." class="w-full h-[38px] px-3 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 font-medium text-slate-800 bg-white placeholder:text-slate-400">
               </div>
             </div>
 
-            <div class="flex items-center justify-between p-2.5 bg-purple-50/60 border border-purple-200 rounded-lg text-xs">
-              <span class="font-bold text-purple-900 flex items-center space-x-1">
-                <i class="bi bi-info-circle-fill text-purple-600"></i>
-                <span>Danh sách mặt hàng trả lại:</span>
-              </span>
-              <button onclick="addNhapTraRow(null, true)" class="inline-flex items-center space-x-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-xs font-bold transition shadow-xs">
-                <i class="bi bi-plus-circle"></i>
-                <span>Thêm dòng (F2)</span>
-              </button>
+            <div class="border border-slate-200 rounded-xl overflow-hidden bg-white">
+              <div class="px-3.5 py-2.5 bg-purple-50/50 border-b border-slate-200/80 flex items-center justify-between text-xs">
+                <span class="font-extrabold text-purple-900 uppercase tracking-wide flex items-center space-x-1.5">
+                  <i class="bi bi-card-list text-purple-600"></i>
+                  <span>Danh sách mặt hàng trả lại</span>
+                </span>
+                <button type="button" onclick="addNhapTraRow(null, true)" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                  <i class="bi bi-plus-lg"></i>
+                  <span>Thêm dòng (F2)</span>
+                </button>
+              </div>
+
+              <div class="overflow-x-auto w-full">
+                <table class="min-w-full divide-y divide-slate-200 text-xs">
+                  <thead class="bg-slate-100/90 text-slate-600 font-bold uppercase tracking-wider text-[11px] sticky top-0 z-10 border-b border-slate-200">
+                    <tr>
+                      <th class="px-3.5 py-2.5 text-center w-12 col-center">STT</th>
+                      <th class="px-3.5 py-2.5 text-left w-44">Mã hàng <span class="text-rose-500">*</span></th>
+                      <th class="px-3.5 py-2.5 text-left min-w-[300px] col-item-name">Tên mặt hàng</th>
+                      <th class="px-3.5 py-2.5 text-center w-20 col-center">ĐVT</th>
+                      <th class="px-3.5 py-2.5 text-center w-36 col-center">Phân loại hàng</th>
+                      <th class="px-3.5 py-2.5 text-right w-28 col-num">Tồn hiện tại</th>
+                      <th class="px-3.5 py-2.5 text-right w-40 text-purple-800 font-bold col-num font-mono">SL Nhập trả <span class="text-rose-500">*</span></th>
+                      <th class="px-3.5 py-2.5 text-left min-w-[160px]">Lý do / Ghi chú dòng</th>
+                      <th class="px-2 py-2.5 text-center w-28 no-print">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="nhaptra-tbody" class="divide-y divide-slate-100 bg-white"></tbody>
+                </table>
+              </div>
+
+              <div class="p-2.5 bg-slate-50/40 border-t border-slate-100 no-print">
+                <button type="button" onclick="addNhapTraRow(null, true)" class="w-full py-2 px-3 border border-dashed border-slate-300 hover:border-purple-500 rounded-xl bg-white/70 hover:bg-purple-50/40 text-slate-600 hover:text-purple-800 font-semibold text-xs transition flex items-center justify-center space-x-1.5 cursor-pointer">
+                  <i class="bi bi-plus-circle text-purple-600"></i>
+                  <span>Thêm dòng hàng trả mới (F2)</span>
+                </button>
+              </div>
             </div>
 
-            <div class="border border-slate-200 rounded-xl overflow-x-auto w-full">
-              <table class="min-w-full divide-y divide-slate-200 text-xs">
-                <thead class="bg-purple-50 text-purple-900 font-semibold sticky top-0 z-10">
-                  <tr>
-                    <th class="px-3.5 py-2 text-center w-12 col-center">STT</th>
-                    <th class="px-3.5 py-2 text-left w-44">Mã hàng</th>
-                    <th class="px-3.5 py-2 text-left min-w-[320px] col-item-name">Tên mặt hàng</th>
-                    <th class="px-3.5 py-2 text-center w-20 col-center">ĐVT</th>
-                    <th class="px-3.5 py-2 text-center w-36 col-center">Phân loại hàng</th>
-                    <th class="px-3.5 py-2 text-right w-28 col-num">Tồn hiện tại</th>
-                    <th class="px-3.5 py-2 text-right w-40 text-purple-800 font-bold col-num font-mono">SL Nhập trả</th>
-                    <th class="px-3.5 py-2 text-left min-w-[160px]">Lý do / Ghi chú dòng</th>
-                    <th class="px-2 py-2 text-center w-28 no-print">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="nhaptra-tbody" class="divide-y divide-slate-100 bg-white"></tbody>
-              </table>
-            </div>
-
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
-              <div class="text-xs text-slate-500 font-medium">
-                Tổng SL nhập trả: <b id="nhaptra-total-qty" class="text-sm text-purple-700 font-black font-mono">0</b>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
+              <div class="px-3 py-1.5 rounded-xl bg-purple-50/70 border border-purple-200/80 text-xs text-purple-900 font-semibold">
+                Tổng SL nhập trả: <b id="nhaptra-total-qty" class="text-sm text-purple-700 font-black font-mono ml-1">0</b>
               </div>
               <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                <button onclick="closeCreateNhapTraForm()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">Hủy bỏ</button>
-                <button onclick="submitNhapTraVoucher()" id="btn-submit-nhaptra" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-lg text-xs shadow-xs transition flex items-center justify-center space-x-1.5">
+                <button type="button" onclick="closeCreateNhapTraForm()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">Hủy bỏ</button>
+                <button type="button" onclick="submitNhapTraVoucher()" id="btn-submit-nhaptra" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl text-xs shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer">
                   <i class="bi bi-arrow-down-left-circle-fill text-base"></i>
                   <span id="btn-submit-nhaptra-text">LƯU PHIẾU HÀNG NHẬP TRẢ</span>
                 </button>
@@ -2047,7 +2111,7 @@
           </div>
 
           <!-- VIEW 2: FORM GHI NHẬN PHÁT HÀNG CHO XE (HỖ TRỢ NHIỀU MÃ HÀNG TRÊN 1 XE) -->
-          <div id="dispatch-create-view" class="hidden bg-white rounded-2xl shadow-xs border-2 border-teal-500/80 p-4 sm:p-5 pb-24 space-y-4 transition-all">
+          <div id="dispatch-create-view" class="hidden bg-white rounded-2xl shadow-xs border border-slate-200/90 p-4 sm:p-5 pb-24 space-y-4 transition-all">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div class="flex items-center space-x-2.5">
                 <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center text-lg shadow-2xs">
@@ -2575,161 +2639,171 @@
           <!-- SUB-VIEW 2: LẬP / CHỈNH SỬA PHIẾU KIỂM KÊ (kiemke-create-view) -->
           <div id="kiemke-create-view" class="hidden space-y-3.5 pb-24">
             
-            <!-- THÔNG TIN PHIẾU KIỂM KÊ -->
-            <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80 space-y-3 no-print">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
-                <div class="flex items-center space-x-2">
-                  <button type="button" onclick="closeCreateKiemKeForm()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition mr-1 cursor-pointer" title="Quay lại danh sách">
-                    <i class="bi bi-arrow-left text-base"></i>
+            <!-- CARD 1: THÔNG TIN CHỨNG TỪ KIỂM KÊ -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-xs border border-slate-200/90 space-y-4 no-print">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3.5 border-b border-slate-100">
+                <div class="flex items-start sm:items-center space-x-2.5 min-w-0 flex-1">
+                  <button type="button" onclick="closeCreateKiemKeForm()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer shrink-0" title="Quay lại danh sách">
+                    <i class="bi bi-arrow-left text-sm font-bold"></i>
                   </button>
-                  <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold shrink-0">
-                    <i class="bi bi-clipboard2-check-fill text-sm"></i>
+                  <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center font-bold shrink-0">
+                    <i class="bi bi-clipboard2-check-fill text-base"></i>
                   </div>
-                  <div>
-                    <h2 id="kiemke-form-title" class="font-extrabold text-sm text-slate-800 uppercase tracking-wide">Lập Phiếu Tính Tiền Chênh Lệch</h2>
-                    <p class="text-[11px] text-slate-500">Ghi nhận số lượng kiểm kê thực tế và tính toán thành tiền theo đơn giá mặt hàng</p>
+                  <div class="min-w-0 flex-1">
+                    <h2 id="kiemke-form-title" class="font-extrabold text-sm sm:text-base text-slate-800 uppercase tracking-tight leading-snug">Lập Phiếu Tính Tiền Chênh Lệch</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5 leading-snug">Nhập số lượng chênh lệch thực tế (<span class="text-emerald-700 font-semibold">+ Thừa</span> / <span class="text-rose-600 font-semibold">− Thiếu</span>) để tự động tính thành tiền theo đơn giá</p>
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2">
-                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer" title="Hủy bỏ và quay lại danh sách phiếu kiểm kê">
-                    <i class="bi bi-x-lg text-xs"></i>
+                <div class="flex items-center space-x-2 shrink-0">
+                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 cursor-pointer" title="Hủy bỏ và quay lại danh sách phiếu kiểm kê">
+                    <i class="bi bi-x-lg text-[11px]"></i>
                     <span>Hủy bỏ</span>
                   </button>
                 </div>
               </div>
 
-              <!-- CÁC TRƯỜNG THÔNG TIN CƠ BẢN -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-                <div>
-                  <label class="block font-bold text-slate-700 mb-1">Mã Phiếu Kiểm Kê:</label>
-                  <input type="text" id="kiemke-input-code" readonly class="w-full px-2.5 py-2 border border-slate-200 rounded-xl bg-slate-100 text-slate-700 font-mono font-bold">
+              <!-- LƯỚI 12 CỘT THÔNG TIN CƠ BẢN ĐỀU ĐẶN -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 text-xs">
+                <div class="lg:col-span-2">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Mã Phiếu</label>
+                  <input type="text" id="kiemke-input-code" readonly class="w-full h-[38px] px-3 border border-slate-200 rounded-xl bg-slate-100/90 text-slate-700 font-mono font-bold text-xs cursor-default">
                 </div>
-                <div>
-                  <label class="block font-bold text-slate-700 mb-1">Ngày Kiểm Kê (*):</label>
-                  <input type="date" id="kiemke-input-date" class="w-full px-2.5 py-2 border border-slate-300 rounded-xl font-semibold bg-white focus:ring-2 focus:ring-amber-500 font-mono">
+                <div class="lg:col-span-2">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Ngày Kiểm Kê <span class="text-rose-500">*</span></label>
+                  <input type="date" id="kiemke-input-date" class="w-full h-[38px] px-3 border border-slate-300 rounded-xl font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-amber-500 font-mono text-xs">
                 </div>
-                <div>
-                  <label class="block font-bold text-slate-700 mb-1">Kho Kiểm Kê (*):</label>
-                  <select id="kiemke-input-warehouse" onchange="handleKiemKeWarehouseChange(this.value)" class="w-full px-2.5 py-2 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-amber-500">
+                <div class="lg:col-span-2">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Kho Kiểm Kê <span class="text-rose-500">*</span></label>
+                  <select id="kiemke-input-warehouse" onchange="handleKiemKeWarehouseChange(this.value)" class="w-full h-[38px] px-3 border border-slate-300 rounded-xl font-bold text-slate-800 bg-white focus:ring-2 focus:ring-amber-500 text-xs">
                     <!-- Populated dynamically -->
                   </select>
                 </div>
-                <div>
-                  <label class="block font-bold text-slate-700 mb-1">Người Kiểm Kê (*):</label>
-                  <input type="text" id="kiemke-input-creator" placeholder="Tên người lập phiếu..." class="w-full px-2.5 py-2 border border-slate-300 rounded-xl font-semibold bg-white focus:ring-2 focus:ring-amber-500">
+                <div class="lg:col-span-3">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Người Kiểm Kê <span class="text-rose-500">*</span></label>
+                  <input type="text" id="kiemke-input-creator" placeholder="Tên người lập phiếu..." class="w-full h-[38px] px-3 border border-slate-300 rounded-xl font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-amber-500 text-xs placeholder:text-slate-400">
                 </div>
-                <div>
-                  <label class="block font-bold text-slate-700 mb-1">Ghi Chú Phiếu:</label>
-                  <input type="text" id="kiemke-input-notes" placeholder="VD: Kiểm kê định kỳ, bàn giao ca..." class="w-full px-2.5 py-2 border border-slate-300 rounded-xl font-medium bg-white focus:ring-2 focus:ring-amber-500">
+                <div class="lg:col-span-3">
+                  <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wide mb-1.5">Ghi Chú Phiếu</label>
+                  <input type="text" id="kiemke-input-notes" placeholder="VD: Kiểm kê định kỳ, bàn giao ca..." class="w-full h-[38px] px-3 border border-slate-300 rounded-xl font-medium text-slate-800 bg-white focus:ring-2 focus:ring-amber-500 text-xs placeholder:text-slate-400">
                 </div>
               </div>
+            </div>
 
-              <!-- THANH CÔNG CỤ NẠP NHANH DÒNG HÀNG -->
-              <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div class="flex items-center space-x-2">
-                  <span class="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-                    <i class="bi bi-card-checklist text-amber-600"></i>
+            <!-- CARD 2: BẢNG DANH SÁCH MẶT HÀNG KIỂM KÊ (GỘP THANH CÔNG CỤ GẦN BẢNG) -->
+            <div class="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden w-full">
+              <!-- THANH CÔNG CỤ BẢNG -->
+              <div class="px-4 py-3 bg-slate-50/75 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs no-print">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-extrabold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="bi bi-card-checklist text-amber-600 text-sm"></i>
                     <span>Danh sách mặt hàng kiểm kê</span>
                   </span>
-                  <button type="button" onclick="clearKiemKeRows()" class="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-500 rounded-lg text-xs font-medium transition flex items-center space-x-1 cursor-pointer" title="Xóa toàn bộ các dòng kiểm kê trong bảng">
-                    <i class="bi bi-trash3 text-xs"></i>
-                    <span>Xóa trắng bảng</span>
+                  <span id="kiemke-count-total-pill" class="px-2 py-0.5 rounded-full text-[11px] font-bold font-mono bg-white text-slate-700 border border-slate-200">0 dòng</span>
+                  <span id="kiemke-count-pos-pill" class="hidden px-2 py-0.5 rounded-full text-[11px] font-bold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200">+0 thừa</span>
+                  <span id="kiemke-count-neg-pill" class="hidden px-2 py-0.5 rounded-full text-[11px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200">−0 thiếu</span>
+                  <button type="button" onclick="clearKiemKeRows()" class="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-500 border border-slate-200 hover:border-rose-200 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1 cursor-pointer ml-1" title="Xóa toàn bộ các dòng kiểm kê trong bảng">
+                    <i class="bi bi-trash3"></i>
+                    <span>Xóa trắng</span>
                   </button>
                 </div>
 
                 <div class="flex items-center space-x-2">
-                  <button type="button" onclick="openPasteKiemKeModal()" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl font-bold transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Dán nhanh danh sách Mã và SL thực tế từ Excel hoặc bản kiểm đếm">
+                  <button type="button" onclick="openPasteKiemKeModal()" class="px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 rounded-xl font-bold transition flex items-center space-x-1.5 shadow-2xs cursor-pointer" title="Dán nhanh danh sách Mã và SL thực tế từ Excel hoặc bản kiểm đếm">
                     <i class="bi bi-clipboard-data text-purple-600"></i>
                     <span>Dán Nhanh (Mã - SL)</span>
                   </button>
-                  <button type="button" onclick="addKiemKeRow(null, true)" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs">
+                  <button type="button" onclick="addKiemKeRow(null, true)" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs">
                     <i class="bi bi-plus-lg font-bold"></i>
                     <span>Thêm Sản Phẩm (F2)</span>
                   </button>
                 </div>
               </div>
-            </div>
 
-            <!-- BẢNG DÒNG HÀNG ĐỐI CHIẾU KIỂM KÊ -->
-            <div class="bg-white rounded-2xl shadow-xs border border-slate-200/80 overflow-hidden w-full">
-              <div class="overflow-x-auto max-h-[580px] custom-scroll w-full">
+              <div class="overflow-x-auto max-h-[560px] custom-scroll w-full">
                 <table id="kiemke-items-table" class="min-w-full divide-y divide-slate-200 text-xs">
-                  <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider text-[11px]">
+                  <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                     <tr>
-                      <th class="px-2 py-2.5 text-center w-12 font-mono">STT</th>
-                      <th class="px-3 py-2.5 text-center w-36 font-mono font-bold text-slate-700">Mã SP (*)</th>
-                      <th class="px-3.5 py-2.5 text-left min-w-[240px]">Tên Mặt Hàng / Quy Cách</th>
-                      <th class="px-2.5 py-2.5 text-center w-20">ĐVT</th>
-                      <th class="px-3.5 py-2.5 text-right w-36 font-mono font-bold text-slate-700">Kiểm Kê Thực Tế (*)</th>
-                      <th class="px-3 py-2.5 text-right w-28 font-mono text-slate-700">Đơn Giá</th>
-                      <th class="px-3 py-2.5 text-right w-32 font-mono font-bold text-emerald-800">Thành Tiền</th>
-                      <th class="px-3 py-2.5 text-left min-w-[160px]">Ghi Chú</th>
-                      <th class="px-2 py-2.5 text-center w-28 no-print">Thao tác</th>
+                      <th class="px-2 py-2.5 text-center w-11 min-w-[44px] font-mono">STT</th>
+                      <th class="px-2 py-2.5 text-center w-32 min-w-[118px] font-mono">Mã SP <span class="text-rose-500">*</span></th>
+                      <th class="px-2.5 py-2.5 text-left min-w-[185px]">Tên Mặt Hàng / Quy Cách</th>
+                      <th class="px-2 py-2.5 text-center w-16 min-w-[56px]">ĐVT</th>
+                      <th class="px-2.5 py-2.5 text-right w-[182px] min-w-[176px] font-mono">Kiểm Kê Thực Tế <span class="text-rose-500">*</span></th>
+                      <th class="px-2.5 py-2.5 text-right w-24 min-w-[90px] font-mono">Đơn Giá</th>
+                      <th class="px-2.5 py-2.5 text-right w-28 min-w-[108px] font-mono text-slate-700">Thành Tiền</th>
+                      <th class="px-2 py-2.5 text-left w-32 min-w-[120px]">Ghi Chú</th>
+                      <th class="px-1.5 py-2.5 text-center w-[124px] min-w-[124px] no-print">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="kiemke-items-tbody" class="divide-y divide-slate-100 bg-white">
                     <tr>
-                      <td colspan="9" class="text-center py-12 text-slate-400">
-                        <i class="bi bi-clipboard2-plus text-3xl block mb-2 opacity-50 text-amber-500"></i>
+                      <td colspan="9" class="text-center py-12 text-slate-500">
+                        <i class="bi bi-clipboard2-plus text-3xl block mb-2 text-amber-500"></i>
                         <span>Bảng kiểm kê đang trống. Hãy bấm <b>"Thêm Sản Phẩm (F2)"</b> hoặc <b>"Dán Nhanh (Mã - SL)"</b> để bắt đầu kiểm kê.</span>
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
+
+              <div class="p-2.5 bg-slate-50/40 border-t border-slate-100 no-print">
+                <button type="button" onclick="addKiemKeRow(null, true)" class="w-full py-2 px-3 border border-dashed border-slate-300 hover:border-amber-500 rounded-xl bg-white/70 hover:bg-amber-50/40 text-slate-600 hover:text-amber-800 font-semibold text-xs transition flex items-center justify-center space-x-1.5 cursor-pointer">
+                  <i class="bi bi-plus-circle text-amber-600"></i>
+                  <span>Thêm dòng kiểm kê mới (F2)</span>
+                </button>
+              </div>
             </div>
 
             <!-- THANH TỔNG KẾT VÀ NÚT LƯU CỐ ĐỊNH Ở ĐÁY (STICKY FOOTER BAR) -->
-            <div id="sticky-kiemke-bar" class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-3 sm:px-6 shadow-[0_-8px_25px_rgba(0,0,0,0.08)] z-30 transition-all duration-300 no-print">
-              <div class="w-full flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5 sm:gap-3">
+            <div id="sticky-kiemke-bar" class="fixed bottom-0 left-0 md:left-64 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-2 px-3 sm:px-6 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] z-30 transition-all duration-300 no-print">
+              <div class="w-full flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 sm:gap-3 min-w-0">
                 
-                <!-- CỤM CHỈ SỐ: Responsive Grid / Flex-wrap không bị vỡ layout trên mọi cỡ màn hình -->
-                <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2.5 text-xs">
+                <!-- CỤM CHỈ SỐ ĐỒNG NHẤT KÍCH THƯỚC & TỶ LỆ (KHÔNG TRÀN TRÊN MOBILE) -->
+                <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2 text-xs min-w-0">
                   <!-- Thẻ Thừa -->
-                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80">
-                    <span class="text-[11px] font-semibold text-emerald-800 flex items-center gap-1">
-                      <i class="bi bi-arrow-up-circle-fill text-emerald-600"></i>
-                      <span>Thừa:</span>
+                  <div class="min-w-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-0.5 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-emerald-50/90 border border-emerald-200/90">
+                    <span class="text-[10.5px] sm:text-[11px] font-bold text-emerald-800 flex items-center gap-1 truncate">
+                      <i class="bi bi-arrow-up-circle-fill text-emerald-600 shrink-0"></i>
+                      <span class="truncate">Thừa:</span>
                     </span>
-                    <b id="kiemke-footer-surplus-amount" class="text-xs sm:text-sm font-black font-mono text-emerald-700">0 đ</b>
+                    <b id="kiemke-footer-surplus-amount" class="text-xs sm:text-sm font-black font-mono text-emerald-700 truncate">0 đ</b>
                   </div>
 
                   <!-- Thẻ Thiếu -->
-                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50/80 border border-rose-200/80">
-                    <span class="text-[11px] font-semibold text-rose-800 flex items-center gap-1">
-                      <i class="bi bi-arrow-down-circle-fill text-rose-600"></i>
-                      <span>Thiếu:</span>
+                  <div class="min-w-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-0.5 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-rose-50/90 border border-rose-200/90">
+                    <span class="text-[10.5px] sm:text-[11px] font-bold text-rose-800 flex items-center gap-1 truncate">
+                      <i class="bi bi-arrow-down-circle-fill text-rose-600 shrink-0"></i>
+                      <span class="truncate">Thiếu:</span>
                     </span>
-                    <b id="kiemke-footer-deficit-amount" class="text-xs sm:text-sm font-black font-mono text-rose-700">0 đ</b>
+                    <b id="kiemke-footer-deficit-amount" class="text-xs sm:text-sm font-black font-mono text-rose-700 truncate">0 đ</b>
                   </div>
 
                   <!-- Thẻ Chênh lệch phiếu này -->
-                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200">
-                    <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                      <i class="bi bi-calculator text-amber-600"></i>
-                      <span>Chênh lệch:</span>
+                  <div class="min-w-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-0.5 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-white border border-slate-300 shadow-2xs">
+                    <span class="text-[10.5px] sm:text-[11px] font-bold text-slate-700 flex items-center gap-1 truncate">
+                      <i class="bi bi-calculator text-amber-600 shrink-0"></i>
+                      <span class="truncate">Chênh lệch:</span>
                     </span>
-                    <span id="kiemke-footer-diff-amount" class="text-xs sm:text-sm font-black font-mono text-slate-900">0 đ</span>
+                    <span id="kiemke-footer-diff-amount" class="text-xs sm:text-sm font-black font-mono text-slate-900 truncate">0 đ</span>
                   </div>
 
                   <!-- Thẻ Tổng toàn bộ danh sách -->
-                  <div class="flex items-center justify-between sm:justify-start gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50/90 border border-amber-300/80 shadow-2xs">
-                    <span class="text-[11px] font-bold text-amber-950 flex items-center gap-1">
-                      <i class="bi bi-collection-fill text-amber-600"></i>
-                      <span>Tổng toàn bộ DS:</span>
+                  <div class="min-w-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-0.5 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-amber-50/90 border border-amber-200">
+                    <span class="text-[10.5px] sm:text-[11px] font-bold text-amber-900 flex items-center gap-1 truncate">
+                      <i class="bi bi-collection-fill text-amber-600 shrink-0"></i>
+                      <span class="truncate">Tổng toàn bộ DS:</span>
                     </span>
-                    <b id="kiemke-footer-all-vouchers-diff" class="text-xs sm:text-sm font-black font-mono text-slate-900">0 đ</b>
+                    <b id="kiemke-footer-all-vouchers-diff" class="text-xs sm:text-sm font-black font-mono text-slate-900 truncate">0 đ</b>
                   </div>
                 </div>
 
-                <!-- CỤM NÚT THAO TÁC: Chỉ giữ nút Quay lại và Lưu Phiếu (đã loại bỏ nút xuất excel ở cuối) -->
+                <!-- CỤM NÚT THAO TÁC -->
                 <div class="flex items-center space-x-2 justify-end shrink-0 pt-1 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer">
+                  <button type="button" onclick="closeCreateKiemKeForm()" class="px-3 sm:px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1 cursor-pointer">
                     <i class="bi bi-arrow-left"></i>
                     <span>Quay lại</span>
                   </button>
-                  <button type="button" onclick="saveKiemKeVoucher(false)" class="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer">
+                  <button type="button" onclick="saveKiemKeVoucher(false)" class="px-4 sm:px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-sm transition flex items-center space-x-1.5 cursor-pointer">
                     <i class="bi bi-check2-circle text-base"></i>
                     <span>Lưu Phiếu (Ctrl+S)</span>
                   </button>
@@ -14170,14 +14244,14 @@ window.google.script = {
       const submitBtnText = document.getElementById('btn-submit-voucher-text');
 
       if (isNhap) {
-        btnNhap.className = "flex items-center justify-center py-2 px-3 border-2 border-emerald-600 bg-emerald-50 text-emerald-800 rounded-xl cursor-pointer text-xs font-black transition";
-        btnXuat.className = "flex items-center justify-center py-2 px-3 border border-slate-200 text-slate-600 rounded-xl cursor-pointer text-xs font-bold hover:bg-slate-50 transition";
-        card.className = "bg-white rounded-2xl shadow-xs border-2 border-emerald-500/80 p-4 sm:p-5 space-y-4 transition-all";
+        btnNhap.className = "flex items-center justify-center px-2.5 h-full border border-emerald-600 bg-emerald-50 text-emerald-800 rounded-xl cursor-pointer text-xs font-black transition";
+        btnXuat.className = "flex items-center justify-center px-2.5 h-full border border-slate-200 text-slate-600 rounded-xl cursor-pointer text-xs font-bold hover:bg-slate-50 transition";
+        card.className = "bg-white rounded-2xl shadow-xs border border-emerald-300/90 p-4 sm:p-5 space-y-4 transition-all";
         if (!editingVoucherNo) submitBtnText.innerText = 'LƯU PHIẾU NHẬP KHO';
       } else {
-        btnXuat.className = "flex items-center justify-center py-2 px-3 border-2 border-amber-600 bg-amber-50 text-amber-800 rounded-xl cursor-pointer text-xs font-black transition";
-        btnNhap.className = "flex items-center justify-center py-2 px-3 border border-slate-200 text-slate-600 rounded-xl cursor-pointer text-xs font-bold hover:bg-slate-50 transition";
-        card.className = "bg-white rounded-2xl shadow-xs border-2 border-amber-500/80 p-4 sm:p-5 space-y-4 transition-all";
+        btnXuat.className = "flex items-center justify-center px-2.5 h-full border border-amber-600 bg-amber-50 text-amber-800 rounded-xl cursor-pointer text-xs font-black transition";
+        btnNhap.className = "flex items-center justify-center px-2.5 h-full border border-slate-200 text-slate-600 rounded-xl cursor-pointer text-xs font-bold hover:bg-slate-50 transition";
+        card.className = "bg-white rounded-2xl shadow-xs border border-amber-300/90 p-4 sm:p-5 space-y-4 transition-all";
         if (!editingVoucherNo) submitBtnText.innerText = 'LƯU PHIẾU XUẤT KHO';
       }
       if (!editingVoucherNo) generateVoucherNo(currentVoucherType);
@@ -14194,7 +14268,7 @@ window.google.script = {
                    onblur="onRowCodeBlur('${rowId}', this.value)"
                    onkeydown="handleCodeKeydown(event, '${rowId}')"
                    placeholder="Nhập mã..." 
-                   class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono font-bold text-xs uppercase">
+                   class="w-full min-w-[100px] px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono font-bold text-xs uppercase placeholder:text-slate-400 placeholder:normal-case placeholder:font-sans placeholder:font-normal">
           </div>
         </td>
         <td class="px-3 py-2 text-slate-800 font-medium col-item-name" id="name_${rowId}">-</td>
@@ -14216,7 +14290,7 @@ window.google.script = {
                  onpaste="handleQtyPaste(event, '${rowId}')"
                  onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('input_note_${rowId}').focus();}"
                  placeholder="SL"
-                 class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-right font-black text-blue-700 focus:ring-2 focus:ring-blue-500 text-xs font-mono">
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-right font-black text-blue-700 focus:ring-2 focus:ring-blue-500 text-xs font-mono placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal">
           <div id="pack_calc_${rowId}" class="text-right"></div>
         </td>
         <td class="px-3 py-2">
@@ -14224,7 +14298,7 @@ window.google.script = {
                  oninput="onRowNoteChange('${rowId}', this.value)"
                  onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); addRowToVoucher(null, true);}"
                  placeholder="Ghi chú dòng..." 
-                 class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs">
+                 class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-xs placeholder:text-slate-400">
         </td>
         <td class="px-2 py-2 text-center no-print">
           <div class="flex items-center justify-center space-x-0.5">
@@ -14428,8 +14502,80 @@ window.google.script = {
       rows.forEach((td, idx) => { td.innerText = idx + 1; });
     }
 
-    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU NHẬP / XUẤT KHO
-    function validateAndHighlightVoucherRow(rowId) {
+    /** Áp dụng đồng nhất trạng thái kiểm lỗi / khôi phục sạch sẽ trên 1 dòng lập phiếu */
+    function applyVoucherRowErrorVisuals_(tr, opts) {
+      const {
+        codeInp, qtyInp, qtyBox, nameEl, unitEl, stockEl,
+        isError, errorMsg, isCodeError, isQtyError,
+        hasCode, isCodeValid, itemInMap,
+        emptyNameHtml = '-'
+      } = opts;
+
+      // Dọn sạch style inline cũ trước để không bao giờ bị kẹt màu đỏ
+      tr.style.removeProperty('background-color');
+      tr.style.removeProperty('box-shadow');
+
+      const clearInputErr = (el) => {
+        if (!el) return;
+        el.style.removeProperty('border-color');
+        el.style.removeProperty('background-color');
+        el.style.removeProperty('color');
+      };
+      const setInputErr = (el) => {
+        if (!el) return;
+        el.style.setProperty('border-color', '#e11d48', 'important');
+        el.style.setProperty('background-color', '#fff1f2', 'important');
+        el.style.setProperty('color', '#be123c', 'important');
+      };
+
+      if (isError) {
+        tr.classList.add('row-error-highlight');
+        tr.setAttribute('data-has-error', 'true');
+        tr.setAttribute('data-error-msg', errorMsg || '');
+
+        if (isCodeError) setInputErr(codeInp); else clearInputErr(codeInp);
+        if (qtyBox) {
+          if (isQtyError) setInputErr(qtyBox); else clearInputErr(qtyBox);
+        } else {
+          if (isQtyError) setInputErr(qtyInp); else clearInputErr(qtyInp);
+        }
+
+        if (nameEl) {
+          if (hasCode && !isCodeValid) {
+            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          } else if (!hasCode) {
+            nameEl.innerHTML = '<span class="text-rose-600 italic text-xs font-medium">Chưa chọn mã</span>';
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          }
+        }
+      } else {
+        tr.classList.remove('row-error-highlight');
+        tr.removeAttribute('data-has-error');
+        tr.removeAttribute('data-error-msg');
+
+        clearInputErr(codeInp);
+        clearInputErr(qtyBox || qtyInp);
+        if (qtyBox) clearInputErr(qtyInp);
+
+        if (nameEl) {
+          if (itemInMap) {
+            nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
+            if (unitEl) unitEl.innerText = itemInMap.unit || '-';
+            if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
+          } else if (!hasCode) {
+            nameEl.innerHTML = emptyNameHtml;
+            if (unitEl) unitEl.innerText = '-';
+            if (stockEl) stockEl.innerText = '-';
+          }
+        }
+      }
+    }
+
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO DÒNG PHIẾU NHẬP / XUẤT KHO (strict=false: dịu nhẹ khi đang nhập)
+    function validateAndHighlightVoucherRow(rowId, strict = false) {
       const tr = document.getElementById(`tr_${rowId}`);
       if (!tr) return null;
 
@@ -14454,10 +14600,12 @@ window.google.script = {
       let isQtyError = false;
 
       if (!hasCode && !isQtyValid) {
-        isError = true;
-        errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
-        isCodeError = true;
-        isQtyError = true;
+        if (strict) {
+          isError = true;
+          errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
+          isCodeError = true;
+          isQtyError = true;
+        }
       } else if (!hasCode && isQtyValid) {
         isError = true;
         errorMsg = 'Chưa điền mã sản phẩm';
@@ -14466,79 +14614,19 @@ window.google.script = {
         isError = true;
         errorMsg = `Mã [${codeVal.toUpperCase()}] chưa có trong kho`;
         isCodeError = true;
-      } else if (hasCode && isCodeValid && !isQtyValid) {
+      } else if (hasCode && isCodeValid && !isQtyValid && strict) {
         isError = true;
         errorMsg = 'Chưa điền số lượng hoặc số lượng phải lớn hơn 0';
         isQtyError = true;
       }
 
-      if (isError) {
-        tr.style.setProperty('background-color', '#fff1f2', 'important');
-        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
-        tr.setAttribute('data-has-error', 'true');
-        tr.setAttribute('data-error-msg', errorMsg);
+      applyVoucherRowErrorVisuals_(tr, {
+        codeInp, qtyInp, nameEl, unitEl, stockEl,
+        isError, errorMsg, isCodeError, isQtyError,
+        hasCode, isCodeValid, itemInMap
+      });
 
-        if (codeInp) {
-          if (isCodeError) {
-            codeInp.style.setProperty('border-color', '#e11d48', 'important');
-            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
-            codeInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            codeInp.style.removeProperty('border-color');
-            codeInp.style.removeProperty('background-color');
-            codeInp.style.removeProperty('color');
-          }
-        }
-
-        if (qtyInp) {
-          if (isQtyError) {
-            qtyInp.style.setProperty('border-color', '#e11d48', 'important');
-            qtyInp.style.setProperty('background-color', '#fff1f2', 'important');
-            qtyInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            qtyInp.style.removeProperty('border-color');
-            qtyInp.style.removeProperty('background-color');
-            qtyInp.style.removeProperty('color');
-          }
-        }
-
-        if (nameEl) {
-          if (hasCode && !isCodeValid) {
-            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          } else if (!hasCode) {
-            nameEl.innerHTML = '<span class="text-rose-500 italic text-xs">⚠️ Chưa chọn mã</span>';
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          }
-        }
-
-        return { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError };
-      } else {
-        // Hợp lệ -> Khôi phục style bình thường
-        tr.style.removeProperty('background-color');
-        tr.style.removeProperty('box-shadow');
-        tr.removeAttribute('data-has-error');
-        tr.removeAttribute('data-error-msg');
-
-        if (codeInp) {
-          codeInp.style.removeProperty('border-color');
-          codeInp.style.removeProperty('background-color');
-          codeInp.style.removeProperty('color');
-        }
-        if (qtyInp) {
-          qtyInp.style.removeProperty('border-color');
-          qtyInp.style.removeProperty('background-color');
-          qtyInp.style.removeProperty('color');
-        }
-        if (nameEl && itemInMap) {
-          nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
-          if (unitEl) unitEl.innerText = itemInMap.unit || '-';
-          if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
-        }
-        return null;
-      }
+      return isError ? { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError } : null;
     }
 
     function onRowCodeBlur(rowId, val) {
@@ -14647,7 +14735,7 @@ window.google.script = {
       const countEl = document.getElementById('voucher-items-count');
       if (countEl) {
         if (totalRows > 0 && validRows.length < totalRows) {
-          countEl.innerHTML = `<span class="text-rose-600 font-bold">${validRows.length}</span> <span class="text-xs text-rose-500 font-semibold">/ ${totalRows} dòng (chưa đủ mã/SL)</span>`;
+          countEl.innerHTML = `<span class="text-slate-900 font-black">${validRows.length}</span> <span class="text-xs text-slate-500 font-medium">/ ${totalRows} dòng</span>`;
         } else {
           countEl.innerHTML = `${validRows.length} <span class="text-xs text-slate-400 font-normal">/ ${totalRows} dòng</span>`;
         }
@@ -14709,7 +14797,7 @@ window.google.script = {
       // BẮT BUỘC 100% MÃ PHẢI TỒN TẠI TRONG KHO VÀ SỐ LƯỢNG > 0
       const invalidRowErrors = [];
       voucherRows.forEach((r, idx) => {
-        const err = validateAndHighlightVoucherRow(r.id);
+        const err = validateAndHighlightVoucherRow(r.id, true);
         if (err) {
           invalidRowErrors.push({
             rowIndex: idx + 1,
@@ -15079,7 +15167,7 @@ window.google.script = {
       calculateVoucherSummary();
       voucherRows.forEach(r => {
         updateRowPackCalc(r.id);
-        validateAndHighlightVoucherRow(r.id);
+        validateAndHighlightVoucherRow(r.id, true);
       });
 
       if (notFoundRows.length > 0) {
@@ -15266,7 +15354,7 @@ window.google.script = {
                    onblur="onNhapTraCodeBlur('${rowId}', this.value)"
                    onkeydown="handleNhapTraCodeKeydown(event, '${rowId}')"
                    placeholder="Nhập mã hàng..." 
-                   class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono font-bold text-xs uppercase text-purple-900">
+                   class="w-full min-w-[100px] px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 font-mono font-bold text-xs uppercase text-purple-900">
           </div>
         </td>
         <td class="px-3 py-2 text-slate-800 font-medium col-item-name" id="nt_name_${rowId}">-</td>
@@ -15451,8 +15539,8 @@ window.google.script = {
       rows.forEach((td, idx) => { td.innerText = idx + 1; });
     }
 
-    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU HÀNG NHẬP TRẢ
-    function validateAndHighlightNhapTraRow(rowId) {
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO DÒNG PHIẾU HÀNG NHẬP TRẢ
+    function validateAndHighlightNhapTraRow(rowId, strict = false) {
       const tr = document.getElementById(`nt_tr_${rowId}`);
       if (!tr) return null;
 
@@ -15477,10 +15565,12 @@ window.google.script = {
       let isQtyError = false;
 
       if (!hasCode && !isQtyValid) {
-        isError = true;
-        errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
-        isCodeError = true;
-        isQtyError = true;
+        if (strict) {
+          isError = true;
+          errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
+          isCodeError = true;
+          isQtyError = true;
+        }
       } else if (!hasCode && isQtyValid) {
         isError = true;
         errorMsg = 'Chưa điền mã sản phẩm';
@@ -15489,78 +15579,19 @@ window.google.script = {
         isError = true;
         errorMsg = `Mã [${codeVal.toUpperCase()}] chưa có trong kho`;
         isCodeError = true;
-      } else if (hasCode && isCodeValid && !isQtyValid) {
+      } else if (hasCode && isCodeValid && !isQtyValid && strict) {
         isError = true;
         errorMsg = 'Chưa điền số lượng hoặc số lượng phải lớn hơn 0';
         isQtyError = true;
       }
 
-      if (isError) {
-        tr.style.setProperty('background-color', '#fff1f2', 'important');
-        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
-        tr.setAttribute('data-has-error', 'true');
-        tr.setAttribute('data-error-msg', errorMsg);
+      applyVoucherRowErrorVisuals_(tr, {
+        codeInp, qtyInp, nameEl, unitEl, stockEl,
+        isError, errorMsg, isCodeError, isQtyError,
+        hasCode, isCodeValid, itemInMap
+      });
 
-        if (codeInp) {
-          if (isCodeError) {
-            codeInp.style.setProperty('border-color', '#e11d48', 'important');
-            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
-            codeInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            codeInp.style.removeProperty('border-color');
-            codeInp.style.removeProperty('background-color');
-            codeInp.style.removeProperty('color');
-          }
-        }
-
-        if (qtyInp) {
-          if (isQtyError) {
-            qtyInp.style.setProperty('border-color', '#e11d48', 'important');
-            qtyInp.style.setProperty('background-color', '#fff1f2', 'important');
-            qtyInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            qtyInp.style.removeProperty('border-color');
-            qtyInp.style.removeProperty('background-color');
-            qtyInp.style.removeProperty('color');
-          }
-        }
-
-        if (nameEl) {
-          if (hasCode && !isCodeValid) {
-            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          } else if (!hasCode) {
-            nameEl.innerHTML = '<span class="text-rose-500 italic text-xs">⚠️ Chưa chọn mã</span>';
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          }
-        }
-
-        return { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError };
-      } else {
-        tr.style.removeProperty('background-color');
-        tr.style.removeProperty('box-shadow');
-        tr.removeAttribute('data-has-error');
-        tr.removeAttribute('data-error-msg');
-
-        if (codeInp) {
-          codeInp.style.removeProperty('border-color');
-          codeInp.style.removeProperty('background-color');
-          codeInp.style.removeProperty('color');
-        }
-        if (qtyInp) {
-          qtyInp.style.removeProperty('border-color');
-          qtyInp.style.removeProperty('background-color');
-          qtyInp.style.removeProperty('color');
-        }
-        if (nameEl && itemInMap) {
-          nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
-          if (unitEl) unitEl.innerText = itemInMap.unit || '-';
-          if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
-        }
-        return null;
-      }
+      return isError ? { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError } : null;
     }
 
     function onNhapTraCodeBlur(rowId, val) {
@@ -15692,7 +15723,7 @@ window.google.script = {
       // BẮT BUỘC 100% MÃ PHẢI TỒN TẠI TRONG KHO VÀ SỐ LƯỢNG > 0
       const invalidNtErrors = [];
       nhaptraRows.forEach((r, idx) => {
-        const err = validateAndHighlightNhapTraRow(r.id);
+        const err = validateAndHighlightNhapTraRow(r.id, true);
         if (err) {
           invalidNtErrors.push({
             rowIndex: idx + 1,
@@ -20753,7 +20784,7 @@ window.google.script = {
                    onblur="onDispatchCodeBlur('${rowId}', this.value)"
                    onkeydown="handleDispatchCodeKeydown(event, '${rowId}')"
                    placeholder="Nhập mã hàng..." 
-                   class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono font-bold text-xs uppercase text-teal-900 bg-white">
+                   class="w-full min-w-[100px] px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 font-mono font-bold text-xs uppercase text-teal-900 bg-white">
           </div>
         </td>
         <td class="px-3 py-2 text-slate-800 font-semibold text-xs col-item-name" id="dp_name_${rowId}">-</td>
@@ -20930,8 +20961,8 @@ window.google.script = {
       if (rowBadge) rowBadge.innerText = `${dispatchFormRows.length} dòng`;
     }
 
-    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU PHÁT HÀNG
-    function validateAndHighlightDispatchRow(rowId) {
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO DÒNG PHIẾU PHÁT HÀNG
+    function validateAndHighlightDispatchRow(rowId, strict = false) {
       const tr = document.getElementById(`tr_${rowId}`);
       if (!tr) return null;
 
@@ -20956,10 +20987,12 @@ window.google.script = {
       let isQtyError = false;
 
       if (!hasCode && !isQtyValid) {
-        isError = true;
-        errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
-        isCodeError = true;
-        isQtyError = true;
+        if (strict) {
+          isError = true;
+          errorMsg = 'Dòng trống (chưa điền mã và số lượng)';
+          isCodeError = true;
+          isQtyError = true;
+        }
       } else if (!hasCode && isQtyValid) {
         isError = true;
         errorMsg = 'Chưa điền mã sản phẩm';
@@ -20968,78 +21001,19 @@ window.google.script = {
         isError = true;
         errorMsg = `Mã [${codeVal.toUpperCase()}] chưa có trong kho`;
         isCodeError = true;
-      } else if (hasCode && isCodeValid && !isQtyValid) {
+      } else if (hasCode && isCodeValid && !isQtyValid && strict) {
         isError = true;
         errorMsg = 'Chưa điền số lượng phát hoặc số lượng phải lớn hơn 0';
         isQtyError = true;
       }
 
-      if (isError) {
-        tr.style.setProperty('background-color', '#fff1f2', 'important');
-        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
-        tr.setAttribute('data-has-error', 'true');
-        tr.setAttribute('data-error-msg', errorMsg);
+      applyVoucherRowErrorVisuals_(tr, {
+        codeInp, qtyInp, nameEl, unitEl, stockEl,
+        isError, errorMsg, isCodeError, isQtyError,
+        hasCode, isCodeValid, itemInMap
+      });
 
-        if (codeInp) {
-          if (isCodeError) {
-            codeInp.style.setProperty('border-color', '#e11d48', 'important');
-            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
-            codeInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            codeInp.style.removeProperty('border-color');
-            codeInp.style.removeProperty('background-color');
-            codeInp.style.removeProperty('color');
-          }
-        }
-
-        if (qtyInp) {
-          if (isQtyError) {
-            qtyInp.style.setProperty('border-color', '#e11d48', 'important');
-            qtyInp.style.setProperty('background-color', '#fff1f2', 'important');
-            qtyInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            qtyInp.style.removeProperty('border-color');
-            qtyInp.style.removeProperty('background-color');
-            qtyInp.style.removeProperty('color');
-          }
-        }
-
-        if (nameEl) {
-          if (hasCode && !isCodeValid) {
-            nameEl.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          } else if (!hasCode) {
-            nameEl.innerHTML = '<span class="text-rose-500 italic text-xs">⚠️ Chưa chọn mã</span>';
-            if (unitEl) unitEl.innerText = '-';
-            if (stockEl) stockEl.innerText = '-';
-          }
-        }
-
-        return { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError };
-      } else {
-        tr.style.removeProperty('background-color');
-        tr.style.removeProperty('box-shadow');
-        tr.removeAttribute('data-has-error');
-        tr.removeAttribute('data-error-msg');
-
-        if (codeInp) {
-          codeInp.style.removeProperty('border-color');
-          codeInp.style.removeProperty('background-color');
-          codeInp.style.removeProperty('color');
-        }
-        if (qtyInp) {
-          qtyInp.style.removeProperty('border-color');
-          qtyInp.style.removeProperty('background-color');
-          qtyInp.style.removeProperty('color');
-        }
-        if (nameEl && itemInMap) {
-          nameEl.innerHTML = `<span class="text-slate-900 font-medium">${escapeHtml(itemInMap.name)}</span>`;
-          if (unitEl) unitEl.innerText = itemInMap.unit || '-';
-          if (stockEl) stockEl.innerText = formatNumber(itemInMap.stock);
-        }
-        return null;
-      }
+      return isError ? { rowId, tr, codeVal: (codeVal ? codeVal.toUpperCase() : ''), qtyVal, errorMsg, isCodeError, isQtyError } : null;
     }
 
     function onDispatchCodeBlur(rowId, val) {
@@ -21300,7 +21274,7 @@ window.google.script = {
         if (dispatchFormRows.length === 1 && !r.code && (!r.quantity || r.quantity <= 0) && validFastList.length > 0) {
           return;
         }
-        const err = validateAndHighlightDispatchRow(r.id);
+        const err = validateAndHighlightDispatchRow(r.id, true);
         if (err) {
           invalidDpErrors.push({
             rowIndex: idx + 1,
@@ -26275,7 +26249,7 @@ window.google.script = {
 
       calculateDispatchFormSummary();
       dispatchFormRows.forEach(r => {
-        validateAndHighlightDispatchRow(r.id);
+        validateAndHighlightDispatchRow(r.id, true);
       });
 
       if (notFoundRows.length > 0) {
@@ -31029,7 +31003,16 @@ window.google.script = {
       createView.classList.remove('hidden');
 
       const stickyBar = document.getElementById('sticky-kiemke-bar');
-      if (stickyBar) stickyBar.classList.remove('hidden');
+      if (stickyBar) {
+        stickyBar.classList.remove('hidden');
+        if (typeof isSidebarCollapsed !== 'undefined' && isSidebarCollapsed) {
+          stickyBar.classList.remove('md:left-64');
+          stickyBar.classList.add('md:left-[68px]');
+        } else {
+          stickyBar.classList.remove('md:left-[68px]');
+          stickyBar.classList.add('md:left-64');
+        }
+      }
 
       populateKiemKeWarehouseDropdowns();
 
@@ -31203,22 +31186,62 @@ window.google.script = {
       }).join('');
     }
 
+    /** Tính class & badge hiển thị trạng thái Dương (Thừa) / Âm (Thiếu) / Khớp / Trống cho 1 dòng kiểm kê */
+    function getKiemKeQtyVisualState_(actualVal) {
+      if (actualVal === '' || actualVal === null || actualVal === undefined) {
+        return {
+          sign: 'empty',
+          rowClass: 'hover:bg-slate-50 transition-colors border-b border-slate-100 text-xs group bg-white',
+          boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-slate-300 hover:border-slate-400 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
+          badgeClass: 'kk-qty-badge hidden',
+          badgeHtml: '',
+          inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-bold text-slate-800 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+        };
+      }
+      const num = Number(actualVal) || 0;
+      if (num > 0) {
+        return {
+          sign: 'positive',
+          rowClass: 'row-kk-positive border-b border-emerald-200/70 text-xs group transition-colors',
+          boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-emerald-400 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
+          badgeClass: 'kk-qty-badge shrink-0 px-2 h-full inline-flex items-center gap-0.5 text-[10.5px] font-extrabold bg-emerald-100/90 text-emerald-800 border-r border-emerald-200 select-none',
+          badgeHtml: '<i class="bi bi-plus-lg text-[10px]"></i><span>Thừa</span>',
+          inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-black text-emerald-700 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+        };
+      }
+      if (num < 0) {
+        return {
+          sign: 'negative',
+          rowClass: 'row-kk-negative border-b border-rose-200/70 text-xs group transition-colors',
+          boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-rose-400 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
+          badgeClass: 'kk-qty-badge shrink-0 px-2 h-full inline-flex items-center gap-0.5 text-[10.5px] font-extrabold bg-rose-100/90 text-rose-800 border-r border-rose-200 select-none',
+          badgeHtml: '<i class="bi bi-dash-lg text-[10px]"></i><span>Thiếu</span>',
+          inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-black text-rose-700 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+        };
+      }
+      return {
+        sign: 'zero',
+        rowClass: 'border-b border-slate-100 text-xs group transition-colors bg-white hover:bg-slate-50',
+        boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-slate-300 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
+        badgeClass: 'kk-qty-badge shrink-0 px-2 h-full inline-flex items-center text-[10.5px] font-bold bg-slate-100 text-slate-600 border-r border-slate-200 select-none',
+        badgeHtml: '<span>Khớp</span>',
+        inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-bold text-slate-700 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+      };
+    }
+
     function buildKiemKeRowHtml(item, stt) {
       const rowId = item.rowId || ('kkr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7));
-      const bookQty = Number(item.book_qty) || 0;
       const actualVal = (item.actual_qty !== undefined && item.actual_qty !== null && item.actual_qty !== '') ? item.actual_qty : '';
       const price = (item.price !== undefined && item.price !== null && item.price !== '') 
         ? Number(item.price) 
         : getProductPrice(item.code);
 
-      let amount = 0;
       let amountDisplay = '0 đ';
-      let amountColor = 'text-slate-300';
+      let amountColor = 'text-slate-400';
 
-      let isNegative = false;
       if (actualVal !== '') {
         const actualNum = Number(actualVal) || 0;
-        amount = actualNum * price;
+        let amount = actualNum * price;
         if (Math.abs(amount) < 0.0001) amount = 0;
 
         if (amount > 0) {
@@ -31227,97 +31250,94 @@ window.google.script = {
         } else if (amount < 0) {
           amountColor = 'text-rose-600 font-bold';
           amountDisplay = '-' + formatCurrency(Math.abs(amount));
-          isNegative = true;
         } else {
-          amountColor = 'text-slate-400 font-medium';
+          amountColor = 'text-slate-500 font-semibold';
           amountDisplay = '0 đ';
         }
-        if (actualNum < 0) isNegative = true;
       }
 
-      const rowClass = isNegative 
-        ? 'bg-rose-50/70 hover:bg-rose-100/70 border-b border-rose-200 text-xs group transition-colors' 
-        : 'hover:bg-slate-50 transition-colors border-b border-slate-100 text-xs group bg-white';
-
-      const qtyInputClass = isNegative
-        ? 'row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-bold text-rose-700 text-sm border border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 rounded-lg bg-rose-50/60 shadow-2xs transition placeholder:text-slate-300'
-        : 'row-actual-qty w-full px-2.5 py-1.5 text-right font-mono font-bold text-slate-900 text-sm border border-slate-300 hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-lg bg-white shadow-2xs transition placeholder:text-slate-300 placeholder:font-sans placeholder:font-normal placeholder:text-xs';
+      const v = getKiemKeQtyVisualState_(actualVal);
 
       return `
-        <tr data-kiemke-row="true" data-row-id="${rowId}" class="${rowClass}">
+        <tr data-kiemke-row="true" data-row-id="${rowId}" class="${v.rowClass}">
           <!-- 1. STT -->
-          <td class="px-2 py-2.5 text-center font-mono font-bold text-slate-400 row-stt align-middle">${stt}</td>
+          <td class="px-2 py-2 text-center font-mono font-bold text-slate-400 row-stt align-middle">${stt}</td>
 
-          <!-- 2. MÃ SP (Ô NHẬP CHÍNH 1 - THANH LỊCH) -->
-          <td class="px-2.5 py-1.5 text-center relative align-middle">
-            <input type="text" id="input_kk_code_${rowId}" value="${escapeHtml(item.code || '')}" 
+          <!-- 2. MÃ SP -->
+          <td class="px-2 py-2 text-center relative align-middle min-w-[118px] w-32">
+            <input type="text" size="8" id="input_kk_code_${rowId}" value="${escapeHtml(item.code || '')}" 
+                   data-last-selected-code="${escapeHtml(item.code || '')}"
                    oninput="handleKiemKeCodeInput('${rowId}', this.value)"
                    onkeydown="handleKiemKeCodeKeydown(event, '${rowId}')"
                    onblur="handleKiemKeCodeBlur('${rowId}')"
                    autocomplete="off"
                    placeholder="Gõ mã SP..." 
-                   class="row-code w-full px-2.5 py-1.5 text-center font-mono font-bold text-slate-800 border border-slate-300 hover:border-slate-400 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-2xs tracking-wider transition placeholder:text-slate-300 placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-xs">
+                   class="row-code w-full min-w-[98px] h-[34px] px-2 text-center font-mono font-bold text-slate-800 border border-slate-300 hover:border-slate-400 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-2xs tracking-wide transition placeholder:text-slate-400 placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-xs">
           </td>
 
-          <!-- 3. TÊN MẶT HÀNG / QUY CÁCH (HIỂN THỊ CHUYÊN NGHIỆP) -->
-          <td class="px-3.5 py-2 text-left align-middle">
-            <div id="display_kk_name_${rowId}" class="font-semibold text-slate-800 text-xs truncate max-w-[340px] select-text" title="${escapeHtml(item.name || '')}">
-              ${item.name ? escapeHtml(item.name) : '<span class="text-slate-300 italic font-normal text-[11px]">- Tự động nạp theo mã SP -</span>'}
+          <!-- 3. TÊN MẶT HÀNG / QUY CÁCH -->
+          <td class="px-2.5 py-2 text-left align-middle">
+            <div id="display_kk_name_${rowId}" class="row-name-display font-semibold text-slate-800 text-xs truncate max-w-[245px] select-text" title="${escapeHtml(item.name || '')}">
+              ${item.name ? escapeHtml(item.name) : '<span class="text-slate-400 italic font-normal text-[11px]">- Tự động nạp theo mã SP -</span>'}
             </div>
             <input type="hidden" id="input_kk_name_${rowId}" class="row-name" value="${escapeHtml(item.name || '')}">
           </td>
 
-          <!-- 4. ĐVT (HIỂN THỊ BADGE GỌN ĐẸP) -->
+          <!-- 4. ĐVT -->
           <td class="px-2 py-2 text-center align-middle">
-            <span id="display_kk_unit_${rowId}" class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold ${item.unit ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'text-slate-300 font-normal'}">
+            <span id="display_kk_unit_${rowId}" class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold ${item.unit ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'text-slate-400 font-normal'}">
               ${escapeHtml(item.unit || '-')}
             </span>
             <input type="hidden" id="input_kk_unit_${rowId}" class="row-unit" value="${escapeHtml(item.unit || '')}">
           </td>
 
-          <!-- 5. KIỂM KÊ THỰC TẾ (Ô NHẬP CHÍNH 2 - MÀU THANH LỊCH TIÊU CHUẨN) -->
-          <td class="px-3 py-1.5 text-right align-middle">
-            <input type="number" step="any" id="input_kk_qty_${rowId}" value="${actualVal}" 
-                   oninput="onKiemKeActualQtyChange(this)" 
-                   onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
-                   placeholder="Nhập SL..." 
-                   class="${qtyInputClass}">
+          <!-- 5. KIỂM KÊ THỰC TẾ (PHÂN BIỆT RÕ + THỪA / − THIẾU) -->
+          <td class="px-2.5 py-2 text-right align-middle min-w-[176px] w-[182px]">
+            <div class="${v.boxClass}">
+              <span class="${v.badgeClass}">${v.badgeHtml}</span>
+              <input type="number" step="any" id="input_kk_qty_${rowId}" value="${actualVal}" 
+                     oninput="onKiemKeActualQtyChange(this)" 
+                     onwheel="this.blur()"
+                     onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
+                     placeholder="SL (+/-)..." 
+                     class="${v.inputClass}">
+            </div>
           </td>
 
-          <!-- 6. ĐƠN GIÁ (HIỂN THỊ TIỀN TỆ ĐẸP MẮT) -->
-          <td class="px-3 py-2 text-right align-middle font-mono font-bold text-slate-700 text-xs">
-            <span id="display_kk_price_${rowId}" class="${price > 0 ? 'text-slate-800' : 'text-slate-300 italic font-normal text-[11px]'}">
+          <!-- 6. ĐƠN GIÁ -->
+          <td class="px-2.5 py-2 text-right align-middle font-mono font-bold text-slate-700 text-xs whitespace-nowrap">
+            <span id="display_kk_price_${rowId}" class="${price > 0 ? 'text-slate-800' : 'text-slate-400 italic font-normal text-[11px]'}">
               ${price > 0 ? formatCurrency(price) : '0 đ'}
             </span>
             <input type="hidden" id="input_kk_price_${rowId}" class="row-price" value="${price || 0}">
           </td>
 
-          <!-- 7. THÀNH TIỀN (HIỂN THỊ CHUẨN KẾ TOÁN) -->
-          <td class="px-3 py-2 text-right align-middle font-mono ${amountColor} row-diff-amount">
+          <!-- 7. THÀNH TIỀN -->
+          <td class="px-2.5 py-2 text-right align-middle font-mono ${amountColor} row-diff-amount whitespace-nowrap">
             ${amountDisplay}
           </td>
 
-          <!-- 8. GHI CHÚ (INPUT PHỤ GỌN GÀNG) -->
-          <td class="px-2.5 py-1.5 text-left align-middle">
+          <!-- 8. GHI CHÚ -->
+          <td class="px-2 py-2 text-left align-middle w-32 min-w-[120px]">
             <input type="text" value="${escapeHtml(item.note || '')}" 
                    placeholder="Ghi chú nếu có..." 
-                   class="row-note w-full px-2.5 py-1 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 rounded-lg bg-white/90 transition placeholder:text-slate-300 placeholder:italic placeholder:text-[11px]">
+                   class="row-note w-full min-w-[104px] h-[34px] px-2.5 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg bg-white/90 transition placeholder:text-slate-400 placeholder:italic placeholder:text-[11px]">
           </td>
 
-          <!-- 9. THAO TÁC (DI CHUYỂN / CHÈN / XÓA) -->
-          <td class="px-2 py-2 text-center align-middle no-print">
+          <!-- 9. THAO TÁC -->
+          <td class="px-1.5 py-2 text-center align-middle no-print min-w-[124px]">
             <div class="flex items-center justify-center space-x-0.5">
-              <button type="button" onclick="moveKiemKeRowUp(this)" title="Di chuyển dòng lên trên (Alt + ↑)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+              <button type="button" onclick="moveKiemKeRowUp(this)" title="Di chuyển dòng lên trên (Alt + ↑)" class="w-7 h-7 inline-flex items-center justify-center text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition cursor-pointer">
                 <i class="bi bi-chevron-up text-xs font-bold"></i>
               </button>
-              <button type="button" onclick="moveKiemKeRowDown(this)" title="Di chuyển dòng xuống dưới (Alt + ↓)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+              <button type="button" onclick="moveKiemKeRowDown(this)" title="Di chuyển dòng xuống dưới (Alt + ↓)" class="w-7 h-7 inline-flex items-center justify-center text-slate-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition cursor-pointer">
                 <i class="bi bi-chevron-down text-xs font-bold"></i>
               </button>
-              <button type="button" onclick="insertKiemKeRowBefore(this)" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="p-1 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded transition cursor-pointer">
+              <button type="button" onclick="insertKiemKeRowBefore(this)" title="Chèn 1 dòng lên trên (Phím tắt: Insert hoặc Shift+Enter)" class="w-7 h-7 inline-flex items-center justify-center text-slate-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition cursor-pointer">
                 <i class="bi bi-arrow-bar-up text-xs font-bold"></i>
               </button>
-              <button type="button" onclick="removeKiemKeRow(this)" class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer" title="Xóa dòng này">
-                <i class="bi bi-trash3 text-sm"></i>
+              <button type="button" onclick="removeKiemKeRow(this)" class="w-7 h-7 inline-flex items-center justify-center text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Xóa dòng này">
+                <i class="bi bi-trash3 text-xs"></i>
               </button>
             </div>
           </td>
@@ -31337,7 +31357,7 @@ window.google.script = {
       const defaultData = data || {
         code: '',
         name: '',
-        unit: 'Cái',
+        unit: '',
         book_qty: 0,
         actual_qty: '',
         price: 0,
@@ -31371,7 +31391,7 @@ window.google.script = {
       const defaultData = {
         code: '',
         name: '',
-        unit: 'Cái',
+        unit: '',
         book_qty: 0,
         actual_qty: '',
         price: 0,
@@ -31573,12 +31593,13 @@ window.google.script = {
       }
     }
 
-    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO ĐỎ DÒNG PHIẾU KIỂM KÊ
-    function validateAndHighlightKiemKeRow(tr) {
+    // HÀM KIỂM TRA & ĐÁNH DẤU CẢNH BÁO DÒNG PHIẾU KIỂM KÊ (strict=false: không bôi đỏ khi đang nhập, giữ màu phân biệt Dương/Âm)
+    function validateAndHighlightKiemKeRow(tr, strict = false) {
       if (!tr) return null;
 
       const codeInp = tr.querySelector('.row-code');
       const actualInp = tr.querySelector('.row-actual-qty');
+      const qtyBox = tr.querySelector('.kk-qty-box');
       const nameDisp = tr.querySelector('.row-name-display');
 
       const codeVal = (codeInp ? codeInp.value : '').trim().toUpperCase();
@@ -31596,10 +31617,12 @@ window.google.script = {
       let isQtyError = false;
 
       if (!hasCode && !hasQty) {
-        isError = true;
-        errorMsg = 'Dòng trống (chưa điền mã và số lượng kiểm kê)';
-        isCodeError = true;
-        isQtyError = true;
+        if (strict) {
+          isError = true;
+          errorMsg = 'Dòng trống (chưa điền mã và số lượng kiểm kê)';
+          isCodeError = true;
+          isQtyError = true;
+        }
       } else if (!hasCode && hasQty) {
         isError = true;
         errorMsg = 'Chưa điền mã sản phẩm kiểm kê';
@@ -31608,79 +31631,51 @@ window.google.script = {
         isError = true;
         errorMsg = `Mã [${codeVal}] chưa có trong kho`;
         isCodeError = true;
-      } else if (hasCode && isCodeValid && !hasQty) {
+      } else if (hasCode && isCodeValid && !hasQty && strict) {
         isError = true;
         errorMsg = 'Chưa điền số lượng kiểm kê thực tế';
         isQtyError = true;
       }
 
+      applyVoucherRowErrorVisuals_(tr, {
+        codeInp,
+        qtyInp: actualInp,
+        qtyBox,
+        nameEl: nameDisp,
+        isError,
+        errorMsg,
+        isCodeError,
+        isQtyError,
+        hasCode,
+        isCodeValid,
+        itemInMap,
+        emptyNameHtml: '<span class="text-slate-400 italic font-normal text-[11px]">- Tự động nạp theo mã SP -</span>'
+      });
+
       if (isError) {
-        tr.style.setProperty('background-color', '#fff1f2', 'important');
-        tr.style.setProperty('box-shadow', 'inset 5px 0 0 #e11d48, inset 0 0 0 1px #fda4af', 'important');
-        tr.setAttribute('data-has-error', 'true');
-        tr.setAttribute('data-error-msg', errorMsg);
-
-        if (codeInp) {
-          if (isCodeError) {
-            codeInp.style.setProperty('border-color', '#e11d48', 'important');
-            codeInp.style.setProperty('background-color', '#fff1f2', 'important');
-            codeInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            codeInp.style.removeProperty('border-color');
-            codeInp.style.removeProperty('background-color');
-            codeInp.style.removeProperty('color');
-          }
-        }
-
-        if (actualInp) {
-          if (isQtyError) {
-            actualInp.style.setProperty('border-color', '#e11d48', 'important');
-            actualInp.style.setProperty('background-color', '#fff1f2', 'important');
-            actualInp.style.setProperty('color', '#be123c', 'important');
-          } else {
-            actualInp.style.removeProperty('border-color');
-            actualInp.style.removeProperty('background-color');
-            actualInp.style.removeProperty('color');
-          }
-        }
-
-        if (nameDisp && hasCode && !isCodeValid) {
-          nameDisp.innerHTML = `<span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"><i class="bi bi-exclamation-triangle-fill text-rose-600"></i><span>MÃ CHƯA CÓ TRONG KHO</span></span>`;
-        }
-
+        tr.classList.add('row-kk-error');
         return { tr, codeVal, actualVal, errorMsg, isCodeError, isQtyError };
       } else {
-        tr.style.removeProperty('background-color');
-        tr.style.removeProperty('box-shadow');
-        tr.removeAttribute('data-has-error');
-        tr.removeAttribute('data-error-msg');
-
-        if (codeInp) {
-          codeInp.style.removeProperty('border-color');
-          codeInp.style.removeProperty('background-color');
-          codeInp.style.removeProperty('color');
-        }
-        if (actualInp) {
-          actualInp.style.removeProperty('border-color');
-          actualInp.style.removeProperty('background-color');
-          actualInp.style.removeProperty('color');
-        }
+        tr.classList.remove('row-kk-error');
         if (nameDisp && itemInMap) {
           nameDisp.innerText = itemInMap.name || '-';
           nameDisp.title = itemInMap.name;
-          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[340px] select-text row-name-display";
+          nameDisp.className = "row-name-display font-semibold text-slate-800 text-xs truncate max-w-[245px] select-text";
         }
         return null;
       }
     }
 
-    function onKiemKeRowCodeSelect(rowId, code) {
+    function onKiemKeRowCodeSelect(rowId, code, shouldFocusQty = true) {
       const cleanCode = String(code || '').trim();
       const item = getFullProductCatalogItem(cleanCode);
       const finalCode = item ? item.code : cleanCode.toUpperCase();
 
       const codeInp = document.getElementById(`input_kk_code_${rowId}`);
-      if (codeInp) codeInp.value = finalCode;
+      if (codeInp) {
+        codeInp.value = finalCode;
+        codeInp.dataset.lastSelectedCode = finalCode;
+      }
 
       const nameInp = document.getElementById(`input_kk_name_${rowId}`);
       const unitInp = document.getElementById(`input_kk_unit_${rowId}`);
@@ -31705,7 +31700,7 @@ window.google.script = {
         if (nameDisp) {
           nameDisp.innerText = prodName || '-';
           nameDisp.title = prodName;
-          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[340px] select-text row-name-display";
+          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[245px] select-text row-name-display";
         }
         if (unitDisp) {
           unitDisp.innerText = prodUnit;
@@ -31738,29 +31733,55 @@ window.google.script = {
       closeAllDropdowns();
       if (tr) {
         updateKiemKeRowCalculations(tr);
-        validateAndHighlightKiemKeRow(tr);
+        validateAndHighlightKiemKeRow(tr, false);
       }
 
-      const qtyInp = document.getElementById(`input_kk_qty_${rowId}`);
-      if (qtyInp) {
-        qtyInp.focus();
-        qtyInp.select();
+      if (shouldFocusQty) {
+        const qtyInp = document.getElementById(`input_kk_qty_${rowId}`);
+        if (qtyInp) {
+          qtyInp.focus();
+          qtyInp.select();
+        }
       }
     }
 
     function handleKiemKeCodeBlur(rowId) {
       setTimeout(() => {
-        const dropdown = document.getElementById('global-autocomplete-dropdown');
-        const isDropdownOpen = dropdown && dropdown.style.display !== 'none' && !dropdown.classList.contains('hidden');
         if (activeDropdownType === 'kiemke' && activeDropdownRowId === rowId) {
           closeAllDropdowns();
         }
         const codeInp = document.getElementById(`input_kk_code_${rowId}`);
-        if (codeInp && codeInp.value.trim()) {
-          onKiemKeRowCodeSelect(rowId, codeInp.value.trim());
-        }
         const tr = codeInp ? codeInp.closest('tr') : null;
-        if (tr) validateAndHighlightKiemKeRow(tr);
+        if (codeInp && codeInp.value.trim()) {
+          const curVal = codeInp.value.trim().toUpperCase();
+          if (codeInp.dataset.lastSelectedCode !== curVal) {
+            onKiemKeRowCodeSelect(rowId, curVal, false);
+          } else if (tr) {
+            validateAndHighlightKiemKeRow(tr, false);
+          }
+        } else if (tr) {
+          const nameDisp = document.getElementById(`display_kk_name_${rowId}`);
+          const unitDisp = document.getElementById(`display_kk_unit_${rowId}`);
+          const priceDisp = document.getElementById(`display_kk_price_${rowId}`);
+          const nameInp = document.getElementById(`input_kk_name_${rowId}`);
+          const unitInp = document.getElementById(`input_kk_unit_${rowId}`);
+          const priceInp = document.getElementById(`input_kk_price_${rowId}`);
+          if (codeInp) codeInp.dataset.lastSelectedCode = '';
+          if (nameInp) nameInp.value = '';
+          if (unitInp) unitInp.value = '';
+          if (priceInp) priceInp.value = 0;
+          if (nameDisp) nameDisp.innerHTML = '<span class="text-slate-400 italic font-normal text-[11px]">- Tự động nạp theo mã SP -</span>';
+          if (unitDisp) {
+            unitDisp.innerText = '-';
+            unitDisp.className = 'inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-normal text-slate-400';
+          }
+          if (priceDisp) {
+            priceDisp.innerText = '0 đ';
+            priceDisp.className = 'text-slate-400 italic font-normal text-[11px]';
+          }
+          updateKiemKeRowCalculations(tr);
+          validateAndHighlightKiemKeRow(tr, false);
+        }
       }, 250);
     }
 
@@ -31776,6 +31797,7 @@ window.google.script = {
       const tr = inputEl.closest('tr');
       if (!tr) return;
       updateKiemKeRowCalculations(tr);
+      validateAndHighlightKiemKeRow(tr, false);
     }
 
     function onKiemKePriceChange(inputEl) {
@@ -31795,9 +31817,8 @@ window.google.script = {
       const actualVal = actualInp.value.trim();
       const price = Math.max(0, Number(priceInp?.value) || 0);
 
-      let isNegative = false;
       if (actualVal === '') {
-        amountEl.className = 'px-3 py-2 text-right font-mono text-slate-300 row-diff-amount align-middle';
+        amountEl.className = 'px-2.5 py-2 text-right font-mono text-slate-400 row-diff-amount align-middle whitespace-nowrap';
         amountEl.innerText = '0 đ';
         amountEl.title = '';
       } else {
@@ -31805,7 +31826,7 @@ window.google.script = {
         let amount = actualNum * price;
         if (Math.abs(amount) < 0.0001) amount = 0;
 
-        let amountColor = 'text-slate-600 font-bold';
+        let amountColor = 'text-slate-500 font-semibold';
         let amountDisplay = '0 đ';
         if (amount > 0) {
           amountColor = 'text-emerald-700 font-bold';
@@ -31813,27 +31834,27 @@ window.google.script = {
         } else if (amount < 0) {
           amountColor = 'text-rose-600 font-bold';
           amountDisplay = '-' + formatCurrency(Math.abs(amount));
-          isNegative = true;
         }
-        if (actualNum < 0) isNegative = true;
 
-        amountEl.className = `px-3 py-2 text-right font-mono ${amountColor} row-diff-amount align-middle`;
+        amountEl.className = `px-2.5 py-2 text-right font-mono ${amountColor} row-diff-amount align-middle whitespace-nowrap`;
         amountEl.innerText = amountDisplay;
         amountEl.title = `SL: ${formatNumber(actualNum)} × Giá: ${formatCurrency(price)} = ${amountDisplay}`;
       }
 
-      // Tô màu nhẹ dòng có số lượng hoặc tiền âm
-      if (isNegative) {
-        tr.classList.add('bg-rose-50/70', 'hover:bg-rose-100/70', 'border-rose-200');
-        tr.classList.remove('bg-white', 'hover:bg-slate-50', 'border-slate-100');
-        actualInp.classList.add('bg-rose-50/60', 'border-rose-300', 'text-rose-700');
-        actualInp.classList.remove('bg-white', 'border-slate-300', 'text-slate-900');
-      } else {
-        tr.classList.remove('bg-rose-50/70', 'hover:bg-rose-100/70', 'border-rose-200');
-        tr.classList.add('bg-white', 'hover:bg-slate-50', 'border-slate-100');
-        actualInp.classList.remove('bg-rose-50/60', 'border-rose-300', 'text-rose-700');
-        actualInp.classList.add('bg-white', 'border-slate-300', 'text-slate-900');
+      // Cập nhật sắc thái Dương (+ Thừa) / Âm (− Thiếu) / Khớp rõ ràng & hài hòa
+      const v = getKiemKeQtyVisualState_(actualVal);
+      const isMoved = tr.classList.contains('active-moved-row');
+      const hasErr = tr.classList.contains('row-kk-error');
+      tr.className = v.rowClass + (isMoved ? ' active-moved-row' : '') + (hasErr ? ' row-kk-error' : '');
+
+      const qtyBox = tr.querySelector('.kk-qty-box');
+      const qtyBadge = tr.querySelector('.kk-qty-badge');
+      if (qtyBox) qtyBox.className = v.boxClass;
+      if (qtyBadge) {
+        qtyBadge.className = v.badgeClass;
+        qtyBadge.innerHTML = v.badgeHtml;
       }
+      actualInp.className = v.inputClass;
 
       calculateKiemKeSummary();
     }
@@ -31843,6 +31864,8 @@ window.google.script = {
       let totalAmount = 0;
       let totalSurplusAmount = 0;
       let totalDeficitAmount = 0;
+      let posRowCount = 0;
+      let negRowCount = 0;
 
       rows.forEach(tr => {
         const actualInp = tr.querySelector('.row-actual-qty');
@@ -31853,6 +31876,9 @@ window.google.script = {
 
         if (aVal !== '') {
           const a = Number(aVal) || 0;
+          if (a > 0) posRowCount++;
+          else if (a < 0) negRowCount++;
+
           let rowAmount = a * p;
           if (Math.abs(rowAmount) < 0.0001) rowAmount = 0;
           totalAmount += rowAmount;
@@ -31864,6 +31890,19 @@ window.google.script = {
           }
         }
       });
+
+      const totalPill = document.getElementById('kiemke-count-total-pill');
+      const posPill = document.getElementById('kiemke-count-pos-pill');
+      const negPill = document.getElementById('kiemke-count-neg-pill');
+      if (totalPill) totalPill.innerText = `${rows.length} dòng`;
+      if (posPill) {
+        posPill.innerText = `+${posRowCount} thừa`;
+        posPill.classList.toggle('hidden', posRowCount === 0);
+      }
+      if (negPill) {
+        negPill.innerText = `−${negRowCount} thiếu`;
+        negPill.classList.toggle('hidden', negRowCount === 0);
+      }
 
       const surplusEl = document.getElementById('kiemke-footer-surplus-amount');
       const deficitEl = document.getElementById('kiemke-footer-deficit-amount');
@@ -31877,13 +31916,13 @@ window.google.script = {
       }
       if (diffAmtEl) {
         if (Math.abs(totalAmount) < 0.0001) {
-          diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-slate-800';
+          diffAmtEl.className = 'text-xs sm:text-sm font-black font-mono text-slate-800';
           diffAmtEl.innerText = '0 đ';
         } else if (totalAmount > 0) {
-          diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-emerald-700';
+          diffAmtEl.className = 'text-xs sm:text-sm font-black font-mono text-emerald-700';
           diffAmtEl.innerText = '+' + formatCurrency(totalAmount);
         } else {
-          diffAmtEl.className = 'text-base sm:text-lg font-black font-mono text-rose-600';
+          diffAmtEl.className = 'text-xs sm:text-sm font-black font-mono text-rose-600';
           diffAmtEl.innerText = '-' + formatCurrency(Math.abs(totalAmount));
         }
       }
@@ -31945,13 +31984,13 @@ window.google.script = {
       if (footerAllTotalDiffEl) {
         if (Math.abs(totalAllVouchersDiff) < 0.0001) {
           footerAllTotalDiffEl.innerText = '0 đ';
-          footerAllTotalDiffEl.className = 'text-sm sm:text-base font-black font-mono text-slate-800';
+          footerAllTotalDiffEl.className = 'text-xs sm:text-sm font-black font-mono text-slate-800';
         } else if (totalAllVouchersDiff > 0) {
           footerAllTotalDiffEl.innerText = '+' + formatCurrency(totalAllVouchersDiff);
-          footerAllTotalDiffEl.className = 'text-sm sm:text-base font-black font-mono text-emerald-700';
+          footerAllTotalDiffEl.className = 'text-xs sm:text-sm font-black font-mono text-emerald-700';
         } else {
           footerAllTotalDiffEl.innerText = '-' + formatCurrency(Math.abs(totalAllVouchersDiff));
-          footerAllTotalDiffEl.className = 'text-sm sm:text-base font-black font-mono text-rose-600';
+          footerAllTotalDiffEl.className = 'text-xs sm:text-sm font-black font-mono text-rose-600';
         }
       }
 
@@ -32085,9 +32124,9 @@ window.google.script = {
       closePasteKiemKeModal();
       calculateKiemKeSummary();
 
-      // Highlight đỏ ngay các dòng lỗi trên bảng kiểm kê
+      // Kiểm tra chặt các dòng sau khi dán nhanh kiểm kê
       document.querySelectorAll('#kiemke-items-tbody tr[data-kiemke-row]').forEach(tr => {
-        validateAndHighlightKiemKeRow(tr);
+        validateAndHighlightKiemKeRow(tr, true);
       });
 
       if (notFoundRows.length > 0) {
@@ -32179,7 +32218,7 @@ window.google.script = {
       const invalidKkErrors = [];
 
       rows.forEach((tr, idx) => {
-        const err = validateAndHighlightKiemKeRow(tr);
+        const err = validateAndHighlightKiemKeRow(tr, true);
         if (err) {
           invalidKkErrors.push({
             rowIndex: idx + 1,
@@ -32462,8 +32501,8 @@ window.google.script = {
         const aAmt = (it.amount !== undefined && it.amount !== null) ? Number(it.amount) : (actualNum * p);
         const isNeg = (actualNum < 0 || aAmt < 0);
 
-        const trClass = isNeg ? 'bg-rose-50/70 hover:bg-rose-100/70 border-b border-rose-200 text-xs transition' : 'hover:bg-slate-50 transition border-b border-slate-100 text-xs bg-white';
-        const qtyClass = isNeg ? 'px-3 py-1.5 text-right font-mono font-bold text-rose-700 bg-rose-50/50' : 'px-3 py-1.5 text-right font-mono font-bold text-blue-800 bg-blue-50/30';
+        const trClass = isNeg ? 'row-kk-negative border-b border-rose-200 text-xs transition' : (actualNum > 0 ? 'row-kk-positive border-b border-emerald-200/70 text-xs transition' : 'hover:bg-slate-50 transition border-b border-slate-100 text-xs bg-white');
+        const qtyClass = isNeg ? 'px-3 py-1.5 text-right font-mono font-bold text-rose-700 bg-rose-50/50' : (actualNum > 0 ? 'px-3 py-1.5 text-right font-mono font-bold text-emerald-700 bg-emerald-50/50' : 'px-3 py-1.5 text-right font-mono font-bold text-slate-700');
         const amtClass = aAmt > 0 ? 'text-emerald-700 font-bold' : (aAmt < 0 ? 'text-rose-600 font-bold' : 'text-slate-500 font-medium');
         const amtStr = aAmt > 0 ? ('+' + formatCurrency(aAmt)) : (aAmt < 0 ? ('-' + formatCurrency(Math.abs(aAmt))) : '0 đ');
 
