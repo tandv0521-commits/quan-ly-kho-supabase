@@ -129,12 +129,13 @@
       outline: none !important;
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
     }
-    .kk-qty-box input:focus {
-      box-shadow: none !important;
+    tr.row-kk-positive input.row-actual-qty:focus {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 2.5px rgba(16, 185, 129, 0.22) !important;
     }
-    .kk-qty-box:focus-within {
-      box-shadow: 0 0 0 2.5px rgba(37, 99, 235, 0.22) !important;
-      border-color: #3b82f6 !important;
+    tr.row-kk-negative input.row-actual-qty:focus {
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 0 2.5px rgba(244, 63, 94, 0.22) !important;
     }
     button:active { transform: translateY(1px); }
     
@@ -746,6 +747,18 @@
     }
     input.no-spinners {
       -moz-appearance: textfield;
+    }
+    /* CỘT TÊN SẢN PHẨM BẢNG LẬP PHIẾU: HIỂN THỊ ĐẦY ĐỦ 100%, TỰ XUỐNG DÒNG KHI DÀI */
+    #kiemke-items-table td.kk-col-name,
+    #kiemke-items-table .kk-col-name .row-name-display,
+    #tab-voucher .col-item-name,
+    #nhaptra-create-view .col-item-name,
+    #dispatch-create-view .col-item-name {
+      white-space: normal !important;
+      word-break: break-word !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      line-height: 1.35 !important;
     }
   </style>
 
@@ -2724,14 +2737,14 @@
                 <table id="kiemke-items-table" class="min-w-full divide-y divide-slate-200 text-xs">
                   <thead class="bg-slate-100/90 sticky top-0 z-10 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                     <tr>
-                      <th class="px-2 py-2.5 text-center w-11 min-w-[44px] font-mono">STT</th>
-                      <th class="px-2 py-2.5 text-center w-32 min-w-[118px] font-mono">Mã SP <span class="text-rose-500">*</span></th>
-                      <th class="px-2.5 py-2.5 text-left min-w-[185px]">Tên Mặt Hàng / Quy Cách</th>
-                      <th class="px-2 py-2.5 text-center w-16 min-w-[56px]">ĐVT</th>
-                      <th class="px-2.5 py-2.5 text-right w-[182px] min-w-[176px] font-mono">Kiểm Kê Thực Tế <span class="text-rose-500">*</span></th>
+                      <th class="px-2 py-2.5 text-center w-10 min-w-[40px] font-mono">STT</th>
+                      <th class="px-2 py-2.5 text-center w-32 min-w-[116px] font-mono">Mã SP <span class="text-rose-500">*</span></th>
+                      <th class="kk-col-name px-2.5 py-2.5 text-left min-w-[260px]">Tên Mặt Hàng / Quy Cách</th>
+                      <th class="px-2 py-2.5 text-center w-14 min-w-[52px]">ĐVT</th>
+                      <th class="px-2 py-2.5 text-right w-[124px] min-w-[118px] font-mono">Kiểm Kê Thực Tế <span class="text-rose-500">*</span></th>
                       <th class="px-2.5 py-2.5 text-right w-24 min-w-[90px] font-mono">Đơn Giá</th>
-                      <th class="px-2.5 py-2.5 text-right w-28 min-w-[108px] font-mono text-slate-700">Thành Tiền</th>
-                      <th class="px-2 py-2.5 text-left w-32 min-w-[120px]">Ghi Chú</th>
+                      <th class="px-2.5 py-2.5 text-right w-28 min-w-[106px] font-mono text-slate-700">Thành Tiền</th>
+                      <th class="px-2 py-2.5 text-left w-32 min-w-[116px]">Ghi Chú</th>
                       <th class="px-1.5 py-2.5 text-center w-[124px] min-w-[124px] no-print">Thao tác</th>
                     </tr>
                   </thead>
@@ -31186,16 +31199,13 @@ window.google.script = {
       }).join('');
     }
 
-    /** Tính class & badge hiển thị trạng thái Dương (Thừa) / Âm (Thiếu) / Khớp / Trống cho 1 dòng kiểm kê */
+    /** Tính class hiển thị gọn gàng phân biệt Dương (xanh) / Âm (đỏ) / Khớp / Trống cho 1 dòng kiểm kê */
     function getKiemKeQtyVisualState_(actualVal) {
       if (actualVal === '' || actualVal === null || actualVal === undefined) {
         return {
           sign: 'empty',
           rowClass: 'hover:bg-slate-50 transition-colors border-b border-slate-100 text-xs group bg-white',
-          boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-slate-300 hover:border-slate-400 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
-          badgeClass: 'kk-qty-badge hidden',
-          badgeHtml: '',
-          inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-bold text-slate-800 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+          inputClass: 'row-actual-qty no-spinners w-[104px] ml-auto block h-[34px] px-2.5 text-right font-mono font-bold text-slate-800 text-sm bg-white border border-slate-300 hover:border-slate-400 rounded-lg transition-all shadow-2xs placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
         };
       }
       const num = Number(actualVal) || 0;
@@ -31203,29 +31213,20 @@ window.google.script = {
         return {
           sign: 'positive',
           rowClass: 'row-kk-positive border-b border-emerald-200/70 text-xs group transition-colors',
-          boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-emerald-400 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
-          badgeClass: 'kk-qty-badge shrink-0 px-2 h-full inline-flex items-center gap-0.5 text-[10.5px] font-extrabold bg-emerald-100/90 text-emerald-800 border-r border-emerald-200 select-none',
-          badgeHtml: '<i class="bi bi-plus-lg text-[10px]"></i><span>Thừa</span>',
-          inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-black text-emerald-700 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+          inputClass: 'row-actual-qty no-spinners w-[104px] ml-auto block h-[34px] px-2.5 text-right font-mono font-black text-emerald-700 text-sm bg-white border border-emerald-400 hover:border-emerald-500 rounded-lg transition-all shadow-2xs placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
         };
       }
       if (num < 0) {
         return {
           sign: 'negative',
           rowClass: 'row-kk-negative border-b border-rose-200/70 text-xs group transition-colors',
-          boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-rose-400 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
-          badgeClass: 'kk-qty-badge shrink-0 px-2 h-full inline-flex items-center gap-0.5 text-[10.5px] font-extrabold bg-rose-100/90 text-rose-800 border-r border-rose-200 select-none',
-          badgeHtml: '<i class="bi bi-dash-lg text-[10px]"></i><span>Thiếu</span>',
-          inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-black text-rose-700 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+          inputClass: 'row-actual-qty no-spinners w-[104px] ml-auto block h-[34px] px-2.5 text-right font-mono font-black text-rose-700 text-sm bg-white border border-rose-400 hover:border-rose-500 rounded-lg transition-all shadow-2xs placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
         };
       }
       return {
         sign: 'zero',
         rowClass: 'border-b border-slate-100 text-xs group transition-colors bg-white hover:bg-slate-50',
-        boxClass: 'kk-qty-box w-[162px] ml-auto flex items-center h-[34px] border border-slate-300 rounded-lg bg-white overflow-hidden transition-all shadow-2xs',
-        badgeClass: 'kk-qty-badge shrink-0 px-2 h-full inline-flex items-center text-[10.5px] font-bold bg-slate-100 text-slate-600 border-r border-slate-200 select-none',
-        badgeHtml: '<span>Khớp</span>',
-        inputClass: 'row-actual-qty no-spinners w-14 flex-1 min-w-0 h-full px-2.5 text-right font-mono font-bold text-slate-700 text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
+        inputClass: 'row-actual-qty no-spinners w-[104px] ml-auto block h-[34px] px-2.5 text-right font-mono font-bold text-slate-700 text-sm bg-white border border-slate-300 hover:border-slate-400 rounded-lg transition-all shadow-2xs placeholder:text-slate-400 placeholder:font-sans placeholder:font-normal placeholder:text-xs'
       };
     }
 
@@ -31276,32 +31277,29 @@ window.google.script = {
           </td>
 
           <!-- 3. TÊN MẶT HÀNG / QUY CÁCH -->
-          <td class="px-2.5 py-2 text-left align-middle">
-            <div id="display_kk_name_${rowId}" class="row-name-display font-semibold text-slate-800 text-xs truncate max-w-[245px] select-text" title="${escapeHtml(item.name || '')}">
+          <td class="kk-col-name px-2.5 py-2 text-left align-middle min-w-[260px]">
+            <div id="display_kk_name_${rowId}" class="row-name-display font-semibold text-slate-800 text-xs leading-snug select-text" title="${escapeHtml(item.name || '')}">
               ${item.name ? escapeHtml(item.name) : '<span class="text-slate-400 italic font-normal text-[11px]">- Tự động nạp theo mã SP -</span>'}
             </div>
             <input type="hidden" id="input_kk_name_${rowId}" class="row-name" value="${escapeHtml(item.name || '')}">
           </td>
 
           <!-- 4. ĐVT -->
-          <td class="px-2 py-2 text-center align-middle">
+          <td class="px-2 py-2 text-center align-middle w-14 min-w-[52px]">
             <span id="display_kk_unit_${rowId}" class="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[11px] font-bold ${item.unit ? 'bg-slate-100 text-slate-700 border border-slate-200' : 'text-slate-400 font-normal'}">
               ${escapeHtml(item.unit || '-')}
             </span>
             <input type="hidden" id="input_kk_unit_${rowId}" class="row-unit" value="${escapeHtml(item.unit || '')}">
           </td>
 
-          <!-- 5. KIỂM KÊ THỰC TẾ (PHÂN BIỆT RÕ + THỪA / − THIẾU) -->
-          <td class="px-2.5 py-2 text-right align-middle min-w-[176px] w-[182px]">
-            <div class="${v.boxClass}">
-              <span class="${v.badgeClass}">${v.badgeHtml}</span>
-              <input type="number" step="any" id="input_kk_qty_${rowId}" value="${actualVal}" 
-                     oninput="onKiemKeActualQtyChange(this)" 
-                     onwheel="this.blur()"
-                     onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
-                     placeholder="SL (+/-)..." 
-                     class="${v.inputClass}">
-            </div>
+          <!-- 5. KIỂM KÊ THỰC TẾ -->
+          <td class="px-2 py-2 text-right align-middle min-w-[118px] w-[124px]">
+            <input type="number" step="any" id="input_kk_qty_${rowId}" value="${actualVal}" 
+                   oninput="onKiemKeActualQtyChange(this)" 
+                   onwheel="this.blur()"
+                   onkeydown="handleKiemKeQtyKeydown(event, '${rowId}')"
+                   placeholder="SL (+/-)..." 
+                   class="${v.inputClass}">
           </td>
 
           <!-- 6. ĐƠN GIÁ -->
@@ -31318,8 +31316,8 @@ window.google.script = {
           </td>
 
           <!-- 8. GHI CHÚ -->
-          <td class="px-2 py-2 text-left align-middle w-32 min-w-[120px]">
-            <input type="text" value="${escapeHtml(item.note || '')}" 
+          <td class="px-2 py-2 text-left align-middle w-32 min-w-[116px]">
+            <input type="text" size="10" value="${escapeHtml(item.note || '')}" 
                    placeholder="Ghi chú nếu có..." 
                    class="row-note w-full min-w-[104px] h-[34px] px-2.5 text-left text-xs text-slate-700 border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-lg bg-white/90 transition placeholder:text-slate-400 placeholder:italic placeholder:text-[11px]">
           </td>
@@ -31599,7 +31597,6 @@ window.google.script = {
 
       const codeInp = tr.querySelector('.row-code');
       const actualInp = tr.querySelector('.row-actual-qty');
-      const qtyBox = tr.querySelector('.kk-qty-box');
       const nameDisp = tr.querySelector('.row-name-display');
 
       const codeVal = (codeInp ? codeInp.value : '').trim().toUpperCase();
@@ -31640,7 +31637,7 @@ window.google.script = {
       applyVoucherRowErrorVisuals_(tr, {
         codeInp,
         qtyInp: actualInp,
-        qtyBox,
+        qtyBox: null,
         nameEl: nameDisp,
         isError,
         errorMsg,
@@ -31660,7 +31657,7 @@ window.google.script = {
         if (nameDisp && itemInMap) {
           nameDisp.innerText = itemInMap.name || '-';
           nameDisp.title = itemInMap.name;
-          nameDisp.className = "row-name-display font-semibold text-slate-800 text-xs truncate max-w-[245px] select-text";
+          nameDisp.className = "row-name-display font-semibold text-slate-800 text-xs leading-snug select-text";
         }
         return null;
       }
@@ -31700,7 +31697,7 @@ window.google.script = {
         if (nameDisp) {
           nameDisp.innerText = prodName || '-';
           nameDisp.title = prodName;
-          nameDisp.className = "font-semibold text-slate-800 text-xs truncate max-w-[245px] select-text row-name-display";
+          nameDisp.className = "font-semibold text-slate-800 text-xs leading-snug select-text row-name-display";
         }
         if (unitDisp) {
           unitDisp.innerText = prodUnit;
@@ -31847,13 +31844,6 @@ window.google.script = {
       const hasErr = tr.classList.contains('row-kk-error');
       tr.className = v.rowClass + (isMoved ? ' active-moved-row' : '') + (hasErr ? ' row-kk-error' : '');
 
-      const qtyBox = tr.querySelector('.kk-qty-box');
-      const qtyBadge = tr.querySelector('.kk-qty-badge');
-      if (qtyBox) qtyBox.className = v.boxClass;
-      if (qtyBadge) {
-        qtyBadge.className = v.badgeClass;
-        qtyBadge.innerHTML = v.badgeHtml;
-      }
       actualInp.className = v.inputClass;
 
       calculateKiemKeSummary();
