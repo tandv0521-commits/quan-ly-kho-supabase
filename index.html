@@ -752,17 +752,19 @@
     }
 
   /* =========================================================
-     TIEN PHONG · CHRISTMAS 2026 / DINH MUI 2027
-     Scoped styles. Compatible with Tailwind CSS v3.
+     TIEN PHONG · SPATIAL LIQUID GLASS 2027 (NOEL & DINH MUI)
+     Scoped strictly to #app-login-overlay. Compatible with Tailwind v3.
      ========================================================= */
 
   #app-login-overlay {
-    --tp-emerald: #0c4942;
-    --tp-primary: #14634f;
-    --tp-ink: #163e35;
-    --tp-muted: #53635e;
-    --tp-ivory: #fbfaf6;
-    --tp-gold: #d9bd79;
+    --tp-emerald: #0b443b;
+    --tp-primary: #0f6856;
+    --tp-primary-hover: #0a4e40;
+    --tp-ink: #0f2f29;
+    --tp-muted: #465b55;
+    --tp-gold: #f5d88c;
+    --tp-mx: 50%;
+    --tp-my: 45%;
 
     position: fixed;
     inset: 0;
@@ -770,26 +772,16 @@
     isolation: isolate;
     display: flex;
     flex-direction: column;
-    align-items: center;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    scroll-padding-block: 24px;
 
-    padding: 32px 24px;
-    padding-top: max(32px, env(safe-area-inset-top));
-    padding-right: max(24px, env(safe-area-inset-right));
-    padding-bottom: max(32px, env(safe-area-inset-bottom));
-    padding-left: max(24px, env(safe-area-inset-left));
-
-    background: #e6eee8;
+    background: linear-gradient(130deg, #083b34 0%, #1a666a 46%, #d9e7ea 100%);
     color: var(--tp-ink);
-    font-family: "Segoe UI", system-ui, -apple-system,
-      BlinkMacSystemFont, Arial, sans-serif;
-    font-size: 16px;
+    font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-size: 15px;
     line-height: 1.5;
-    text-align: left;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -806,7 +798,7 @@
     display: none !important;
   }
 
-  #app-login-overlay :where(h1, h2, p, figure) {
+  #app-login-overlay :where(h1, h2, h3, p, figure) {
     margin: 0;
   }
 
@@ -814,81 +806,48 @@
     font: inherit;
   }
 
-  #app-login-overlay button {
-    -webkit-tap-highlight-color: transparent;
-  }
+  /* LAYER 0: Edge-to-Edge Animated Spatial 3D Backdrop + Scrim + Cursor Spotlight */
 
-  /* LAYER 1: luminous atmosphere */
-
-  #app-login-overlay .tp-atmosphere {
+  #app-login-overlay .tp-backdrop {
     position: fixed;
     inset: 0;
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
-    background:
-      radial-gradient(
-        ellipse at 88% 12%,
-        rgba(255, 247, 219, 0.95),
-        transparent 48%
-      ),
-      linear-gradient(125deg, #d9eae1 0%, #e7eff2 51%, #f8f2e5 100%);
   }
 
-  #app-login-overlay .tp-aurora {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(48px);
-    animation: tp27-breathe 24s ease-in-out infinite alternate paused;
+  #app-login-overlay .tp-backdrop-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 35% center;
+    transform-origin: center center;
+    animation: tpSpatialDrift 26s ease-in-out infinite alternate paused;
+    will-change: transform;
   }
 
-  #app-login-overlay .tp-aurora--emerald {
-    top: -26%;
-    left: -16%;
-    width: 82vmax;
-    height: 68vmax;
-    background: radial-gradient(
-      ellipse,
-      rgba(16, 128, 98, 0.34),
-      rgba(52, 168, 132, 0.15) 44%,
-      transparent 72%
-    );
-  }
-
-  #app-login-overlay .tp-aurora--sapphire {
-    right: -22%;
-    bottom: -34%;
-    width: 86vmax;
-    height: 72vmax;
-    background: radial-gradient(
-      ellipse,
-      rgba(37, 99, 165, 0.28),
-      rgba(217, 169, 78, 0.16) 46%,
-      transparent 72%
-    );
-    animation-name: tp27-breathe-alt;
-    animation-duration: 24s;
-    animation-delay: -7s;
-  }
-
-  #app-login-overlay .tp-atmosphere::after {
-    content: "";
+  #app-login-overlay .tp-backdrop-scrim {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(
-        circle at 16% 82%,
-        rgba(255, 255, 255, 0.8),
-        transparent 29%
-      ),
-      radial-gradient(
-        circle at 90% 20%,
-        rgba(244, 220, 157, 0.23),
-        transparent 24%
-      );
+      linear-gradient(to top, rgba(4, 30, 27, 0.86) 0%, rgba(4, 34, 30, 0.44) 26%, rgba(6, 42, 38, 0.08) 52%, transparent 74%),
+      linear-gradient(to bottom, rgba(4, 32, 28, 0.36) 0%, transparent 130px),
+      linear-gradient(to left, rgba(255, 255, 255, 0.14) 0%, transparent 45%);
   }
 
-  /* LAYER 2: crystal snow + champagne dust */
+  #app-login-overlay .tp-spotlight {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      620px circle at var(--tp-mx) var(--tp-my),
+      rgba(255, 244, 206, 0.2),
+      rgba(52, 211, 153, 0.06) 38%,
+      transparent 68%
+    );
+    transition: opacity 250ms ease;
+  }
+
+  /* LAYER 1: Ambient 60fps Crystalline Snow + Gold Bokeh */
 
   #app-login-overlay #login-festive-canvas {
     position: fixed;
@@ -900,358 +859,413 @@
     pointer-events: none;
   }
 
-  /* LAYER 3: enterprise login surface */
+  /* LAYER 2: Spatial Layout Container */
 
-  #app-login-overlay .tp-stage {
+  #app-login-overlay .tp-spatial-frame {
     position: relative;
     z-index: 2;
-    flex: 0 0 auto;
-    width: min(1160px, 100%);
-    min-width: 0;
-    margin-block: auto;
-  }
-
-  #app-login-overlay .tp-card {
-    display: grid;
-    grid-template-columns: 1.06fr 1fr;
-    min-width: 0;
-    border: 1px solid rgba(255, 255, 255, 0.85);
-    border-radius: 28px;
-    background: var(--tp-ivory);
-    box-shadow:
-      0 32px 90px rgba(12, 73, 66, 0.17),
-      0 6px 20px rgba(22, 62, 53, 0.07);
-  }
-
-  /* Brand showcase */
-
-  #app-login-overlay .tp-hero {
-    position: relative;
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 1440px;
+    min-height: 100%;
+    margin: 0 auto;
+    padding: max(20px, env(safe-area-inset-top)) clamp(18px, 3vw, 44px) max(22px, env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
-    padding: 32px;
-    border-radius: 27px 0 0 27px;
-    background: linear-gradient(155deg, #0b443d 0%, #0d5349 52%, #114357 100%);
-    color: #fffdf5;
+    justify-content: space-between;
+    gap: 20px;
   }
 
-  #app-login-overlay .tp-hero > *:not(#login-hero-canvas) {
-    position: relative;
-    z-index: 2;
-  }
+  /* Floating Top Rail */
 
-  #app-login-overlay #login-hero-canvas {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-
-  #app-login-overlay .tp-hero::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 32px;
-    right: 32px;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(245, 223, 169, 0.8),
-      transparent
-    );
-  }
-
-  #app-login-overlay .tp-brand {
+  #app-login-overlay .tp-topbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 16px;
-    min-width: 0;
+    flex-wrap: wrap;
   }
 
-  #app-login-overlay .tp-logo-badge {
-    display: flex;
-    flex: 0 0 104px;
+  #app-login-overlay .tp-brand-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px 8px 10px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.84);
+    backdrop-filter: blur(20px) saturate(175%);
+    -webkit-backdrop-filter: blur(20px) saturate(175%);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 28px rgba(5, 36, 31, 0.14);
+  }
+
+  #app-login-overlay .tp-logo-pill {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 104px;
-    height: 66px;
-    padding: 9px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    border-radius: 12px;
-    background: #fff;
-    box-shadow: 0 5px 14px rgba(0, 30, 25, 0.13);
+    height: 36px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
   }
 
-  #app-login-overlay .tp-logo-badge img {
+  #app-login-overlay .tp-logo-pill img {
     display: block;
-    width: 100%;
-    height: 100%;
+    height: 26px;
+    width: auto;
     object-fit: contain;
   }
 
-  #app-login-overlay .tp-company {
-    max-width: 28ch;
+  #app-login-overlay .tp-brand-name {
     font-size: 12px;
-    font-weight: 700;
-    line-height: 1.65;
-    letter-spacing: 0.055em;
-    color: #fffdf5;
-    overflow-wrap: break-word;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #0b3c33;
+    line-height: 1.25;
   }
 
-  #app-login-overlay .tp-hero-copy {
-    margin-top: 26px;
-  }
-
-  #app-login-overlay .tp-season-label {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    color: var(--tp-gold);
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1.6;
-    letter-spacing: 0.16em;
-  }
-
-  #app-login-overlay .tp-season-label::before {
-    content: "";
-    flex: 0 0 22px;
-    height: 1px;
-    background: var(--tp-gold);
-  }
-
-  #app-login-overlay .tp-hero-heading {
-    margin-top: 12px;
-    font-size: clamp(27px, 2.45vw, 35px);
-    font-weight: 600;
-    line-height: 1.22;
-    letter-spacing: -0.035em;
-  }
-
-  #app-login-overlay .tp-hero-heading span {
-    color: var(--tp-gold);
-  }
-
-  #app-login-overlay .tp-artwork {
-    display: flex;
-    flex: 1 0 auto;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    margin: 12px -8px 6px;
-  }
-
-  #app-login-overlay .tp-artwork svg {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-height: 242px;
-    overflow: visible;
-  }
-
-  #app-login-overlay .tp-orbit {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: tp27-orbit 80s linear infinite paused;
-  }
-
-  #app-login-overlay .tp-star {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: tp27-star 5s ease-in-out infinite paused;
-  }
-
-  #app-login-overlay .tp-ornament {
-    transform-box: fill-box;
-    transform-origin: top center;
-    animation: tp27-sway 6.5s ease-in-out infinite paused;
-  }
-
-  #app-login-overlay .tp-twinkle {
-    animation: tp27-twinkle 3.4s ease-in-out infinite alternate paused;
-  }
-
-  #app-login-overlay .tp-twinkle--delay {
-    animation-delay: -1.7s;
-  }
-
-  #app-login-overlay .tp-hero-footer {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-top: auto;
-    padding-top: 18px;
-    border-top: 1px solid #397067;
-  }
-
-  #app-login-overlay .tp-hero-footer > .bi {
-    margin-top: 1px;
-    color: var(--tp-gold);
-    font-size: 21px;
-    line-height: 1;
-  }
-
-  #app-login-overlay .tp-wish {
-    color: #fffdf5;
+  #app-login-overlay .tp-brand-sub {
     font-size: 11px;
     font-weight: 600;
-    line-height: 1.7;
-    letter-spacing: 0.055em;
+    color: #3d635a;
   }
 
-  #app-login-overlay .tp-wish-sub {
-    margin-top: 4px;
-    color: #dbe7dc;
+  #app-login-overlay .tp-clock-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px) saturate(175%);
+    -webkit-backdrop-filter: blur(20px) saturate(175%);
+    border: 1px solid rgba(255, 255, 255, 0.88);
+    box-shadow: 0 8px 26px rgba(5, 36, 31, 0.12);
+    color: #0e3f36;
     font-size: 12px;
-    line-height: 1.6;
-  }
-
-  #app-login-overlay .tp-mobile-festival {
-    display: none;
-  }
-
-  /* Form */
-
-  #app-login-overlay .tp-form-pane {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-    padding: 36px 42px;
-    border-radius: 0 27px 27px 0;
-    background: var(--tp-ivory);
-  }
-
-  #app-login-overlay .tp-form-content {
-    width: 100%;
-    max-width: 390px;
-    min-width: 0;
-    margin-inline: auto;
-  }
-
-  #app-login-overlay .tp-portal-label {
-    color: var(--tp-muted);
-    font-size: 10px;
     font-weight: 700;
-    line-height: 1.5;
-    letter-spacing: 0.14em;
   }
 
-  #app-login-overlay .tp-clock {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 8px;
-    color: var(--tp-muted);
-    font-size: 12px;
-    line-height: 1.7;
-  }
-
-  #app-login-overlay .tp-clock > .bi {
-    flex: 0 0 auto;
-    margin-top: 1px;
+  #app-login-overlay .tp-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22);
+    flex-shrink: 0;
   }
 
   #app-login-overlay #login-clock-text {
-    min-width: 0;
     font-variant-numeric: tabular-nums;
-    overflow-wrap: anywhere;
+    letter-spacing: 0.015em;
   }
 
-  #app-login-overlay .tp-form-header {
-    margin-top: 27px;
+  /* Main Asymmetric Spatial Shell */
+
+  #app-login-overlay .tp-shell {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.28fr) minmax(360px, 430px);
+    align-items: end;
+    gap: clamp(24px, 3.5vw, 52px);
+    min-height: 0;
+  }
+
+  /* Left Open Exhibition Area (Leaves middle-upper Goat & Pines completely visible!) */
+
+  #app-login-overlay .tp-exhibition {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 18px;
+    padding-bottom: 6px;
+    min-width: 0;
+  }
+
+  #app-login-overlay .tp-theme-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: rgba(7, 45, 39, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(245, 216, 140, 0.42);
+    color: #fbe6a6;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  #app-login-overlay .tp-hero-title {
+    font-size: clamp(32px, 3.3vw, 48px);
+    font-weight: 800;
+    line-height: 1.14;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    text-shadow: 0 4px 24px rgba(3, 24, 21, 0.45);
+  }
+
+  #app-login-overlay .tp-gold-shimmer {
+    display: inline-block;
+    background: linear-gradient(
+      105deg,
+      #ffe8ac 0%,
+      #f3c96b 32%,
+      #fff7dc 50%,
+      #eab957 68%,
+      #ffe8ac 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 3px 14px rgba(5, 25, 22, 0.42));
+    animation: tpGoldFlow 7s ease-in-out infinite paused;
+  }
+
+  /* 2 Focused Bento Theme Tiles */
+
+  #app-login-overlay .tp-bento-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    max-width: 660px;
+  }
+
+  #app-login-overlay .tp-bento-tile {
+    position: relative;
+    overflow: hidden;
+    padding: 16px 18px;
+    border-radius: 20px;
+    background: rgba(8, 43, 38, 0.62);
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 14px 36px rgba(3, 22, 19, 0.26);
+    color: #f8fafc;
+    transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 240ms ease, background-color 240ms ease;
+  }
+
+  #app-login-overlay .tp-bento-tile:hover {
+    transform: translateY(-3px);
+    border-color: rgba(245, 216, 140, 0.52);
+    background: rgba(8, 48, 42, 0.72);
+  }
+
+  #app-login-overlay .tp-bento-tile--gold {
+    background: rgba(11, 46, 44, 0.66);
+    border-color: rgba(245, 216, 140, 0.36);
+  }
+
+  #app-login-overlay .tp-bento-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  #app-login-overlay .tp-bento-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #e2f5ee;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #app-login-overlay .tp-bento-tile--gold .tp-bento-badge {
+    background: rgba(245, 216, 140, 0.16);
+    border-color: rgba(245, 216, 140, 0.32);
+    color: #fce7a8;
+  }
+
+  #app-login-overlay .tp-bento-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 15px;
+  }
+
+  #app-login-overlay .tp-bento-tile--gold .tp-bento-icon {
+    background: rgba(245, 216, 140, 0.18);
+    color: #fde68a;
+  }
+
+  #app-login-overlay .tp-bento-metric {
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.015em;
+    color: #ffffff;
+    line-height: 1.25;
+  }
+
+  #app-login-overlay .tp-bento-tile--gold .tp-bento-metric {
+    color: #ffefc2;
+  }
+
+  #app-login-overlay .tp-bento-caption {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(232, 244, 240, 0.86);
+    line-height: 1.45;
+  }
+
+  /* Right Floating Spatial Liquid Glass Login Panel */
+
+  #app-login-overlay .tp-glass-panel {
+    position: relative;
+    align-self: center;
+    width: 100%;
+    padding: 32px 30px 28px;
+    border-radius: 28px;
+    background: linear-gradient(
+      152deg,
+      rgba(255, 255, 255, 0.86) 0%,
+      rgba(248, 252, 251, 0.74) 100%
+    );
+    backdrop-filter: blur(28px) saturate(185%);
+    -webkit-backdrop-filter: blur(28px) saturate(185%);
+    border: 1px solid rgba(255, 255, 255, 0.92);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.96),
+      0 28px 80px -14px rgba(6, 42, 37, 0.28),
+      0 6px 20px rgba(6, 42, 37, 0.08);
+    animation: tpCardIn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  #app-login-overlay .tp-panel-kicker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  #app-login-overlay .tp-panel-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    background: rgba(15, 104, 86, 0.1);
+    border: 1px solid rgba(15, 104, 86, 0.22);
+    color: #0b5142;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  #app-login-overlay .tp-year-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, rgba(245, 216, 140, 0.35), rgba(251, 241, 204, 0.7));
+    border: 1px solid rgba(180, 134, 42, 0.3);
+    color: #714b0c;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
   }
 
   #app-login-overlay .tp-form-title {
-    color: var(--tp-ink);
-    font-size: clamp(26px, 2.25vw, 32px);
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.035em;
+    font-size: clamp(24px, 2.2vw, 29px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #092c25;
+    line-height: 1.18;
   }
 
   #app-login-overlay .tp-form-description {
-    margin-top: 10px;
-    color: var(--tp-muted);
-    font-size: 14px;
-    line-height: 1.65;
+    margin-top: 6px;
+    font-size: 13.5px;
+    color: #3f5852;
+    line-height: 1.5;
   }
 
   #app-login-overlay #app-login-form {
     display: grid;
-    gap: 18px;
-    min-width: 0;
-    margin-top: 25px;
+    gap: 16px;
+    margin-top: 22px;
   }
 
   #app-login-overlay .tp-field {
     display: grid;
-    gap: 8px;
-    min-width: 0;
+    gap: 7px;
   }
 
   #app-login-overlay .tp-label {
-    color: var(--tp-ink);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.45;
+    font-size: 13px;
+    font-weight: 700;
+    color: #103a32;
   }
 
   #app-login-overlay .tp-field-control {
     display: flex;
     align-items: center;
-    min-width: 0;
-    padding-left: 15px;
-    border: 1px solid #899d93;
-    border-radius: 12px;
-    background: #fff;
-    transition:
-      border-color 180ms ease,
-      box-shadow 180ms ease;
+    padding-left: 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(15, 76, 65, 0.22);
+    box-shadow: inset 0 1px 2px rgba(9, 44, 37, 0.03);
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
   }
 
   #app-login-overlay .tp-field-control:hover {
-    border-color: #58796a;
+    border-color: rgba(15, 104, 86, 0.45);
+    background: #ffffff;
   }
 
   #app-login-overlay .tp-field-control:focus-within {
+    background: #ffffff;
     border-color: var(--tp-primary);
-    outline: 2px solid var(--tp-primary);
-    outline-offset: 3px;
-    box-shadow: 0 4px 14px rgba(20, 99, 79, 0.07);
+    box-shadow: 0 0 0 3px rgba(15, 104, 86, 0.16);
   }
 
   #app-login-overlay .tp-field-control > .bi {
-    flex: 0 0 20px;
-    width: 20px;
+    color: #3c655b;
+    font-size: 17px;
     margin-right: 10px;
-    color: var(--tp-muted);
-    font-size: 19px;
-    text-align: center;
+    flex-shrink: 0;
   }
 
   #app-login-overlay .tp-input {
-    display: block;
-    flex: 1 1 auto;
     width: 100%;
     min-width: 0;
-    height: 52px;
-    margin: 0;
-    padding: 12px 15px 12px 0;
+    height: 48px;
     border: 0;
-    border-radius: 10px;
     outline: none;
     background: transparent;
-    color: var(--tp-ink);
-    font-size: 16px;
-    line-height: 1.5;
-    caret-color: var(--tp-primary);
+    color: #0b2d26;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding-right: 14px;
   }
 
   #app-login-overlay .tp-input:focus {
@@ -1260,452 +1274,227 @@
   }
 
   #app-login-overlay .tp-input::placeholder {
-    color: var(--tp-muted);
-    opacity: 1;
-  }
-
-  #app-login-overlay .tp-input:-webkit-autofill,
-  #app-login-overlay .tp-input:-webkit-autofill:hover,
-  #app-login-overlay .tp-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: var(--tp-ink);
-    -webkit-box-shadow: 0 0 0 1000px #fff inset;
-    caret-color: var(--tp-primary);
+    color: #6b807a;
+    font-weight: 500;
   }
 
   #app-login-overlay .tp-password-toggle {
     display: inline-flex;
-    flex: 0 0 44px;
     align-items: center;
     justify-content: center;
     width: 44px;
     height: 44px;
-    margin-right: 4px;
-    padding: 0;
+    margin-right: 2px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: transparent;
-    color: var(--tp-muted);
+    color: #46635b;
     cursor: pointer;
-    font-size: 19px;
-    transition: background-color 180ms ease, color 180ms ease;
+    transition: background-color 150ms ease, color 150ms ease;
+    flex-shrink: 0;
   }
 
   #app-login-overlay .tp-password-toggle:hover {
-    background: #edf3ee;
+    background: rgba(15, 104, 86, 0.08);
     color: var(--tp-primary);
   }
 
   #app-login-overlay .tp-password-toggle:focus-visible {
     outline: 2px solid var(--tp-primary);
-    outline-offset: -3px;
+    outline-offset: -2px;
   }
 
   #app-login-overlay .tp-remember {
     display: inline-flex;
     align-items: center;
-    justify-self: start;
-    gap: 10px;
-    min-height: 44px;
-    color: var(--tp-muted);
-    font-size: 14px;
+    gap: 9px;
+    min-height: 36px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #36504a;
     cursor: pointer;
+    justify-self: start;
   }
 
   #app-login-overlay #login-remember-me {
-    flex: 0 0 18px;
-    width: 18px;
-    height: 18px;
-    margin: 0;
+    width: 17px;
+    height: 17px;
     accent-color: var(--tp-primary);
     cursor: pointer;
-  }
-
-  #app-login-overlay #login-remember-me:focus-visible {
-    outline: 2px solid var(--tp-primary);
-    outline-offset: 4px;
   }
 
   #app-login-overlay .tp-error {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    padding: 12px 14px;
-    border: 1px solid #dfaca7;
-    border-radius: 10px;
-    background: #fff1ef;
-    color: #a23232;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: rgba(255, 241, 242, 0.95);
+    border: 1px solid #fda4af;
+    color: #9f1239;
     font-size: 13px;
-    line-height: 1.6;
-    overflow-wrap: anywhere;
-  }
-
-  #app-login-overlay .tp-error > .bi {
-    flex: 0 0 auto;
-    margin-top: 1px;
-    font-size: 16px;
+    font-weight: 600;
   }
 
   #app-login-overlay .tp-submit {
     position: relative;
-    isolation: isolate;
-    display: flex;
+    overflow: hidden;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
-    min-height: 54px;
-    overflow: hidden;
-    padding: 14px 20px;
-    border: 1px solid transparent;
-    border-radius: 12px;
-    background: var(--tp-primary);
-    color: #fff;
-    box-shadow:
-      0 8px 18px rgba(20, 99, 79, 0.17),
-      inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    cursor: pointer;
+    min-height: 52px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 14px;
+    background: linear-gradient(135deg, #0b5345 0%, #107662 58%, #0e6352 100%);
+    color: #ffffff;
     font-size: 15px;
-    font-weight: 600;
-    line-height: 1.5;
-    transition:
-      background-color 180ms ease,
-      box-shadow 180ms ease,
-      transform 180ms ease;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.26),
+      0 12px 28px -6px rgba(11, 83, 69, 0.45);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
   }
 
   #app-login-overlay .tp-submit::before {
     content: "";
     position: absolute;
-    z-index: -1;
-    inset: -80% auto -80% -55%;
-    width: 35%;
+    inset: -60% auto -60% -45%;
+    width: 36%;
+    background: linear-gradient(90deg, transparent, rgba(255, 246, 212, 0.28), transparent);
+    transform: translateX(-160%) skewX(-20deg);
+    animation: tpBtnShimmer 6.5s ease-in-out infinite paused;
     pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.18),
-      transparent
-    );
-    transform: translateX(-150%) skewX(-18deg);
-    animation: tp27-shimmer 7.5s ease-in-out infinite paused;
-  }
-
-  #app-login-overlay .tp-submit > .bi {
-    font-size: 18px;
-    transition: transform 180ms ease;
   }
 
   #app-login-overlay .tp-submit:hover:not(:disabled) {
-    transform: translateY(-1px);
-    background: #104f41;
-    box-shadow: 0 10px 24px rgba(20, 99, 79, 0.22);
+    transform: translateY(-1.5px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      0 16px 34px -6px rgba(11, 83, 69, 0.55);
+    filter: brightness(1.04);
+  }
+
+  #app-login-overlay .tp-submit > .bi {
+    font-size: 17px;
+    transition: transform 180ms ease;
   }
 
   #app-login-overlay .tp-submit:hover:not(:disabled) > .bi {
     transform: translateX(3px);
   }
 
-  #app-login-overlay .tp-submit:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
   #app-login-overlay .tp-submit:focus-visible {
     outline: 3px solid var(--tp-primary);
-    outline-offset: 4px;
+    outline-offset: 3px;
   }
 
-  #app-login-overlay .tp-submit:disabled {
-    background: #53635e;
-    box-shadow: none;
-    cursor: wait;
-  }
-
-  #app-login-overlay .tp-submit:disabled::before {
-    animation: none;
-    opacity: 0;
-  }
-
-  #app-login-overlay .tp-account-note {
+  #app-login-overlay .tp-panel-footer {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(15, 76, 65, 0.12);
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 7px;
-    color: var(--tp-muted);
-    font-size: 12px;
-    line-height: 1.6;
-    text-align: center;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #466059;
   }
 
-  #app-login-overlay .tp-account-note > .bi {
-    flex: 0 0 auto;
-    margin-top: 1px;
-  }
+  /* Running animations when overlay visible & motion allowed */
 
-  /* Choreography: subtle, crisp card entry — controls always crisp & ready without ghostly fade lag */
-
-  #app-login-overlay[data-tp-open="true"] .tp-card {
-    animation: tp27-enter 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  #app-login-overlay .tp-reveal {
-    opacity: 1;
-  }
-
-  #app-login-overlay[data-tp-motion="on"] .tp-aurora,
-  #app-login-overlay[data-tp-motion="on"] .tp-orbit,
-  #app-login-overlay[data-tp-motion="on"] .tp-star,
-  #app-login-overlay[data-tp-motion="on"] .tp-ornament,
-  #app-login-overlay[data-tp-motion="on"] .tp-twinkle,
+  #app-login-overlay[data-tp-motion="on"] .tp-backdrop-img,
+  #app-login-overlay[data-tp-motion="on"] .tp-gold-shimmer,
   #app-login-overlay[data-tp-motion="on"] .tp-submit::before {
     animation-play-state: running;
   }
 
-  #app-login-overlay[data-tp-motion="on"] .tp-aurora {
-    will-change: transform;
+  @keyframes tpSpatialDrift {
+    0%   { transform: scale(1) translate3d(0, 0, 0); }
+    100% { transform: scale(1.045) translate3d(-1.1%, -0.6%, 0); }
   }
 
-  @keyframes tp27-enter {
-    from { opacity: 0.92; transform: translateY(8px) scale(0.992); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+  @keyframes tpGoldFlow {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
   }
 
-  @keyframes tp27-twinkle {
-    0%   { opacity: 0.45; }
-    100% { opacity: 1; }
+  @keyframes tpCardIn {
+    from { opacity: 0.94; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes tp27-breathe {
-    from { transform: translate3d(-2%, -1%, 0) scale(0.97) rotate(-5deg); }
-    to   { transform: translate3d(5%, 4%, 0) scale(1.08) rotate(5deg); }
+  @keyframes tpBtnShimmer {
+    0%, 68%  { transform: translateX(-160%) skewX(-20deg); }
+    92%, 100% { transform: translateX(620%) skewX(-20deg); }
   }
 
-  @keyframes tp27-breathe-alt {
-    from { transform: translate3d(3%, 1%, 0) scale(1.04); }
-    to   { transform: translate3d(-5%, -5%, 0) scale(0.95); }
-  }
-
-  @keyframes tp27-orbit {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes tp27-star {
-    0%, 100% { opacity: 0.78; transform: scale(0.96); }
-    50%      { opacity: 1; transform: scale(1.04); }
-  }
-
-  @keyframes tp27-sway {
-    0%, 100% { transform: rotate(-1.7deg); }
-    50%      { transform: rotate(1.7deg); }
-  }
-
-  @keyframes tp27-shimmer {
-    0%, 72% { transform: translateX(-150%) skewX(-18deg); }
-    92%, 100% { transform: translateX(620%) skewX(-18deg); }
-  }
-
-  /* Short desktop/laptop screens: reduce decoration, retain input sizes. */
-
-  @media (min-width: 900px) and (max-height: 800px) {
-    #app-login-overlay {
-      padding-top: max(18px, env(safe-area-inset-top));
-      padding-bottom: max(18px, env(safe-area-inset-bottom));
+  /* Short Laptop Viewports */
+  @media (min-width: 961px) and (max-height: 760px) {
+    #app-login-overlay .tp-spatial-frame {
+      padding-top: 14px;
+      padding-bottom: 14px;
+      gap: 12px;
     }
-
-    #app-login-overlay .tp-hero {
-      padding: 26px 30px;
+    #app-login-overlay .tp-hero-title {
+      font-size: clamp(28px, 2.8vw, 38px);
     }
-
-    #app-login-overlay .tp-hero-copy {
-      margin-top: 20px;
+    #app-login-overlay .tp-glass-panel {
+      padding: 24px 26px 20px;
     }
-
-    #app-login-overlay .tp-hero-heading {
-      font-size: 30px;
-    }
-
-    #app-login-overlay .tp-artwork svg {
-      max-height: 205px;
-    }
-
-    #app-login-overlay .tp-form-pane {
-      padding: 28px 36px;
-    }
-
-    #app-login-overlay .tp-form-header {
-      margin-top: 20px;
-    }
-
     #app-login-overlay #app-login-form {
-      gap: 16px;
-      margin-top: 22px;
+      gap: 12px;
+      margin-top: 16px;
     }
   }
 
-  @media (min-width: 900px) and (max-height: 620px) {
-    #app-login-overlay .tp-artwork svg {
-      max-height: 150px;
+  /* Responsive Tablet & Mobile */
+  @media (max-width: 960px) {
+    #app-login-overlay .tp-backdrop-img {
+      object-position: 32% center;
     }
-
-    #app-login-overlay .tp-hero-heading {
-      font-size: 27px;
+    #app-login-overlay .tp-backdrop-scrim {
+      background:
+        linear-gradient(to bottom, rgba(4, 30, 27, 0.35) 0%, rgba(4, 32, 28, 0.25) 35%, rgba(4, 34, 30, 0.72) 100%);
     }
-  }
-
-  /* Tablet + mobile: compact brand band, full-width form. */
-
-  @media (max-width: 899px) {
-    #app-login-overlay {
-      padding: 20px 16px;
-      padding-top: max(20px, env(safe-area-inset-top));
-      padding-right: max(16px, env(safe-area-inset-right));
-      padding-bottom: max(20px, env(safe-area-inset-bottom));
-      padding-left: max(16px, env(safe-area-inset-left));
+    #app-login-overlay .tp-spatial-frame {
+      gap: 14px;
+      padding: 14px;
     }
-
-    #app-login-overlay .tp-stage {
-      max-width: 540px;
+    #app-login-overlay .tp-brand-capsule {
+      width: 100%;
+      justify-content: flex-start;
     }
-
-    #app-login-overlay .tp-card {
+    #app-login-overlay .tp-clock-capsule {
+      width: 100%;
+      justify-content: center;
+      padding: 7px 14px;
+    }
+    #app-login-overlay .tp-shell {
       grid-template-columns: minmax(0, 1fr);
-      border-radius: 24px;
+      align-items: start;
+      gap: 14px;
     }
-
-    #app-login-overlay .tp-hero {
-      padding: 20px 26px 16px;
-      border-radius: 23px 23px 0 0;
+    /* Show the Golden Goat art window gracefully at top, then Login Panel, then Bento Tiles cleanly */
+    #app-login-overlay .tp-glass-panel {
+      order: 1;
+      padding: 22px 20px 20px;
+      border-radius: 22px;
     }
-
-    #app-login-overlay .tp-logo-badge {
-      flex-basis: 90px;
-      width: 90px;
-      height: 56px;
-      padding: 7px;
-    }
-
-    #app-login-overlay .tp-company {
-      max-width: 30ch;
-      font-size: 11px;
-    }
-
-    #app-login-overlay .tp-hero-copy,
-    #app-login-overlay .tp-artwork,
-    #app-login-overlay .tp-hero-footer {
-      display: none;
-    }
-
-    #app-login-overlay .tp-mobile-festival {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    #app-login-overlay .tp-exhibition {
+      order: 2;
       gap: 12px;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #397067;
-      color: var(--tp-gold);
-      font-size: 10.5px;
-      font-weight: 600;
-      line-height: 1.5;
-      letter-spacing: 0.07em;
+      padding-top: 4px;
     }
-
-    #app-login-overlay .tp-mobile-festival-left {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
+    #app-login-overlay .tp-hero-title {
+      font-size: 26px;
     }
-
-    #app-login-overlay .tp-mobile-year {
-      flex: 0 0 auto;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 29px;
-      font-weight: 400;
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-
-    #app-login-overlay .tp-form-pane {
-      padding: 26px;
-      border-radius: 0 0 23px 23px;
-    }
-
-    #app-login-overlay .tp-form-content {
-      max-width: none;
-    }
-
-    #app-login-overlay .tp-portal-label {
-      display: none;
-    }
-
-    #app-login-overlay .tp-clock {
-      margin-top: 0;
-    }
-
-    #app-login-overlay .tp-form-header {
-      margin-top: 18px;
-    }
-
-    #app-login-overlay #app-login-form {
-      gap: 16px;
-      margin-top: 22px;
-    }
-  }
-
-  @media (max-width: 500px) {
-    #app-login-overlay {
-      padding: 12px;
-      padding-top: max(12px, env(safe-area-inset-top));
-      padding-right: max(12px, env(safe-area-inset-right));
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
-      padding-left: max(12px, env(safe-area-inset-left));
-    }
-
-    #app-login-overlay .tp-card {
-      border-radius: 20px;
-    }
-
-    #app-login-overlay .tp-hero {
-      padding: 18px 20px 14px;
-      border-radius: 19px 19px 0 0;
-    }
-
-    #app-login-overlay .tp-brand {
-      gap: 12px;
-    }
-
-    #app-login-overlay .tp-logo-badge {
-      flex-basis: 80px;
-      width: 80px;
-      height: 52px;
-      border-radius: 10px;
-    }
-
-    #app-login-overlay .tp-company {
-      font-size: 10px;
-      line-height: 1.65;
-      letter-spacing: 0.035em;
-    }
-
-    #app-login-overlay .tp-form-pane {
-      padding: 22px 20px 24px;
-      border-radius: 0 0 19px 19px;
-    }
-
-    #app-login-overlay .tp-form-title {
-      font-size: 27px;
-    }
-
-    #app-login-overlay .tp-clock {
-      font-size: 11px;
-    }
-
-    #app-login-overlay .tp-input {
-      height: 50px;
-    }
-
-    #app-login-overlay .tp-aurora {
-      filter: blur(30px);
+    #app-login-overlay .tp-bento-pair {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
     }
   }
 
@@ -1715,39 +1504,9 @@
     #app-login-overlay *::after {
       animation: none !important;
       transition: none !important;
-      scroll-behavior: auto !important;
     }
-
-    #app-login-overlay .tp-reveal {
-      opacity: 1 !important;
-      transform: none !important;
-    }
-
-    #app-login-overlay .tp-submit:hover {
-      transform: none !important;
-    }
-
-    #app-login-overlay .tp-submit::before {
+    #app-login-overlay .tp-spotlight {
       display: none;
-    }
-  }
-
-  @media (forced-colors: active) {
-    #app-login-overlay .tp-atmosphere,
-    #app-login-overlay #login-festive-canvas {
-      display: none;
-    }
-
-    #app-login-overlay .tp-card,
-    #app-login-overlay .tp-field-control,
-    #app-login-overlay .tp-submit,
-    #app-login-overlay .tp-logo-badge {
-      border: 1px solid CanvasText;
-    }
-
-    #app-login-overlay .tp-logo-badge {
-      forced-color-adjust: none;
-      background: white;
     }
   }
   </style>
@@ -4084,10 +3843,10 @@
   <!-- ============================================================== -->
   <!-- ============================================================== -->
   <!-- ============================================================== -->
-  <!-- 1. MÀN HÌNH ĐĂNG NHẬP CHUYỂN ĐỘNG NOEL & NĂM MỚI 2027 ĐINH MÙI -->
+  <!-- 1. MÀN HÌNH ĐĂNG NHẬP SPATIAL LIQUID GLASS 2027 (NOEL & ĐINH MÙI) -->
   <div
     id="app-login-overlay"
-    class="fixed inset-0 z-[9999] tp-login"
+    class="fixed inset-0 z-[9999]"
     style="display: none;"
     role="dialog"
     aria-modal="true"
@@ -4098,533 +3857,175 @@
     data-tp-open="false"
     data-tp-motion="off"
   >
-    <!-- Decorative layers never intercept clicks or keyboard focus. -->
-    <div class="tp-atmosphere" aria-hidden="true">
-      <div class="tp-aurora tp-aurora--emerald"></div>
-      <div class="tp-aurora tp-aurora--sapphire"></div>
+    <!-- Layer 0: Fullscreen Animated Festive 2027 3D Architectural Backdrop -->
+    <div class="tp-backdrop" aria-hidden="true">
+      <img
+        src="banner_noel_dinh_mui_2027.jpg"
+        alt="Không khí Giáng Sinh & Năm Mới Đinh Mùi 2027 - Nhựa Tiền Phong"
+        class="tp-backdrop-img"
+      >
+      <div class="tp-backdrop-scrim"></div>
+      <div class="tp-spotlight"></div>
     </div>
-  
-    <canvas
-      id="login-festive-canvas"
-      aria-hidden="true"
-    ></canvas>
-  
-    <div class="tp-stage">
-      <div class="tp-card">
-  
-        <!-- BRAND SHOWCASE -->
-        <section class="tp-hero" aria-label="Tiền Phong — Mùa lễ hội 2026–2027">
-          <canvas id="login-hero-canvas" aria-hidden="true"></canvas>
-          <div class="tp-brand tp-reveal" style="--tp-delay: 40ms;">
-            <div class="tp-logo-badge">
-              <img
-                src="logo_tien_phong.png"
-                alt="Tiền Phong Plastic"
-                width="104"
-                height="66"
-                decoding="async"
-              >
-            </div>
-  
-            <p class="tp-company">
-              CÔNG TY CP NHỰA<br>
-              THIẾU NIÊN TIỀN PHONG
-            </p>
-          </div>
-  
-          <div class="tp-hero-copy tp-reveal" style="--tp-delay: 100ms;">
-            <p class="tp-season-label">
-              GIÁNG SINH AN LÀNH · CHÀO XUÂN ĐINH MÙI 2027
-            </p>
-  
-            <h2 class="tp-hero-heading">
-              Vững nhịp vận hành.<br>
-              <span>Rạng ngời năm mới.</span>
-            </h2>
-          </div>
-  
-          <figure
-            class="tp-artwork tp-reveal"
-            style="--tp-delay: 170ms;"
-            role="img"
-            aria-label="Kim Dương Đinh Mùi 2027: dê núi vàng champagne vươn lên đỉnh cao dưới ánh sao Giáng Sinh."
-          >
-            <svg
-              viewBox="0 0 540 310"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <defs>
-                <linearGradient
-                  id="tp27-gold"
-                  x1="178" y1="70"
-                  x2="305" y2="246"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop offset="0" stop-color="#fff1c7"/>
-                  <stop offset="0.38" stop-color="#e8cc8b"/>
-                  <stop offset="0.73" stop-color="#c9a464"/>
-                  <stop offset="1" stop-color="#f7e6b7"/>
-                </linearGradient>
-  
-                <linearGradient
-                  id="tp27-horn"
-                  x1="210" y1="55"
-                  x2="294" y2="125"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop offset="0" stop-color="#c49c59"/>
-                  <stop offset="0.5" stop-color="#fff1c7"/>
-                  <stop offset="1" stop-color="#d2b06b"/>
-                </linearGradient>
-  
-                <linearGradient id="tp27-year" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#fff0c4"/>
-                  <stop offset="1" stop-color="#d9bd79"/>
-                </linearGradient>
-  
-                <radialGradient id="tp27-starlight">
-                  <stop offset="0" stop-color="#f9e6ad" stop-opacity=".24"/>
-                  <stop offset="1" stop-color="#f9e6ad" stop-opacity="0"/>
-                </radialGradient>
-  
-                <linearGradient id="tp27-rock" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#245e51"/>
-                  <stop offset="1" stop-color="#0c4942"/>
-                </linearGradient>
-              </defs>
-  
-              <!-- Orbital halo -->
-              <circle cx="250" cy="153" r="111"
-                fill="none" stroke="#d9bd79" stroke-opacity=".17"/>
-  
-              <g class="tp-orbit" fill="none" stroke="#d9bd79">
-                <circle cx="250" cy="153" r="102"
-                  stroke-opacity=".34" stroke-dasharray="1 13"
-                  stroke-linecap="round"/>
-                <circle cx="250" cy="153" r="113"
-                  stroke-opacity=".38" stroke-dasharray="88 622"/>
-                <circle cx="250" cy="40" r="3"
-                  fill="#efd79c" stroke="none"/>
-                <circle cx="250" cy="266" r="2"
-                  fill="#d9bd79" stroke="none"/>
-              </g>
-  
-              <!-- Christmas ornaments (crimson-emerald & champagne gold) -->
-              <g transform="translate(56 8)">
-                <g class="tp-ornament">
-                  <path d="M0 0V68"
-                    fill="none" stroke="#e4cb89" stroke-opacity=".65"/>
-                  <path d="M-4.5 68H4.5V74H-4.5Z"
-                    fill="#e4cb89"/>
-                  <circle cx="0" cy="88" r="15"
-                    fill="#9e2a2b" stroke="#f0d797" stroke-width="1.2"/>
-                  <path d="M-12 83Q0 94 12 83M-12 93Q0 82 12 93"
-                    fill="none" stroke="#f4dfa8" stroke-opacity=".85"/>
-                  <circle cx="-4.5" cy="81" r="2.2"
-                    fill="#fff5d6" fill-opacity=".88"/>
-                </g>
-              </g>
-              <g transform="translate(94 2)">
-                <g class="tp-ornament" style="animation-delay: -2.4s;">
-                  <path d="M0 0V42"
-                    fill="none" stroke="#d9bd79" stroke-opacity=".48"/>
-                  <path d="M-3.5 42H3.5V47H-3.5Z"
-                    fill="#d9bd79"/>
-                  <circle cx="0" cy="57" r="10.5"
-                    fill="#15574c" stroke="#d9bd79" stroke-width="1.1"/>
-                  <path d="M-7 57H7M0 50V64"
-                    stroke="#f0d797" stroke-opacity=".75" stroke-width=".9"/>
-                  <circle cx="-3" cy="53" r="1.5"
-                    fill="#fff1c7" fill-opacity=".8"/>
-                </g>
-              </g>
-  
-              <!-- North Star -->
-              <circle cx="408" cy="60" r="65" fill="url(#tp27-starlight)"/>
-  
-              <g transform="translate(408 60)">
-                <g class="tp-star">
-                  <path
-                    d="M0-27 5-6 25 0 5 6 0 27-5 6-25 0-5-6Z"
-                    fill="#f4dfaa"
-                  />
-                  <path d="M-16-16 16 16M16-16-16 16"
-                    stroke="#e5c987" stroke-opacity=".65"
-                    stroke-linecap="round"/>
-                  <circle r="4" fill="#fffaf0"/>
-                </g>
-              </g>
-  
-              <g fill="#e9d49d">
-                <path d="M112 118v8m-4-4h8" stroke="#e9d49d"
-                  stroke-width="1" stroke-linecap="round"/>
-                <circle cx="360" cy="96" r="1.8"/>
-                <circle cx="460" cy="98" r="1.5"/>
-                <circle cx="134" cy="57" r="1.5"/>
-                <circle cx="335" cy="43" r="1.3"/>
-                <circle cx="477" cy="169" r="1.5"/>
-              </g>
-  
-              <!-- Snow-frosted Christmas pines with warm fairy lights -->
-              <g
-                fill="#14584c"
-                stroke="#9ac0ab"
-                stroke-width="1"
-                stroke-linejoin="round"
-              >
-                <path d="M94 196 77 220H86L69 241H80L61 264H126L108 241H119L101 220H111Z"/>
-                <path d="M466 202 453 221H460L446 241H456L440 264H494L477 241H486L471 221H478Z"/>
-              </g>
-  
-              <g
-                fill="none"
-                stroke="#edf2e5"
-                stroke-opacity=".82"
-                stroke-linecap="round"
-              >
-                <path d="m87 207 7-11 8 12M78 237l8-9M107 244l7 8"/>
-                <path d="m460 211 6-9 6 10M452 237l7-8M475 247l6 8"/>
-              </g>
 
-              <g>
-                <circle class="tp-twinkle" cx="89" cy="216" r="2.2" fill="#ffe49e"/>
-                <circle class="tp-twinkle tp-twinkle--delay" cx="102" cy="233" r="2.2" fill="#f87171"/>
-                <circle class="tp-twinkle" cx="82" cy="252" r="2.4" fill="#fde68a"/>
-                <circle class="tp-twinkle tp-twinkle--delay" cx="465" cy="218" r="2" fill="#fde68a"/>
-                <circle class="tp-twinkle" cx="458" cy="236" r="2" fill="#f87171"/>
-                <circle class="tp-twinkle tp-twinkle--delay" cx="472" cy="251" r="2.2" fill="#ffe49e"/>
-              </g>
-  
-              <!-- Angular mountain ledges -->
-              <path
-                d="M65 286 175 247 215 249 267 230 320 207 374 252 472 286Z"
-                fill="url(#tp27-rock)"
-              />
-  
-              <g
-                fill="none"
-                stroke="#d9bd79"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M65 286 175 247 215 249 267 230 320 207 374 252 472 286"
-                  stroke-opacity=".76" stroke-width="1.2"/>
-                <path d="m175 247 24 21 68-38-8 40 61-63 12 43 42 2"
-                  stroke-opacity=".28"/>
-                <path d="m128 280 71-12 60 2 73-20 78 29"
-                  stroke-opacity=".21"/>
-                <path d="m264 238 39-6 17-25"
-                  stroke-opacity=".6"/>
-              </g>
-  
-              <!-- KIM DUONG: far limbs -->
-              <g
-                fill="#c8a86a"
-                stroke="#f0dca6"
-                stroke-width="1.1"
-                stroke-linejoin="round"
-              >
-                <path d="m210 190 23 24-14 21 1 13h-12l-2-17 13-15-18-17Z"/>
-                <path d="m253 189 21 35h26l1 8-37 3-23-36Z"/>
-              </g>
-  
-              <!-- Short raised tail -->
-              <path
-                d="m172 169-15-15-2 17 12 12Z"
-                fill="url(#tp27-gold)"
-                stroke="#f0dca6"
-                stroke-width="1.2"
-                stroke-linejoin="round"
-              />
-  
-              <!-- Far horn -->
-              <path
-                d="M298 115C306 85 294 62 273 51c-17-7-34-4-43 5
-                   19-2 38 8 45 22 8 13 8 26 8 41Z"
-                fill="#bda064"
-                stroke="#e6cf95"
-                stroke-width="1.1"
-              />
-  
-              <!-- Body, ascending neck, head -->
-              <path
-                d="M163 176
-                   C171 149 194 143 218 151
-                   L255 158 278 137 284 116
-                   L305 110 329 120 322 133 305 136
-                   L293 160 281 187 252 202 211 199 179 191Z"
-                fill="url(#tp27-gold)"
-                stroke="#fff0c4"
-                stroke-width="1.5"
-                stroke-linejoin="round"
-              />
-  
-              <!-- Sculpted facets -->
-              <path d="m168 175 49-24 14 36-51 4Z"
-                fill="#fff3cd" fill-opacity=".33"/>
-              <path d="m217 151 38 7-24 29Z"
-                fill="#b78e49" fill-opacity=".35"/>
-              <path d="m231 187 47-50 3 50-29 15Z"
-                fill="#fff3cd" fill-opacity=".3"/>
-              <path d="m278 137 27-27-12 50Z"
-                fill="#fff7da" fill-opacity=".35"/>
-              <path d="m180 191 51-4-20 12Z"
-                fill="#9d783d" fill-opacity=".35"/>
-  
-              <g
-                fill="none"
-                stroke="#8e713c"
-                stroke-opacity=".48"
-                stroke-width=".9"
-                stroke-linejoin="round"
-              >
-                <path d="m168 175 49-24 14 36 47-50"/>
-                <path d="m180 191 51-4 21 15"/>
-                <path d="m255 158 26 29"/>
-              </g>
-  
-              <!-- Near hind leg -->
-              <path
-                d="m186 185 17 22-22 20-2 19h-11l-2-24 18-20-9-12Z"
-                fill="url(#tp27-gold)"
-                stroke="#fff0c4"
-                stroke-width="1.3"
-                stroke-linejoin="round"
-              />
-  
-              <!-- Raised foreleg, hoof planted on the upper ledge -->
-              <path
-                d="m272 178 15 12 22-9 17 19-8 7-15-14-21 12-19-10Z"
-                fill="url(#tp27-gold)"
-                stroke="#fff0c4"
-                stroke-width="1.3"
-                stroke-linejoin="round"
-              />
-  
-              <!-- Ear and small beard -->
-              <path d="m282 121-19-11 5 20 12 4Z"
-                fill="#dfc081" stroke="#f9e8b7" stroke-width="1.1"/>
-              <path d="m305 135-5 22-7-10 4-11Z"
-                fill="#e6ca8c" stroke="#f8e6b4" stroke-width="1"/>
-  
-              <!-- Near swept-back horn -->
-              <path
-                d="M291 117C289 83 272 57 245 53
-                   c-23-3-44 12-43 32
-                   11-16 28-20 43-12
-                   19 10 27 31 29 52Z"
-                fill="url(#tp27-horn)"
-                stroke="#fff0c5"
-                stroke-width="1.3"
-              />
-  
-              <!-- Fine horn engraving -->
-              <g fill="none" stroke="#8d713f" stroke-opacity=".52" stroke-width="1">
-                <path d="m220 58 3 11M233 54l1 15M247 55l-3 17"/>
-                <path d="m260 61-6 16M272 72l-8 15M281 86l-10 11"/>
-                <path d="m287 101-12 8"/>
-              </g>
-  
-              <!-- Eye, muzzle, cloven hooves -->
-              <circle cx="306" cy="120" r="2.1" fill="#173f35"/>
-              <circle cx="306.5" cy="119.5" r=".6" fill="#fff9e7"/>
-              <path d="m321 128-7 1"
-                stroke="#70572f" stroke-width="1.2" stroke-linecap="round"/>
-  
-              <g fill="none" stroke="#70572f" stroke-width="1.2" stroke-linecap="round">
-                <path d="M168 242h11m-5 0v4M208 244h12m-6 0v4"/>
-                <path d="m316 201 7-5m-3 3 3 4M293 229v4"/>
-              </g>
-  
-              <!-- Editorial year treatment (clean sky placement above ridge & pines) -->
-              <text
-                x="422"
-                y="148"
-                text-anchor="middle"
-                fill="url(#tp27-year)"
-                font-family="Georgia, 'Times New Roman', serif"
-                font-size="62"
-                letter-spacing="-2.5"
-              >2027</text>
-  
-              <path d="M378 161H466"
-                stroke="#d9bd79" stroke-opacity=".6"/>
-  
-              <text
-                x="423"
-                y="180"
-                text-anchor="middle"
-                fill="#f2dc9f"
-                font-family="'Segoe UI', Arial, sans-serif"
-                font-size="11.5"
-                font-weight="700"
-                letter-spacing="3.2"
-              >ĐINH MÙI</text>
-  
-              <!-- Snow highlights along mountain ridges -->
-              <path
-                d="m166 250 9-3 16 1M306 213l14-6 12 10M361 241l13 11 13 4"
-                fill="none"
-                stroke="#f3f4e9"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-opacity=".8"
-              />
-            </svg>
-          </figure>
-  
-          <div class="tp-hero-footer tp-reveal" style="--tp-delay: 230ms;">
+    <!-- Layer 1: 60fps Crystalline Snowflakes & Golden Champagne Bokeh -->
+    <canvas id="login-festive-canvas" aria-hidden="true"></canvas>
+
+    <!-- Layer 2: Edge-to-Edge Spatial Stage -->
+    <div class="tp-spatial-frame">
+      <!-- Floating Top Navigation Pill Rail -->
+      <header class="tp-topbar">
+        <div class="tp-brand-capsule">
+          <span class="tp-logo-pill">
+            <img src="logo_tien_phong.png" alt="Nhựa Tiền Phong" width="84" height="26">
+          </span>
+          <div>
+            <div class="tp-brand-name">CÔNG TY CP NHỰA THIẾU NIÊN TIỀN PHONG</div>
+            <div class="tp-brand-sub">Hệ Thống Quản Trị Kho &amp; Bàn Giao Phát Hàng</div>
+          </div>
+        </div>
+
+        <div class="tp-clock-capsule">
+          <span class="tp-live-dot" aria-hidden="true"></span>
+          <i class="bi bi-clock text-emerald-700" aria-hidden="true"></i>
+          <time id="login-clock-text" aria-live="off">--:--:--</time>
+        </div>
+      </header>
+
+      <!-- Main Asymmetric Spatial Shell -->
+      <div class="tp-shell">
+        <!-- Left Open Exhibition: Unobstructed Mountain Goat + Headline + 2 Theme Bento Cards -->
+        <section class="tp-exhibition" aria-label="Chào đón Giáng Sinh 2026 & Tân Niên Đinh Mùi 2027">
+          <span class="tp-theme-eyebrow">
             <i class="bi bi-stars" aria-hidden="true"></i>
-            <div>
-              <p class="tp-wish">
-                NOEL AN LÀNH · ĐINH MÙI 2027 THỊNH VƯỢNG
-              </p>
-              <p class="tp-wish-sub">
-                Cùng Tiền Phong vững bước vào năm mới.
-              </p>
-            </div>
-          </div>
-  
-          <!-- Compact seasonal identity for mobile/tablet -->
-          <div class="tp-mobile-festival">
-            <span class="tp-mobile-festival-left">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8Z" fill="#efd79c"/>
-              </svg>
-              <span>GIÁNG SINH 2026 · NĂM MỚI ĐINH MÙI</span>
-            </span>
-            <span class="tp-mobile-year">2027</span>
-          </div>
-        </section>
-  
-        <!-- LOGIN FORM -->
-        <section class="tp-form-pane" aria-labelledby="login-title">
-          <div class="tp-form-content">
-  
-            <div class="tp-reveal" style="--tp-delay: 80ms;">
-              <p class="tp-portal-label">CỔNG ĐĂNG NHẬP NỘI BỘ</p>
-  
-              <div class="tp-clock">
-                <i class="bi bi-clock" aria-hidden="true"></i>
-                <time id="login-clock-text" aria-live="off">
-                  Đồng hồ hệ thống
-                </time>
-              </div>
-            </div>
-  
-            <header class="tp-form-header tp-reveal" style="--tp-delay: 140ms;">
-              <h1 id="login-title" class="tp-form-title">
-                Chào mừng trở lại.
-              </h1>
-  
-              <p id="login-description" class="tp-form-description">
-                Đăng nhập Hệ thống Quản trị Kho &amp; Bàn Giao Phát Hàng.
-              </p>
-            </header>
-  
-            <form
-              id="app-login-form"
-              onsubmit="event.preventDefault(); handleLoginSubmit();"
-            >
-              <div
-                id="login-error-box"
-                class="hidden tp-error"
-                role="alert"
-                aria-atomic="true"
-              >
-                <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
-                <span id="login-error-text">
-                  Vui lòng kiểm tra thông tin đăng nhập.
+            <span>GIÁNG SINH 2026 • ĐÓN TÂN NIÊN ĐINH MÙI</span>
+          </span>
+
+          <h2 class="tp-hero-title">
+            Giáng Sinh An Lành.<br>
+            <span class="tp-gold-shimmer">Chào Năm Mới Đinh Mùi 2027.</span>
+          </h2>
+
+          <div class="tp-bento-pair">
+            <!-- Bento Theme 1: Noel -->
+            <div class="tp-bento-tile">
+              <div class="tp-bento-head">
+                <span class="tp-bento-badge">
+                  <i class="bi bi-snow2" aria-hidden="true"></i>
+                  <span>Mùa Giáng Sinh</span>
+                </span>
+                <span class="tp-bento-icon" aria-hidden="true">
+                  <i class="bi bi-tree-fill"></i>
                 </span>
               </div>
-  
-              <div class="tp-field tp-reveal" style="--tp-delay: 200ms;">
-                <label class="tp-label" for="login-username">
-                  Tên đăng nhập
-                </label>
-  
-                <div class="tp-field-control">
-                  <i class="bi bi-person" aria-hidden="true"></i>
-                  <input
-                    id="login-username"
-                    class="tp-input"
-                    name="username"
-                    type="text"
-                    required
-                    autocomplete="username"
-                    autocapitalize="none"
-                    spellcheck="false"
-                    placeholder="Tên đăng nhập của bạn"
-                  >
-                </div>
+              <div id="tp-countdown-noel" class="tp-bento-metric">Đang đón Noel 2026</div>
+              <p class="tp-bento-caption">An lành • Sum vầy • Lan tỏa năng lượng tươi mới</p>
+            </div>
+
+            <!-- Bento Theme 2: Năm mới 2027 Đinh Mùi (Con Dê) -->
+            <div class="tp-bento-tile tp-bento-tile--gold">
+              <div class="tp-bento-head">
+                <span class="tp-bento-badge">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 19V11M12 11C10.5 7 7 4.5 3.5 5.2C5.4 6.2 7.2 8.4 7.8 11.2M12 11C13.5 7 17 4.5 20.5 5.2C18.6 6.2 16.8 8.4 16.2 11.2M8.5 14L12 19L15.5 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Đinh Mùi 2027</span>
+                </span>
+                <span class="tp-bento-icon" aria-hidden="true">
+                  <i class="bi bi-sunrise-fill"></i>
+                </span>
               </div>
-  
-              <div class="tp-field tp-reveal" style="--tp-delay: 250ms;">
-                <label class="tp-label" for="login-password">
-                  Mật khẩu
-                </label>
-  
-                <div class="tp-field-control">
-                  <i class="bi bi-lock" aria-hidden="true"></i>
-  
-                  <input
-                    id="login-password"
-                    class="tp-input"
-                    name="password"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    placeholder="Nhập mật khẩu"
-                  >
-  
-                  <button
-                    class="tp-password-toggle"
-                    type="button"
-                    onclick="togglePasswordVisibility('login-password', this)"
-                    aria-label="Hiện mật khẩu"
-                    aria-controls="login-password"
-                    aria-pressed="false"
-                    data-tp-password-toggle
-                  >
-                    <i class="bi bi-eye" aria-hidden="true"></i>
-                  </button>
-                </div>
-              </div>
-  
-              <label
-                class="tp-remember tp-reveal"
-                style="--tp-delay: 290ms;"
-                for="login-remember-me"
-              >
-                <input
-                  id="login-remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  checked
-                >
-                <span>Ghi nhớ đăng nhập</span>
-              </label>
-  
-              <button
-                id="btn-login-submit"
-                class="tp-submit tp-reveal"
-                style="--tp-delay: 330ms;"
-                type="submit"
-              >
-                <span id="btn-login-submit-text">Đăng nhập</span>
-                <i class="bi bi-arrow-right" aria-hidden="true"></i>
-              </button>
-  
-              <p class="tp-account-note tp-reveal" style="--tp-delay: 370ms;">
-                <i class="bi bi-info-circle" aria-hidden="true"></i>
-                <span>Tài khoản do quản trị viên hệ thống cấp.</span>
-              </p>
-            </form>
+              <div id="tp-countdown-2027" class="tp-bento-metric">Tân Niên Đinh Mùi</div>
+              <p class="tp-bento-caption">Khí chất Kim Dương • Bền bỉ tiên phong vươn xa</p>
+            </div>
           </div>
         </section>
-  
+
+        <!-- Right Floating Liquid Glass Login Panel -->
+        <section class="tp-glass-panel" aria-labelledby="login-title">
+          <div class="tp-panel-kicker-row">
+            <span class="tp-panel-tag">
+              <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+              <span>Cổng Truy Cập Kho</span>
+            </span>
+            <span class="tp-year-pill">
+              <i class="bi bi-sparkles" aria-hidden="true"></i>
+              <span>2027 Đinh Mùi</span>
+            </span>
+          </div>
+
+          <h1 id="login-title" class="tp-form-title">Chào mừng trở lại</h1>
+          <p id="login-description" class="tp-form-description">
+            Đăng nhập tài khoản nội bộ để bắt đầu ca làm việc hôm nay.
+          </p>
+
+          <form id="app-login-form" onsubmit="event.preventDefault(); handleLoginSubmit();">
+            <div id="login-error-box" class="hidden tp-error" role="alert" aria-atomic="true">
+              <i class="bi bi-exclamation-triangle-fill shrink-0 mt-0.5" aria-hidden="true"></i>
+              <span id="login-error-text">Tên đăng nhập hoặc mật khẩu không chính xác!</span>
+            </div>
+
+            <div class="tp-field">
+              <label class="tp-label" for="login-username">Tên đăng nhập</label>
+              <div class="tp-field-control">
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                <input
+                  id="login-username"
+                  class="tp-input"
+                  name="username"
+                  type="text"
+                  required
+                  autocomplete="username"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  placeholder="Nhập tên tài khoản..."
+                >
+              </div>
+            </div>
+
+            <div class="tp-field">
+              <label class="tp-label" for="login-password">Mật khẩu</label>
+              <div class="tp-field-control">
+                <i class="bi bi-key-fill" aria-hidden="true"></i>
+                <input
+                  id="login-password"
+                  class="tp-input"
+                  name="password"
+                  type="password"
+                  required
+                  autocomplete="current-password"
+                  placeholder="Nhập mật khẩu..."
+                >
+                <button
+                  type="button"
+                  class="tp-password-toggle"
+                  onclick="togglePasswordVisibility('login-password', this)"
+                  aria-label="Hiện mật khẩu"
+                  aria-controls="login-password"
+                  aria-pressed="false"
+                  data-tp-password-toggle
+                >
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <label class="tp-remember" for="login-remember-me">
+              <input id="login-remember-me" name="remember-me" type="checkbox" checked>
+              <span>Ghi nhớ đăng nhập trên thiết bị này</span>
+            </label>
+
+            <button id="btn-login-submit" class="tp-submit" type="submit">
+              <span id="btn-login-submit-text">Đăng nhập hệ thống</span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </button>
+          </form>
+
+          <div class="tp-panel-footer">
+            <span>© Nhựa Tiền Phong • WMS</span>
+            <span class="flex items-center gap-1"><i class="bi bi-shield-check text-emerald-700" aria-hidden="true"></i> Bảo mật nội bộ</span>
+          </div>
+        </section>
       </div>
     </div>
   </div>
@@ -9744,7 +9145,7 @@ window.google.script = {
     }
 
     // =========================================================================
-    // HIỆU ỨNG CHUYỂN ĐỘNG NOEL & NĂM MỚI 2027 ĐINH MÙI + ĐỒNG HỒ + TRUY CẬP
+    // HIỆU ỨNG SPATIAL LIQUID GLASS 2027 (NOEL & ĐINH MÙI) + ĐẾM NGƯỢC + CANVAS 60FPS
     // =========================================================================
     function quickFillLogin(username, password) {
       const uInp = document.getElementById('login-username');
@@ -9758,14 +9159,7 @@ window.google.script = {
     (() => {
       'use strict';
 
-      /*
-       * Replace the old lifecycle block with this script.
-       * Keep existing handleLoginSubmit() and togglePasswordVisibility().
-       */
-
       const KEY = '__tpLogin2027';
-
-      // Safe reinstallation: release the previous controller first.
       if (window[KEY] && typeof window[KEY].destroy === 'function') {
         window[KEY].destroy();
       }
@@ -9778,36 +9172,26 @@ window.google.script = {
         root: null,
         canvas: null,
         ctx: null,
-        heroCanvas: null,
-        heroCtx: null,
         sprites: null,
-        heroSprites: null,
-        heroParticles: [],
-
         active: false,
         destroyed: false,
         canvasFailed: false,
         canvasWanted: true,
         clockWanted: true,
-
         raf: 0,
         timer: 0,
         last: 0,
         elapsed: 0,
-
         width: 0,
         height: 0,
         dpr: 1,
         dirty: true,
-
         particles: [],
         pointer: { x: 0, y: 0 },
         offset: { x: 0, y: 0 },
-
         previousFocus: null,
         overflow: null,
         inert: [],
-
         disposers: [],
         mutation: null,
         resize: null
@@ -9815,22 +9199,16 @@ window.google.script = {
 
       function listen(target, type, handler, options) {
         target.addEventListener(type, handler, options);
-        S.disposers.push(() => {
-          target.removeEventListener(type, handler, options);
-        });
+        S.disposers.push(() => target.removeEventListener(type, handler, options));
       }
 
       function visible() {
         if (!S.root || !S.root.isConnected || S.root.hidden) return false;
-
         const style = getComputedStyle(S.root);
-
         return style.display !== 'none' &&
           style.visibility !== 'hidden' &&
           S.root.getClientRects().length > 0;
       }
-
-      /* ---------------- Modal focus / background isolation ---------------- */
 
       function focusable() {
         return Array.from(S.root.querySelectorAll(
@@ -9846,34 +9224,18 @@ window.google.script = {
 
       function focusElement(el) {
         if (!el || typeof el.focus !== 'function') return;
-
-        try {
-          el.focus({ preventScroll: true });
-        } catch (_) {
-          el.focus();
-        }
+        try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
       }
 
       function focusMain() {
         const user = S.root.querySelector('#login-username');
-
-        focusElement(
-          user && !user.disabled
-            ? user
-            : focusable()[0] || S.root
-        );
+        focusElement(user && !user.disabled ? user : focusable()[0] || S.root);
       }
 
       function isolateBackground() {
         S.inert = [];
         let branch = S.root;
-
-        // Also works when the overlay is nested in an application wrapper.
-        while (
-          branch &&
-          branch !== document.body &&
-          branch.parentElement
-        ) {
+        while (branch && branch !== document.body && branch.parentElement) {
           for (const sibling of branch.parentElement.children) {
             if (
               sibling === branch ||
@@ -9882,157 +9244,99 @@ window.google.script = {
             ) {
               continue;
             }
-
             S.inert.push({
               el: sibling,
               inert: sibling.hasAttribute('inert'),
               aria: sibling.getAttribute('aria-hidden')
             });
-
             sibling.setAttribute('inert', '');
             sibling.setAttribute('aria-hidden', 'true');
           }
-
           branch = branch.parentElement;
         }
       }
 
       function activate() {
         if (S.active) return;
-
         S.active = true;
         S.previousFocus = document.activeElement;
-
         const style = document.body.style;
-        S.overflow = [
-          style.getPropertyValue('overflow'),
-          style.getPropertyPriority('overflow')
-        ];
-
+        S.overflow = [style.getPropertyValue('overflow'), style.getPropertyPriority('overflow')];
         style.setProperty('overflow', 'hidden');
-
-        // Move focus before marking the previous content aria-hidden.
-        if (
-          !document.hidden &&
-          !S.root.contains(document.activeElement)
-        ) {
-          focusMain();
-        }
-
+        if (!document.hidden && !S.root.contains(document.activeElement)) focusMain();
         isolateBackground();
       }
 
       function deactivate() {
         if (!S.active) return;
         S.active = false;
-
         for (const item of S.inert) {
-          if (!item.inert) {
-            item.el.removeAttribute('inert');
-          }
-
+          if (!item.inert) item.el.removeAttribute('inert');
           if (item.el.getAttribute('aria-hidden') === 'true') {
-            if (item.aria === null) {
-              item.el.removeAttribute('aria-hidden');
-            } else {
-              item.el.setAttribute('aria-hidden', item.aria);
-            }
+            if (item.aria === null) item.el.removeAttribute('aria-hidden');
+            else item.el.setAttribute('aria-hidden', item.aria);
           }
         }
-
         S.inert = [];
-
         if (S.overflow) {
           const style = document.body.style;
-
-          if (S.overflow[0]) {
-            style.setProperty(
-              'overflow',
-              S.overflow[0],
-              S.overflow[1]
-            );
-          } else {
-            style.removeProperty('overflow');
-          }
-
+          if (S.overflow[0]) style.setProperty('overflow', S.overflow[0], S.overflow[1]);
+          else style.removeProperty('overflow');
           S.overflow = null;
         }
-
         const current = document.activeElement;
         const previous = S.previousFocus;
-
-        // Avoid stealing focus if another UI has already received it.
         if (
           (S.root.contains(current) || current === document.body) &&
-          previous &&
-          previous.isConnected &&
-          previous.getClientRects().length
+          previous && previous.isConnected && previous.getClientRects().length
         ) {
           focusElement(previous);
         }
-
         S.previousFocus = null;
       }
 
       function onKeyDown(event) {
         if (!S.active || event.key !== 'Tab') return;
-
         const items = focusable();
-
         if (!items.length) {
           event.preventDefault();
           focusElement(S.root);
           return;
         }
-
         const index = items.indexOf(document.activeElement);
-
         if (event.shiftKey && index <= 0) {
           event.preventDefault();
           focusElement(items[items.length - 1]);
-        } else if (
-          !event.shiftKey &&
-          (index < 0 || index === items.length - 1)
-        ) {
+        } else if (!event.shiftKey && (index < 0 || index === items.length - 1)) {
           event.preventDefault();
           focusElement(items[0]);
         }
       }
 
-      /* ---------------- Mount / observers ---------------- */
-
       function mount() {
         if (S.destroyed) return false;
         if (S.root) return true;
-
         S.root = document.getElementById('app-login-overlay');
         if (!S.root) return false;
-
         S.canvas = S.root.querySelector('#login-festive-canvas');
-      S.heroCanvas = S.root.querySelector('#login-hero-canvas');
 
         listen(S.root, 'keydown', onKeyDown);
-
         listen(S.root, 'pointermove', event => {
-          if (
-            !S.active ||
-            motion.matches ||
-            !S.canvasWanted ||
-            (event.pointerType && event.pointerType !== 'mouse')
-          ) {
-            return;
+          if (!S.active || motion.matches || (event.pointerType && event.pointerType !== 'mouse')) return;
+          const nx = (event.clientX / Math.max(1, S.width) - 0.5) * 2;
+          const ny = (event.clientY / Math.max(1, S.height) - 0.5) * 2;
+          if (S.canvasWanted) {
+            S.pointer.x = nx;
+            S.pointer.y = ny;
           }
-
-          S.pointer.x =
-            (event.clientX / Math.max(1, S.width) - 0.5) * 2;
-          S.pointer.y =
-            (event.clientY / Math.max(1, S.height) - 0.5) * 2;
+          const px = Math.round((event.clientX / Math.max(1, window.innerWidth)) * 1000) / 10;
+          const py = Math.round((event.clientY / Math.max(1, window.innerHeight)) * 1000) / 10;
+          S.root.style.setProperty('--tp-mx', px + '%');
+          S.root.style.setProperty('--tp-my', py + '%');
         }, { passive: true });
-
         listen(S.root, 'pointerleave', () => {
           S.pointer.x = S.pointer.y = 0;
         });
-
         listen(document, 'focusin', event => {
           if (
             S.active &&
@@ -10043,92 +9347,89 @@ window.google.script = {
             focusMain();
           }
         });
-
         listen(document, 'visibilitychange', sync);
+        listen(window, 'resize', () => { S.dirty = true; sync(); }, { passive: true });
 
-        listen(window, 'resize', () => {
-          S.dirty = true;
-          sync();
-        }, { passive: true });
-
-        // Detect external style/class/hidden changes on the overlay
-        // or on one of its ancestors.
         if (window.MutationObserver) {
           S.mutation = new MutationObserver(sync);
-
           let node = S.root;
-
           while (node) {
-            S.mutation.observe(node, {
-              attributes: true,
-              attributeFilter: ['style', 'class', 'hidden']
-            });
-
+            S.mutation.observe(node, { attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
             node = node.parentElement;
           }
+          const password = S.root.querySelector('#login-password');
+          if (password) {
+            S.mutation.observe(password, { attributes: true, attributeFilter: ['type'] });
+          }
         }
-
-        // Keep password-toggle accessibility in sync with the existing handler.
-        const password = S.root.querySelector('#login-password');
-
-        if (S.mutation && password) {
-          S.mutation.observe(password, {
-            attributes: true,
-            attributeFilter: ['type']
-          });
-        }
-
         if (window.ResizeObserver) {
-          S.resize = new ResizeObserver(() => {
-            S.dirty = true;
-            sync();
-          });
-
+          S.resize = new ResizeObserver(() => { S.dirty = true; sync(); });
           S.resize.observe(S.root);
         }
-
         if (typeof motion.addEventListener === 'function') {
           listen(motion, 'change', sync);
         } else if (typeof motion.addListener === 'function') {
           motion.addListener(sync);
-
-          S.disposers.push(() => {
-            motion.removeListener(sync);
-          });
+          S.disposers.push(() => motion.removeListener(sync));
         }
-
         return true;
       }
 
-      /* ---------------- Realtime clock ---------------- */
+      function formatCountdown(targetMs, nowMs) {
+        const diff = Math.max(0, targetMs - nowMs);
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        const mins = Math.floor((diff % 3600000) / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        const pad = n => String(n).padStart(2, '0');
+        return days + ' ngày • ' + pad(hours) + ':' + pad(mins) + ':' + pad(secs);
+      }
 
       function clockText() {
-        const el = S.root.querySelector('#login-clock-text');
-        if (!el) return;
-
         const now = new Date();
-        const pad = number => String(number).padStart(2, '0');
+        const pad = n => String(n).padStart(2, '0');
+        const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 
-        const days = [
-          'Chủ Nhật',
-          'Thứ Hai',
-          'Thứ Ba',
-          'Thứ Tư',
-          'Thứ Năm',
-          'Thứ Sáu',
-          'Thứ Bảy'
-        ];
+        const el = S.root.querySelector('#login-clock-text');
+        if (el) {
+          el.textContent =
+            pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds()) + ' • ' +
+            days[now.getDay()] + ', ' + pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+          el.setAttribute('datetime', now.toISOString());
+        }
 
-        el.textContent =
-          pad(now.getHours()) + ':' +
-          pad(now.getMinutes()) + ':' +
-          pad(now.getSeconds()) +
-          ' • ' + days[now.getDay()] + ', ' +
-          pad(now.getDate()) + '/' +
-          pad(now.getMonth() + 1) + '/' +
-          now.getFullYear();
+        const nowMs = now.getTime();
+        const year = now.getFullYear();
 
-        el.setAttribute('datetime', now.toISOString());
+        const noelEl = S.root.querySelector('#tp-countdown-noel');
+        if (noelEl) {
+          const xmasEve = new Date(year, 11, 24, 0, 0, 0).getTime();
+          const xmasEnd = new Date(year, 11, 26, 0, 0, 0).getTime();
+          if (nowMs >= xmasEve && nowMs < xmasEnd) {
+            noelEl.textContent = 'Giáng Sinh An Lành!';
+          } else {
+            const nextXmas = nowMs >= xmasEnd
+              ? new Date(year + 1, 11, 25, 0, 0, 0).getTime()
+              : new Date(year, 11, 25, 0, 0, 0).getTime();
+            noelEl.textContent = 'Còn ' + formatCountdown(nextXmas, nowMs);
+          }
+        }
+
+        const nyEl = S.root.querySelector('#tp-countdown-2027');
+        if (nyEl) {
+          const newYear2027 = new Date(2027, 0, 1, 0, 0, 0).getTime();
+          const tetDinhMui2027 = new Date(2027, 1, 7, 0, 0, 0).getTime();
+          const tetEnd = new Date(2027, 1, 10, 0, 0, 0).getTime();
+          if (nowMs < newYear2027) {
+            nyEl.textContent = 'Còn ' + formatCountdown(newYear2027, nowMs);
+          } else if (nowMs < tetDinhMui2027) {
+            nyEl.textContent = 'Tết Đinh Mùi: ' + formatCountdown(tetDinhMui2027, nowMs);
+          } else if (nowMs < tetEnd) {
+            nyEl.textContent = 'Chúc Mừng Năm Mới Đinh Mùi!';
+          } else {
+            nyEl.textContent = 'Xuân Đinh Mùi 2027 Thịnh Vượng';
+          }
+        }
       }
 
       function stopClock() {
@@ -10138,226 +9439,106 @@ window.google.script = {
 
       function runClock() {
         if (S.timer) return;
-
         const tick = () => {
           S.timer = 0;
-
-          if (
-            !S.active ||
-            document.hidden ||
-            !S.clockWanted ||
-            !visible()
-          ) {
-            return;
-          }
-
+          if (!S.active || document.hidden || !S.clockWanted || !visible()) return;
           clockText();
-
-          // Align updates to real second boundaries instead of accumulating drift.
-          S.timer = setTimeout(
-            tick,
-            1000 - Date.now() % 1000 + 8
-          );
+          S.timer = setTimeout(tick, 1000 - Date.now() % 1000 + 8);
         };
-
         tick();
       }
 
-      /* ---------------- Cached Canvas sprites ---------------- */
-
-      function sprite(gold, onDark) {
+      function sprite(gold) {
         const c = document.createElement('canvas');
         c.width = c.height = 64;
-
         const x = c.getContext('2d');
         if (!x) return null;
 
-        const glow = x.createRadialGradient(
-          32, 32, 0,
-          32, 32, 30
-        );
-
-        glow.addColorStop(
-          0,
-          gold
-            ? (onDark ? 'rgba(255,232,165,.92)' : 'rgba(218,162,48,.58)')
-            : (onDark ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.95)')
-        );
-
-        glow.addColorStop(
-          1,
-          gold ? 'rgba(255,235,174,0)' : 'rgba(255,255,255,0)'
-        );
-
+        const glow = x.createRadialGradient(32, 32, 0, 32, 32, 30);
+        glow.addColorStop(0, gold ? 'rgba(255, 232, 165, 0.92)' : 'rgba(255, 255, 255, 0.92)');
+        glow.addColorStop(1, gold ? 'rgba(255, 232, 165, 0)' : 'rgba(255, 255, 255, 0)');
         x.fillStyle = glow;
         x.fillRect(0, 0, 64, 64);
         x.translate(32, 32);
 
-        x.strokeStyle = gold
-          ? (onDark ? '#ffe5a5' : '#ca8a04')
-          : (onDark ? '#ffffff' : 'rgba(20, 99, 79, 0.36)');
-        x.lineWidth = gold ? 2.2 : 1.9;
+        x.strokeStyle = gold ? '#f6d170' : '#ffffff';
+        x.lineWidth = gold ? 2.1 : 1.7;
         x.lineCap = 'round';
 
         if (gold) {
           x.beginPath();
-          x.moveTo(-14, 0);
-          x.lineTo(14, 0);
-          x.moveTo(0, -19);
-          x.lineTo(0, 19);
+          x.moveTo(-13, 0); x.lineTo(13, 0);
+          x.moveTo(0, -18); x.lineTo(0, 18);
           x.stroke();
-
-          x.fillStyle = onDark ? '#fff7db' : '#eab308';
-          x.beginPath();
-          x.arc(0, 0, 3.2, 0, Math.PI * 2);
-          x.fill();
+          x.fillStyle = '#fff9df';
+          x.beginPath(); x.arc(0, 0, 3.2, 0, Math.PI * 2); x.fill();
         } else {
           for (let i = 0; i < 6; i++) {
             x.save();
             x.rotate(i * Math.PI / 3);
-
             x.beginPath();
-            x.moveTo(0, 0);
-            x.lineTo(0, -20);
-            x.moveTo(-5, -11);
-            x.lineTo(0, -15);
-            x.lineTo(5, -11);
+            x.moveTo(0, 0); x.lineTo(0, -19);
+            x.moveTo(-4.5, -10.5); x.lineTo(0, -14.5); x.lineTo(4.5, -10.5);
             x.stroke();
-
             x.restore();
           }
           x.fillStyle = '#ffffff';
-          x.beginPath();
-          x.arc(0, 0, 2.4, 0, Math.PI * 2);
-          x.fill();
+          x.beginPath(); x.arc(0, 0, 2.2, 0, Math.PI * 2); x.fill();
         }
-
         return c;
       }
 
       function prepareCanvas() {
         if (S.canvasFailed || !S.canvas) return false;
         if (S.ctx) return true;
-
         try {
           S.ctx = S.canvas.getContext('2d', { alpha: true });
           if (!S.ctx) throw new Error('Canvas unavailable');
-
-          S.sprites = [sprite(false, false), sprite(true, false)];
-          if (S.sprites.some(item => !item)) throw new Error('Canvas sprite unavailable');
-
-          if (S.heroCanvas && typeof S.heroCanvas.getContext === 'function') {
-            S.heroCtx = S.heroCanvas.getContext('2d', { alpha: true });
-            if (S.heroCtx) {
-              S.heroSprites = [sprite(false, true), sprite(true, true)];
-            }
-          }
-
+          S.sprites = [sprite(false), sprite(true)];
+          if (S.sprites.some(item => !item)) throw new Error('Sprite unavailable');
           return true;
         } catch (_) {
           S.ctx = null;
-          S.heroCtx = null;
           S.canvasFailed = true;
           return false;
         }
       }
-
-      function spawnParticles(count, w, h) {
-        return Array.from({ length: count }, () => {
-          const gold = Math.random() > 0.72;
-          const depth = 0.35 + Math.random() * 0.65;
-          return {
-            gold,
-            depth,
-            x: Math.random() * w,
-            y: Math.random() * h,
-            size: gold ? 7 + Math.random() * 9 : 6 + Math.random() * 14,
-            vx: (Math.random() - 0.5) * 9,
-            vy: gold ? -(6 + Math.random() * 11) : 12 + Math.random() * 24,
-            angle: Math.random() * Math.PI * 2,
-            spin: (Math.random() - 0.5) * 0.3,
-            phase: Math.random() * Math.PI * 2,
-            alpha: gold ? 0.48 + Math.random() * 0.42 : 0.4 + Math.random() * 0.48
-          };
-        });
-      }
-
-      /* ---------------- Responsive Canvas sizing ---------------- */
 
       function resizeCanvas() {
         const rect = S.canvas.getBoundingClientRect();
         const width = Math.max(1, Math.round(rect.width));
         const height = Math.max(1, Math.round(rect.height));
         const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
-
         S.dirty = false;
+        if (width === S.width && height === S.height && dpr === S.dpr && S.particles.length) return;
 
-        if (
-          width !== S.width ||
-          height !== S.height ||
-          dpr !== S.dpr ||
-          !S.particles.length
-        ) {
-          S.width = width;
-          S.height = height;
-          S.dpr = dpr;
-          S.canvas.width = Math.round(width * dpr);
-          S.canvas.height = Math.round(height * dpr);
-          S.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          const count = Math.max(32, Math.min(120, Math.round(width * height / 13000)));
-          S.particles = spawnParticles(count, width, height);
-        }
+        S.width = width; S.height = height; S.dpr = dpr;
+        S.canvas.width = Math.round(width * dpr);
+        S.canvas.height = Math.round(height * dpr);
+        S.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        if (S.heroCanvas && S.heroCtx && S.heroSprites) {
-          const hRect = S.heroCanvas.getBoundingClientRect();
-          const hw = Math.max(0, Math.round(hRect.width));
-          const hh = Math.max(0, Math.round(hRect.height));
-          if (hw > 0 && hh > 0) {
-            S.heroWidth = hw;
-            S.heroHeight = hh;
-            S.heroCanvas.width = Math.round(hw * dpr);
-            S.heroCanvas.height = Math.round(hh * dpr);
-            S.heroCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            if (!S.heroParticles.length) {
-              S.heroParticles = spawnParticles(34, hw, hh);
-            }
-          }
-        }
-      }
-
-      /* ---------------- Animation ---------------- */
-
-      function drawLayer(x, list, sprites, w, h, dt, ox, oy) {
-        x.clearRect(0, 0, w, h);
-        for (const p of list) {
-          p.x += p.vx * dt;
-          p.y += p.vy * p.depth * dt;
-          p.angle += p.spin * dt;
-
-          if (p.y > h + 24) { p.y = -24; p.x = Math.random() * w; }
-          if (p.y < -25) { p.y = h + 24; p.x = Math.random() * w; }
-          if (p.x < -24) p.x = w + 24;
-          if (p.x > w + 24) p.x = -24;
-
-          const drift = Math.sin(S.elapsed * 0.45 + p.phase) * 9 * p.depth;
-          const size = p.size * (0.7 + p.depth * 0.3);
-
-          x.save();
-          x.globalAlpha = p.alpha * (0.84 + Math.sin(S.elapsed * 0.9 + p.phase) * 0.16);
-          x.translate(p.x + drift + ox * p.depth, p.y + oy * p.depth);
-          x.rotate(p.angle);
-          x.drawImage(sprites[p.gold ? 1 : 0], -size / 2, -size / 2, size, size);
-          x.restore();
-        }
+        const count = Math.max(36, Math.min(125, Math.round(width * height / 13500)));
+        S.particles = Array.from({ length: count }, () => {
+          const gold = Math.random() > 0.72;
+          const depth = 0.35 + Math.random() * 0.65;
+          return {
+            gold, depth,
+            x: Math.random() * width,
+            y: Math.random() * height,
+            size: gold ? 7 + Math.random() * 10 : 6 + Math.random() * 15,
+            vx: (Math.random() - 0.5) * 8,
+            vy: gold ? -(6 + Math.random() * 11) : 11 + Math.random() * 24,
+            angle: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.28,
+            phase: Math.random() * Math.PI * 2,
+            alpha: gold ? 0.5 + Math.random() * 0.42 : 0.42 + Math.random() * 0.5
+          };
+        });
       }
 
       function frame(timestamp) {
         S.raf = 0;
-
-        if (!S.active || document.hidden || motion.matches || !S.canvasWanted) {
-          return;
-        }
-
+        if (!S.active || document.hidden || motion.matches || !S.canvasWanted) return;
         if (S.dirty) resizeCanvas();
 
         const dt = S.last ? Math.min((timestamp - S.last) / 1000, 0.05) : 1 / 60;
@@ -10365,172 +9546,107 @@ window.google.script = {
         S.elapsed += dt;
 
         const ease = 1 - Math.exp(-dt * 4);
-        S.offset.x += (S.pointer.x * 9 - S.offset.x) * ease;
-        S.offset.y += (S.pointer.y * 7 - S.offset.y) * ease;
+        S.offset.x += (S.pointer.x * 11 - S.offset.x) * ease;
+        S.offset.y += (S.pointer.y * 8 - S.offset.y) * ease;
 
-        drawLayer(S.ctx, S.particles, S.sprites, S.width, S.height, dt, S.offset.x, S.offset.y);
-        if (S.heroCtx && S.heroSprites && S.heroWidth > 0 && S.heroHeight > 0) {
-          drawLayer(S.heroCtx, S.heroParticles, S.heroSprites, S.heroWidth, S.heroHeight, dt, S.offset.x * 0.6, S.offset.y * 0.6);
+        const x = S.ctx;
+        x.clearRect(0, 0, S.width, S.height);
+        for (const p of S.particles) {
+          p.x += p.vx * dt;
+          p.y += p.vy * p.depth * dt;
+          p.angle += p.spin * dt;
+          if (p.y > S.height + 24) { p.y = -24; p.x = Math.random() * S.width; }
+          if (p.y < -25) { p.y = S.height + 24; p.x = Math.random() * S.width; }
+          if (p.x < -24) p.x = S.width + 24;
+          if (p.x > S.width + 24) p.x = -24;
+
+          const drift = Math.sin(S.elapsed * 0.45 + p.phase) * 9 * p.depth;
+          const size = p.size * (0.7 + p.depth * 0.3);
+
+          x.save();
+          x.globalAlpha = p.alpha * (0.84 + Math.sin(S.elapsed * 0.9 + p.phase) * 0.16);
+          x.translate(p.x + drift + S.offset.x * p.depth, p.y + S.offset.y * p.depth);
+          x.rotate(p.angle);
+          x.drawImage(S.sprites[p.gold ? 1 : 0], -size / 2, -size / 2, size, size);
+          x.restore();
         }
-
         S.raf = requestAnimationFrame(frame);
       }
 
       function stopFrames() {
         if (S.raf) cancelAnimationFrame(S.raf);
-
-        S.raf = 0;
-        S.last = 0;
-
-        S.pointer.x = S.pointer.y = 0;
-        S.offset.x = S.offset.y = 0;
-
+        S.raf = 0; S.last = 0;
+        S.pointer.x = S.pointer.y = S.offset.x = S.offset.y = 0;
         if (S.ctx) S.ctx.clearRect(0, 0, S.width, S.height);
-        if (S.heroCtx) S.heroCtx.clearRect(0, 0, S.heroWidth || 0, S.heroHeight || 0);
       }
-
-      /* ---------------- Single lifecycle reconciliation ---------------- */
 
       function sync() {
         if (!mount()) return;
-
         const password = S.root.querySelector('#login-password');
         const toggle = S.root.querySelector('[data-tp-password-toggle]');
-
         if (password && toggle) {
           const revealed = password.type === 'text';
-
-          toggle.setAttribute(
-            'aria-label',
-            revealed ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
-          );
-
-          toggle.setAttribute(
-            'aria-pressed',
-            revealed ? 'true' : 'false'
-          );
+          toggle.setAttribute('aria-label', revealed ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+          toggle.setAttribute('aria-pressed', revealed ? 'true' : 'false');
         }
-
         const open = visible();
-
         S.root.setAttribute('aria-hidden', open ? 'false' : 'true');
         S.root.setAttribute('data-tp-open', open ? 'true' : 'false');
+        if (open) activate(); else deactivate();
 
-        if (open) {
-          activate();
-        } else {
-          deactivate();
-        }
+        if (open && !document.hidden && S.clockWanted) runClock();
+        else stopClock();
 
-        if (open && !document.hidden && S.clockWanted) {
-          runClock();
-        } else {
-          stopClock();
-        }
-
-        const animate =
-          open &&
-          !document.hidden &&
-          !motion.matches &&
-          S.canvasWanted;
-
-        // CSS motion and Canvas share the same visibility/motion policy.
-        S.root.setAttribute(
-          'data-tp-motion',
-          animate ? 'on' : 'off'
-        );
-
+        const animate = open && !document.hidden && !motion.matches && S.canvasWanted;
+        S.root.setAttribute('data-tp-motion', animate ? 'on' : 'off');
         if (animate && prepareCanvas()) {
           if (S.dirty) resizeCanvas();
-
-          // Idempotent: never create a second animation loop.
-          if (!S.raf) {
-            S.raf = requestAnimationFrame(frame);
-          }
+          if (!S.raf) S.raf = requestAnimationFrame(frame);
         } else {
           stopFrames();
         }
       }
 
-      /* ---------------- Public API: preserved function names ---------------- */
-
       function showLoginOverlay() {
         if (!mount()) return false;
-
-        S.canvasWanted = true;
-        S.clockWanted = true;
-
+        S.canvasWanted = S.clockWanted = true;
         S.root.hidden = false;
         S.root.classList.remove('hidden');
         S.root.style.display = 'flex';
-
+        const errBox = document.getElementById('login-error-box');
+        if (errBox) errBox.classList.add('hidden');
         S.dirty = true;
         sync();
-
-        // Existing credentials, checkbox state and error content are preserved.
         return true;
       }
 
       function hideLoginOverlay() {
         if (!mount()) return false;
-
         S.root.style.display = 'none';
         sync();
-
         return true;
       }
 
-      function initFestive2027Canvas() {
-        S.canvasWanted = true;
-        sync();
-      }
-
-      function stopFestive2027Canvas() {
-        S.canvasWanted = false;
-        sync();
-      }
-
-      function startLoginRealtimeClock() {
-        S.clockWanted = true;
-        sync();
-      }
-
-      function stopLoginRealtimeClock() {
-        S.clockWanted = false;
-        stopClock();
-      }
-
-      /* ---------------- Complete teardown ---------------- */
+      function initFestive2027Canvas() { S.canvasWanted = true; sync(); }
+      function stopFestive2027Canvas() { S.canvasWanted = false; sync(); }
+      function startLoginRealtimeClock() { S.clockWanted = true; sync(); }
+      function stopLoginRealtimeClock() { S.clockWanted = false; stopClock(); }
 
       function destroy() {
         if (S.destroyed) return;
-
-        stopFrames();
-        stopClock();
-        deactivate();
-
+        stopFrames(); stopClock(); deactivate();
         S.destroyed = true;
-
         if (S.mutation) S.mutation.disconnect();
         if (S.resize) S.resize.disconnect();
-
         S.disposers.splice(0).forEach(dispose => dispose());
-
         if (S.root) {
           S.root.setAttribute('data-tp-motion', 'off');
           S.root.setAttribute('data-tp-open', 'false');
         }
-
-        S.particles = [];
-        S.heroParticles = [];
-        S.sprites = null;
-        S.heroSprites = null;
-        S.ctx = null;
-        S.heroCtx = null;
+        S.particles = []; S.sprites = null; S.ctx = null;
       }
 
       window[KEY] = { destroy };
-
       Object.assign(window, {
         showLoginOverlay,
         hideLoginOverlay,
@@ -10538,14 +9654,10 @@ window.google.script = {
         stopLoginRealtimeClock,
         initFestive2027Canvas,
         stopFestive2027Canvas,
-
-        // Backward-compatible aliases for existing callers.
         initNovemberLeavesCanvas: initFestive2027Canvas,
         stopNovemberLeavesCanvas: stopFestive2027Canvas
       });
 
-      // Mount safely whether the script appears before or after DOM readiness.
-      // The overlay remains hidden until the application calls showLoginOverlay().
       if (document.readyState === 'loading') {
         listen(document, 'DOMContentLoaded', sync, { once: true });
       } else {
