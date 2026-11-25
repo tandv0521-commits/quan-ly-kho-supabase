@@ -1741,11 +1741,253 @@
       font-size: 11px;
       font-weight: 500;
     }
+
+    /* =========================================================
+       MỞ RỘNG KHÔNG KHÍ TẾT 2027: MENU TRÁI, THỐNG KÊ KPI, BẢNG & TẠO PHIẾU
+       Giữ nguyên 100% màu cảnh báo kho, số liệu tabular-nums và bản in A4.
+       ========================================================= */
+    .app-tet-sidebar-seal {
+      display: none !important;
+    }
+
+    body[data-app-theme="tet-2027"] {
+      --app-tet-workspace: #faf7f2;
+      --app-tet-shell-shadow: 0 5px 22px rgba(107, 21, 34, 0.045);
+      background-color: var(--app-tet-workspace) !important;
+    }
+
+    body[data-app-theme="tet-2027"] #main-wrapper {
+      background-color: var(--app-tet-workspace) !important;
+    }
+
+    /* Thanh menu trái: phủ nền kem ấm, nút đang chọn đỏ son + chỉ vàng champagne */
+    body[data-app-theme="tet-2027"] #sidebar {
+      background: linear-gradient(180deg, #fcf9f4 0%, #faf5ec 100%) !important;
+      border-right-color: var(--app-tet-border) !important;
+      box-shadow: 6px 0 24px rgba(107, 21, 34, 0.04);
+    }
+
+    body[data-app-theme="tet-2027"] #nav-tabs {
+      background-color: transparent !important;
+    }
+
+    body[data-app-theme="tet-2027"] #nav-tabs .border-t {
+      border-top-color: var(--app-tet-border) !important;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .menu-group-title {
+      color: #856942 !important;
+      letter-spacing: 0.06em;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .sidebar-nav-btn {
+      transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .sidebar-nav-btn:not(.text-white):not(:disabled):hover {
+      background-color: #f6ede0 !important;
+      color: var(--app-tet-crimson-deep) !important;
+      box-shadow: inset 2.5px 0 0 var(--app-tet-gold-soft);
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .sidebar-nav-btn.text-white {
+      background-color: var(--app-tet-crimson) !important;
+      background-image: linear-gradient(135deg, #912435 0%, var(--app-tet-crimson-deep) 100%) !important;
+      color: #ffffff !important;
+      box-shadow:
+        inset 3px 0 0 var(--app-tet-gold-soft),
+        0 4px 12px rgba(107, 21, 34, 0.16) !important;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar.sidebar-collapsed .sidebar-nav-btn.text-white {
+      box-shadow:
+        inset 0 0 0 1px rgba(226, 205, 166, 0.55),
+        0 4px 12px rgba(107, 21, 34, 0.16) !important;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .sidebar-nav-btn:focus-visible {
+      outline: 2px solid var(--app-tet-gold);
+      outline-offset: 2px;
+    }
+
+    /* Ấn triện xuân tinh tế phía trên thẻ tài khoản chân sidebar (tự ẩn khi thu gọn 68px) */
+    body[data-app-theme="tet-2027"] #sidebar:not(.sidebar-collapsed) .app-tet-sidebar-seal {
+      display: flex !important;
+      align-items: center;
+      gap: 9px;
+      flex: 0 0 auto;
+      margin: 8px 0 2px;
+      padding: 8px 10px;
+      border: 1px solid var(--app-tet-border);
+      border-radius: 12px;
+      background: linear-gradient(115deg, #fdfaf4 0%, #f5ebd9 100%);
+      color: var(--app-tet-crimson-deep);
+    }
+
+    #sidebar.sidebar-collapsed .app-tet-sidebar-seal {
+      display: none !important;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .app-tet-sidebar-seal > svg {
+      display: block;
+      flex: 0 0 26px;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .app-tet-sidebar-seal > span {
+      min-width: 0;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .app-tet-sidebar-seal strong {
+      display: block;
+      font-size: 10px;
+      line-height: 1.4;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar .app-tet-sidebar-seal small {
+      display: block;
+      margin-top: 1px;
+      color: #7c674d;
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: 0.09em;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar-user-widget {
+      border-top-color: var(--app-tet-border) !important;
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar-user-card {
+      background: #fffdf9 !important;
+      border-color: var(--app-tet-border) !important;
+      box-shadow: 0 2px 10px rgba(107, 21, 34, 0.04);
+    }
+
+    body[data-app-theme="tet-2027"] #sidebar-user-card:hover {
+      background: #faf3e7 !important;
+      border-color: #dec9a6 !important;
+    }
+
+    /* Nhãn tab hiện tại trên header đồng bộ đỏ son & kem ấm */
+    body[data-app-theme="tet-2027"] #current-tab-badge {
+      background-color: #fdf5eb !important;
+      color: var(--app-tet-crimson) !important;
+      border-color: #e5cda4 !important;
+    }
+
+    /* Vỏ thẻ thống kê KPI, bảng dữ liệu & khung lập phiếu trong <main> */
+    body[data-app-theme="tet-2027"] main .bg-white.rounded-2xl.border {
+      box-shadow:
+        inset 0 1px 0 rgba(226, 205, 166, 0.68),
+        var(--app-tet-shell-shadow) !important;
+    }
+
+    body[data-app-theme="tet-2027"] main .bg-white.rounded-2xl.border:is(
+      .border-slate-100,
+      .border-slate-200,
+      [class~="border-slate-200/80"]
+    ):not(#voucher-card) {
+      border-color: var(--app-tet-border) !important;
+    }
+
+    /* Điểm nhấn chỉ vàng champagne trên đỉnh các thẻ KPI thống kê & khung lập phiếu */
+    body[data-app-theme="tet-2027"] main :is(
+      #tab-inventory > .grid > div.bg-white,
+      #tab-kiemke .grid > div.bg-white.rounded-2xl,
+      #voucher-card
+    ) {
+      background: linear-gradient(180deg, #ffffff 0%, #fffdf9 100%) !important;
+      box-shadow:
+        inset 0 2.5px 0 var(--app-tet-gold-soft),
+        var(--app-tet-shell-shadow) !important;
+    }
+
+    /* Bề mặt thanh bộ lọc, phân trang & thanh phụ trung tính chuyển sang kem sứ nhẹ */
+    body[data-app-theme="tet-2027"] main :is(div, section):is(
+      .bg-slate-50,
+      [class~="bg-slate-50/70"],
+      [class~="bg-slate-50/80"],
+      [class~="bg-slate-50/90"]
+    ) {
+      background-color: #fcf8f1 !important;
+      border-color: var(--app-tet-border) !important;
+    }
+
+    /* Nút viền trung tính chưa chọn hòa sắc ấm */
+    body[data-app-theme="tet-2027"] main button.bg-white.border:is(
+      .border-slate-200,
+      .border-slate-300
+    ):not(.text-white):not(:focus) {
+      border-color: var(--app-tet-border) !important;
+    }
+
+    /* Đầu bảng trung tính chuyển sang Porcelain Ivory ấm + chỉ đáy champagne */
+    body[data-app-theme="tet-2027"] main table > thead:is(
+      .bg-slate-100,
+      [class~="bg-slate-100/90"],
+      [class~="bg-slate-100/95"],
+      .bg-slate-50
+    ) {
+      background-color: #f8f2e7 !important;
+      color: #4a3a30 !important;
+    }
+
+    body[data-app-theme="tet-2027"] main table > thead:is(
+      .bg-slate-100,
+      [class~="bg-slate-100/90"],
+      [class~="bg-slate-100/95"],
+      .bg-slate-50
+    ) > tr > :is(th, td):is(
+      .bg-slate-100,
+      [class~="bg-slate-100/90"],
+      .bg-slate-50
+    ) {
+      background-color: #f8f2e7 !important;
+    }
+
+    body[data-app-theme="tet-2027"] main table > thead:is(
+      .bg-slate-100,
+      [class~="bg-slate-100/90"],
+      [class~="bg-slate-100/95"],
+      .bg-slate-50
+    ) > tr > :is(th, td):is(
+      .text-slate-500,
+      .text-slate-600,
+      .text-slate-700,
+      .text-slate-800
+    ) {
+      color: #4a3a30 !important;
+    }
+
+    body[data-app-theme="tet-2027"] main table > thead > tr:last-child > :is(th, td) {
+      border-bottom: 1.5px solid var(--app-tet-gold-soft) !important;
+    }
+
+    /* Hover dòng bảng dữ liệu ấm nhẹ, giữ nguyên 100% các dòng cảnh báo/chênh lệch */
+    body[data-app-theme="tet-2027"] main tbody tr:not(.row-kk-positive):not(.row-kk-negative):not(.row-kk-error):not(.row-error-highlight):not(.active-moved-row):hover {
+      background-color: #fcf7ee !important;
+    }
+
+    /* Thanh hành động dính đáy ở các tab tạo phiếu / phát hàng / kiểm kê */
+    body[data-app-theme="tet-2027"] :is(
+      #sticky-voucher-bar,
+      #sticky-dispatch-bar,
+      #sticky-kiemke-bar
+    ) {
+      background: rgba(253, 250, 245, 0.96) !important;
+      border-top-color: #e4d4bc !important;
+      box-shadow:
+        inset 0 1px 0 rgba(184, 139, 59, 0.28),
+        0 -6px 22px rgba(107, 21, 34, 0.045) !important;
+    }
   }
 
   @media screen and (prefers-reduced-motion: reduce) {
     body[data-app-theme="tet-2027"] .sidebar-header-wrapper,
     body[data-app-theme="tet-2027"] .sidebar-logo-icon,
+    body[data-app-theme="tet-2027"] #sidebar .sidebar-nav-btn,
     body[data-app-theme="tet-2027"] #app-status-bar,
     body[data-app-theme="tet-2027"] #main-wrapper > header,
     .app-tet-toggle,
@@ -1764,6 +2006,7 @@
 
   @media print {
     .app-tet-only,
+    .app-tet-sidebar-seal,
     .app-tet-toggle,
     .app-tet-welcome-toast,
     #sidebar-user-popover {
@@ -1923,6 +2166,25 @@
             </button>
           </div>
         </nav>
+
+        <div class="app-tet-only app-tet-sidebar-seal no-print" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none" focusable="false" aria-hidden="true">
+            <rect x="1" y="1" width="30" height="30" rx="6" fill="#861f2e"/>
+            <rect x="3.5" y="3.5" width="25" height="25" rx="4" stroke="#e2cda6" stroke-opacity="0.7"/>
+            <g fill="#e2cda6">
+              <ellipse cx="16" cy="11.5" rx="2.4" ry="3.9"/>
+              <ellipse cx="16" cy="11.5" rx="2.4" ry="3.9" transform="rotate(72 16 16)"/>
+              <ellipse cx="16" cy="11.5" rx="2.4" ry="3.9" transform="rotate(144 16 16)"/>
+              <ellipse cx="16" cy="11.5" rx="2.4" ry="3.9" transform="rotate(216 16 16)"/>
+              <ellipse cx="16" cy="11.5" rx="2.4" ry="3.9" transform="rotate(288 16 16)"/>
+            </g>
+            <circle cx="16" cy="16" r="1.7" fill="#861f2e"/>
+          </svg>
+          <span>
+            <strong>AN KHANG · KHỞI SẮC</strong>
+            <small>ĐINH MÙI 2027</small>
+          </span>
+        </div>
 
         <div id="sidebar-user-widget" class="mt-2 pt-2 border-t border-slate-100 no-print relative">
           <!-- Nút cô đọng 1 dòng hiện tên -->
